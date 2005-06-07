@@ -1,0 +1,13 @@
+Package: fmri
+Version: 0.1
+Date: 2005-4-25
+Title: FMRI Analysis
+Author: Karsten Tabelow <tabelow@wias-berlin.de>
+Maintainer: Karsten Tabelow <tabelow@wias-berlin.de>
+Description: The library contains R-functions to perform an fmri analysis
+     based on the adaptive weights smoothing (AWS) procedure devoloped in 
+     Polzehl und Spokoiny (2000).
+License: GPL version 2 or newer
+     This library is Copyright (C) 2005 Weierstrass Institute for 
+                                   Applied Analysis and Stochastics.
+URL: http://wias-berlin.de/
