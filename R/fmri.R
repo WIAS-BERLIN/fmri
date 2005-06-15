@@ -1,4 +1,4 @@
-library(awsnew)
+library(aws)
 
 
 create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, mean=TRUE) {
@@ -68,11 +68,7 @@ create.designmatrix <- function(hrf, order=0) {
 
   if (order != 0) {
     for (i in (stimuli+2):(stimuli+order+1)) {
-      summe <- rep(0, scans)
-      for (k in 1:(i-1)) {
-        summe <- summe + z[,k]*(z[,k] %*% (1:scans)^(i-stimuli-1))/(z[,k] %*% z[,k])
-      }
-      z[,i] <- (1:scans)^(i-stimuli-1) - summe
+      z[,i] <- (1:scans)^(i-stimuli-1)
     }
   }
   
@@ -110,32 +106,41 @@ calculate.lm <- function(ttt,z,ar,vtype="var") {
   sigma <- v %*% lambda2 %*% vt
 
   dy <- dim(ttt)
-  varianz <- array(0,dim=c(dy[1:3]))
+  variance <- array(0,dim=c(dy[1:3]))
   dim(ttt) <- c(prod(dy[1:3]),dy[4])
   beta <- ttt %*% t(a) %*% u %*% lambda1 %*% vt
   residuals <- ttt - beta %*% t(z)
   b <- rep(1/dim(z)[1],dim(z)[1])
   if (vtype == "var") {
-    varianz <- (residuals^2 %*% b)*dim(z)[1]/(dim(z)[1]-dim(z)[2])*sigma[1,1]
+    variance <- (residuals^2 %*% b)*dim(z)[1]/(dim(z)[1]-dim(z)[2])*sigma[1,1]
   }
   dim(beta)<-c(dy[1:3],dim(z)[2])
-  dim(varianz) <- c(dy[1:3])
+  dim(variance) <- c(dy[1:3])
   dim(residuals) <- dy
   
-  result <- list(beta=beta,varianz=varianz,residuals=residuals)
+  result <- list(beta=beta,var=variance,residuals=residuals)
   result
 }
 
-perform.aws <- function(beta,varianz,hmax=4,hinit=1,weights=c(1,1,1),qlambda=NULL) {
-  varianz[varianz < quantile(varianz,0.25)] <- quantile(varianz,0.25)
+perform.aws <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),vweights=NULL,qlambda=1) {
+  variance[variance < quantile(variance,0.25)] <- quantile(variance,0.25)
 
-  ttthat <- chaws(beta[,,], sigma2=varianz, hmax=hmax, hinit=hinit,
-  qlambda=qlambda, wghts=weights)
+  ttthat <- vaws(beta, sigma2=variance, hmax=hmax, hinit=hinit,
+                 qlambda=qlambda, qtau=1,wghts=weights,vwghts=vweights)
+
   tttvar <- ttthat$ni2 / ttthat$ni^2
 
   z <- list(hat=ttthat$theta, var=tttvar)
   z
 }
+
+calculate.threshold <- function(var1,var2,alpha=0.95,gamma=0.5) {
+  delta <- var1 * qchisq(gamma,1)
+  calpha <- qchisq(alpha,1 + delta/var2)
+  test <- (var2 + 2 * delta)/(1 + delta/var2) * calpha
+  test
+}
+
 
 plot.fmri <- function(signal, mask, anatomic, zlim=0, device="X11", file="plot.png") {
   alim <- range(anatomic)
