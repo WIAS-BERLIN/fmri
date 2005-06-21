@@ -1,7 +1,7 @@
 library(aws)
 
 
-create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, mean=TRUE) {
+create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, rt=3, mean=TRUE) {
   numberofonsets <- length(onsets)
   stimulus <- rep(0, scans)
   
@@ -36,7 +36,7 @@ create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, mean=TRUE) {
   myhrf <- function(t) {
     mysum <- 0
     for (k in 1:scans) {
-      mysum <- mysum + mygamma(k, 6, 12, 0.3, 0.3, 0.35) * mystimulus(t-k)
+      mysum <- mysum + mygamma(k, 6, 12, 0.9/rt, 0.9/rt, 0.35) * mystimulus(t-k)
     }
     mysum
   }
@@ -128,9 +128,7 @@ perform.aws <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),vweights=N
   ttthat <- vaws(beta, sigma2=variance, hmax=hmax, hinit=hinit,
                  qlambda=qlambda, qtau=1,wghts=weights,vwghts=vweights)
 
-  tttvar <- ttthat$ni2 / ttthat$ni^2
-
-  z <- list(hat=ttthat$theta, var=tttvar)
+  z <- list(hat=ttthat$theta, var=ttthat$var)
   z
 }
 
@@ -142,7 +140,7 @@ calculate.threshold <- function(var1,var2,alpha=0.95,gamma=0.5) {
 }
 
 
-plot.fmri <- function(signal, mask, anatomic, zlim=0, device="X11", file="plot.png") {
+plot.fmri <- function(signal, mask, anatomic, x, y, z, zlim=0, device="X11", file="plot.png") {
   alim <- range(anatomic)
   zlim <- max(zlim,signal)
 
@@ -155,15 +153,107 @@ plot.fmri <- function(signal, mask, anatomic, zlim=0, device="X11", file="plot.p
   } else {
     X11()
   }
-  
-  oldpar <- par(mfrow=c(5,6), mar=c(0,0,0,.25), mgp=c(2,1,0))
+
+  partition <- as.integer(sqrt(dim(anatomic)[3])) + 1
+  oldpar <- par(mfrow=c(partition,partition), mar=c(0,0,0,.25), mgp=c(2,1,0))
   
   for (i in 1:dim(anatomic)[3]) {
     image(anatomic[,,i], xaxt="n", yaxt="n", zlim=alim, col=grey(1:255/255))
     if (any(signal[,,i]))
       image(signal[,,i], zlim=c(0,zlim) ,col=c(0,rainbow(512)[350:512]), add=TRUE)
+    if (i == z) {
+      lines(c(0,1),c(y,y)/dim(anatomic)[2],col=2)
+      lines(c(x,x)/dim(anatomic)[1],c(0,1),col=2)
+    }     
   }
   
   par(oldpar)
   as.numeric(dev.cur())
+}
+
+rho0prime <- function(z) {
+  dnorm(z)
+}
+
+rho1prime <- function(z) {
+  c <- -(4 * log(2))^.5 / (2 * pi)
+  f <- exp(-z*z/2) * z
+  c * f  
+}
+
+rho2prime <- function(z) {
+  c <- - (4 * log(2)) / (2 * pi)^1.5  
+  f <- exp(-z*z/2) * (z*z -1)
+  c * f
+}
+
+rho3prime <- function(z) {
+  c <- - (4 * log(2))^1.5 / (2 * pi)^2  
+  f <- exp(-z*z/2) * (z*z*z - z)
+  c * f
+}
+
+rho0 <- function(z) {
+  1 - pnorm(z)
+}
+
+rho1 <- function(z) {
+  c <- (4 * log(2))^.5 / (2 * pi)
+  f <- exp(-z*z/2)
+  c * f
+}
+
+rho2 <- function(z) {
+  c <- (4 * log(2)) / (2 * pi)^1.5  
+  f <- exp(-z*z/2) * z
+  c * f
+}
+
+rho3 <- function(z) {
+  c <- (4 * log(2))^1.5 / (2 * pi)^2  
+  f <- exp(-z*z/2) * (z*z -1)
+  c * f
+}
+
+r0 <- function(i,j,k,rx,ry,rz) {
+  1
+}
+
+r1 <- function(i,j,k,rx,ry,rz) {
+  (i-1)*rx + (j-1)*ry +(k-1)*rz 
+}
+
+r2 <- function(i,j,k,rx,ry,rz) {
+  (i-1)*(j-1)*rx*ry + (j-1)*(k-1)*ry*rz +(i-1)*(k-1)*rx*rz 
+}
+
+r3 <- function(i,j,k,rx,ry,rz) {
+  (i-1)*(j-1)*(k-1)*rx*ry*rz
+}
+
+pvalue <- function(z,i,j,k,rx,ry,rz) {
+  rho0(z) * r0(i,j,k,rx,ry,rz) +
+    rho1(z) * r1(i,j,k,rx,ry,rz) +
+      rho2(z) * r2(i,j,k,rx,ry,rz) +
+        rho3(z) * r3(i,j,k,rx,ry,rz)
+}
+
+pvalueprime <- function(z,i,j,k,rx,ry,rz) {
+  rho0prime(z) * r0(i,j,k,rx,ry,rz) +
+    rho1prime(z) * r1(i,j,k,rx,ry,rz) +
+      rho2prime(z) * r2(i,j,k,rx,ry,rz) +
+        rho3prime(z) * r3(i,j,k,rx,ry,rz)
+}
+
+resel <- function(voxeld, hmax, hv=0.919) {
+  hv * voxeld / hmax
+}
+
+threshold <- function(p,i,j,k,rx,ry,rz) {
+  x <- 3
+  repeat {
+    x <- x - (pvalue(x,i,j,k,rx,ry,rz)-p)/pvalueprime(x,i,j,k,rx,ry,rz)
+    if (abs(pvalue(x,i,j,k,rx,ry,rz)-p) < 0.000001) break
+  }
+  x
 }
