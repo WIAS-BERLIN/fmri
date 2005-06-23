@@ -160,7 +160,8 @@ plot.fmri <- function(signal, mask, anatomic, x, y, z, zlim=0, device="X11", fil
   for (i in 1:dim(anatomic)[3]) {
     image(anatomic[,,i], xaxt="n", yaxt="n", zlim=alim, col=grey(1:255/255))
     if (any(signal[,,i]))
-      image(signal[,,i], zlim=c(0,zlim) ,col=c(0,rainbow(512)[350:512]), add=TRUE)
+#      image(signal[,,i], zlim=c(0,zlim) ,col=c(0,rainbow(512)[350:512]), add=TRUE)
+      image(signal[,,i], zlim=c(0,zlim) ,col=c(0,rainbow(512)[1:512]), add=TRUE)
     if (i == z) {
       lines(c(0,1),c(y,y)/dim(anatomic)[2],col=2)
       lines(c(x,x)/dim(anatomic)[1],c(0,1),col=2)
