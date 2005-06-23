@@ -1,5 +1,5 @@
 library(aws)
-
+library(AnalyzeFMRI)
 
 create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, rt=3, mean=TRUE) {
   numberofonsets <- length(onsets)
@@ -53,7 +53,6 @@ create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, rt=3, mean=TRUE) {
   }
 }
 
-
 create.designmatrix <- function(hrf, order=0) {
   stimuli <- dim(hrf)[2]
   scans <- dim(hrf)[1]
@@ -74,7 +73,6 @@ create.designmatrix <- function(hrf, order=0) {
   
   z
 }
-
 
 create.arcorrection <- function(scans, rho=0) {
   a <- array(0,dim=c(scans,scans))
