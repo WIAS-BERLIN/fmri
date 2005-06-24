@@ -1,22 +1,23 @@
 read.ANALYZE <- function(prefix = "", picstart = 0, numbpic = 1) {
   if (require(AnalyzeFMRI)) {
-    a<- f.read.analyze.volume(paste(prefix, picstart, ".img", sep=""));
+
+    ttt <- f.read.analyze.volume(paste(prefix, picstart, ".img", sep=""));
+    dt <- dim(ttt)
     cat(".")
 
-    # the question of dimension should be handled with more care here
-    # we should be able to read a single 4 dimensional ANALYZE format
-    # here as well as series of pseudo 4 dimensionals!!!
-    
-    ttt <- array(0,dim=c(dim(a)[1],dim(a)[2],dim(a)[3],numbpic));
-    ttt[,,,1] <- a;
-
-    for (i in (picstart+1):(picstart+numbpic-1)) {
-      j <- i - picstart + 1;
-      ttt[,,,j] <- f.read.analyze.volume(paste(prefix, i, ".img", sep=""));
-      cat(".")
+    if (numbpic > 1) { 
+      for (i in (picstart+1):(picstart+numbpic-1)) {
+        a <- f.read.analyze.volume(paste(prefix, i, ".img", sep=""))
+        if (sum() != 0)
+          cat("Error: wrong spatial dimension in picture",i)
+        ttt <- c(ttt,a);
+        dt[4] <- dt[4] + dim(a)[4]
+        cat(".")
+      }
     }
 
     cat("\n")
+    dim(ttt) <- c(dt)
     ttt
   } else {
     cat("Error: library AnalyzeFMRI not found\n")
