@@ -236,6 +236,28 @@ gkernsm <- function(y,h=1) {
                              dnorm(grid(dy[2]),0,h[2]/dy[2]),"*"),
                        dnorm(grid(dy[3]),0,h[3]/dy[3]),"*"))
   kern <- kern/sum(kern)
-  print(sum(kern^2))
-  convolve(y,kern,conj=TRUE)
+  kernsq <- sum(kern^2)
+  list(gkernsm=convolve(y,kern,conj=TRUE),kernsq=kernsq)
+}
+
+correlation <- function(res) {
+  dr <- dim(res)
+  x <- mean(res[-1,,,]*res[-dr[1],,,]/sqrt(var(res[-1,,,]) * var(res[-dr[1],,,])))
+  y <- mean(res[,-1,,]*res[,-dr[2],,]/sqrt(var(res[,-1,,]) * var(res[,-dr[2],,])))
+  z <- mean(res[,,-1,]*res[,,-dr[3],]/sqrt(var(res[,,-1,]) * var(res[,,-dr[3],])))
+  c(x,y,z)
+}
+
+smoothness <- function(cor, dim) {
+  h <- 0
+  field <- array(rnorm(prod(dim)),dim)
+  for (i in 1:100) {
+    h <- h + 0.1
+    cat(h,"\n")
+    z <- gkernsm(field, h)$gkernsm;
+    corg <- mean(z[,-1,]*z[,-dim[2],]/sqrt(var(z[,-1,]) * var(z[,-dim[2],])))
+    cat(corg)
+    if (corg > cor) break
+  }
+  h
 }
