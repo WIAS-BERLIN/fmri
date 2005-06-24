@@ -3,6 +3,10 @@ read.ANALYZE <- function(prefix = "", picstart = 0, numbpic = 1) {
     a<- f.read.analyze.volume(paste(prefix, picstart, ".img", sep=""));
     cat(".")
 
+    # the question of dimension should be handled with more care here
+    # we should be able to read a single 4 dimensional ANALYZE format
+    # here as well as series of pseudo 4 dimensionals!!!
+    
     ttt <- array(0,dim=c(dim(a)[1],dim(a)[2],dim(a)[3],numbpic));
     ttt[,,,1] <- a;
 
@@ -19,7 +23,16 @@ read.ANALYZE <- function(prefix = "", picstart = 0, numbpic = 1) {
     NA
   }
 }
-  
+
+write.ANALYZE <- function(ttt, name = "data", size="int", voxelsize = c(2,2,2)) {
+  if (require(AnalyzeFMRI)) {
+    f.write.analyze(ttt, file=name, size=size, voxelsize)
+  } else {
+    cat("Error: library AnalyzeFMRI not found\n")
+    NA
+  }
+}
+
 create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, rt=3, mean=TRUE) {
   numberofonsets <- length(onsets)
   stimulus <- rep(0, scans)
@@ -202,4 +215,26 @@ threshold <- function(p,i,j,k,rx,ry,rz) {
     if (abs(pvalue(x,i,j,k,rx,ry,rz)-p) < 0.000001) break
   }
   x
+}
+
+gkernsm <- function(y,h=1) {
+  grid <- function(d) {
+    d0 <- d%/%2+1
+    gd <- seq(0,1,length=d0)
+    if (2*d0==d+1) gd <- c(gd,-gd[d0:2]) else gd <- c(gd,-gd[(d0-1):2])
+    gd
+  }
+  dy <- dim(y)
+  if (is.null(dy)) dy<-length(y)
+  ldy <- length(dy)
+  if (length(h)!=ldy) h <- rep(h[1],ldy)
+  kern <- switch(ldy,dnorm(grid(dy),0,h/dy),
+                 outer(dnorm(grid(dy[1]),0,h[1]/dy[1]),
+                       dnorm(grid(dy[2]),0,h[2]/dy[2]),"*"),
+                 outer(outer(dnorm(grid(dy[1]),0,h[1]/dy[1]),
+                             dnorm(grid(dy[2]),0,h[2]/dy[2]),"*"),
+                       dnorm(grid(dy[3]),0,h[3]/dy[3]),"*"))
+  kern <- kern/sum(kern)
+  print(sum(kern^2))
+  convolve(y,kern,conj=TRUE)
 }
