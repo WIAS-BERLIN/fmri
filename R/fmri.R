@@ -1,6 +1,25 @@
-library(aws)
-library(AnalyzeFMRI)
+read.ANALYZE <- function(prefix = "", picstart = 0, numbpic = 1) {
+  if (require(AnalyzeFMRI)) {
+    a<- f.read.analyze.volume(paste(prefix, picstart, ".img", sep=""));
+    cat(".")
 
+    ttt <- array(0,dim=c(dim(a)[1],dim(a)[2],dim(a)[3],numbpic));
+    ttt[,,,1] <- a;
+
+    for (i in (picstart+1):(picstart+numbpic-1)) {
+      j <- i - picstart + 1;
+      ttt[,,,j] <- f.read.analyze.volume(paste(prefix, i, ".img", sep=""));
+      cat(".")
+    }
+
+    cat("\n")
+    ttt
+  } else {
+    cat("Error: library AnalyzeFMRI not found\n")
+    NA
+  }
+}
+  
 create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, rt=3, mean=TRUE) {
   numberofonsets <- length(onsets)
   stimulus <- rep(0, scans)
@@ -21,31 +40,8 @@ create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, rt=3, mean=TRUE) {
     res
   }
 
-  mystimulus <- function(t) {
-    if (t <= 0) {
-      0
-    } else {
-      if (t > scans) {
-        0
-      } else {
-        stimulus[t]
-      }
-    }
-  }
-
-  myhrf <- function(t) {
-    mysum <- 0
-    for (k in 1:scans) {
-      mysum <- mysum + mygamma(k, 6, 12, 0.9/rt, 0.9/rt, 0.35) * mystimulus(t-k)
-    }
-    mysum
-  }
-
-  hrf <- rep(0, scans)
-  for (i in 1:scans) {
-    hrf[i] <- myhrf(i)
-  }
-
+  hrf <- convolve(stimulus,mygamma(scans:1, 6, 12, 0.9/rt, 0.9/rt, 0.35))
+  
   if (mean) {
     hrf - mean(hrf)
   } else {
@@ -121,6 +117,7 @@ calculate.lm <- function(ttt,z,ar,vtype="var") {
 }
 
 perform.aws <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),vweights=NULL,qlambda=1) {
+  require(aws)
   variance[variance < quantile(variance,0.25)] <- quantile(variance,0.25)
 
   ttthat <- vaws(beta, sigma2=variance, hmax=hmax, hinit=hinit,
@@ -138,7 +135,7 @@ calculate.threshold <- function(var1,var2,alpha=0.95,gamma=0.5) {
 }
 
 
-plot.fmri <- function(signal, mask, anatomic, x, y, z, zlim=0, device="X11", file="plot.png") {
+plot.fmri <- function(signal, mask, anatomic, x=-1, y=-1, z=-1, zlim=0, device="X11", file="plot.png") {
   alim <- range(anatomic)
   zlim <- max(zlim,signal)
 
@@ -158,8 +155,7 @@ plot.fmri <- function(signal, mask, anatomic, x, y, z, zlim=0, device="X11", fil
   for (i in 1:dim(anatomic)[3]) {
     image(anatomic[,,i], xaxt="n", yaxt="n", zlim=alim, col=grey(1:255/255))
     if (any(signal[,,i]))
-#      image(signal[,,i], zlim=c(0,zlim) ,col=c(0,rainbow(512)[350:512]), add=TRUE)
-      image(signal[,,i], zlim=c(0,zlim) ,col=c(0,rainbow(512)[1:512]), add=TRUE)
+      image(signal[,,i], zlim=c(0,zlim) ,col=c(0,rainbow(512)[350:512]), add=TRUE)
     if (i == z) {
       lines(c(0,1),c(y,y)/dim(anatomic)[2],col=2)
       lines(c(x,x)/dim(anatomic)[1],c(0,1),col=2)
@@ -170,83 +166,34 @@ plot.fmri <- function(signal, mask, anatomic, x, y, z, zlim=0, device="X11", fil
   as.numeric(dev.cur())
 }
 
-rho0prime <- function(z) {
-  dnorm(z)
-}
-
-rho1prime <- function(z) {
-  c <- -(4 * log(2))^.5 / (2 * pi)
-  f <- exp(-z*z/2) * z
-  c * f  
-}
-
-rho2prime <- function(z) {
-  c <- - (4 * log(2)) / (2 * pi)^1.5  
-  f <- exp(-z*z/2) * (z*z -1)
-  c * f
-}
-
-rho3prime <- function(z) {
-  c <- - (4 * log(2))^1.5 / (2 * pi)^2  
-  f <- exp(-z*z/2) * (z*z*z - z)
-  c * f
-}
-
-rho0 <- function(z) {
-  1 - pnorm(z)
-}
-
-rho1 <- function(z) {
-  c <- (4 * log(2))^.5 / (2 * pi)
-  f <- exp(-z*z/2)
-  c * f
-}
-
-rho2 <- function(z) {
-  c <- (4 * log(2)) / (2 * pi)^1.5  
-  f <- exp(-z*z/2) * z
-  c * f
-}
-
-rho3 <- function(z) {
-  c <- (4 * log(2))^1.5 / (2 * pi)^2  
-  f <- exp(-z*z/2) * (z*z -1)
-  c * f
-}
-
-r0 <- function(i,j,k,rx,ry,rz) {
-  1
-}
-
-r1 <- function(i,j,k,rx,ry,rz) {
-  (i-1)*rx + (j-1)*ry +(k-1)*rz 
-}
-
-r2 <- function(i,j,k,rx,ry,rz) {
-  (i-1)*(j-1)*rx*ry + (j-1)*(k-1)*ry*rz +(i-1)*(k-1)*rx*rz 
-}
-
-r3 <- function(i,j,k,rx,ry,rz) {
-  (i-1)*(j-1)*(k-1)*rx*ry*rz
-}
 
 pvalue <- function(z,i,j,k,rx,ry,rz) {
-  rho0(z) * r0(i,j,k,rx,ry,rz) +
-    rho1(z) * r1(i,j,k,rx,ry,rz) +
-      rho2(z) * r2(i,j,k,rx,ry,rz) +
-        rho3(z) * r3(i,j,k,rx,ry,rz)
+  rho0 <- 1 - pnorm(z)
+  rho1 <- (4 * log(2))^.5 / (2 * pi) * exp(-z*z/2)
+  rho2 <- (4 * log(2)) / (2 * pi)^1.5 * exp(-z*z/2) * z
+  rho3 <- (4 * log(2))^1.5 / (2 * pi)^2 * exp(-z*z/2) * (z*z -1)
+  r0 <- 1
+  r1 <- (i-1)*rx + (j-1)*ry +(k-1)*rz
+  r2 <- (i-1)*(j-1)*rx*ry + (j-1)*(k-1)*ry*rz +(i-1)*(k-1)*rx*rz
+  r3 <- (i-1)*(j-1)*(k-1)*rx*ry*rz
+
+  rho0 * r0 + rho1 * r1 + rho2 * r2 + rho3 * r3
 }
 
 pvalueprime <- function(z,i,j,k,rx,ry,rz) {
-  rho0prime(z) * r0(i,j,k,rx,ry,rz) +
-    rho1prime(z) * r1(i,j,k,rx,ry,rz) +
-      rho2prime(z) * r2(i,j,k,rx,ry,rz) +
-        rho3prime(z) * r3(i,j,k,rx,ry,rz)
+  rho0prime <- dnorm(z)
+  rho1prime <- -(4 * log(2))^.5 / (2 * pi) * exp(-z*z/2) * z
+  rho2prime <- -(4 * log(2)) / (2 * pi)^1.5  * exp(-z*z/2) * (z*z -1)
+  rho3prime <- -(4 * log(2))^1.5 / (2 * pi)^2 * exp(-z*z/2) * (z*z*z - z)
+  r0 <- 1
+  r1 <- (i-1)*rx + (j-1)*ry +(k-1)*rz
+  r2 <- (i-1)*(j-1)*rx*ry + (j-1)*(k-1)*ry*rz +(i-1)*(k-1)*rx*rz
+  r3 <- (i-1)*(j-1)*(k-1)*rx*ry*rz
+
+  rho0prime * r0 + rho1prime * r1 + rho2prime * r2 + rho3prime * r3
 }
 
-resel <- function(voxeld, hmax, hv=0.919) {
-  hv * voxeld / hmax
-}
+resel <- function(voxeld, hmax, hv=0.919) hv * voxeld / hmax
 
 threshold <- function(p,i,j,k,rx,ry,rz) {
   x <- 3
