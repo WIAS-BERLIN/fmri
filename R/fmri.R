@@ -1,9 +1,10 @@
-read.ANALYZE <- function(prefix = "", picstart = 0, numbpic = 1) {
+read.ANALYZE <- function(prefix = "", picstart = "", numbpic = 1) {
   if (require(AnalyzeFMRI)) {
 
     ttt <- f.read.analyze.volume(paste(prefix, picstart, ".img", sep=""));
     dt <- dim(ttt)
     cat(".")
+    header <- f.read.analyze.header(paste(prefix, picstart, ".img", sep=""));
 
     if (numbpic > 1) { 
       for (i in (picstart+1):(picstart+numbpic-1)) {
@@ -18,10 +19,61 @@ read.ANALYZE <- function(prefix = "", picstart = 0, numbpic = 1) {
 
     cat("\n")
     dim(ttt) <- c(dt)
-    ttt
+    list(ttt=ttt,header=header)
   } else {
     cat("Error: library AnalyzeFMRI not found\n")
-    NA
+    list(ttt=NA,header=NA)
+  }
+}
+
+read.AFNI <- function(file) {
+  conhead <- file(paste(file,".HEAD",sep=""),"r")
+  header <- readLines(conhead)
+  close(conhead)
+
+  types <- NULL
+  args <- NULL
+  counts <- NULL
+  values <- NULL
+  
+  for (i in 1:length(header)) {
+    if (regexpr("^type *= *", header[i]) == 1) {
+      tmptype <- strsplit(header[i]," *= *")[[1]][2]
+      types <- c(types,tmptype)
+      args <- c(args,strsplit(header[i+1]," *= *")[[1]][2])
+      tmpcounts <- as.numeric(strsplit(header[i+2]," *= *")[[1]][2])
+      counts <- c(counts,tmpcounts)
+      i <- i+3
+      tmpvalue <- ""
+      while ((regexpr("^$", header[i]) != 1) && (i <= length(header))) {
+        tmpvalue <- paste(tmpvalue,header[i])
+        i <- i+1
+      }
+      tmpvalue <- sub("^ +","",tmpvalue)
+      if ((tmptype == "integer-attribute") || (tmptype == "float-attribute")) {
+        tmpvalue <- as.numeric(strsplit(tmpvalue," +")[[1]])
+      }
+      values <- c(values,list(value=tmpvalue))
+    }        
+  }
+
+  names(values) <- args
+
+  dx <- values$DATASET_DIMENSIONS[1]
+  dy <- values$DATASET_DIMENSIONS[2]
+  dz <- values$DATASET_DIMENSIONS[3]
+  dt <- values$DATASET_RANK[2]
+  size <- file.info(paste(file,".BRIK",sep=""))$size/(dx*dy*dz*dt)
+
+  if (as.integer(size) == size) {
+    conbrik <- file(paste(file,".BRIK",sep=""),"rb")
+    myttt<- readBin(conbrik, "int", n=dx*dy*dz*dt*size, size=size, signed=FALSE, endian="big")
+    close(conbrik)
+    dim(myttt) <- c(dx,dy,dz,dt)
+    list(ttt=myttt,header=values)
+  } else {
+    cat("Error reading file: Could not detect size per voxel\n")
+    list(ttt=NA,header=values)    
   }
 }
 
@@ -149,6 +201,72 @@ calculate.threshold <- function(var1,var2,alpha=0.95,gamma=0.5) {
 }
 
 
+plot.pvalue <- function(stat, anatomic,rx,ry,rz, pvalue, x=-1, y=-1, z=-1, zlim=0, device="X11", file="plot.png") {
+  alim <- range(anatomic)
+
+  anatomic[anatomic<0] <- 0
+
+  i <- dim(stat)[1]
+  j <- dim(stat)[2]
+  k <- dim(stat)[3]
+  p <- pvalue(stat,i,j,k,rx,ry,rz)
+  mask <- array(1,dim=dim(stat)[1:3])
+  maximum <- threshold(max(p),i,j,k,rx,ry,rz)
+  mask[stat<maximum] <- 0  
+  p[!mask] <- 1
+  p[p>pvalue] <- 1
+
+  signal <- -log(p)
+  signal[mask==0] <- 0
+  zlim <- max(zlim,signal)
+  
+  switch (device,
+          "png" = png(filename=file, width = 1000, height = 1000, pointsize=12, bg="transparent", res=NA),
+          "jpeg" = jpeg(filename=file, width = 1000, height = 1000,
+            quality =100, pointsize=12, bg="transparent", res=NA),
+          "ppm" = bitmap(file,type="ppm",height=10,width=10,res=64,pointsize=12),
+          X11())
+
+  partition <- as.integer(sqrt(dim(anatomic)[3])) + 1
+  oldpar <- par(mfrow=c(partition,partition), mar=c(0,0,0,.25), mgp=c(2,1,0))
+  
+  for (i in 1:dim(anatomic)[3]) {
+    image(anatomic[,,i], xaxt="n", yaxt="n", zlim=alim, col=grey(1:255/255))
+    if (any(signal[,,i]))
+      image(signal[,,i], zlim=c(0,zlim) ,col=c(0,heat.colors(512)), add=TRUE)
+    if (i == z) {
+      lines(c(0,1),c(y,y)/dim(anatomic)[2],col=2)
+      lines(c(x,x)/dim(anatomic)[1],c(0,1),col=2)
+    }     
+  }
+
+  image(t(matrix(seq(0,zlim,length=512),512,20)),col=c(0,heat.colors(512)))
+
+  lines(c(0,1),rep(-log(0.005),2)/zlim,col=1)
+  text(0,-log(0.005)/zlim,"0.005")
+
+  lines(c(0,1),rep(-log(0.01),2)/zlim,col=1)
+  text(0,-log(0.01)/zlim,"0.01")
+
+  lines(c(0,1),rep(-log(0.025),2)/zlim,col=1)
+  text(0,-log(0.025)/zlim,"0.025")
+
+  lines(c(0,1),rep(-log(0.05),2)/zlim,col=1)
+  text(0,-log(0.05)/zlim,"0.05")
+
+  lines(c(0,1),rep(-log(0.1),2)/zlim,col=1)
+  text(0,-log(0.1)/zlim,"0.1")
+
+  lines(c(0,1),rep(-log(0.2),2)/zlim,col=1)
+  text(0,-log(0.2)/zlim,"0.2")
+
+  lines(c(0,1),rep(-log(0.4),2)/zlim,col=1)
+  text(0,-log(0.4)/zlim,"0.4")
+  
+  par(oldpar)
+  as.numeric(dev.cur())
+}
+
 plot.fmri <- function(signal, mask, anatomic, x=-1, y=-1, z=-1, zlim=0, device="X11", file="plot.png") {
   alim <- range(anatomic)
   zlim <- max(zlim,signal)
@@ -169,7 +287,7 @@ plot.fmri <- function(signal, mask, anatomic, x=-1, y=-1, z=-1, zlim=0, device="
   for (i in 1:dim(anatomic)[3]) {
     image(anatomic[,,i], xaxt="n", yaxt="n", zlim=alim, col=grey(1:255/255))
     if (any(signal[,,i]))
-      image(signal[,,i], zlim=c(0,zlim) ,col=c(0,rainbow(512)[350:512]), add=TRUE)
+      image(signal[,,i], zlim=c(0,zlim) ,col=c(0,heat.colors(512)), add=TRUE)
     if (i == z) {
       lines(c(0,1),c(y,y)/dim(anatomic)[2],col=2)
       lines(c(x,x)/dim(anatomic)[1],c(0,1),col=2)
@@ -210,12 +328,10 @@ pvalueprime <- function(z,i,j,k,rx,ry,rz) {
 resel <- function(voxeld, hmax, hv=0.919) hv * voxeld / hmax
 
 threshold <- function(p,i,j,k,rx,ry,rz) {
-  x <- 3
-  repeat {
-    x <- x - (pvalue(x,i,j,k,rx,ry,rz)-p)/pvalueprime(x,i,j,k,rx,ry,rz)
-    if (abs(pvalue(x,i,j,k,rx,ry,rz)-p) < 0.000001) break
+  f <- function(x,par){
+    abs(pvalue(x,par$i,par$j,par$k,par$rx,par$ry,par$rz)-par$p)
   }
-  x
+  optimize(f=f,lower=2,upper=10,tol=1e-6,par=list(p=p,i=i,j=j,k=k,rx=rx,ry=ry,rz=rz))$minimum
 }
 
 gkernsm <- function(y,h=1) {
@@ -240,24 +356,42 @@ gkernsm <- function(y,h=1) {
   list(gkernsm=convolve(y,kern,conj=TRUE),kernsq=kernsq)
 }
 
-correlation <- function(res) {
+correlation <- function(res,mask) {
+  meanpos <- function(a) mean(a[a!=0])
+  varpos <- function(a) var(a[a!=0])
+
   dr <- dim(res)
-  x <- mean(res[-1,,,]*res[-dr[1],,,]/sqrt(var(res[-1,,,]) * var(res[-dr[1],,,])))
-  y <- mean(res[,-1,,]*res[,-dr[2],,]/sqrt(var(res[,-1,,]) * var(res[,-dr[2],,])))
-  z <- mean(res[,,-1,]*res[,,-dr[3],]/sqrt(var(res[,,-1,]) * var(res[,,-dr[3],])))
-  c(x,y,z)
+  if ( (length(dim(mask)) == length(dr))
+      && (sum(dim(mask)[1:3] != dr[1:3]) == 0)
+      && (dim(mask)[4] == 1)) {
+    mask <- rep(mask,dr[4])
+    dim(mask) <- dr
+    x <- meanpos(res[-1,,,]*res[-dr[1],,,]*mask[-1,,,]/sqrt(varpos(res[-1,,,]*mask[-1,,,]) * varpos(res[-dr[1],,,]*mask[-dr[1],,,])))
+    y <- meanpos(res[,-1,,]*res[,-dr[2],,]*mask[,-1,,]/sqrt(varpos(res[,-1,,]*mask[,-1,,]) * varpos(res[,-dr[2],,]*mask[,-dr[2],,])))
+    z <- meanpos(res[,,-1,]*res[,,-dr[3],]*mask[,,-1,]/sqrt(varpos(res[,,-1,]*mask[,,-1,]) * varpos(res[,,-dr[3],]*mask[,,-dr[3],])))
+    c(x,y,z)
+  } else {
+    cat("Error: dimension of mask and residui matrices do not match\n")    
+  }
 }
 
-smoothness <- function(cor, dim) {
-  h <- 0
+smoothness <- function(cor, dim, h = 0, step = 0.1) {
   field <- array(rnorm(prod(dim)),dim)
-  for (i in 1:100) {
-    h <- h + 0.1
-    cat(h,"\n")
+  repeat {
+    h <- h + step
     z <- gkernsm(field, h)$gkernsm;
     corg <- mean(z[,-1,]*z[,-dim[2],]/sqrt(var(z[,-1,]) * var(z[,-dim[2],])))
-    cat(corg)
+#    cat(corg,h,"\n")
     if (corg > cor) break
   }
   h
+}
+
+bandwidth <- function(res,mask) { # second argument !!!!
+  cxyz <- correlation(res,mask)
+  bwx <- smoothness(cxyz[1],dim(res)[1:3],0.5,0.01)
+  bwy <- smoothness(cxyz[2],dim(res)[1:3],0.5,0.01)
+  bwz <- smoothness(cxyz[3],dim(res)[1:3],0.5,0.01)
+  meingauss<-gkernsm(array(rnorm(prod(dim(res)[1:3])),dim=dim(res)[1:3]),c(bwx,bwy,bwz))
+  list(bwcorr=1/meingauss$kernsq,bw=c(bwx,bwy,bwz))
 }
