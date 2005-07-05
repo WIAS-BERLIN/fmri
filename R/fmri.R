@@ -72,7 +72,7 @@ read.AFNI <- function(file) {
 
   if (as.integer(size) == size) {
     conbrik <- file(paste(file,".BRIK",sep=""),"rb")
-    myttt<- readBin(conbrik, "int", n=dx*dy*dz*dt*size, size=size, signed=FALSE, endian=endian)
+    myttt<- readBin(conbrik, "int", n=dx*dy*dz*dt*size, size=size, signed=TRUE, endian=endian)
     close(conbrik)
     dim(myttt) <- c(dx,dy,dz,dt)
     list(ttt=myttt,header=values)
