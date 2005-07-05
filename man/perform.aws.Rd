@@ -3,7 +3,7 @@
 
 \title{Perform adaptive weights smoothing}
 \description{This functions performs adaptive weights smoothing on the
-  parameter \code{beta}.
+  parameters \code{beta}.
 }
 
 \usage{perform.aws(beta, varianz, hmax = 4, hinit = 1, weights =
@@ -15,6 +15,7 @@ c(1,1,1), qlambda = NULL)}
   \item{hmax}{Paramter \code{hmax} of AWS procedure}
   \item{hinit}{Paramter \code{hinit} of AWS procedure}
   \item{weights}{Paramter \code{weights} of AWS procedure}
+  \item{vweights}{Paramter \code{vweights} of AWS procedure}  
   \item{qlambda}{Paramter \code{qlambda} of AWS procedure}
 }
 

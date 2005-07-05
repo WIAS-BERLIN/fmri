@@ -77,6 +77,54 @@ read.AFNI <- function(file) {
   }
 }
 
+write.AFNI <- function(file, ttt, label, note="", origin=c(0,0,0), delta=c(4,4,4), idcode="WIAS_noid") {
+  conhead <- file(paste(file, ".HEAD", sep=""), "w")
+  writeChar(AFNIheaderpart("string-attribute","HISTORY_NOTE",note),conhead,eos=NULL)
+  writeChar(AFNIheaderpart("string-attribute","TYPESTRING","3DIM_HEAD_ANAT"),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("string-attribute","IDCODE_STRING",idcode),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("string-attribute","IDCODE_DATE",date()),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("integer-attribute","SCENE_DATA",c(0,2,1,-999,-999,-999,-999,-999)),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("integer-attribute","ORIENT_SPECIFIC",c(0,3,4)),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("float-attribute","ORIGIN",origin),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("float-attribute","DELTA",delta),conhead,eos=NULL)  
+  minmax <- function(y) {r <- NULL;for (k in 1:dim(y)[4]) {r <- c(r,min(y[,,,k]),max(y[,,,k]))}; r}
+  writeChar(AFNIheaderpart("float-attribute","BRICK_STATS",minmax(ttt)),conhead,eos=NULL)
+  writeChar(AFNIheaderpart("integer-attribute","DATASET_RANK",c(3,dim(ttt)[4],0,0,0,0,0,0)),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("integer-attribute","DATASET_DIMENSIONS",c(dim(ttt)[1:3],0,0)),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("integer-attribute","BRICK_TYPES",rep(1,dim(ttt)[4])),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("float-attribute","BRICK_FLOAT_FACS",rep(0.0,dim(ttt)[4])),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("string-attribute","BRICK_LABS",paste(label,collapse="~")),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("string-attribute","BRICK_KEYWORDS",paste(rep("",length(label)),collapse="~")),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("string-attribute","BYTEORDER_STRING","MSB_FIRST"),conhead,eos=NULL)  
+  close(conhead)
+
+  conbrik <- file(paste(file, ".BRIK", sep=""), "wb")
+  dim(ttt) <- NULL
+  writeBin(as.integer(ttt), conbrik,size=2)
+  close(conbrik)
+}
+
+AFNIheaderpart <- function(type, name, value) {
+  a <- "\n"
+  a <- paste(a, "type = ", type, "\n", sep="")
+  a <- paste(a, "name = ", name, "\n", sep="")
+  if (regexpr("string",type) == 1) {
+    value <- paste("'", value, "~", sep="")
+    a <- paste(a, "count = ", nchar(value) - 1, "\n", sep ="")
+    a <- paste(a, value, "\n", sep="")
+  } else {
+    a <- paste(a, "count = ", length(value), "\n", sep ="")
+    j <- 0
+    while (j<length(value)) {
+      left <- length(value) - j
+      if (left>4) left <- 5
+      a <- paste(a, paste(value[(j+1):(j+left)],collapse="  "), "\n", sep="  ")
+      j <- j+5
+    }
+  }
+  a
+}
+
 write.ANALYZE <- function(ttt, name = "data", size="int", voxelsize = c(2,2,2)) {
   if (require(AnalyzeFMRI)) {
     f.write.analyze(ttt, file=name, size=size, voxelsize)
