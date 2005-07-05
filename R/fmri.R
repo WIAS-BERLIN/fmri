@@ -64,10 +64,15 @@ read.AFNI <- function(file) {
   dz <- values$DATASET_DIMENSIONS[3]
   dt <- values$DATASET_RANK[2]
   size <- file.info(paste(file,".BRIK",sep=""))$size/(dx*dy*dz*dt)
+  if (regexpr("MSB",values$BYTEORDER_STRING) == 1) {
+    endian <- "big"
+  } else {
+    endian <- "little"
+  }
 
   if (as.integer(size) == size) {
     conbrik <- file(paste(file,".BRIK",sep=""),"rb")
-    myttt<- readBin(conbrik, "int", n=dx*dy*dz*dt*size, size=size, signed=FALSE, endian="big")
+    myttt<- readBin(conbrik, "int", n=dx*dy*dz*dt*size, size=size, signed=FALSE, endian=endian)
     close(conbrik)
     dim(myttt) <- c(dx,dy,dz,dt)
     list(ttt=myttt,header=values)
@@ -77,13 +82,17 @@ read.AFNI <- function(file) {
   }
 }
 
+
 write.AFNI <- function(file, ttt, label, note="", origin=c(0,0,0), delta=c(4,4,4), idcode="WIAS_noid") {
   conhead <- file(paste(file, ".HEAD", sep=""), "w")
   writeChar(AFNIheaderpart("string-attribute","HISTORY_NOTE",note),conhead,eos=NULL)
-  writeChar(AFNIheaderpart("string-attribute","TYPESTRING","3DIM_HEAD_ANAT"),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("string-attribute","TYPESTRING","3DIM_HEAD_FUNC"),conhead,eos=NULL)  
   writeChar(AFNIheaderpart("string-attribute","IDCODE_STRING",idcode),conhead,eos=NULL)  
   writeChar(AFNIheaderpart("string-attribute","IDCODE_DATE",date()),conhead,eos=NULL)  
   writeChar(AFNIheaderpart("integer-attribute","SCENE_DATA",c(0,2,1,-999,-999,-999,-999,-999)),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("string-attribute","LABEL_1","zyxt"),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("string-attribute","LABEL_2","zyxt"),conhead,eos=NULL)  
+  writeChar(AFNIheaderpart("string-attribute","DATASET_NAME","zyxt"),conhead,eos=NULL)  
   writeChar(AFNIheaderpart("integer-attribute","ORIENT_SPECIFIC",c(0,3,4)),conhead,eos=NULL)  
   writeChar(AFNIheaderpart("float-attribute","ORIGIN",origin),conhead,eos=NULL)  
   writeChar(AFNIheaderpart("float-attribute","DELTA",delta),conhead,eos=NULL)  
@@ -99,8 +108,9 @@ write.AFNI <- function(file, ttt, label, note="", origin=c(0,0,0), delta=c(4,4,4
   close(conhead)
 
   conbrik <- file(paste(file, ".BRIK", sep=""), "wb")
+ # dim(ttt) <- prod(dim(ttt))
   dim(ttt) <- NULL
-  writeBin(as.integer(ttt), conbrik,size=2)
+  writeBin(as.integer(ttt), conbrik,size=2, endian="big")
   close(conbrik)
 }
 
