@@ -258,32 +258,111 @@ create.arcorrection <- function(scans, rho=0) {
 }
 
 
-calculate.lm <- function(ttt,z,ar,vtype="var") {
-  zprime <- a %*% z
-  svdresult <- svd(zprime)
+calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var") {
+  require(aws)
+  cat("calculate.lm: entering function with:",actype, hmax, qlambda, vtype, "\n")
+  # first get the SVD for the design matrix
+  svdresult <- svd(z)
   u <- svdresult$u
   v <- svdresult$v
   vt <- t(v)
   lambda1 <- diag(1/svdresult$d)
   lambda2 <- diag(1/svdresult$d^2)
-
   sigma <- v %*% lambda2 %*% vt
+  # now we have z = u lambda1^(-1) vt
 
+  # define some variables and make ttt a matrix
   dy <- dim(ttt)
-  variance <- array(0,dim=c(dy[1:3]))
+  voxelcount <- prod(dy[1:3])
   dim(ttt) <- c(prod(dy[1:3]),dy[4])
-  beta <- ttt %*% t(a) %*% u %*% lambda1 %*% vt
+  arfactor <- rep(0,length=prod(dy[1:3]))
+  variance <- rep(0,length=prod(dy[1:3]))
+
+  # calculate the paramters and residuals for all voxels
+  beta <- ttt %*% u %*% lambda1 %*% vt
   residuals <- ttt - beta %*% t(z)
-  b <- rep(1/dim(z)[1],dim(z)[1])
-  if (vtype == "var") {
-    variance <- (residuals^2 %*% b)*dim(z)[1]/(dim(z)[1]-dim(z)[2])*sigma[1,1]
+
+  # actype == "smooth" ... calc AC, smooth AC, calc prewhitened model
+  # actype == "accalc" ... calc AC, calc prewhitened model
+  # actype == "ac"     ... calc AC only
+  # "accalc" is actually a special case of "smooth" (hmax=1), but we
+  # leave it here for clearer function interface, so parameter set is
+  # only needed for "smooth"
+  if ((actype == "smooth") || (actype == "accalc") || (actype == "ac")) { 
+    progress = 0
+    cat("calculate.lm: calculating AR(1) model\n")
+    for (i in 1:voxelcount) {
+      if (i > progress/100*voxelcount) {
+        cat(progress,"% . ",sep="")
+        progress = progress + 10
+      }
+      # calculate the Koeff of ACR(1) time series model
+      if (sum(abs(residuals[i,]))) {
+        arfactor[i] <- residuals[i,2:dim(z)[1]] %*% residuals[i,1:(dim(z)[1]-1)] / residuals[i,] %*% residuals[i,]
+      } else {
+        arfactor[i] <- 0 # avoid NaN
+      }
+    }
+    cat("\n")
+    cat("calculate.lm: finished\n")
+    
+    if (actype == "smooth") {
+      cat("calculate.lm: smoothing with (hmax,qlambda):",hmax,",",qlambda,"\n")
+      dim(arfactor) <- dy[1:3]
+      # now smooth (if actype is such) with AWS
+      arfactor <- aws(arfactor,hinit=1,hmax=hmax,qlambda=qlambda,qtau=1)$theta
+      dim(arfactor) <- voxelcount
+      cat("calculate.lm: finished\n")
+    }
+
+    if ((actype == "smooth") || (actype == "accalc")) {
+      progress = 0
+      cat("calculate.lm: re-calculating linear model with prewithened data\n")
+      # re- calculated the linear model with prewithened data
+      # NOTE: due to the voxelwise calculation in a for loop this is
+      # NOTE: very unefficient, but since arfactor, and prewhitening
+      # NOTE: matrix a, depend on the voxel matrix view is difficult
+      # NOTE: Please feel free to find one!
+      for (i in 1:voxelcount) {
+        if (i > progress/100*voxelcount) {
+          cat(progress,"% . ",sep="")
+          progress = progress + 10
+        }
+        a <- create.arcorrection(dy[4],arfactor[i]) # create prewhitening matrix
+        zprime <- a %*% z
+        svdresult <- svd(zprime) # calc SVD of prewhitened design
+        u <- svdresult$u 
+        v <- svdresult$v
+        vt <- t(v)
+        lambda1 <- diag(1/svdresult$d)
+        lambda2 <- diag(1/svdresult$d^2)
+        sigma <- v %*% lambda2 %*% vt # sigma * <estimate of varince> of prewhitened noise is variance of parameter estimate
+        tttprime <- ttt[i,] %*% t(a)
+        beta[i,] <- tttprime %*% u %*% lambda1 %*% vt # estimate parameter
+        residuals[i,] <- tttprime - beta[i,] %*% t(zprime) # calculate residuals
+        variance[i] <- residuals[i,] %*% residuals[i,] / (dim(z)[1]-dim(z)[2]) * sigma[1,1] # variance estimate, add for more paramters if needed
+      }
+      cat("\n")
+      cat("calculate.lm: finished\n")
+    } else {
+      b <- rep(1/dy[4],length=dy[4])
+      variance <- (residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2]) * sigma[1,1]
+    }
+  } else { # actype == "noac"
+    # estimate variance, add more paramters if needed
+    b <- rep(1/dy[4],length=dy[4])
+    variance <- (residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2]) * sigma[1,1]
   }
+
+  # re-arrange dimensions
   dim(beta)<-c(dy[1:3],dim(z)[2])
-  dim(variance) <- c(dy[1:3])
+  dim(variance) <- dy[1:3]
+  dim(arfactor) <- dy[1:3]
   dim(residuals) <- dy
+
+  cat("calculate.lm: exiting function\n")
   
-  result <- list(beta=beta,var=variance,residuals=residuals)
-  result
+  list(beta=beta,var=variance,arfactor=arfactor)
 }
 
 perform.aws <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),vweights=NULL,qlambda=1) {
@@ -322,7 +401,7 @@ plot.pvalue <- function(stat, anatomic,rx,ry,rz, pvalue, x=-1, y=-1, z=-1, zlim=
 
   signal <- -log(p)
   signal[mask==0] <- 0
-  zlim <- max(zlim,signal)
+#  zlim <- max(zlim,signal)
   
   switch (device,
           "png" = png(filename=file, width = 1000, height = 1000, pointsize=12, bg="transparent", res=NA),
@@ -337,7 +416,8 @@ plot.pvalue <- function(stat, anatomic,rx,ry,rz, pvalue, x=-1, y=-1, z=-1, zlim=
   for (i in 1:dim(anatomic)[3]) {
     image(anatomic[,,i], xaxt="n", yaxt="n", zlim=alim, col=grey(1:255/255))
     if (any(signal[,,i]))
-      image(signal[,,i], zlim=c(0,zlim) ,col=c(0,heat.colors(512)), add=TRUE)
+#      image(signal[,,i], zlim=c(0,zlim) ,col=c(0,heat.colors(512)), add=TRUE)
+      image(signal[,,i], col=c(0,heat.colors(512)), add=TRUE)
     if (i == z) {
       lines(c(0,1),c(y,y)/dim(anatomic)[2],col=2)
       lines(c(x,x)/dim(anatomic)[1],c(0,1),col=2)
@@ -403,24 +483,70 @@ plot.fmri <- function(signal, mask, anatomic, x=-1, y=-1, z=-1, zlim=0, device="
 }
 
 
-pvalue <- function(z,i,j,k,rx,ry,rz) {
-  rho0 <- 1 - pnorm(z)
-  rho1 <- (4 * log(2))^.5 / (2 * pi) * exp(-z*z/2)
-  rho2 <- (4 * log(2)) / (2 * pi)^1.5 * exp(-z*z/2) * z
-  rho3 <- (4 * log(2))^1.5 / (2 * pi)^2 * exp(-z*z/2) * (z*z -1)
+pvalue <- function(z,i,j,k,rx,ry,rz,field="norm",nu=4) {
+  rho0 <- 0
+  rho1 <- 0
+  rho2 <- 0
+  rho3 <- 0
+  
+  if (field == "norm") {
+    rho0 <- 1 - pnorm(z)
+    rho1 <- (4 * log(2))^.5 / (2 * pi) * exp(-z*z/2)
+    rho2 <- (4 * log(2)) / (2 * pi)^1.5 * exp(-z*z/2) * z
+    rho3 <- (4 * log(2))^1.5 / (2 * pi)^2 * exp(-z*z/2) * (z*z -1)
+  }
+  if (field == "t") {
+    rho0 <- 1 - pt(z,nu)
+    rho1 <- (4 * log(2))^.5 / (2 * pi) * (1+z*z/nu)^(-0.5*(nu-1))
+    rho2 <- (4 * log(2)) / (2 * pi)^1.5 * gamma((nu+1)/2)/gamma(nu/2)/(nu/2)^0.5 * (1+z*z/nu)^(-0.5*(nu-1)) * z
+    rho3 <- (4 * log(2))^1.5 / (2 * pi)^2 * (1+z*z/nu)^(-0.5*(nu-1)) * ((nu-1)/nu*z*z-1)
+  }
+  if (field == "chisq") {
+    rho0 <- 1 - pchisq(z,nu)
+    rho1 <- (4 * log(2))^.5 / (2 * pi)^.5 * chihelp(z,nu,1)
+    rho2 <- (4 * log(2)) / (2 * pi) * chihelp(z,nu,2) * (z-nu+1)
+    rho3 <- (4 * log(2))^1.5 / (2 * pi)^1.5 * chihelp(z,nu,3) * (z*z - (2*nu-1)*z + (nu-1) * (nu-2))    
+  }
+  
   r0 <- 1
   r1 <- (i-1)*rx + (j-1)*ry +(k-1)*rz
   r2 <- (i-1)*(j-1)*rx*ry + (j-1)*(k-1)*ry*rz +(i-1)*(k-1)*rx*rz
   r3 <- (i-1)*(j-1)*(k-1)*rx*ry*rz
-
+  
   rho0 * r0 + rho1 * r1 + rho2 * r2 + rho3 * r3
 }
 
-pvalueprime <- function(z,i,j,k,rx,ry,rz) {
-  rho0prime <- dnorm(z)
-  rho1prime <- -(4 * log(2))^.5 / (2 * pi) * exp(-z*z/2) * z
-  rho2prime <- -(4 * log(2)) / (2 * pi)^1.5  * exp(-z*z/2) * (z*z -1)
-  rho3prime <- -(4 * log(2))^1.5 / (2 * pi)^2 * exp(-z*z/2) * (z*z*z - z)
+chihelp <- function(z,nu,d) {
+  z^((nu-d)/2) * exp(-z/2) / 2^((nu-2)/2) / gamma(nu/2)
+}
+
+# the following function is possibly obsolete since we do not
+# implement an algorithm using the derivative 
+pvalueprime <- function(z,i,j,k,rx,ry,rz,field="norm",nu=4) {
+  rho0prime <- 0
+  rho1prime <- 0
+  rho2prime <- 0
+  rho3prime <- 0
+  
+  if (field == "norm") {
+    rho0prime <- dnorm(z)
+    rho1prime <- -(4 * log(2))^.5 / (2 * pi) * exp(-z*z/2) * z
+    rho2prime <- -(4 * log(2)) / (2 * pi)^1.5  * exp(-z*z/2) * (z*z -1)
+    rho3prime <- -(4 * log(2))^1.5 / (2 * pi)^2 * exp(-z*z/2) * (z*z*z - z)
+  }
+  if (field == "t") {
+    rho0 <- 1 - pt(z,nu)
+    rho1 <- 0
+    rho2 <- 0
+    rho3 <- 0
+  }
+  if (field == "chisq") {
+    rho0 <- 1 - pchisq(z,nu)
+    rho1 <- 0
+    rho2 <- 0
+    rho3 <- 0    
+  }
+    
   r0 <- 1
   r1 <- (i-1)*rx + (j-1)*ry +(k-1)*rz
   r2 <- (i-1)*(j-1)*rx*ry + (j-1)*(k-1)*ry*rz +(i-1)*(k-1)*rx*rz
@@ -428,14 +554,16 @@ pvalueprime <- function(z,i,j,k,rx,ry,rz) {
 
   rho0prime * r0 + rho1prime * r1 + rho2prime * r2 + rho3prime * r3
 }
+# end of obsolete function
+
 
 resel <- function(voxeld, hmax, hv=0.919) hv * voxeld / hmax
 
-threshold <- function(p,i,j,k,rx,ry,rz) {
+threshold <- function(p,i,j,k,rx,ry,rz,field="norm",nu=4) {
   f <- function(x,par){
-    abs(pvalue(x,par$i,par$j,par$k,par$rx,par$ry,par$rz)-par$p)
+    abs(pvalue(x,par$i,par$j,par$k,par$rx,par$ry,par$rz,par$field,par$nu)-par$p)
   }
-  optimize(f=f,lower=2,upper=10,tol=1e-6,par=list(p=p,i=i,j=j,k=k,rx=rx,ry=ry,rz=rz))$minimum
+  optimize(f=f,lower=2,upper=10,tol=1e-6,par=list(p=p,i=i,j=j,k=k,rx=rx,ry=ry,rz=rz,field=field,nu=nu))$minimum
 }
 
 gkernsm <- function(y,h=1) {
