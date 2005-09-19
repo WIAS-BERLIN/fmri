@@ -282,7 +282,14 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var") 
   # calculate matrix R for bias correction in correlation coefficient
   # estimate
   R <- diag(1,dy[4]) - u %*% t(u)
-
+  m00 <- dy[4] - dim(z)[2]
+  m01 <- 0
+  for (k in 1:dy[4]) {m01 <- m01 + sum(R[k,-1]*R[k,-dy[4]])}
+  m10 <- m01
+  m11 <- 0
+  for (k in 1:(dy[4]-1)) {m11 <- m11 + sum(R[k+1,-dy[4]]*R[k,-1] + R[k+1,-1]*R[k,-dy[4]]) }
+  Minv <- matrix(c(m11,-m01,-m10,m00),2,2)/(m00*m11-m01*m10) # inverse
+  
   # calculate the paramters and residuals for all voxels
   beta <- ttt %*% u %*% lambda1 %*% vt
   residuals <- ttt - beta %*% t(z)
@@ -304,13 +311,6 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var") 
       # calculate the Koeff of ACR(1) time series model
       a0 <- residuals[i,] %*% residuals[i,]
       a1 <- residuals[i,-1] %*% residuals[i,-dim(z)[1]]
-      m00 <- dy[4] - dim(z)[2]
-      m01 <- 0
-      for (k in 1:dy[4]) {m01 <- m01 + sum(R[k,-1]*R[k,-dy[4]])}
-      m10 <- m01
-      m11 <- 0
-      for (k in 1:(dy[4]-1)) {m11 <- m11 + sum(R[k+1,-dy[4]]*R[k,-1] + R[k+1,-1]*R[k,-dy[4]]) }
-      Minv <- matrix(c(m11,-m01,-m10,m00),2,2)/(m00*m11-m01*m10) # inverse
       an <- Minv %*% c(a0,a1)
       if (an[1] != 0) {
         arfactor[i] <- an[2]/an[1]
