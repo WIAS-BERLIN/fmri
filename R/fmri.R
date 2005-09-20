@@ -630,9 +630,10 @@ correlation <- function(res,mask) {
       && (dim(mask)[4] == 1)) {
     mask <- rep(mask,dr[4])
     dim(mask) <- dr
-    x <- meanpos(res[-1,,,]*res[-dr[1],,,]*mask[-1,,,]/sqrt(varpos(res[-1,,,]*mask[-1,,,]) * varpos(res[-dr[1],,,]*mask[-dr[1],,,])))
-    y <- meanpos(res[,-1,,]*res[,-dr[2],,]*mask[,-1,,]/sqrt(varpos(res[,-1,,]*mask[,-1,,]) * varpos(res[,-dr[2],,]*mask[,-dr[2],,])))
-    z <- meanpos(res[,,-1,]*res[,,-dr[3],]*mask[,,-1,]/sqrt(varpos(res[,,-1,]*mask[,,-1,]) * varpos(res[,,-dr[3],]*mask[,,-dr[3],])))
+    vrm <- varpos(res*mask)
+    x <- meanpos(res[-1,,,]*res[-dr[1],,,]*mask[-1,,,])/vrm
+    y <- meanpos(res[,-1,,]*res[,-dr[2],,]*mask[,-1,,])/vrm
+    z <- meanpos(res[,,-1,]*res[,,-dr[3],]*mask[,,-1,])/vrm
     c(x,y,z)
   } else {
     cat("Error: dimension of mask and residui matrices do not match\n")    
@@ -644,7 +645,7 @@ smoothness <- function(cor, dim, h = 0, step = 0.1) {
   repeat {
     h <- h + step
     z <- gkernsm(field, h)$gkernsm;
-    corg <- mean(z[,-1,]*z[,-dim[2],]/sqrt(var(z[,-1,]) * var(z[,-dim[2],])))
+    corg <- mean(z[,-1,]*z[,-dim[2],])/var(z)
 #    cat(corg,h,"\n")
     if (corg > cor) break
   }
