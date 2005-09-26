@@ -1,21 +1,13 @@
-perform.aws <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),vweights=NULL,qlambda=1) {
+perform.aws <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),vweights=NULL,qlambda=1,lkern="Gaussian") {
   require(aws)
   variance[variance < quantile(variance,0.25)] <- quantile(variance,0.25)
 
   ttthat <- aws(beta, sigma2=variance, hmax=hmax, hinit=hinit,
-                 qlambda=qlambda, qtau=1,wghts=weights,lkern="Gaussian")
+                 qlambda=qlambda, qtau=1,wghts=weights,lkern=lkern)
 
   z <- list(hat=ttthat$theta, var=ttthat$var)
   z
 }
-
-calculate.threshold <- function(var1,var2,alpha=0.95,gamma=0.5) {
-  delta <- var1 * qchisq(gamma,1)
-  calpha <- qchisq(alpha,1 + delta/var2)
-  test <- (var2 + 2 * delta)/(1 + delta/var2) * calpha
-  test
-}
-
 
 plot.pvalue <- function(stat, anatomic,rx,ry,rz, pvalue, x=-1, y=-1, z=-1, zlim=0, device="X11", file="plot.png") {
   alim <- range(anatomic)
@@ -39,7 +31,7 @@ plot.pvalue <- function(stat, anatomic,rx,ry,rz, pvalue, x=-1, y=-1, z=-1, zlim=
   switch (device,
           "png" = png(filename=file, width = 1000, height = 1000, pointsize=12, bg="transparent", res=NA),
           "jpeg" = jpeg(filename=file, width = 1000, height = 1000,
-            quality =100, pointsize=12, bg="white", res=NA),
+            quality =100, pointsize=12, bg="transparent", res=NA),
           "ppm" = bitmap(file,type="ppm",height=10,width=10,res=64,pointsize=12),
           X11())
 
