@@ -78,7 +78,34 @@ gkernsm <- function(y,h=1) {
   list(gkernsm=convolve(y,kern,conj=TRUE),kernsq=kernsq)
 }
 
+get.corr.gauss <- function(h) {
+  #
+  #   Calculates the correlation of 
+  #
+  #   colored noise that was produced by smoothing with "gaussian" kernel and bandwidth h
+  #
+  #   Result does not depend on d for "Gaussian" kernel !!
+  #
+  h <- h/2.3548
+  ih <- trunc(4*h+1)
+  dx <- 2*ih+1
+  penl <- dnorm(((-ih):ih)/h)
+  sum(penl[-1]*penl[-dx])/sum(penl^2)
+}
 
+get.bw.gauss <- function(corr, step = 1.01) {
+  # get the   bandwidth for lkern corresponding to a given correlation
+  h <- .1
+  z <- 0
+  # 
+  #  keep it simple result does not depend on d
+  #
+  while (z<corr) {
+    h <- h*step
+    z <- get.corr.gauss(h)
+  }
+  h
+}
 
 correlation <- function(res,mask) {
   meanpos <- function(a) mean(a[a!=0])
@@ -117,7 +144,7 @@ bandwidth <- function(res,mask) { # second argument !!!!
   bwy <- smoothness(cxyz[2])
   bwz <- smoothness(cxyz[3])
   meingauss<-gkernsm(array(rnorm(prod(dim(res)[1:3])),dim=dim(res)[1:3]),c(bwx,bwy,bwz))
-  list(bwcorr=1/meingauss$kernsq,bw=c(bwx,bwy,bwz))
+  list(bwcorr=1/meingauss$kernsq,bw=c(bwx,bwy,bwz),corr=cxyz)
 }
 
 

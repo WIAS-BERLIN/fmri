@@ -1,9 +1,9 @@
-perform.aws <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),vweights=NULL,qlambda=1,lkern="Gaussian") {
+perform.aws <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),vweights=NULL,qlambda=1,lkern="Gaussian",scorr=0) {
   require(aws)
   variance[variance < quantile(variance,0.25)] <- quantile(variance,0.25)
 
   ttthat <- aws(beta, sigma2=variance, hmax=hmax, hinit=hinit,
-                 qlambda=qlambda, qtau=1,wghts=weights,lkern=lkern)
+                 qlambda=qlambda, qtau=1,wghts=weights,lkern=lkern,scorr=scorr)
 
   z <- list(hat=ttthat$theta, var=ttthat$var)
   z
