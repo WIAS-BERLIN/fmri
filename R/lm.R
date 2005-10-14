@@ -40,11 +40,24 @@ create.designmatrix <- function(hrf, order=0) {
     z[,i] <- hrf[,i]
   }
 
+  ortho <- matrix(0, stimuli, stimuli)
+  for (i in 1:stimuli) {
+    for (j in 1:stimuli) {
+      ortho[i,j] <- z[,i]%*%z[,j]
+    }
+  }
+
   z[,stimuli+1] <- 1
 
   if (order != 0) {
     for (i in (stimuli+2):(stimuli+order+1)) {
       z[,i] <- (1:scans)^(i-stimuli-1)
+      hz <- numeric(stimuli)
+      for (j in 1:stimuli) {
+        hz[j] <- z[,j]%*%z[,i]
+      }
+      tmp <- lm(-hz~ortho-1)
+      z[,i] <- z[,i] + as.vector(hrf %*% as.vector(tmp$coeff))
     }
   }
   
