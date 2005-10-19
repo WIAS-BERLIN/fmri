@@ -6,7 +6,7 @@ perform.aws <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),qlambda=1,
                  qlambda=qlambda, qtau=1,wghts=weights,lkern=lkern,scorr=scorr,...)
 
   z <- list(hat=ttthat$theta, var=ttthat$var, ni=ttthat$ni,
-  hmax=ttthat$hmax, lseq=ttthat$lseq, y = ttthat$y, mae=ttthat$mae)
+  hmax=ttthat$hmax, lseq=ttthat$lseq, y = ttthat$y, mae=ttthat$mae, vred=ttthat$vred)
   z
 }
 

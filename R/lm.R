@@ -156,7 +156,9 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var") 
       cat("calculate.lm: smoothing with (hmax,qlambda):",hmax,",",qlambda,"\n")
       dim(arfactor) <- dy[1:3]
       # now smooth (if actype is such) with AWS
-      arfactor <- aws(arfactor,hinit=1,hmax=hmax,qlambda=qlambda,qtau=1)$theta
+      hinit <- 1
+      if (qlambda == 1) hinit <- hmax + hinit
+      arfactor <- aws(arfactor,hinit=hinit,hmax=hmax,qlambda=qlambda,qtau=1,lkern="Gaussian")$theta
       dim(arfactor) <- voxelcount
       cat("calculate.lm: finished\n")
     }
