@@ -47,13 +47,27 @@ resel <- function(voxeld, hmax, hv=0.95) hv * voxeld / hmax # hv=0.919 for large
 
 
 
-threshold <- function(p,i,j,k,rx,ry,rz,type="norm",df=4,dim=3) {
-  f <- function(x,par){
-    abs(pvalue(x,par$i,par$j,par$k,par$rx,par$ry,par$rz,par$type,par$df,par$dim)-par$p)
-  }
-  optimize(f=f,lower=2,upper=10,tol=1e-6,par=list(p=p,i=i,j=j,k=k,rx=rx,ry=ry,rz=rz,type=type,df=df,dim=dim))$minimum
-}
+#threshold <- function(p,i,j,k,rx,ry,rz,type="norm",df=4,dim=3) {
+#  f <- function(x,par){
+#    abs(pvalue(x,par$i,par$j,par$k,par$rx,par$ry,par$rz,par$type,par$df,par$dim)-par$p)
+#  }
+#  optimize(f=f,lower=2,upper=10,tol=1e-6,par=list(p=p,i=i,j=j,k=k,rx=rx,ry=ry,rz=rz,type=type,df=df,dim=dim))$minimum
+#}
 
+threshold <- function(p,i,j,k,rx,ry,rz,type="norm",df=4,dim=3,step=.01) {
+  n <- length(rx)
+  thr <- numeric(n)
+  fixed <- logical(n)
+  x <- 3
+  while (any(!fixed)) {  
+    pv <- pvalue(x,i,j,k,rx,ry,rz,type,df,dim)
+    ind <- (1:n)[!fixed][pv[!fixed]<p]
+    thr[ind] <- x
+    fixed[ind] <- TRUE
+    x <- x+step
+  }
+  thr
+}
 
 
 gkernsm <- function(y,h=1) {
