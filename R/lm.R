@@ -81,7 +81,7 @@ create.arcorrection <- function(scans, rho=0) {
 
 
 
-calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var") {
+calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var",step=0.01) {
   require(aws)
   cat("calculate.lm: entering function with:",actype, hmax, qlambda, vtype, "\n")
   # first get the SVD for the design matrix
@@ -167,25 +167,28 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var") 
       progress = 0
       cat("calculate.lm: re-calculating linear model with prewithened data\n")
       # re- calculated the linear model with prewithened data
-      # NOTE: due to the voxelwise calculation in a for loop this is
-      # NOTE: very unefficient, but since arfactor, and prewhitening
-      # NOTE: matrix a, depend on the voxel matrix view is difficult
-      # NOTE: Please feel free to find one!
-      for (i in 1:voxelcount) {
-        if (i > progress/100*voxelcount) {
+      # NOTE: sort arfactors and bin them! this combines calculation in
+      # NOTE: voxels with similar arfactor, see Worsley
+      arlist <- seq(range(arfactor)[1]-step/2,range(arfactor)[2]+step/2,step)
+      for (i in 1:(length(arlist)-1)) {
+        if (i > progress/100*length(arlist)) {
           cat(progress,"% . ",sep="")
           progress = progress + 10
         }
-        a <- create.arcorrection(dy[4],arfactor[i]) # create prewhitening matrix
-        zprime <- a %*% z
-        svdresult <- svd(zprime) # calc SVD of prewhitened design
-        v <- svdresult$v
-        vt <- t(v)
-        sigma <- v %*% diag(1/svdresult$d^2) %*% vt # sigma * <estimate of varince> of prewhitened noise is variance of parameter estimate
-        tttprime <- ttt[i,] %*% t(a)
-        beta[i,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% vt # estimate parameter
-        residuals[i,] <- tttprime - beta[i,] %*% t(zprime) # calculate residuals
-        variance[i] <- residuals[i,] %*% residuals[i,] * sigma[1,1] # variance estimate, add for more paramters if needed
+        indar <- as.logical((arfactor > arlist[i]) * (arfactor <=
+                                                      arlist[i+1]))
+        if(length(indar)>0){
+          a <- create.arcorrection(dy[4],mean(arlist[i:(i+1)])) # create prewhitening matrix
+          zprime <- a %*% z
+          svdresult <- svd(zprime) # calc SVD of prewhitened design
+          v <- svdresult$v
+          vt <- t(v)
+          sigma <- v %*% diag(1/svdresult$d^2) %*% vt # sigma * <estimate of varince> of prewhitened noise is variance of parameter estimate
+          tttprime <- ttt[indar,] %*% t(a)
+          beta[indar,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% vt # estimate parameter
+          residuals[indar,] <- tttprime - beta[indar,] %*% t(zprime) # calculate residuals
+          variance[indar] <- diag(residuals[indar,,drop=FALSE] %*% t(residuals[indar,,drop=FALSE]) * sigma[1,1]) # variance estimate, add for more paramters if needed
+        }
       }
       variance <- variance / (dim(z)[1]-dim(z)[2])
       cat("\n")
