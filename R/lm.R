@@ -169,6 +169,7 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var",s
       # re- calculated the linear model with prewithened data
       # NOTE: sort arfactors and bin them! this combines calculation in
       # NOTE: voxels with similar arfactor, see Worsley
+      variancepart <- rep(0,length=prod(dy[1:3]))
       arlist <- seq(range(arfactor)[1]-step/2,range(arfactor)[2]+step/2,step)
       for (i in 1:(length(arlist)-1)) {
         if (i > progress/100*length(arlist)) {
@@ -177,7 +178,7 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var",s
         }
         indar <- as.logical((arfactor > arlist[i]) * (arfactor <=
                                                       arlist[i+1]))
-        if(length(indar)>0){
+        if(sum(indar)>0){
           a <- create.arcorrection(dy[4],mean(arlist[i:(i+1)])) # create prewhitening matrix
           zprime <- a %*% z
           svdresult <- svd(zprime) # calc SVD of prewhitened design
@@ -187,10 +188,11 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var",s
           tttprime <- ttt[indar,] %*% t(a)
           beta[indar,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% vt # estimate parameter
           residuals[indar,] <- tttprime - beta[indar,] %*% t(zprime) # calculate residuals
-          variance[indar] <- diag(residuals[indar,,drop=FALSE] %*% t(residuals[indar,,drop=FALSE]) * sigma[1,1]) # variance estimate, add for more paramters if needed
+          variancepart[indar] <- sigma[1,1] # variance estimate, add for more paramters if needed
         }
       }
-      variance <- variance / (dim(z)[1]-dim(z)[2])
+      b <- rep(1/dy[4],length=dy[4])
+      variance <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * variancepart
       cat("\n")
       cat("calculate.lm: finished\n")
     } else {
