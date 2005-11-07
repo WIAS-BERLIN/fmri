@@ -81,12 +81,12 @@ gkernsm <- function(y,h=1) {
   if (is.null(dy)) dy<-length(y)
   ldy <- length(dy)
   if (length(h)!=ldy) h <- rep(h[1],ldy)
-  kern <- switch(ldy,dnorm(grid(dy),0,h/dy),
-                 outer(dnorm(grid(dy[1]),0,h[1]/dy[1]),
-                       dnorm(grid(dy[2]),0,h[2]/dy[2]),"*"),
-                 outer(outer(dnorm(grid(dy[1]),0,h[1]/dy[1]),
-                             dnorm(grid(dy[2]),0,h[2]/dy[2]),"*"),
-                       dnorm(grid(dy[3]),0,h[3]/dy[3]),"*"))
+  kern <- switch(ldy,dnorm(grid(dy),0,2*h/dy),
+                 outer(dnorm(grid(dy[1]),0,2*h[1]/dy[1]),
+                       dnorm(grid(dy[2]),0,2*h[2]/dy[2]),"*"),
+                 outer(outer(dnorm(grid(dy[1]),0,2*h[1]/dy[1]),
+                             dnorm(grid(dy[2]),0,2*h[2]/dy[2]),"*"),
+                       dnorm(grid(dy[3]),0,2*h[3]/dy[3]),"*"))
   kern <- kern/sum(kern)
   kernsq <- sum(kern^2)
   list(gkernsm=convolve(y,kern,conj=TRUE),kernsq=kernsq)
@@ -141,6 +141,47 @@ correlation <- function(res,mask) {
   }
 }
 
+correlation2 <- function(res,mask) {
+  meanpos <- function(a) mean(a[a!=0])
+  varpos <- function(a) var(a[a!=0])
+
+  dr <- dim(res)
+  if ( (length(dim(mask)) == length(dr))
+      && (sum(dim(mask)[1:3] != dr[1:3]) == 0)
+      && (dim(mask)[4] == 1)) {
+    mask <- rep(mask,dr[4])
+    dim(mask) <- dr
+    vrm <- varpos(res*mask)
+    x <- meanpos(res[-c(1,2),,,]*res[-dr[1]+c(0,1),,,]*mask[-c(1,dr[1]),,,])/vrm
+    y <- meanpos(res[,-c(1,2),,]*res[,-dr[2]+c(0,1),,]*mask[,-c(1,dr[2]),,])/vrm
+    z <- meanpos(res[,,-c(1,2),]*res[,,-dr[3]+c(0,1),]*mask[,,-c(1,dr[3]),])/vrm
+    c(x,y,z)
+  } else {
+    cat("Error: dimension of mask and residui matrices do not match\n")    
+  }
+}
+
+
+correlation3 <- function(res,mask) {
+  meanpos <- function(a) mean(a[a!=0])
+  varpos <- function(a) var(a[a!=0])
+
+  dr <- dim(res)
+  if ( (length(dim(mask)) == length(dr))
+      && (sum(dim(mask)[1:3] != dr[1:3]) == 0)
+      && (dim(mask)[4] == 1)) {
+    mask <- rep(mask,dr[4])
+    dim(mask) <- dr
+    vrm <- varpos(res*mask)
+    x <- meanpos(res[-c(1,2,3),,,]*res[-dr[1]+c(0,1,2),,,]*mask[-c(1,2,dr[1]),,,])/vrm
+    y <- meanpos(res[,-c(1,2,3),,]*res[,-dr[2]+c(0,1,2),,]*mask[,-c(1,2,dr[2]),,])/vrm
+    z <- meanpos(res[,,-c(1,2,3),]*res[,,-dr[3]+c(0,1,2),]*mask[,,-c(1,2,dr[3]),])/vrm
+    c(x,y,z)
+  } else {
+    cat("Error: dimension of mask and residui matrices do not match\n")    
+  }
+}
+
 
 
 smoothness <- function(cor) {
@@ -153,11 +194,14 @@ smoothness <- function(cor) {
 
 
 bandwidth <- function(res,mask) { # second argument !!!!
+  require(aws)
   cxyz <- correlation(res,mask)
-  bwx <- smoothness(cxyz[1])
-  bwy <- smoothness(cxyz[2])
-  bwz <- smoothness(cxyz[3])
-  meingauss<-gkernsm(array(rnorm(prod(dim(res)[1:3])),dim=dim(res)[1:3]),c(bwx,bwy,bwz))
+  bwx <- geth.gauss(cxyz[1])
+  bwy <- geth.gauss(cxyz[2])
+  bwz <- geth.gauss(cxyz[3])
+  # 0.42445 is factor for changing units from FWHM to grid (gkernsm
+  # works with grid)
+  meingauss<-gkernsm(array(rnorm(prod(dim(res)[1:3])),dim=dim(res)[1:3]),c(bwx,bwy,bwz)*0.42445)
   list(bwcorr=1/meingauss$kernsq,bw=c(bwx,bwy,bwz),corr=cxyz)
 }
 

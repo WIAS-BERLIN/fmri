@@ -81,7 +81,7 @@ create.arcorrection <- function(scans, rho=0) {
 
 
 
-calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var",step=0.01) {
+calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var",step=0.01,hrf=1) {
   require(aws)
   cat("calculate.lm: entering function with:",actype, hmax, qlambda, vtype, "\n")
   # first get the SVD for the design matrix
@@ -99,7 +99,8 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var",s
   voxelcount <- prod(dy[1:3])
   dim(ttt) <- c(prod(dy[1:3]),dy[4])
   arfactor <- rep(0,length=prod(dy[1:3]))
-  variance <- rep(0,length=prod(dy[1:3]))
+  variance <- rep(0,length=prod(hrf,dy[1:3]))
+  dim(variance) <- c(prod(dy[1:3]),hrf)
 
   # calculate matrix R for bias correction in correlation coefficient
   # estimate
@@ -188,26 +189,26 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var",s
           tttprime <- ttt[indar,] %*% t(a)
           beta[indar,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% vt # estimate parameter
           residuals[indar,] <- tttprime - beta[indar,] %*% t(zprime) # calculate residuals
-          variancepart[indar] <- sigma[1,1] # variance estimate, add for more paramters if needed
+          variancepart[indar] <- sigma[1,1]# + sigma[2,2] - sigma[1,2] - sigma[2,1]# variance estimate, add for more paramters if needed
         }
       }
       b <- rep(1/dy[4],length=dy[4])
-      variance <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * variancepart
+      variance[,1] <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * variancepart
       cat("\n")
       cat("calculate.lm: finished\n")
     } else {
       b <- rep(1/dy[4],length=dy[4])
-      variance <- (residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2]) * sigma[1,1]
+      for (h in 1:hrf) variance[,h] <- (residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2]) * sigma[h,h]
     }
   } else { # actype == "noac"
     # estimate variance, add more paramters if needed
     b <- rep(1/dy[4],length=dy[4])
-    variance <- (residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2]) * sigma[1,1]
+    for (h in 1:hrf) variance[,h] <- (residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2]) * sigma[h,h]
   }
 
   # re-arrange dimensions
   dim(beta)<-c(dy[1:3],dim(z)[2])
-  dim(variance) <- dy[1:3]
+  dim(variance) <- c(dy[1:3],hrf)
   dim(arfactor) <- dy[1:3]
   dim(residuals) <- dy
 
