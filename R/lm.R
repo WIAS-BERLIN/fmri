@@ -81,9 +81,14 @@ create.arcorrection <- function(scans, rho=0) {
 
 
 
-calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var",step=0.01,hrf=1) {
+calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,contrast=c(1)) {
   require(aws)
-  cat("calculate.lm: entering function with:",actype, hmax, qlambda, vtype, "\n")
+  cat("calculate.lm: entering function with:",actype, hmax, vtype, "\n")
+
+  # first consider contrast vector! NO test whether it is real contrast!!
+  if (length(contrast) <= dim(z)[2]) contrast <- c(contrast,rep(0,dim(z)[2]-length(contrast)))
+  length(contrast) <- dim(z)[2]
+
   # first get the SVD for the design matrix
   svdresult <- svd(z)
   u <- svdresult$u
@@ -91,7 +96,7 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var",s
   vt <- t(v)
   lambda1 <- diag(1/svdresult$d)
   lambda2 <- diag(1/svdresult$d^2)
-  sigma <- v %*% lambda2 %*% vt
+  xtx <- v %*% lambda2 %*% vt
   # now we have z = u lambda1^(-1) vt
 
   # define some variables and make ttt a matrix
@@ -100,7 +105,6 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var",s
   dim(ttt) <- c(prod(dy[1:3]),dy[4])
   arfactor <- rep(0,length=prod(dy[1:3]))
   variance <- rep(0,length=prod(hrf,dy[1:3]))
-  dim(variance) <- c(prod(dy[1:3]),hrf)
 
   # calculate matrix R for bias correction in correlation coefficient
   # estimate
@@ -154,12 +158,11 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var",s
     cat("calculate.lm: finished\n")
     
     if (actype == "smooth") {
-      cat("calculate.lm: smoothing with (hmax,qlambda):",hmax,",",qlambda,"\n")
+      cat("calculate.lm: smoothing with (hmax):",hmax,"\n")
       dim(arfactor) <- dy[1:3]
       # now smooth (if actype is such) with AWS
       hinit <- 1
-      if (qlambda == 1) hinit <- hmax + hinit
-      arfactor <- aws(arfactor,hinit=hinit,hmax=hmax,qlambda=qlambda,qtau=1,lkern="Gaussian")$theta
+      arfactor <- gkernsm(arfactor,rep(hmax,3)*0.42445)$gkernsm
       dim(arfactor) <- voxelcount
       cat("calculate.lm: finished\n")
     }
@@ -185,35 +188,39 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=4,qlambda=0.96,vtype="var",s
           svdresult <- svd(zprime) # calc SVD of prewhitened design
           v <- svdresult$v
           vt <- t(v)
-          sigma <- v %*% diag(1/svdresult$d^2) %*% vt # sigma * <estimate of varince> of prewhitened noise is variance of parameter estimate
+          xtx <- v %*% diag(1/svdresult$d^2) %*% vt # xtx * <estimate of varince> of prewhitened noise is variance of parameter estimate
           tttprime <- ttt[indar,] %*% t(a)
           beta[indar,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% vt # estimate parameter
           residuals[indar,] <- tttprime - beta[indar,] %*% t(zprime) # calculate residuals
-          variancepart[indar] <- sigma[1,1]# + sigma[2,2] - sigma[1,2] - sigma[2,1]# variance estimate, add for more paramters if needed
+          variancepart[indar] <- t(contrast) %*% xtx %*% contrast # variance estimate
         }
       }
       b <- rep(1/dy[4],length=dy[4])
-      variance[,1] <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * variancepart
+      variance <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * variancepart
       cat("\n")
       cat("calculate.lm: finished\n")
     } else {
       b <- rep(1/dy[4],length=dy[4])
-      for (h in 1:hrf) variance[,h] <- (residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2]) * sigma[h,h]
+      cxtx <- t(contrast) %*% xtx %*% contrast
+      variance <- (residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2]) * cxtx
     }
   } else { # actype == "noac"
     # estimate variance, add more paramters if needed
     b <- rep(1/dy[4],length=dy[4])
-    for (h in 1:hrf) variance[,h] <- (residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2]) * sigma[h,h]
+    cxtx <- t(contrast) %*% xtx %*% contrast
+    variance <- (residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2]) * cxtx
   }
 
+  cbeta <- beta %*% contrast
   # re-arrange dimensions
-  dim(beta)<-c(dy[1:3],dim(z)[2])
-  dim(variance) <- c(dy[1:3],hrf)
+  dim(beta) <- c(dy[1:3],dim(z)[2])
+  dim(cbeta) <- dy[1:3]
+  dim(variance) <- dy[1:3]
   dim(arfactor) <- dy[1:3]
   dim(residuals) <- dy
 
   cat("calculate.lm: exiting function\n")
   
-  list(beta=beta,var=variance,res=residuals,arfactor=arfactor)
+  list(beta = beta, cbeta = cbeta, var = variance, res = residuals, arfactor = arfactor)
 }
 

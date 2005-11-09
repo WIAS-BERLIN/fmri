@@ -121,67 +121,27 @@ get.bw.gauss <- function(corr, step = 1.01) {
   h
 }
 
-correlation <- function(res,mask) {
+correlation <- function(res,mask = array(1,dim=dim(res)[1:3])) {
   meanpos <- function(a) mean(a[a!=0])
   varpos <- function(a) var(a[a!=0])
 
   dr <- dim(res)
-  if ( (length(dim(mask)) == length(dr))
-      && (sum(dim(mask)[1:3] != dr[1:3]) == 0)
-      && (dim(mask)[4] == 1)) {
-    mask <- rep(mask,dr[4])
-    dim(mask) <- dr
-    vrm <- varpos(res*mask)
-    x <- meanpos(res[-1,,,]*res[-dr[1],,,]*mask[-1,,,])/vrm
-    y <- meanpos(res[,-1,,]*res[,-dr[2],,]*mask[,-1,,])/vrm
-    z <- meanpos(res[,,-1,]*res[,,-dr[3],]*mask[,,-1,])/vrm
-    c(x,y,z)
+  if (length(dim(mask)) == 3) {
+    if (sum(dim(mask)[1:3] != dr[1:3]) == 0) {
+      mask <- rep(mask,dr[4])
+      dim(mask) <- dr
+      vrm <- varpos(res*mask)
+      x <- meanpos(res[-1,,,]*res[-dr[1],,,]*mask[-1,,,])/vrm
+      y <- meanpos(res[,-1,,]*res[,-dr[2],,]*mask[,-1,,])/vrm
+      z <- meanpos(res[,,-1,]*res[,,-dr[3],]*mask[,,-1,])/vrm
+      c(x,y,z)
+    } else {
+      warning("Error: dimension of mask and residui matrices do not match\n")    
+    }
   } else {
-    cat("Error: dimension of mask and residui matrices do not match\n")    
-  }
+    warning("Error: can only handle 3 dimensional arrays\n")    
+  }    
 }
-
-correlation2 <- function(res,mask) {
-  meanpos <- function(a) mean(a[a!=0])
-  varpos <- function(a) var(a[a!=0])
-
-  dr <- dim(res)
-  if ( (length(dim(mask)) == length(dr))
-      && (sum(dim(mask)[1:3] != dr[1:3]) == 0)
-      && (dim(mask)[4] == 1)) {
-    mask <- rep(mask,dr[4])
-    dim(mask) <- dr
-    vrm <- varpos(res*mask)
-    x <- meanpos(res[-c(1,2),,,]*res[-dr[1]+c(0,1),,,]*mask[-c(1,dr[1]),,,])/vrm
-    y <- meanpos(res[,-c(1,2),,]*res[,-dr[2]+c(0,1),,]*mask[,-c(1,dr[2]),,])/vrm
-    z <- meanpos(res[,,-c(1,2),]*res[,,-dr[3]+c(0,1),]*mask[,,-c(1,dr[3]),])/vrm
-    c(x,y,z)
-  } else {
-    cat("Error: dimension of mask and residui matrices do not match\n")    
-  }
-}
-
-
-correlation3 <- function(res,mask) {
-  meanpos <- function(a) mean(a[a!=0])
-  varpos <- function(a) var(a[a!=0])
-
-  dr <- dim(res)
-  if ( (length(dim(mask)) == length(dr))
-      && (sum(dim(mask)[1:3] != dr[1:3]) == 0)
-      && (dim(mask)[4] == 1)) {
-    mask <- rep(mask,dr[4])
-    dim(mask) <- dr
-    vrm <- varpos(res*mask)
-    x <- meanpos(res[-c(1,2,3),,,]*res[-dr[1]+c(0,1,2),,,]*mask[-c(1,2,dr[1]),,,])/vrm
-    y <- meanpos(res[,-c(1,2,3),,]*res[,-dr[2]+c(0,1,2),,]*mask[,-c(1,2,dr[2]),,])/vrm
-    z <- meanpos(res[,,-c(1,2,3),]*res[,,-dr[3]+c(0,1,2),]*mask[,,-c(1,2,dr[3]),])/vrm
-    c(x,y,z)
-  } else {
-    cat("Error: dimension of mask and residui matrices do not match\n")    
-  }
-}
-
 
 
 smoothness <- function(cor) {
