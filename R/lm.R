@@ -224,3 +224,9 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,c
   list(beta = beta, cbeta = cbeta, var = variance, res = residuals, arfactor = arfactor)
 }
 
+degrees <- function(z, fwhmcorr, bw) {
+  x <- (z %*% (t(z) %*% z))[,1]
+  tau1 <- sum(x[-1] %*% x[-length(x)])/sum(x^2)
+  f <- (1+2*(fwhmcorr^2)/(bw^2))^(-1.5)
+  (dim(z)[1]-4)/(1+2*f*tau1^2)
+}
