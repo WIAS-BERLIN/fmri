@@ -1,25 +1,41 @@
-read.ANALYZE <- function(prefix = "", picstart = "", numbpic = 1) {
+read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart = 1, numbpic = 1) {
+  counter <- c(paste("00", 1:9, sep=""), paste("0", 10:99, sep=""),paste(100:999,sep=""));
   if (require(AnalyzeFMRI)) {
-
-    ttt <- f.read.analyze.volume(paste(prefix, picstart, ".img", sep=""));
-    dt <- dim(ttt)
-    cat(".")
-    header <- f.read.analyze.header(paste(prefix, picstart, ".img", sep=""));
-
-    if (numbpic > 1) { 
-      for (i in (picstart+1):(picstart+numbpic-1)) {
-        a <- f.read.analyze.volume(paste(prefix, i, ".img", sep=""))
-        if (sum() != 0)
-          cat("Error: wrong spatial dimension in picture",i)
-        ttt <- c(ttt,a);
-        dt[4] <- dt[4] + dim(a)[4]
-        cat(".")
-      }
+    if (numbered) {
+      filename <- paste(prefix, counter[picstart], postfix, ".img", sep="")
+    } else {
+      filename <- paste(prefix, ".img", sep="")
     }
+    
+    if (length(system(paste("ls",filename),TRUE,TRUE)) != 0) {
+      ttt <- f.read.analyze.volume(filename);
+      dt <- dim(ttt)
+      cat(".")
+      header <- f.read.analyze.header(filename);
 
-    cat("\n")
-    dim(ttt) <- c(dt)
-    list(ttt=ttt,header=header)
+      if (numbpic > 1) { 
+        for (i in (picstart+1):(picstart+numbpic-1)) {
+          if (numbered) {
+            filename <- paste(prefix, counter[i], postfix, ".img", sep="")
+          } else {
+            filename <- paste(prefix, ".img", sep="")
+          }
+          a <- f.read.analyze.volume(filename)
+          if (sum() != 0)
+            cat("Error: wrong spatial dimension in picture",i)
+          ttt <- c(ttt,a);
+          dt[4] <- dt[4] + dim(a)[4]
+          cat(".")
+        }
+      }
+
+      cat("\n")
+      dim(ttt) <- c(dt)
+      invisible(list(ttt=ttt,header=header))
+    } else {
+        warning(paste("Error: file",filename,"does not exist!"))
+        list(ttt=NULL,header=NULL)
+    }
   } else {
     warning("Error: library AnalyzeFMRI not found\n")
     list(ttt=NULL,header=NULL)

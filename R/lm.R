@@ -104,7 +104,7 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,c
   voxelcount <- prod(dy[1:3])
   dim(ttt) <- c(prod(dy[1:3]),dy[4])
   arfactor <- rep(0,length=prod(dy[1:3]))
-  variance <- rep(0,length=prod(hrf,dy[1:3]))
+  variance <- rep(0,length=prod(dy[1:3]))
 
   # calculate matrix R for bias correction in correlation coefficient
   # estimate
