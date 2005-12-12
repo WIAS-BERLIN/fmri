@@ -1,9 +1,13 @@
 perform.aws <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),qlambda=1,lkern="Gaussian",scorr=0,...) {
-  require(aws)
+#  require(aws)
   variance[variance < quantile(variance,0.25)] <- quantile(variance,0.25)
 
-  ttthat <- aws(beta, sigma2=variance, hmax=hmax, hinit=hinit,
-                 qlambda=qlambda, qtau=1,wghts=weights,lkern=lkern,scorr=scorr,...)
+#  ttthat <- aws(beta, sigma2=variance, hmax=hmax, hinit=hinit,
+#                 qlambda=qlambda,
+#                 qtau=1,wghts=weights,lkern=lkern,scorr=scorr#,...)
+  
+  ttthat <- vaws3D(beta, sigma2=variance, hmax=hmax, hinit=hinit,
+                 qlambda=qlambda, qtau=1,heta=1000,wghts=weights,lkern=lkern,scorr=scorr,...)
 
   z <- list(hat=ttthat$theta, var=ttthat$var, ni=ttthat$ni,
   hmax=ttthat$hmax, lseq=ttthat$lseq, y = ttthat$y, mae=ttthat$mae, vred=ttthat$vred)

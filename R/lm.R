@@ -82,7 +82,7 @@ create.arcorrection <- function(scans, rho=0) {
 
 
 calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,contrast=c(1)) {
-  require(aws)
+#  require(aws)
   cat("calculate.lm: entering function with:",actype, hmax, vtype, "\n")
 
   # first consider contrast vector! NO test whether it is real contrast!!
