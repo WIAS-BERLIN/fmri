@@ -207,7 +207,8 @@ C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine chaws(y,fix,si2,n1,n2,n3,dv,dv0,hakt,lambda,theta,bi,
-     1    bi2,bi0,ai,kern,spmin,spmax,lwght,wght,vwghts,swjy,thi,thj)
+     1    bi2,bi0,vred,ai,kern,spmin,spmax,lwght,wght,vwghts,swjy,
+     2    thi,thj)
 C   
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
@@ -231,7 +232,7 @@ C
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
      1        iind,jind,jind3,jind2,clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
       real*8 thetai,bii,sij,swj,swj2,swj0,swjy(dv),z1,z2,z3,wj,hakt2,
-     1        bii0,si2(1)
+     1        bii0,si2(1),vred(1),sv1,sv2
       hakt2=hakt*hakt
       ih1=hakt
       aws=lambda.lt.1d40
@@ -288,6 +289,8 @@ C   scaling of sij outside the loop
                swj=0.d0
 	       swj2=0.d0
                swj0=0.d0
+	       sv1=0.d0
+	       sv2=0.d0
 	       DO k=1,dv
                   swjy(k)=0.d0
 	       END DO
@@ -328,6 +331,8 @@ C   if sij <= spmin  this just keeps the location penalty
 C    spmin = 0 corresponds to old choice of K_s 
 C   new kernel is flat in [0,spmin] and then decays exponentially
                         END IF
+			sv1=sv1+wj
+			sv2=sv2+wj*wj
                         swj=swj+wj*si2(jind)
                         swj2=swj2+wj*wj*si2(jind)
 			DO k=1,dv
@@ -342,6 +347,7 @@ C   new kernel is flat in [0,spmin] and then decays exponentially
                bi(iind)=swj
                bi2(iind)=swj2
                bi0(iind)=swj0
+	       vred(iind)=sv2/sv1/sv1
             END DO
          END DO
       END DO

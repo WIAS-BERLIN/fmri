@@ -81,7 +81,7 @@ args <- match.call()
 dy<-dim(y)
 if(length(dy)==3){
 dv<-1
-dy<-c(dy,1)
+dim(y)<-dy<-c(dy,1)
 } else if(length(dy)!=4){
 stop("y has to be 3 or 4 dimensional")
 }
@@ -221,6 +221,7 @@ zobj <- .Fortran("chaws",as.double(y),
                        as.integer(n2),
                        as.integer(n3),
 		       as.integer(dv),
+		       as.integer(dv0),
                        hakt=as.double(hakt),
                        as.double(lambda0),
                        as.double(tobj$theta),
@@ -234,6 +235,10 @@ zobj <- .Fortran("chaws",as.double(y),
 		       as.double(spmax),
 		       double(prod(dlw)),
 		       as.double(wghts),
+		       as.double(vwghts),
+		       double(dv),#swjy
+		       double(dv0),#thi
+		       double(dv0),#thj
 		       PACKAGE="fmri")[c("bi","bi0","bi2","vred","ai","hakt")]
 vred[!tobj$fix]<-zobj$vred[!tobj$fix]
 } else {
