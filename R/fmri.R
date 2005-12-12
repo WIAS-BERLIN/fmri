@@ -9,9 +9,13 @@ perform.aws <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),qlambda=1,
   ttthat <- vaws3D(beta, sigma2=variance, hmax=hmax, hinit=hinit,
                  qlambda=qlambda, qtau=1,heta=1000,wghts=weights,lkern=lkern,scorr=scorr,...)
 
-  z <- list(hat=ttthat$theta, var=ttthat$var, ni=ttthat$ni,
-  hmax=ttthat$hmax, lseq=ttthat$lseq, y = ttthat$y, mae=ttthat$mae, vred=ttthat$vred)
-  z
+  if (dim(ttthat$theta)[4] == 1) {
+    list(hat=ttthat$theta[,,,1], var=ttthat$var, ni=ttthat$ni,
+         hmax=ttthat$hmax, lseq=ttthat$lseq, y = ttthat$y, mae=ttthat$mae, vred=ttthat$vred)
+  } else {
+    list(hat=ttthat$theta, var=ttthat$var, ni=ttthat$ni,
+         hmax=ttthat$hmax, lseq=ttthat$lseq, y = ttthat$y, mae=ttthat$mae, vred=ttthat$vred)
+  }    
 }
 
 plot.pvalue <- function(stat, anatomic,rx,ry,rz, pvalue, x=-1, y=-1, z=-1, zlim=0, device="X11", file="plot.png") {
