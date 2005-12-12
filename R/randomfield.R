@@ -154,7 +154,7 @@ smoothness <- function(cor) {
 
 
 bandwidth <- function(res,mask) { # second argument !!!!
-  require(aws)
+#  require(aws)
   cxyz <- correlation(res,mask)
   bwx <- geth.gauss(cxyz[1])
   bwy <- geth.gauss(cxyz[2])
