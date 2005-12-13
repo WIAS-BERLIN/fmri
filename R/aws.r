@@ -279,9 +279,9 @@ dim(tobj$bi)<-dy[-4]
 dim(tobj$eta)<-dy[-4]
 if(graph){
 par(mfrow=c(2,2),mar=c(1,1,3,.25),mgp=c(2,1,0))
-image(y[,,n3%/%2+1,],col=gray((0:255)/255),xaxt="n",yaxt="n")
+image(y[,,n3%/%2+1,1],col=gray((0:255)/255),xaxt="n",yaxt="n")
 title(paste("Observed Image  min=",signif(min(y),3)," max=",signif(max(y),3)))
-image(tobj$theta[,,n3%/%2+1,],col=gray((0:255)/255),xaxt="n",yaxt="n")
+image(tobj$theta[,,n3%/%2+1,1],col=gray((0:255)/255),xaxt="n",yaxt="n")
 title(paste("Reconstruction  h=",signif(hakt,3)," min=",signif(min(tobj$theta),3)," max=",signif(max(tobj$theta),3)))
 image(tobj$bi[,,n3%/%2+1],col=gray((0:255)/255),xaxt="n",yaxt="n")
 title(paste("Sum of weights: min=",signif(min(tobj$bi),3)," mean=",signif(mean(tobj$bi),3)," max=",signif(max(tobj$bi),3)))
