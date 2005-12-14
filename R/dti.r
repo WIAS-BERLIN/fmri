@@ -30,23 +30,20 @@ calculate.lm.dti <- function(ttt,z,res=FALSE) {
   lambda2 <- diag(1/svdresult$d^2)
   xtx <- v %*% lambda2 %*% vt
   # now we have z = u lambda1^(-1) vt
-  cat("SVD done\n")
   
   # define some variables and make ttt a matrix
   dy <- dim(ttt)
   voxelcount <- prod(dy[1:3])
   dim(ttt) <- c(prod(dy[1:3]),dy[4])
-  cat("definitions\n")
   
   # calculate the paramters and residuals for all voxels
   beta <- ttt %*% u %*% lambda1 %*% vt
-  cat("parameters\n")
   residuals <- ttt - beta %*% t(z)
-  cat("residuals\n")
   b <- rep(1/dy[4],length=dy[4])
   variance <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2]))
   dim(variance) <- c(dy[1:3])
-  cat("variance\n")
+  dim(beta) <- c(dy[1:3],dim(z)[2])
+  dim(residuals) <- c(dy[1:3],dim(z)[1])
 
   if (res) {
     list(dt=beta,xtx=xtx,variance=variance,residuals=residuals)
