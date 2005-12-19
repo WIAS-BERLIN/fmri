@@ -59,22 +59,21 @@ determine.eigenvalue <- function(diff) {
     cat(".")
     for (j in 1:dim(diff)[2]) {
       for (k in 1:dim(diff)[3]) {
-        tensor <- array(0,dim=c(3,3))
-        tensor[1,1] <- diff[i,j,k,1]
-        tensor[1,2] <- diff[i,j,k,4]
-        tensor[1,3] <- diff[i,j,k,5]
-        tensor[2,1] <- diff[i,j,k,4]
-        tensor[2,2] <- diff[i,j,k,2]
-        tensor[2,3] <- diff[i,j,k,6]
-        tensor[3,1] <- diff[i,j,k,5]
-        tensor[3,2] <- diff[i,j,k,6]
-        tensor[3,3] <- diff[i,j,k,3]
-        eigen[i,j,k,] <- eigen(tensor)$values
+        eigen[i,j,k,] <- eigen(matrix(diff[i,j,k,c(1,4,5,4,2,6,5,6,3)],c(3,3)),symmetric=TRUE,only.values=TRUE)$values
       }
     }
   }
-
+# ediff<-apply(array(diff[,,,c(1,2,3,2,4,5,3,5,6)],c(dim(diff)[-4],3,3)),1:3,eigen)  
+#  gives a list of dimension dim(diff)  containing the eigenvalues and eigenvectors
   list(eigen=eigen)
+}
+
+determine2.eigenvalue <- function(diff,only.values=TRUE) {
+  n<-3
+  ddiff<-prod(dim(diff)[-4])
+  z<-.Fortran("eigen3", as.integer(ddiff), as.double(diff), evectors = double(ddiff*9), evalues = double(ddiff*3),
+            !only.values, ierr = integer(ddiff), package="fmri")[c("evalues","evectors","ierr")]
+  list(evalues=array(t(matrix(z$evalues,3,ddiff)),c(dim(diff)[-4],3)),evectors=array(t(matrix(z$evectors,9,ddiff)),c(dim(diff)[-4],3,3)),ierr=z$ierr)
 }
 
 anisotropy <- function(eigen) {
