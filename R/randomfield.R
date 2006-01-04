@@ -109,14 +109,19 @@ get.corr.gauss <- function(h) {
 
 get.bw.gauss <- function(corr, step = 1.01) {
   # get the   bandwidth for lkern corresponding to a given correlation
-  h <- .1
-  z <- 0
   # 
   #  keep it simple result does not depend on d
   #
-  while (z<corr) {
-    h <- h*step
-    z <- get.corr.gauss(h)
+  if (corr < 0.1) {
+    h <- 0
+  } else { 
+    h <- .8
+    z <- 0
+    while (z<corr) {
+      h <- h*step
+      z <- get.corr.gauss(h)
+    }
+    h <- h/step
   }
   h
 }

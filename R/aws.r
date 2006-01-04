@@ -138,7 +138,7 @@ h0<-0
   if(scorr[1]>0) {
          h0<-numeric(length(scorr))
          for(i in 1:length(h0))
-         h0[i]<-geth.gauss(scorr[i])
+         h0[i]<-get.bw.gauss(scorr[i])
          if(length(h0)<d) h0<-rep(h0[1],d)
          cat("Corresponding bandwiths for specified correlation:",h0,"\n")
 }
@@ -209,7 +209,7 @@ if(hinit>1) lambda0<-1e50 # that removes the stochstic term for the first step
 #
 while(hakt<=hmax){
 dlw<-(2*trunc(hakt/c(1,wghts))+1)[1:d]
-if(scorr[1]>0) lambda0<-lambda0*Spatialvar.gauss(hakt0/0.42445/4,h0,d)/Spatialvar.gauss(hakt0/0.42445/4,1e-5,d)
+if(scorr[1]>=0.1) lambda0<-lambda0*Spatialvar.gauss(hakt0/0.42445/4,h0,d)/Spatialvar.gauss(hakt0/0.42445/4,1e-5,d)
 # Correction for spatial correlation depends on h^{(k-1)} 
 hakt0<-hakt
 if(length(sigma2)==n){

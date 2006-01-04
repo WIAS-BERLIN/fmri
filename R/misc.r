@@ -214,7 +214,8 @@ h
 }
 
 get3Dh.gauss<-function(vred,h0,vwghts,step=1.01){
-n<-length(vred)
+  h0 <- pmax(h0,1e-5)
+  n<-length(vred)
 vred1<-vred
 h<-.5/vwghts
 fixed<-rep(FALSE,length(vred))
