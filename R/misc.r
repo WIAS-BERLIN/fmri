@@ -23,14 +23,19 @@ Varcor.gauss<-function(h){
 #
 #   in case of colored noise that was produced by smoothing with lkern and bandwidth h
 #
-h<-h/2.3548
+#  interv allows for further discretization of the Gaussian Kernel, result depends on
+#  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
+#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
+#  discretisation into voxel) 
+#
+h<-h/2.3548*interv
 ih<-trunc(4*h)+1
 dx<-2*ih+1
 d<-length(h)
 penl <- dnorm(((-ih[1]):ih[1])/h[1])
 if(d==2) penl <- outer(penl,dnorm(((-ih[2]):ih[2])/h[2]),"*")
 if(d==3) penl <- outer(penl,outer(dnorm(((-ih[2]):ih[2])/h[2]),dnorm(((-ih[3]):ih[3])/h[3]),"*"),"*")
-2*sum(penl)^2/sum(diff(penl)^2)
+2*sum(penl)^2/sum(diff(penl,interv)^2)/interv^(d)
 }
 
 SpatialCorr<-function(lkern,h,d=1){
@@ -59,7 +64,7 @@ if(d==3) z<-sum(penl[-1,,]*penl[-dx,,])/sum(penl^2)
 z
 }
 
-SpatialCorr.gauss<-function(h){
+SpatialCorr.gauss<-function(h,interv=1){
 #
 #   Calculates the correlation of 
 #
@@ -67,11 +72,17 @@ SpatialCorr.gauss<-function(h){
 #
 #   Result does not depend on d for "Gaussian" kernel !!
 #
-h<-h/2.3548
+#
+#  interv allows for further discretization of the Gaussian Kernel, result depends on
+#  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
+#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
+#  discretisation into voxel) 
+#
+h<-h/2.3548*interv
 ih<-trunc(4*h+1)
 dx<-2*ih+1
 penl<-dnorm(((-ih):ih)/h)
-sum(penl[-1]*penl[-dx])/sum(penl^2)
+sum(penl[-(1:interv)] * penl[-((dx-interv+1):dx)])/sum(penl^2)
 }
 
 Spatialvar<-function(lkern,lkern0,h,h0,d){
@@ -140,7 +151,7 @@ z[-ind1,-ind2,-ind3]<-z[-ind1,-ind2,-ind3]+penl*penl0[i1,i2,i3]
 sum(z^2)/sum(z)^2
 }
 
-Spatialvar.gauss<-function(h,h0,d){
+Spatialvar.gauss<-function(h,h0,d,interv=1){
 #
 #   Calculates the factor of variance reduction obtained for Gaussian Kernel and bandwidth h in 
 #
@@ -149,8 +160,14 @@ Spatialvar.gauss<-function(h,h0,d){
 #   Spatialvariance(lkern,h,h0,d)/Spatialvariance(lkern,h,1e-5,d) gives the 
 #   a factor for lambda to be used with bandwidth h 
 #
+#
+#  interv allows for further discretization of the Gaussian Kernel, result depends on
+#  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
+#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
+#  discretisation into voxel) 
+#
   h0 <- pmax(h0,1e-5)
-  h<-h/2.3548
+  h<-h/2.3548*interv
 if(length(h)==1) h<-rep(h,d)
 ih<-trunc(4*h)
 ih<-pmax(1,ih)
@@ -159,7 +176,7 @@ penl<-dnorm(((-ih[1]):ih[1])/h[1])
 if(d==2) penl<-outer(dnorm(((-ih[1]):ih[1])/h[1]),dnorm(((-ih[2]):ih[2])/h[2]),"*")
 if(d==3) penl<-outer(dnorm(((-ih[1]):ih[1])/h[1]),outer(dnorm(((-ih[2]):ih[2])/h[2]),dnorm(((-ih[3]):ih[3])/h[3]),"*"),"*")
 dim(penl)<-dx
-h0<-h0/2.3548
+h0<-h0/2.3548*interv
 if(length(h0)==1) h0<-rep(h0,d)
 ih<-trunc(4*h0)
 ih<-pmax(1,ih)
@@ -197,31 +214,45 @@ ind3<-ind3[ind3<=dz[3]][-1]
 z[-ind1,-ind2,-ind3]<-z[-ind1,-ind2,-ind3]+penl*penl0[i1,i2,i3]
 }
 }
-sum(z^2)/sum(z)^2
+sum(z^2)/sum(z)^2*interv^d
 }
 
-geth.gauss<-function(corr,step=1.01){
+geth.gauss<-function(corr,step=1.01,interv=1){
 #   get the   bandwidth for lkern corresponding to a given correlation
-h<-.1
-z<-0
-# 
-#  keep it simple result does not depend on d
 #
-while(z<corr){
-h<-h*step
-z<-SpatialCorr.gauss(h)
-}
-h
+#  interv allows for further discretization of the Gaussian Kernel, result depends on
+#  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
+#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
+#  discretisation into voxel) 
+#
+  if (corr < 0.1) {
+    h <- 0
+  } else { 
+    h <- .5
+    z <- 0
+    while (z<corr) {
+      h <- h*step
+      z <- get.corr2.gauss(h,interv)
+    }
+    h <- h/step
+  }
+  h
 }
 
-get3Dh.gauss<-function(vred,h0,vwghts,step=1.01){
+get3Dh.gauss<-function(vred,h0,vwghts,step=1.01,interv=1){
+#
+#  interv allows for further discretization of the Gaussian Kernel, result depends on
+#  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
+#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
+#  discretisation into voxel) 
+#
   h0 <- pmax(h0,1e-5)
   n<-length(vred)
 vred1<-vred
 h<-.5/vwghts
 fixed<-rep(FALSE,length(vred))
 while(any(!fixed)){
-ind<-(1:n)[!fixed][vred[!fixed]>=Spatialvar.gauss(h,1e-5,3)]
+ind<-(1:n)[!fixed][vred[!fixed]>=Spatialvar.gauss(h,1e-5,3,interv)]
 vred1[ind]<-Spatialvar.gauss(h,h0,3)
 fixed[ind]<-TRUE
 h<-h*step
@@ -231,7 +262,7 @@ hh<-.01/vwghts
 h<-h0
 fixed<-rep(FALSE,length(vred))
 while(any(!fixed)){
-ind<-(1:n)[!fixed][vred1[!fixed]>=Spatialvar.gauss(h,1e-5,3)]
+ind<-(1:n)[!fixed][vred1[!fixed]>=Spatialvar.gauss(h,1e-5,3,interv)]
 hvred[,ind]<-h
 fixed[ind]<-TRUE
 hh<-hh*step

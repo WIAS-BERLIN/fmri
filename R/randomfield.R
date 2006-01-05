@@ -92,7 +92,7 @@ gkernsm <- function(y,h=1) {
   list(gkernsm=convolve(y,kern,conj=TRUE),kernsq=kernsq)
 }
 
-get.corr.gauss <- function(h) {
+get.corr.gauss <- function(h,interv=1) {
   #
   #   Calculates the correlation of 
   #
@@ -100,26 +100,38 @@ get.corr.gauss <- function(h) {
   #
   #   Result does not depend on d for "Gaussian" kernel !!
   #
-  h <- h/2.3548
-  ih <- trunc(4*h+1)
+#
+#  interv allows for further discretization of the Gaussian Kernel, result depends on
+#  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
+#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
+#  discretisation into voxel) 
+#
+  h <- h/2.3548*int
+  ih <- trunc(4*h+ 2*interv-1)
   dx <- 2*ih+1
   penl <- dnorm(((-ih):ih)/h)
-  sum(penl[-1]*penl[-dx])/sum(penl^2)
+  sum(penl[-(1:interv)]*penl[-((dx-interv+1):dx)])/sum(penl^2)
 }
 
-get.bw.gauss <- function(corr, step = 1.01) {
+get.bw.gauss <- function(corr, step = 1.01,interv=1) {
   # get the   bandwidth for lkern corresponding to a given correlation
   # 
   #  keep it simple result does not depend on d
   #
+#
+#  interv allows for further discretization of the Gaussian Kernel, result depends on
+#  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
+#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
+#  discretisation into voxel) 
+#
   if (corr < 0.1) {
     h <- 0
   } else { 
-    h <- .8
+    h <- .5
     z <- 0
     while (z<corr) {
       h <- h*step
-      z <- get.corr.gauss(h)
+      z <- get.corr.gauss(h,interv)
     }
     h <- h/step
   }
