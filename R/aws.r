@@ -209,7 +209,7 @@ if(hinit>1) lambda0<-1e50 # that removes the stochstic term for the first step
 #
 while(hakt<=hmax){
 dlw<-(2*trunc(hakt/c(1,wghts))+1)[1:d]
-if(scorr[1]>=0.1) lambda0<-lambda0*Spatialvar.gauss(hakt0/0.42445/4,h0,d)/Spatialvar.gauss(hakt0/0.42445/4,1e-5,d)
+if(scorr[1]>=0.1) lambda0<-lambda0*Spatialvar.gauss(hakt0/0.42445/4*c(1,wghts),h0*c(1,wghts),d)/Spatialvar.gauss(hakt0/0.42445/4*c(1,wghts),1e-5,d)
 # Correction for spatial correlation depends on h^{(k-1)} 
 hakt0<-hakt
 if(length(sigma2)==n){
@@ -313,7 +313,11 @@ vartheta <- tobj$bi2/tobj$bi^2
 vartheta <- sigma2*tobj$bi2/tobj$bi^2
 vred<-tobj$bi2/tobj$bi^2
 }
-vartheta<-vartheta*Spatialvar.gauss(hakt/0.42445/4,h0+1e-5,d)/Spatialvar.gauss(hakt/0.42445/4,1e-5,d)
+vartheta<-vartheta/Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),h0*c(1,wghts)+1e-5,d)*Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),1e-5,d)
+vred<-vred/Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),h0*c(1,wghts)+1e-5,d)*Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),1e-5,d)
+# 
+#   this accounts for intrinsic correlation (data), less variance reduction (larger variance, larger variance reduction factor) if data were correlated
+#
 z<-list(theta=tobj$theta,ni=tobj$bi,var=vartheta,vred=vred,y=y,
 hmax=hakt/hincr,mae=mae,lseq=c(0,lseq[-steps]),call=args)
 class(z)<-"aws.gaussian"

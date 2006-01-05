@@ -217,7 +217,7 @@ z[-ind1,-ind2,-ind3]<-z[-ind1,-ind2,-ind3]+penl*penl0[i1,i2,i3]
 sum(z^2)/sum(z)^2*interv^d
 }
 
-geth.gauss<-function(corr,step=1.01,interv=1){
+geth.gauss<-function(corr,step=1.001,interv=1){
 #   get the   bandwidth for lkern corresponding to a given correlation
 #
 #  interv allows for further discretization of the Gaussian Kernel, result depends on
@@ -253,7 +253,7 @@ h<-.5/vwghts
 fixed<-rep(FALSE,length(vred))
 while(any(!fixed)){
 ind<-(1:n)[!fixed][vred[!fixed]>=Spatialvar.gauss(h,1e-5,3,interv)]
-vred1[ind]<-Spatialvar.gauss(h,h0,3)
+vred1[ind]<-Spatialvar.gauss(h,h0,3,interv)
 fixed[ind]<-TRUE
 h<-h*step
 }

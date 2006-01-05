@@ -54,11 +54,20 @@ resel <- function(voxeld, hmax, hv=0.95) hv * voxeld / hmax # hv=0.919 for large
 #  optimize(f=f,lower=2,upper=10,tol=1e-6,par=list(p=p,i=i,j=j,k=k,rx=rx,ry=ry,rz=rz,type=type,df=df,dim=dim))$minimum
 #}
 
-threshold <- function(p,i,j,k,rx,ry,rz,type="norm",df=4,dim=3,step=.01) {
+threshold <- function(p,i,j,k,rx,ry,rz,type="norm",df=4,dim=3,step=.001) {
   n <- length(rx)
   thr <- numeric(n)
   fixed <- logical(n)
   x <- 3
+  pxyz<-rx*ry*rz
+  ind<-(1:length(pxyz))[pxyz==min(pxyz)][1]
+  pv<-1
+  while(pv>p) {
+     pv <- pvalue(x,i,j,k,rx[ind],ry[ind],rz[ind],type,df,dim)
+     x <- x+5*step
+  }
+  x<-x-5*step
+#  this runs faster to the lowest level and therefore allows for smaller value of step
   while (any(!fixed)) {  
     pv <- pvalue(x,i,j,k,rx,ry,rz,type,df,dim)
     ind <- (1:n)[!fixed][pv[!fixed]<p]
@@ -106,14 +115,14 @@ get.corr.gauss <- function(h,interv=1) {
 #  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
 #  discretisation into voxel) 
 #
-  h <- h/2.3548*int
+  h <- h/2.3548*interv
   ih <- trunc(4*h+ 2*interv-1)
   dx <- 2*ih+1
   penl <- dnorm(((-ih):ih)/h)
   sum(penl[-(1:interv)]*penl[-((dx-interv+1):dx)])/sum(penl^2)
 }
 
-get.bw.gauss <- function(corr, step = 1.01,interv=1) {
+get.bw.gauss <- function(corr, step = 1.001,interv=1) {
   # get the   bandwidth for lkern corresponding to a given correlation
   # 
   #  keep it simple result does not depend on d
