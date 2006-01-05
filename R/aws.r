@@ -314,7 +314,7 @@ vartheta <- sigma2*tobj$bi2/tobj$bi^2
 vred<-tobj$bi2/tobj$bi^2
 }
 vartheta<-vartheta/Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),h0*c(1,wghts)+1e-5,d)*Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),1e-5,d)
-vred<-vred/Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),h0*c(1,wghts)+1e-5,d)*Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),1e-5,d)
+#vred<-vred/Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),h0*c(1,wghts)+1e-5,d)*Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),1e-5,d)
 # 
 #   this accounts for intrinsic correlation (data), less variance reduction (larger variance, larger variance reduction factor) if data were correlated
 #
