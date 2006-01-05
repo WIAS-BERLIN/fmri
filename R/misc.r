@@ -149,7 +149,8 @@ Spatialvar.gauss<-function(h,h0,d){
 #   Spatialvariance(lkern,h,h0,d)/Spatialvariance(lkern,h,1e-5,d) gives the 
 #   a factor for lambda to be used with bandwidth h 
 #
-h<-h/2.3548
+  h0 <- pmax(h0,1e-5)
+  h<-h/2.3548
 if(length(h)==1) h<-rep(h,d)
 ih<-trunc(4*h)
 ih<-pmax(1,ih)
