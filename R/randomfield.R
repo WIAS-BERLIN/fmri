@@ -178,7 +178,7 @@ bandwidth <- function(res,mask) { # second argument !!!!
   bwz <- geth.gauss(cxyz[3])
   # 0.42445 is factor for changing units from FWHM to grid (gkernsm
   # works with grid)
-  meingauss<-gkernsm(array(rnorm(prod(dim(res)[1:3])),dim=dim(res)[1:3]),c(bwx,bwy,bwz)*0.42445)
+  meingauss<-gkernsm(array(rnorm(prod(dim(res)[1:3])),dim=dim(res)[1:3]),pmax(c(bwx,bwy,bwz),0.1)*0.42445)
   list(bwcorr=1/meingauss$kernsq,bw=c(bwx,bwy,bwz),corr=cxyz)
 }
 
