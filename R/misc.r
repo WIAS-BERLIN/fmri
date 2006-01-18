@@ -232,7 +232,7 @@ geth.gauss<-function(corr,step=1.001,interv=1){
     z <- 0
     while (z<corr) {
       h <- h*step
-      z <- get.corr2.gauss(h,interv)
+      z <- get.corr.gauss(h,interv)
     }
     h <- h/step
   }

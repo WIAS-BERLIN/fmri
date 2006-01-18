@@ -1,4 +1,5 @@
-create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, rt=3, mean=TRUE) {
+create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, rt=3,
+  mean=TRUE, a1 = 6, a2 = 12, b1 = 0.9, b2 = 0.9, cc = 0.35) {
   numberofonsets <- length(onsets)
   stimulus <- rep(0, scans)
   
@@ -18,7 +19,7 @@ create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, rt=3, mean=TRUE) {
     res
   }
 
-  hrf <- convolve(stimulus,mygamma(scans:1, 6, 12, 0.9/rt, 0.9/rt, 0.35))
+  hrf <- convolve(stimulus,mygamma(scans:1, a1, a2, b1/rt, b2/rt, cc))
   dim(hrf) <- c(scans,1)
   
   if (mean) {
@@ -81,13 +82,14 @@ create.arcorrection <- function(scans, rho=0) {
 
 
 
-calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,contrast=c(1)) {
+calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,contrast=c(1),vvector=c(1)) {
 #  require(aws)
   cat("calculate.lm: entering function with:",actype, hmax, vtype, "\n")
 
   # first consider contrast vector! NO test whether it is real contrast!!
   if (length(contrast) <= dim(z)[2]) contrast <- c(contrast,rep(0,dim(z)[2]-length(contrast)))
   length(contrast) <- dim(z)[2]
+  if ((length(vvector) < dim(z)[2]) && (length(vvector) > 1)) vvector <- c(vvector,rep(0,dim(z)[2]-length(vvector)))
 
   # first get the SVD for the design matrix
   svdresult <- svd(z)
@@ -105,6 +107,7 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,c
   dim(ttt) <- c(prod(dy[1:3]),dy[4])
   arfactor <- rep(0,length=prod(dy[1:3]))
   variance <- rep(0,length=prod(dy[1:3]))
+  if (length(vvector) > 1) variancem <- array(0,c(dy[1:3],length(vector)^2))
 
   # calculate matrix R for bias correction in correlation coefficient
   # estimate
@@ -174,6 +177,7 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,c
       # NOTE: sort arfactors and bin them! this combines calculation in
       # NOTE: voxels with similar arfactor, see Worsley
       variancepart <- rep(0,length=prod(dy[1:3]))
+      if (length(vvector) > 1) variancepartm <- array(0,c(dy[1:3],length(vvector)^2))
       arlist <- seq(range(arfactor)[1]-step/2,range(arfactor)[2]+step/2,step)
       for (i in 1:(length(arlist)-1)) {
         if (i > progress/100*length(arlist)) {
@@ -193,35 +197,44 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,c
           beta[indar,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% vt # estimate parameter
           residuals[indar,] <- tttprime - beta[indar,] %*% t(zprime) # calculate residuals
           variancepart[indar] <- t(contrast) %*% xtx %*% contrast # variance estimate
+          if (length(vvector) > 1) variancepartm[indar,] <- as.vector(xtx[as.logical(vvector),as.logical(vvector)])
         }
       }
       b <- rep(1/dy[4],length=dy[4])
       variance <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * variancepart
+      if (length(vvector) > 1) variancem <- as.vector((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * variancepartm
       cat("\n")
       cat("calculate.lm: finished\n")
     } else {
       b <- rep(1/dy[4],length=dy[4])
       cxtx <- t(contrast) %*% xtx %*% contrast
-      variance <- (residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2]) * cxtx
+      if (length(vvector) > 1) variancem <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) %*% as.vector(xtx[as.logical(vvector),as.logical(vvector)])
+      variance <- ((residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2])) %*% cxtx
     }
   } else { # actype == "noac"
-    # estimate variance, add more paramters if needed
+                                        # estimate variance, add more paramters if needed
     b <- rep(1/dy[4],length=dy[4])
     cxtx <- t(contrast) %*% xtx %*% contrast
-    variance <- (residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2]) * cxtx
+    if (length(vvector) > 1) variancem <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) %*% as.vector(xtx[as.logical(vvector),as.logical(vvector)])
+    variance <- ((residuals^2 %*% b) * dy[4] / (dy[4]-dim(z)[2])) %*% cxtx
   }
-
+  
   cbeta <- beta %*% contrast
   # re-arrange dimensions
   dim(beta) <- c(dy[1:3],dim(z)[2])
   dim(cbeta) <- dy[1:3]
   dim(variance) <- dy[1:3]
+  if (length(vvector) > 1) dim(variancem) <- c(dy[1:3],sum(as.logical(vvector)),sum(as.logical(vvector)))
   dim(arfactor) <- dy[1:3]
   dim(residuals) <- dy
-
+  
   cat("calculate.lm: exiting function\n")
   
-  list(beta = beta, cbeta = cbeta, var = variance, res = residuals, arfactor = arfactor)
+  if (length(vvector) > 1) {
+    list(beta = beta, cbeta = cbeta, var = variance, varm = variancem, res = residuals, arfactor = arfactor)
+  } else {
+    list(beta = beta, cbeta = cbeta, var = variance, res = residuals, arfactor = arfactor)
+  }
 }
 
 degrees <- function(z, fwhmcorr, bw, contrast = c(1)) {
