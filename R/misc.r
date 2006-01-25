@@ -217,7 +217,7 @@ z[-ind1,-ind2,-ind3]<-z[-ind1,-ind2,-ind3]+penl*penl0[i1,i2,i3]
 sum(z^2)/sum(z)^2*interv^d
 }
 
-geth.gauss<-function(corr,step=1.001,interv=1){
+geth.gauss<-function(corr,step=1.002,interv=1){
 #   get the   bandwidth for lkern corresponding to a given correlation
 #
 #  interv allows for further discretization of the Gaussian Kernel, result depends on
@@ -239,7 +239,7 @@ geth.gauss<-function(corr,step=1.001,interv=1){
   h
 }
 
-get3Dh.gauss<-function(vred,h0,vwghts,step=1.01,interv=1){
+get3Dh.gauss<-function(vred,h0,vwghts,step=1.002,interv=1){
 #
 #  interv allows for further discretization of the Gaussian Kernel, result depends on
 #  interv for small bandwidths. interv=1  is correct for kernel smoothing, 

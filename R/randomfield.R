@@ -122,7 +122,7 @@ get.corr.gauss <- function(h,interv=1) {
   sum(penl[-(1:interv)]*penl[-((dx-interv+1):dx)])/sum(penl^2)
 }
 
-get.bw.gauss <- function(corr, step = 1.001,interv=1) {
+get.bw.gauss <- function(corr, step = 1.001,interv=2) {
   # get the   bandwidth for lkern corresponding to a given correlation
   # 
   #  keep it simple result does not depend on d
