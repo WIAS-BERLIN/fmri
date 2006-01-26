@@ -210,6 +210,7 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
   while (hakt<=hmax) {
     dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
     if (scorr[1]>=0.1) lambda0 <- lambda0 * Spatialvar.gauss(hakt0/0.42445/4*c(1,wghts),h0*c(1,wghts),d) /
+                                            Spatialvar.gauss(h0*c(1,wghts),1e-5,d) /
                                             Spatialvar.gauss(hakt0/0.42445/4*c(1,wghts),1e-5,d)
     # Correction for spatial correlation depends on h^{(k-1)} 
     hakt0 <- hakt
@@ -313,7 +314,7 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
     vred<-tobj$bi2/tobj$bi^2
   }
   hakt <- hakt/hincr
-  vartheta <- vartheta/Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),h0*c(1,wghts)+1e-5,d)*Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),1e-5,d)
+  vartheta <- vartheta/Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),h0*c(1,wghts)+1e-5,d)*Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),1e-5,d)*Spatialvar.gauss(h0*c(1,wghts),1e-5,d)
 #vred<-vred/Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),h0*c(1,wghts)+1e-5,d)*Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),1e-5,d)
 # 
 #   this accounts for intrinsic correlation (data), less variance reduction (larger variance, larger variance reduction factor) if data were correlated

@@ -17,7 +17,7 @@ penl<-switch(lkern,Triangle=pmax(0,1-x^2),
                    Gaussian=dnorm(x))
 2*sum(penl)^2/sum(diff(penl)^2)
 }
-Varcor.gauss<-function(h){
+Varcor.gauss<-function(h,interv = 1){
 #
 #   Calculates a correction for the variance estimate obtained by (IQRdiff(y)/1.908)^2
 #
