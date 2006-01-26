@@ -157,7 +157,7 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
   h0 <- 0
   if (scorr[1]>0) {
     h0 <- numeric(length(scorr))
-    for (i in 1:length(h0)) h0[i] <- get.bw.gauss(scorr[i])
+    for (i in 1:length(h0)) h0[i] <- get.bw.gauss(scorr[i],interv=2)
     if (length(h0)<d) h0 <- rep(h0[1],d)
     cat("Corresponding bandwiths for specified correlation:",h0,"\n")
   }
@@ -165,7 +165,7 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
   # estimate variance in the gaussian case if necessary  
   if (is.null(sigma2)) {
     sigma2 <- IQRdiff(as.vector(y))^2
-    if (scorr[1]>0) sigma2<-sigma2*Varcor.gauss(h0)
+    if (scorr[1]>0) sigma2<-sigma2*Varcor.gauss(h0)*Spatialvar.gauss(h0*c(1,wghts),1e-5,d)
     cat("Estimated variance: ", signif(sigma2,4),"\n")
   }
   if (length(sigma2)==1) { # homoskedastic Gaussian case
@@ -212,7 +212,7 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
     if (scorr[1]>=0.1) lambda0 <- lambda0 * Spatialvar.gauss(hakt0/0.42445/4*c(1,wghts),h0*c(1,wghts),d) /
                                             Spatialvar.gauss(h0*c(1,wghts),1e-5,d) /
                                             Spatialvar.gauss(hakt0/0.42445/4*c(1,wghts),1e-5,d)
-    # Correction for spatial correlation depends on h^{(k-1)} 
+    # Correction C(h0,hakt) for spatial correlation depends on h^{(k-1)}  all bandwidth-arguments in FWHM 
     hakt0 <- hakt
     if (length(sigma2)==n) { # heteroskedastic Gaussian case
       zobj <- .Fortran("chaws",as.double(y),

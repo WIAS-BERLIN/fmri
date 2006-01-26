@@ -157,7 +157,7 @@ Spatialvar.gauss<-function(h,h0,d,interv=1){
 #
 #   case of colored noise that was produced by smoothing with Gaussian kernel and bandwidth h0
 #
-#   Spatialvariance(lkern,h,h0,d)/Spatialvariance(lkern,h,1e-5,d) gives the 
+#   Spatialvar.gauss(lkern,h,h0,d)/Spatialvar.gauss(lkern,h,1e-5,d) gives the 
 #   a factor for lambda to be used with bandwidth h 
 #
 #
