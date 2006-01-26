@@ -167,6 +167,7 @@ Spatialvar.gauss<-function(h,h0,d,interv=1){
 #  discretisation into voxel) 
 #
   h0 <- pmax(h0,1e-5)
+  h <- pmax(h,1e-5)
   h<-h/2.3548*interv
 if(length(h)==1) h<-rep(h,d)
 ih<-trunc(4*h)

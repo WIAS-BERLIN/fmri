@@ -78,7 +78,7 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
   n1 <- dy[1]
   n2 <- dy[2]
   n3 <- dy[3]
-  n <- length(y)
+  n <- n1*n2*n3
   if (length(dy)==d) {
     dim(y) <- dy <- c(dy,1)
   } else if (length(dy)!=d+1) {

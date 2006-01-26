@@ -177,7 +177,7 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,c
       # NOTE: sort arfactors and bin them! this combines calculation in
       # NOTE: voxels with similar arfactor, see Worsley
       variancepart <- rep(0,length=prod(dy[1:3]))
-      if (length(vvector) > 1) variancepartm <- array(0,c(dy[1:3],length(vvector)^2))
+      if (length(vvector) > 1) variancepartm <- array(0,c(sum(as.logical(vvector))^2,prod(dy[1:3])))
       arlist <- seq(range(arfactor)[1]-step/2,range(arfactor)[2]+step/2,step)
       for (i in 1:(length(arlist)-1)) {
         if (i > progress/100*length(arlist)) {
@@ -197,12 +197,12 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,c
           beta[indar,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% vt # estimate parameter
           residuals[indar,] <- tttprime - beta[indar,] %*% t(zprime) # calculate residuals
           variancepart[indar] <- t(contrast) %*% xtx %*% contrast # variance estimate
-          if (length(vvector) > 1) variancepartm[indar,] <- as.vector(xtx[as.logical(vvector),as.logical(vvector)])
+          if (length(vvector) > 1) variancepartm[,indar] <- as.vector(xtx[as.logical(vvector),as.logical(vvector)])
         }
       }
       b <- rep(1/dy[4],length=dy[4])
       variance <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * variancepart
-      if (length(vvector) > 1) variancem <- as.vector((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * variancepartm
+      if (length(vvector) > 1) variancem <- as.vector((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * t(variancepartm)
       cat("\n")
       cat("calculate.lm: finished\n")
     } else {
