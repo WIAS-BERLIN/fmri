@@ -324,3 +324,267 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
   class(z) <- "aws.gaussian"
   z
 }
+#################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################
+#
+#   reduced version for qtau==1, heteroskedastic variances only, exact value for Variance reduction
+#
+#################################################################################################################################################
+#################################################################################################################################################
+#
+#    R - function  aws3D  for vector-valued  Adaptive Weights Smoothing (AWS)
+#    in 3D                                    
+#
+#    emaphazises on the propagation-separation approach 
+#
+#    Copyright (C) 2005 Weierstrass-Institut fuer
+#                       Angewandte Analysis und Stochastik (WIAS)
+#
+#    Author:  Joerg Polzehl
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+#  USA.
+#
+#     default parameters:  
+#       
+#             sagg:          heta=2   qtau=.95     
+#             Gaussian:      qlambda=.96          
+#
+vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
+                   sigma2=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
+                   heta=NULL,u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
+                   spmin=0,spmax=5,scorr=0,vwghts=1) {
+  #  Auxilary functions
+  IQRdiff <- function(y) IQR(diff(y))/1.908
+
+  #
+  # first check arguments and initialize
+  #
+  args <- match.call()
+
+  # set cut off point in K_{st}(x) = exp(-x) I_{x<spmax}
+  #spmax <- 5
+
+  # test dimension of data (vector of 3D) and define dimension related stuff
+  d <- 3
+  dy <- dim(y)
+  n1 <- dy[1]
+  n2 <- dy[2]
+  n3 <- dy[3]
+  n <- n1*n2*n3
+  if (length(dy)==d) {
+    dim(y) <- dy <- c(dy,1)
+  } else if (length(dy)!=d+1) {
+    stop("y has to be 3 or 4 dimensional")
+  }
+  dv <- dim(y)[d+1]
+
+  # define vwghts
+  if (length(vwghts)>dv) vwghts <- vwghts[1:dv]
+  dv0 <- length(vwghts)
+
+  # MAE
+  mae <- NULL
+
+
+  # define qlambda, lambda
+  if (is.null(qlambda)) qlambda <- .985
+  if (qlambda<.9) warning("Inappropriate value of qlambda")
+  if (qlambda<1) {
+    vwghts <- vwghts/max(vwghts)
+    df <- sum(vwghts^2)^2/sum(vwghts^4)
+    lambda <- qchisq(qlambda,df) 
+  } else {
+    lambda <- 1e50
+  }
+
+  # set the code for the kernel (used in lkern) and set lambda
+  lkern <- switch(lkern,
+                  Triangle=2,
+                  Quadratic=3,
+                  Cubic=4,
+                  Uniform=1,
+                  Gaussian=5,
+                  2)
+
+  # set hinit and hincr if not provided
+  if (is.null(hinit)||hinit<1) hinit <- 1
+
+  # define hmax
+  if (is.null(hmax)) hmax <- 5    # uses a maximum of about 520 points
+
+  # re-define bandwidth for Gaussian lkern!!!!
+  if (lkern==5) {
+    # assume  hmax was given in  FWHM  units (Gaussian kernel will be truncated at 4)
+    hmax <- hmax*0.42445*4
+    hinit <- min(hinit,hmax)
+  }
+
+  # define hincr
+  if (is.null(hincr)||hincr<=1) hincr <- 1.25
+  hincr <- hincr^(1/d)
+
+  # determine corresponding bandwidth for specified correlation
+  h0 <- 0
+  if (scorr[1]>0) {
+    h0 <- numeric(length(scorr))
+    for (i in 1:length(h0)) h0[i] <- get.bw.gauss(scorr[i],interv=2)
+    if (length(h0)<d) h0 <- rep(h0[1],d)
+    cat("Corresponding bandwiths for specified correlation:",h0,"\n")
+  }
+
+  # estimate variance in the gaussian case if necessary  
+  if (is.null(sigma2)) {
+    sigma2 <- IQRdiff(as.vector(y))^2
+    if (scorr[1]>0) sigma2<-sigma2*Varcor.gauss(h0)*Spatialvar.gauss(h0*c(1,wghts),1e-5,d)
+    cat("Estimated variance: ", signif(sigma2,4),"\n")
+  }
+  if (length(sigma2)==1) sigma2<-array(sigma2,dy[1:3]) 
+  # deal with homoskedastic Gaussian case by extending sigma2
+  if (length(sigma2)!=n) stop("sigma2 does not have length 1 or same length as y")
+    lambda <- lambda*2 
+    sigma2 <- 1/sigma2 #  taking the invers yields simpler formulaes 
+
+  # demo mode should deliver graphics!
+  if (demo && !graph) graph <- TRUE
+  
+
+  # Initialize  list for ai, bi and theta
+  if (is.null(wghts)) wghts <- c(1,1,1)
+  hinit <- hinit/wghts[1]
+  hmax <- hmax/wghts[1]
+  wghts <- (wghts[2:3]/wghts[1])
+  tobj <- list(ai=y, bi= rep(1,n))
+  theta <- y
+  steps <- as.integer(log(hmax/hinit)/log(hincr)+1)
+
+  # define lseq
+  if (is.null(lseq)) lseq <- c(1.75,1.35,1.2,1.2,1.2,1.2)
+  if (length(lseq)<steps) lseq <- c(lseq,rep(1,steps-length(lseq)))
+  lseq <- lseq[1:steps]
+
+  k <- 1
+  hakt <- hinit
+  hakt0 <- hinit
+  lambda0 <- lambda
+  if (hinit>1) lambda0 <- 1e50 # that removes the stochstic term for the first step
+
+  # run single steps to display intermediate results
+  while (hakt<=hmax) {
+    dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
+    if (scorr[1]>=0.1) lambda0 <- lambda0 * Spatialvar.gauss(hakt0/0.42445/4*c(1,wghts),h0*c(1,wghts),d) /
+                                            Spatialvar.gauss(h0*c(1,wghts),1e-5,d) /
+                                            Spatialvar.gauss(hakt0/0.42445/4*c(1,wghts),1e-5,d)
+    # Correction C(h0,hakt) for spatial correlation depends on h^{(k-1)}  all bandwidth-arguments in FWHM 
+    hakt0 <- hakt
+    theta0 <- theta
+    bi0 <- tobj$bi
+#
+#   need these values to compute variances after the last iteration
+#
+      tobj <- .Fortran("chaws2",as.double(y),
+                       as.double(sigma2),
+                       as.integer(n1),
+                       as.integer(n2),
+                       as.integer(n3),
+		       as.integer(dv),
+		       as.integer(dv0),
+                       hakt=as.double(hakt),
+                       as.double(lambda0),
+                       as.double(theta0),
+                       bi=as.double(bi0),
+                       ai=as.double(tobj$ai),
+                       as.integer(lkern),
+	               as.double(spmin),
+		       as.double(spmax),
+		       double(prod(dlw)),
+		       as.double(wghts),
+		       as.double(vwghts),
+		       double(dv),#swjy
+		       double(dv0),#thi
+		       double(dv0),#thj
+		       PACKAGE="fmri")[c("bi","ai","hakt")]
+    gc()
+    dim(tobj$ai) <- dy
+    gc()
+    theta <- array(tobj$ai/tobj$bi,dy) 
+    dim(tobj$bi) <- dy[-4]
+    if (graph) {
+      par(mfrow=c(1,3),mar=c(1,1,3,.25),mgp=c(2,1,0))
+      image(y[,,n3%/%2+1,1],col=gray((0:255)/255),xaxt="n",yaxt="n")
+      title(paste("Observed Image  min=",signif(min(y),3)," max=",signif(max(y),3)))
+      image(theta[,,n3%/%2+1,1],col=gray((0:255)/255),xaxt="n",yaxt="n")
+      title(paste("Reconstruction  h=",signif(hakt,3)," min=",signif(min(tobj$theta),3)," max=",signif(max(tobj$theta),3)))
+      image(tobj$bi[,,n3%/%2+1],col=gray((0:255)/255),xaxt="n",yaxt="n")
+      title(paste("Sum of weights: min=",signif(min(tobj$bi),3)," mean=",signif(mean(tobj$bi),3)," max=",signif(max(tobj$bi),3)))
+    }
+    if (!is.null(u)) {
+      cat("bandwidth: ",signif(hakt,3),"eta==1",sum(tobj$eta==1),"   MSE: ",
+          signif(mean((theta-u)^2),3),"   MAE: ",signif(mean(abs(theta-u)),3)," mean(bi)=",signif(mean(tobj$bi),3),"\n")
+      mae <- c(mae,signif(mean(abs(theta-u)),3))
+    }
+    if (demo) readline("Press return")
+    hakt <- hakt*hincr
+    x <- 1.25^(k-1)
+    scorrfactor <- x/(3^d*prod(scorr)*prod(h0)+x)
+    lambda0 <- lambda*lseq[k]*scorrfactor
+    k <- k+1
+    gc()
+  }
+###                                                                       
+###   Now compute variance of theta and variance reduction factor (with respect to the spatially uncorrelated situation
+###   
+      g <- trunc(h0/c(1,wghts)/2.3548*4)+1
+      gwght <- outer(dnorm(-(g[1]):g[1],0,2.3548/h0[1]),
+               outer(dnorm(-(g[2]):g[2],0,2.3548/h0[2]),
+	             dnorm(-(g[3]):g[3],0,2.3548/h0[3]),"*"),"*")
+      dgw <- dim(gw)
+      qg <- sum(gwght^2)
+      ng <- sum(gwght)
+      vred <- .Fortran("chawsvr",as.double(y),
+                       as.double(sigma2),
+                       as.integer(n1),
+                       as.integer(n2),
+                       as.integer(n3),
+		       as.integer(dv),
+		       as.integer(dv0),
+                       as.double(tobj$hakt),
+                       as.double(lambda0),
+                       as.double(theta0),# thats the theta needed for the weights
+                       as.double(bi0), # thats the bi needed for the weights
+		       vred=double(n),
+                       as.integer(lkern),
+	               as.double(spmin),
+		       as.double(spmax),
+		       double(prod(dlw)),# lwghts
+		       as.double(gwght),# gwghts
+		       double(n), # to keep the wij
+		       as.integer(dgw),
+		       as.double(wghts),
+		       as.double(vwghts),
+		       double(dv0),#thi
+		       double(dv0),#thj
+		       PACKAGE="fmri")$vred
+  vartheta <- vred/tobj$bi^2/qg
+  vred <- vartheta*sigma2/ng^2*qg
+# 
+#   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
+#
+  z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,y=y,
+            hmax=tobj$hakt,mae=mae,lseq=c(0,lseq[-steps]),call=args)
+  class(z) <- "aws.gaussian"
+  z
+}
