@@ -308,7 +308,7 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 ###   
   if (length(sigma2)==n) {
 # heteroskedastic Gaussian case 
-    vartheta <- tobj$bi2/tobj$bi^2
+    vartheta <- tobj$bi2/tobj$bi^2/Spatialvar.gauss(h0*c(1,wghts),1e-5,d)
   } else {
     vartheta <- sigma2*tobj$bi2/tobj$bi^2
     vred<-tobj$bi2/tobj$bi^2
