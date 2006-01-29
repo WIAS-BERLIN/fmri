@@ -548,6 +548,9 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 ###   Now compute variance of theta and variance reduction factor (with respect to the spatially uncorrelated situation
 ###   
       g <- trunc(h0/c(1,wghts)/2.3548*4)+1
+#
+#  use g <- trunc(h0/c(1,wghts)/2.3548*3)+1 if it takes to long
+#
       gwght <- outer(dnorm(-(g[1]):g[1],0,2.3548/h0[1]),
                outer(dnorm(-(g[2]):g[2],0,2.3548/h0[2]),
 	             dnorm(-(g[3]):g[3],0,2.3548/h0[3]),"*"),"*")

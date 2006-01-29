@@ -78,13 +78,13 @@ C
       implicit logical (a-z)
       external kldist,lkern
       real*8 kldist,lkern
-      integer n1,n2,n3,model,kern,dv,dv0
+      integer n1,n2,n3,kern,dv,dv0
       logical aws,fix(1)
       real*8 y(1),theta(1),bi(1),bi0(1),ai(1),lambda,spmax,wght(2),
      1       bi2(1),hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),thj(dv0)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
      1        iind,jind,jind3,jind2,clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
-      real*8 thetai,bii,sij,swj,swj2,swj0,swjy(dv),z1,z2,z3,wj,hakt2,
+      real*8 bii,sij,swj,swj2,swj0,swjy(dv),z1,z2,z3,wj,hakt2,
      1        bii0
       hakt2=hakt*hakt
       ih1=hakt
@@ -104,6 +104,11 @@ C
       dlw1=ih1+clw1
       dlw2=ih2+clw2
       dlw3=ih3+clw3
+      z2=0.d0
+      z3=0.d0
+C   
+C    location weights
+C
       DO j3=1,dlw3
          if(n3.gt.1) THEN
             z3=(clw3-j3)*wght(2)
@@ -225,13 +230,13 @@ C
       implicit logical (a-z)
       external kldist,lkern
       real*8 kldist,lkern
-      integer n1,n2,n3,model,kern,dv,dv0
+      integer n1,n2,n3,kern,dv,dv0
       logical aws,fix(1)
       real*8 y(1),theta(1),bi(1),bi0(1),ai(1),lambda,spmax,wght(2),
      1       bi2(1),hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),thj(dv0)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
      1        iind,jind,jind3,jind2,clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
-      real*8 thetai,bii,sij,swj,swj2,swj0,swjy(dv),z1,z2,z3,wj,hakt2,
+      real*8 bii,sij,swj,swj2,swj0,swjy(dv),z1,z2,z3,wj,hakt2,
      1        bii0,si2(1),vred(1),sv1,sv2
       hakt2=hakt*hakt
       ih1=hakt
@@ -251,6 +256,11 @@ C
       dlw1=ih1+clw1
       dlw2=ih2+clw2
       dlw3=ih3+clw3
+      z2=0.d0
+      z3=0.d0
+C   
+C    location weights
+C
       DO j3=1,dlw3
          if(n3.gt.1) THEN
             z3=(clw3-j3)*wght(2)
@@ -376,14 +386,13 @@ C
       implicit logical (a-z)
       external kldist,lkern
       real*8 kldist,lkern
-      integer n1,n2,n3,model,kern,dv,dv0
+      integer n1,n2,n3,kern,dv,dv0
       logical aws
       real*8 y(1),theta(1),bi(1),ai(1),lambda,spmax,wght(2),
      1       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),thj(dv0)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
      1        iind,jind,jind3,jind2,clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
-      real*8 thetai,bii,sij,swj,swjy(dv),z1,z2,z3,wj,hakt2,
-     1        bii0,si2(1)
+      real*8 bii,sij,swj,swjy(dv),z1,z2,z3,wj,hakt2,si2(1)
       hakt2=hakt*hakt
       ih1=hakt
       aws=lambda.lt.1d40
@@ -402,6 +411,11 @@ C
       dlw1=ih1+clw1
       dlw2=ih2+clw2
       dlw3=ih3+clw3
+      z2=0.d0
+      z3=0.d0
+C   
+C    location weights
+C
       DO j3=1,dlw3
          if(n3.gt.1) THEN
             z3=(clw3-j3)*wght(2)
@@ -514,16 +528,16 @@ C
       implicit logical (a-z)
       external kldist,lkern
       real*8 kldist,lkern
-      integer n1,n2,n3,model,kern,dv,dv0,dgw(3)
+      integer n1,n2,n3,kern,dv,dv0,dgw(3)
       logical aws
-      real*8 y(1),theta(1),bi(1),lambda,spmax,wght(2),g(3),gwght(1),
+      real*8 y(1),theta(1),bi(1),lambda,spmax,wght(2),gwght(1),
      1       swght(n1,n2,n3),hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),
      2       thj(dv0)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
      1        iind,jind,jind3,jind2,clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n,
-     2        cgw1,cgw2,cgw3,dgw1,dgw2,dgw3,j1a,j1e,j2a,j2e,j3a,j3e,
-     3        l1,l2,l3,m1,m2,m3,cgw10,cgw20,cgw30,k1,k2,k3,indg
-      real*8 thetai,bii,sij,swj,swj2,z1,z2,z3,wj,hakt2,
+     2        cgw1,dgw1,dgw2,dgw3,j1a,j1e,j2a,j2e,j3a,j3e,l1,l2,l3,
+     3        m1,m2,m3,cgw10,cgw20,cgw30,k1,k2,k3,indg,m10,m20,m30
+      real*8 bii,sij,swj,swj2,z1,z2,z3,wj,hakt2,
      1        si2(n1,n2,n3),var(1)
       hakt2=hakt*hakt
       ih1=hakt
@@ -538,8 +552,6 @@ C
       cgw20=(dgw2-1)/2
       cgw30=(dgw3-1)/2
       cgw1=cgw10+1
-      cgw2=cgw20+1
-      cgw3=cgw30+1
       ih3=hakt/wght(2)
       ih2=hakt/wght(1)
       ih1=hakt
@@ -552,6 +564,11 @@ C
       dlw1=ih1+clw1
       dlw2=ih2+clw2
       dlw3=ih3+clw3
+      z2=0.d0
+      z3=0.d0
+C   
+C    location weights
+C
       DO j3=1,dlw3
          if(n3.gt.1) THEN
             z3=(clw3-j3)*wght(2)
@@ -651,16 +668,19 @@ C
 		     DO l1=j1a-cgw10,j1e+cgw10
 	                if(l1.le.1.or.l1.gt.n1) CYCLE
 			swj=0.d0
-		        DO m1=-cgw10,cgw10
-			   k1=m1+l1
+		        DO m10=-cgw10,cgw10
+			   k1=m10+l1
 			   if(k1.lt.j1a.or.k1.gt.j1e) CYCLE
-			   DO m2=-cgw20,cgw20
-			      k2=m2+l2
+                           m1=m10+cgw1
+			   DO m20=-cgw20,cgw20
+			      k2=m20+l2
 			      if(k2.lt.j2a.or.k2.gt.j2e) CYCLE
-			      DO m3=-cgw30,cgw30
-			         k3=m3+l3
+                              m2=m20+cgw20
+			      DO m30=-cgw30,cgw30
+			         k3=m30+l3
 			         if(k3.lt.j3a.or.k3.gt.j3e) CYCLE
-				 indg=m1+(m2-1)*dgw1+(m3-1)*dgw1*dgw2
+                                 m3=m30+cgw30
+				 indg=m1+(m2-1)*dgw1+m3*dgw1*dgw2
 			         swj=swj+swght(k1,k2,k3)*gwght(indg)
 			      END DO
 			   END DO
