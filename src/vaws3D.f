@@ -539,6 +539,7 @@ C
      3        m1,m2,m3,cgw10,cgw20,cgw30,k1,k2,k3,indg,m10,m20,m30
       real*8 bii,sij,swj,swj2,z1,z2,z3,wj,hakt2,
      1        si2(n1,n2,n3),var(1)
+      integer ngw
       hakt2=hakt*hakt
       ih1=hakt
       aws=lambda.lt.1d40
@@ -548,6 +549,7 @@ C
       dgw1=dgw(1)
       dgw2=dgw(2)
       dgw3=dgw(3)
+      ngw=dgw1*dgw2*dgw3
       cgw10=(dgw1-1)/2
       cgw20=(dgw2-1)/2
       cgw30=(dgw3-1)/2
@@ -607,11 +609,11 @@ C   scaling of sij outside the loop
 	          thi(k)=theta(iind+(k-1)*n)
 	       END DO
 C   fill swght with zeros where needed
-               j3a=min0(1-clw3+i3,1)
+               j3a=max0(1-clw3+i3,1)
                j3e=min0(dlw3-clw3+i3,n3)
-               j2a=min0(1-clw2+i2,1)
+               j2a=max0(1-clw2+i2,1)
                j2e=min0(dlw2-clw2+i2,n2)
-               j1a=min0(1-clw1+i1,1)
+               j1a=max0(1-clw1+i1,1)
                j1e=min0(dlw1-clw1+i1,n1)
                DO j1=j1a,j1e
                   DO j2=j2a,j2e
@@ -653,7 +655,7 @@ C   if sij <= spmin  this just keeps the location penalty
 C    spmin = 0 corresponds to old choice of K_s 
 C   new kernel is flat in [0,spmin] and then decays exponentially
                         END IF
-                        swght(j1,j2,j3)=wj*si2(j1,j2,j3)
+                        swght(j1,j2,j3)=wj*dsqrt(si2(j1,j2,j3))
                      END DO
                   END DO
                END DO
@@ -662,11 +664,11 @@ C     now the convolution
 C
                swj2=0.d0
                DO l3=j3a-cgw30,j3e+cgw30
-	          if(l3.le.1.or.l3.gt.n3) CYCLE
+	          if(l3.lt.1.or.l3.gt.n3) CYCLE
 	          DO l2=j2a-cgw20,j2e+cgw20
-	             if(l2.le.1.or.l2.gt.n2) CYCLE
+	             if(l2.lt.1.or.l2.gt.n2) CYCLE
 		     DO l1=j1a-cgw10,j1e+cgw10
-	                if(l1.le.1.or.l1.gt.n1) CYCLE
+	                if(l1.lt.1.or.l1.gt.n1) CYCLE
 			swj=0.d0
 		        DO m10=-cgw10,cgw10
 			   k1=m10+l1
@@ -680,12 +682,13 @@ C
 			         k3=m30+l3
 			         if(k3.lt.j3a.or.k3.gt.j3e) CYCLE
                                  m3=m30+cgw30
-				 indg=m1+(m2-1)*dgw1+m3*dgw1*dgw2
+				 indg=m1+m2*dgw1+m3*dgw1*dgw2
 			         swj=swj+swght(k1,k2,k3)*gwght(indg)
 			      END DO
 			   END DO
 	                END DO
-			swj2=swj2+swj/si2(l1,l2,l3)
+			swj2=swj2+swj*swj
+C           /si2(l1,l2,l3)
 		     END DO
 		  END DO
 	       END DO
@@ -695,3 +698,219 @@ C
       END DO
       RETURN
       END
+      subroutine nqg(gwght,gwght2,dg1,dg2,dg3,n1,n2,n3,qg,ng)
+      implicit logical (a-z)
+      integer dg1,dg2,dg3,n1,n2,n3
+      real*8 gwght(dg1,dg2,dg3),gwght2(dg1,dg2,dg3),qg(n1,n2,n3),
+     1       ng(n1,n2,n3)
+      integer cg1,cg2,cg3,cn1,cn2,cn3,i1,i2,i3,kk,ll,mm,rn1,rn2,rn3
+      real*8 zn,zq,zrown,zrowq,z
+      cg1=dg1/2
+      cg2=dg2/2
+      cg3=dg3/2
+      zn=0.d0
+      zq=0.d0
+      DO i1=1,dg1
+         DO i2=1,dg2
+	    DO i3=1,dg3
+	       zn=zn+gwght(i1,i2,i3)
+	       zq=zq+gwght2(i1,i2,i3)
+	    END DO
+	 END DO
+      END DO
+      cn1=(n1+1)/2
+      cn2=(n2+1)/2
+      cn3=(n3+1)/2
+      DO i1=1,cn1
+         DO i2=1,cn2
+	    DO i3=1,cn3
+	    ng(i1,i2,i3)=zn
+	    qg(i1,i2,i3)=zq
+	    END DO
+	 END DO
+      END DO
+C   now handle boundary surfaces
+C      call intpr("boundary",8,cg1,1)
+      ll=cg1
+      DO WHILE(ll.gt.0) 
+         zrown=0.d0
+	 zrowq=0.d0
+	 DO i2=1,dg2
+	    DO i3=1,dg3
+	       zrown=zrown+gwght(cg1+1-ll,i2,i3)
+	       zrowq=zrowq+gwght2(cg1+1-ll,i2,i3)
+	    END DO
+	 END DO
+         DO i1=1,ll
+            DO i2=1,cn2
+               DO i3=1,cn3
+	          ng(i1,i2,i3)=ng(i1,i2,i3)-zrown 
+	          qg(i1,i2,i3)=qg(i1,i2,i3)-zrowq 
+	       END DO
+	    END DO
+	 END DO
+	 ll=ll-1
+      END DO
+C      call intpr("boundary",8,cg2,1)
+      ll=cg2
+      DO WHILE(ll.gt.0) 
+         zrown=0.d0
+	 zrowq=0.d0
+	 DO i1=1,dg1
+	    DO i3=1,dg3
+	       zrown=zrown+gwght(i1,cg2+1-ll,i3)
+	       zrowq=zrowq+gwght2(i1,cg2+1-ll,i3)
+	    END DO
+	 END DO
+         DO i2=1,ll
+            DO i1=1,cn1
+               DO i3=1,cn3
+	          ng(i1,i2,i3)=ng(i1,i2,i3)-zrown 
+	          qg(i1,i2,i3)=qg(i1,i2,i3)-zrowq 
+	       END DO
+	    END DO
+	 END DO
+	 ll=ll-1
+      END DO
+C      call intpr("boundary",8,cg3,1)
+      ll=cg3
+      DO WHILE(ll.gt.0) 
+         zrown=0.d0
+	 zrowq=0.d0
+	 DO i1=1,dg1
+	    DO i3=1,dg3
+	       zrown=zrown+gwght(i1,i2,cg3+1-ll)
+	       zrowq=zrowq+gwght2(i1,i2,cg3+1-ll)
+	    END DO
+	 END DO
+         DO i3=1,ll
+            DO i1=1,cn1
+               DO i2=1,cn2
+	          ng(i1,i2,i3)=ng(i1,i2,i3)-zrown 
+	          qg(i1,i2,i3)=qg(i1,i2,i3)-zrowq 
+	       END DO
+	    END DO
+	 END DO
+	 ll=ll-1
+      END DO
+C  now edges  
+C      call intpr("edges",5,cg3,1)
+      ll=cg1
+      mm=cg2
+      DO WHILE(ll.gt.0)
+         DO WHILE(mm.gt.0)
+            zrown=0.d0
+            zrowq=0.d0
+	    DO i3=1,dg3
+	       zrown=zrown+gwght(cg1+1-ll,cg2+1-mm,i3)
+	       zrowq=zrowq+gwght2(cg1+1-ll,cg2+1-mm,i3)
+	    END DO
+            DO i1=1,ll
+               DO i2=1,mm
+                  DO i3=1,cn3
+	             ng(i1,i2,i3)=ng(i1,i2,i3)+zrown 
+	             qg(i1,i2,i3)=qg(i1,i2,i3)+zrowq 
+	          END DO
+	       END DO
+	    END DO
+	    mm=mm-1
+	 END DO
+	 ll=ll-1
+      END DO
+C      call intpr("edges",5,cg2,1)
+      ll=cg1
+      mm=cg3
+      DO WHILE(ll.gt.0)
+         DO WHILE(mm.gt.0)
+            zrown=0.d0
+            zrowq=0.d0
+	    DO i2=1,dg2
+	       zrown=zrown+gwght(cg1+1-ll,i2,cg3+1-mm)
+	       zrowq=zrowq+gwght2(cg1+1-ll,i2,cg3+1-mm)
+	    END DO
+            DO i1=1,ll
+               DO i3=1,mm
+                  DO i2=1,cn2
+	             ng(i1,i2,i3)=ng(i1,i2,i3)+zrown 
+	             qg(i1,i2,i3)=qg(i1,i2,i3)+zrowq 
+	          END DO
+	       END DO
+	    END DO
+	    mm=mm-1
+	 END DO
+	 ll=ll-1
+      END DO
+C      call intpr("edges",5,cg3,1)
+      ll=cg2
+      mm=cg3
+      DO WHILE(ll.gt.0)
+         DO WHILE(mm.gt.0)
+            zrown=0.d0
+            zrowq=0.d0
+	    DO i1=1,dg1
+	       zrown=zrown+gwght(i1,cg2+1-ll,cg3+1-mm)
+	       zrowq=zrowq+gwght2(i1,cg2+1-ll,cg3+1-mm)
+	    END DO
+            DO i2=1,ll
+               DO i3=1,mm
+                  DO i1=1,cn1
+	             ng(i1,i2,i3)=ng(i1,i2,i3)+zrown 
+	             qg(i1,i2,i3)=qg(i1,i2,i3)+zrowq 
+	          END DO
+	       END DO
+	    END DO
+	    mm=mm-1
+	 END DO
+	 ll=ll-1
+      END DO
+C  now the corner
+C      call intpr("corner",6,cg3,1)
+      kk=cg1
+      ll=cg2
+      mm=cg3
+      DO WHILE(kk.gt.0)
+         DO WHILE(ll.gt.0)
+            DO WHILE(mm.gt.0)
+               DO i2=1,ll
+                  DO i3=1,mm
+                     DO i1=1,kk
+	                ng(i1,i2,i3)=ng(i1,i2,i3)-
+     1                               gwght(cg1+1-kk,cg2+1-ll,cg3+1-mm)
+	                qg(i1,i2,i3)=qg(i1,i2,i3)-
+     1                              gwght2(cg1+1-kk,cg2+1-ll,cg3+1-mm)
+	             END DO
+	          END DO
+	       END DO
+	       mm=mm-1
+	    END DO
+	    ll=ll-1
+	 END DO
+	 kk=kk-1
+      END DO
+      
+C  now symmetries
+      DO i1=1,cn1
+         DO i2=1,cn2
+	    DO i3=1,cn3
+	       z=ng(i1,i2,i3)
+	       ng(n1+1-i1,i2,i3)=z
+	       ng(n1+1-i1,n2+1-i2,i3)=z
+	       ng(n1+1-i1,n2+1-i2,n3+1-i3)=z
+	       ng(n1+1-i1,i2,n3+1-i3)=z
+	       ng(i1,n2+1-i2,i3)=z
+	       ng(i1,n2+1-i2,n3+1-i3)=z
+	       ng(i1,i2,n3+1-i3)=z
+	       z=qg(i1,i2,i3)
+	       qg(n1+1-i1,i2,i3)=z
+	       qg(n1+1-i1,n2+1-i2,i3)=z
+	       qg(n1+1-i1,n2+1-i2,n3+1-i3)=z
+	       qg(n1+1-i1,i2,n3+1-i3)=z
+	       qg(i1,n2+1-i2,i3)=z
+	       qg(i1,n2+1-i2,n3+1-i3)=z
+	       qg(i1,i2,n3+1-i3)=z
+	    END DO
+	 END DO
+      END DO
+      RETURN
+      END
+	       

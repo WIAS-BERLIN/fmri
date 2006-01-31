@@ -154,8 +154,8 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
   hincr <- hincr^(1/d)
 
   # determine corresponding bandwidth for specified correlation
-  h0 <- 0
-  if (scorr[1]>0) {
+  h0 <- rep(0,length(scorr))
+  if (max(scorr)>0) {
     h0 <- numeric(length(scorr))
     for (i in 1:length(h0)) h0[i] <- get.bw.gauss(scorr[i],interv=2)
     if (length(h0)<d) h0 <- rep(h0[1],d)
@@ -314,12 +314,13 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
     vred<-tobj$bi2/tobj$bi^2
   }
   hakt <- hakt/hincr
-  vartheta <- vartheta*Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),h0*c(1,wghts)+1e-5,d)/Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),1e-5,d) / Spatialvar.gauss(h0*c(1,wghts),1e-5,d) 
+  cgh <- Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),h0*c(1,wghts)+1e-5,d)/Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),1e-5,d) / Spatialvar.gauss(h0*c(1,wghts),1e-5,d) 
+  vartheta <- vartheta*cgh 
 #vred<-vred/Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),h0*c(1,wghts)+1e-5,d)*Spatialvar.gauss(hakt/0.42445/4*c(1,wghts),1e-5,d)
 # 
 #   this accounts for intrinsic correlation (data), less variance reduction (larger variance, larger variance reduction factor) if data were correlated
 #
-  z <- list(theta=tobj$theta,ni=tobj$bi,var=vartheta,vred=vred,y=y,
+  z <- list(theta=tobj$theta,ni=tobj$bi,qi=tobj$bi2,cgh=cgh,var=vartheta,vred=vred,y=y,
             hmax=hakt,mae=mae,lseq=c(0,lseq[-steps]),call=args)
   class(z) <- "aws.gaussian"
   z
@@ -438,8 +439,8 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
   hincr <- hincr^(1/d)
 
   # determine corresponding bandwidth for specified correlation
-  h0 <- 0
-  if (scorr[1]>0) {
+  h0 <- rep(0,length(scorr))
+  if (max(scorr)>0) {
     h0 <- numeric(length(scorr))
     for (i in 1:length(h0)) h0[i] <- get.bw.gauss(scorr[i],interv=2)
     if (length(h0)<d) h0 <- rep(h0[1],d)
@@ -547,16 +548,16 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 ###                                                                       
 ###   Now compute variance of theta and variance reduction factor (with respect to the spatially uncorrelated situation
 ###   
-      g <- trunc(h0/c(1,wghts)/2.3548*4)+1
+      g <- trunc(h0/c(1,wghts)/2.3548*4)
 #
 #  use g <- trunc(h0/c(1,wghts)/2.3548*3)+1 if it takes to long
 #
-      gwght <- outer(dnorm(-(g[1]):g[1],0,2.3548/h0[1]),
-               outer(dnorm(-(g[2]):g[2],0,2.3548/h0[2]),
-	             dnorm(-(g[3]):g[3],0,2.3548/h0[3]),"*"),"*")
-      dgw <- dim(gw)
-      qg <- sum(gwght^2)
-      ng <- sum(gwght)
+      if(h0[1]>0) gw1 <- dnorm(-(g[1]):g[1],0,h0[1]/2.3548)/dnorm(0,0,h0[1]/2.3548) else gw1 <- 1
+      if(h0[2]>0) gw2 <- dnorm(-(g[2]):g[2],0,h0[2]/2.3548/wghts[1])/dnorm(0,0,h0[2]/2.3548/wghts[1]) else gw2 <- 1
+      if(h0[3]>0) gw3 <- dnorm(-(g[3]):g[3],0,h0[3]/2.3548/wghts[2])/dnorm(0,0,h0[3]/2.3548/wghts[2]) else gw3 <- 1
+      gwght <- outer(gw1,outer(gw2,gw3,"*"),"*")
+      gwght <- gwght/sum(gwght)
+      dgw <- dim(gwght)
       vred <- .Fortran("chawsvr",as.double(y),
                        as.double(sigma2),
                        as.integer(n1),
@@ -581,13 +582,29 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 		       double(dv0),#thi
 		       double(dv0),#thj
 		       PACKAGE="fmri")$vred
+      dim(vred) <- dim(sigma2)
+      nqg <- .Fortran("nqg",as.double(gwght),
+                       as.double(gwght^2),
+                       as.integer(dgw[1]),
+                       as.integer(dgw[2]),
+                       as.integer(dgw[3]),
+                       as.integer(n1),
+                       as.integer(n2),
+                       as.integer(n3),
+                       qg=double(n),
+		       ng=double(n),
+		       PACKAGE="fmri")[c("qg","ng")]
+      qg <- array(nqg$qg,dim(sigma2))
+      ng <- array(nqg$ng,dim(sigma2))
+  vr<-vred
+  dim(tobj$bi)<-dim(vred)
   vartheta <- vred/tobj$bi^2/qg
   vred <- vartheta*sigma2/ng^2*qg
 # 
 #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
 #
   z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,y=y,
-            hmax=tobj$hakt,mae=mae,lseq=c(0,lseq[-steps]),call=args)
+            hmax=tobj$hakt,mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg,vr=vr,gw=gwght)
   class(z) <- "aws.gaussian"
   z
 }
