@@ -68,6 +68,7 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 
   # first check arguments and initialize
   args <- match.call()
+  cat("\nvaws3D: start smoothing\n")
 
   # set cut off point in K_{st}(x) = exp(-x) I_{x<spmax}
   #spmax <- 5
@@ -207,6 +208,9 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
   if (hinit>1) lambda0 <- 1e50 # that removes the stochstic term for the first step
 
   # run single steps to display intermediate results
+  progress <- 0
+  step <- 0
+  total <- (hincr^(d*ceiling(log(hmax/hinit)/log(hincr)))-1)/(hincr^d-1)
   while (hakt<=hmax) {
     dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
     if (scorr[1]>=0.1) lambda0 <- lambda0 * Spatialvar.gauss(hakt0/0.42445/4*c(1,wghts),h0*c(1,wghts),d) /
@@ -292,6 +296,10 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
       cat("bandwidth: ",signif(hakt,3),"eta==1",sum(tobj$eta==1),"   MSE: ",
           signif(mean((tobj$theta-u)^2),3),"   MAE: ",signif(mean(abs(tobj$theta-u)),3)," mean(bi)=",signif(mean(tobj$bi),3),"\n")
       mae <- c(mae,signif(mean(abs(tobj$theta-u)),3))
+    } else if (total !=0) {
+      progress <- progress + hincr^(d*step)
+      step <- step + 1
+      cat(signif(progress/total,2)*100,"% . ",sep="")
     }
     if (demo) readline("Press return")
     hakt <- hakt*hincr
@@ -323,6 +331,7 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
   z <- list(theta=tobj$theta,ni=tobj$bi,qi=tobj$bi2,cgh=cgh,var=vartheta,vred=vred,y=y,
             hmax=hakt,mae=mae,lseq=c(0,lseq[-steps]),call=args)
   class(z) <- "aws.gaussian"
+  cat("\nvaws3D: finished smoothing\n")
   z
 }
 #################################################################################################################################################

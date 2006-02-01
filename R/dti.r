@@ -1,4 +1,7 @@
+### CODE IN THIS FILE IS STILL EXPERIMENTAL ###
+
 create.designmatrix.dti <- function(bvec, bvalue=1) {
+  cat("\nNOTE: This code is still experimental!\n") 
   dimension <- dim(bvec)[2] # should be 3
   if (dimension != 3) {
     warning("Error: gradient vectors do not have length 3")
@@ -22,6 +25,7 @@ create.designmatrix.dti <- function(bvec, bvalue=1) {
 }
 
 calculate.lm.dti <- function(ttt,z,res=FALSE) {
+  cat("\nNOTE: This code is still experimental!\n") 
   svdresult <- svd(z)
   u <- svdresult$u
   v <- svdresult$v
@@ -53,6 +57,7 @@ calculate.lm.dti <- function(ttt,z,res=FALSE) {
 }
   
 determine.eigenvalue <- function(diff) {
+  cat("\nNOTE: This code is still experimental!\n") 
 
   eigen <- array(0,dim=c(dim(diff)[1],dim(diff)[2],dim(diff)[3],3))
   for (i in 1:dim(diff)[1]) {
@@ -69,6 +74,7 @@ determine.eigenvalue <- function(diff) {
 }
 
 determine2.eigenvalue <- function(diff,only.values=TRUE) {
+  cat("\nNOTE: This code is still experimental!\n") 
   n<-3
   ddiff<-prod(dim(diff)[-4])
   z<-.Fortran("eigen3", as.integer(ddiff), as.double(diff), evectors = double(ddiff*9), evalues = double(ddiff*3),
@@ -77,6 +83,7 @@ determine2.eigenvalue <- function(diff,only.values=TRUE) {
 }
 
 anisotropy <- function(eigen) {
+  cat("\nNOTE: This code is still experimental!\n") 
   
   fa <-
     array(0,dim=c(dim(eigen)[1],dim(eigen)[2],dim(eigen)[3]))

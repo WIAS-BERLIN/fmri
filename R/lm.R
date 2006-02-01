@@ -67,23 +67,22 @@ create.designmatrix <- function(hrf, order=0) {
 
 
 
-create.arcorrection <- function(scans, rho=0) {
-  rho0 <- 1/sqrt(1-rho^2)
-  a <- numeric(scans*scans)
-  
-  a[1] <- 1
-  ind <- (2:scans) *(scans+1) - 2*scans
-  a[ind] <- -rho*rho0
-  a[ind+scans] <- rho0
-  dim(a) <- c(scans,scans)
-  
-  a
-}
-
 
 
 calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,contrast=c(1),vvector=c(1)) {
-#  require(aws)
+  create.arcorrection <- function(scans, rho=0) {
+    rho0 <- 1/sqrt(1-rho^2)
+    a <- numeric(scans*scans)
+    
+    a[1] <- 1
+    ind <- (2:scans) *(scans+1) - 2*scans
+    a[ind] <- -rho*rho0
+    a[ind+scans] <- rho0
+    dim(a) <- c(scans,scans)
+    
+    a
+  }
+
   cat("calculate.lm: entering function with:",actype, hmax, vtype, "\n")
 
   # first consider contrast vector! NO test whether it is real contrast!!
@@ -237,11 +236,3 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,c
   }
 }
 
-degrees <- function(z, fwhmcorr, bw, contrast = c(1)) {
-  if (length(contrast) <= dim(z)[2]) contrast <- c(contrast,rep(0,dim(z)[2]-length(contrast)))
-  length(contrast) <- dim(z)[2]
-  x <- (z %*% (t(z) %*% z)) %*% contrast
-  tau1 <- sum(x[-1] %*% x[-length(x)])/sum(x^2)
-  f <- (1+2*(fwhmcorr^2)/(bw^2))^(-1.5)
-  (dim(z)[1]-4)/(1+2*f*tau1^2)
-}

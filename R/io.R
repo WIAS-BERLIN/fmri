@@ -125,6 +125,27 @@ read.AFNI <- function(file) {
 
 
 write.AFNI <- function(file, ttt, label, note="", origin=c(0,0,0), delta=c(4,4,4), idcode="WIAS_noid") {
+  AFNIheaderpart <- function(type, name, value) {
+    a <- "\n"
+    a <- paste(a, "type = ", type, "\n", sep="")
+    a <- paste(a, "name = ", name, "\n", sep="")
+    if (regexpr("string",type) == 1) {
+      value <- paste("'", value, "~", sep="")
+      a <- paste(a, "count = ", nchar(value) - 1, "\n", sep ="")
+      a <- paste(a, value, "\n", sep="")
+    } else {
+      a <- paste(a, "count = ", length(value), "\n", sep ="")
+      j <- 0
+      while (j<length(value)) {
+        left <- length(value) - j
+        if (left>4) left <- 5
+        a <- paste(a, paste(value[(j+1):(j+left)],collapse="  "), "\n", sep="  ")
+        j <- j+5
+      }
+    }
+    a
+  }
+  
   conhead <- file(paste(file, ".HEAD", sep=""), "w")
   writeChar(AFNIheaderpart("string-attribute","HISTORY_NOTE",note),conhead,eos=NULL)
   writeChar(AFNIheaderpart("string-attribute","TYPESTRING","3DIM_HEAD_FUNC"),conhead,eos=NULL)  
@@ -156,27 +177,6 @@ write.AFNI <- function(file, ttt, label, note="", origin=c(0,0,0), delta=c(4,4,4
   dim(ttt) <- NULL
   writeBin(as.integer(ttt), conbrik,size=2, endian="big")
   close(conbrik)
-}
-
-AFNIheaderpart <- function(type, name, value) {
-  a <- "\n"
-  a <- paste(a, "type = ", type, "\n", sep="")
-  a <- paste(a, "name = ", name, "\n", sep="")
-  if (regexpr("string",type) == 1) {
-    value <- paste("'", value, "~", sep="")
-    a <- paste(a, "count = ", nchar(value) - 1, "\n", sep ="")
-    a <- paste(a, value, "\n", sep="")
-  } else {
-    a <- paste(a, "count = ", length(value), "\n", sep ="")
-    j <- 0
-    while (j<length(value)) {
-      left <- length(value) - j
-      if (left>4) left <- 5
-      a <- paste(a, paste(value[(j+1):(j+left)],collapse="  "), "\n", sep="  ")
-      j <- j+5
-    }
-  }
-  a
 }
 
 
