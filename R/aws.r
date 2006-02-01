@@ -528,7 +528,7 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
       image(y[,,n3%/%2+1,1],col=gray((0:255)/255),xaxt="n",yaxt="n")
       title(paste("Observed Image  min=",signif(min(y),3)," max=",signif(max(y),3)))
       image(theta[,,n3%/%2+1,1],col=gray((0:255)/255),xaxt="n",yaxt="n")
-      title(paste("Reconstruction  h=",signif(hakt,3)," min=",signif(min(tobj$theta),3)," max=",signif(max(tobj$theta),3)))
+      title(paste("Reconstruction  h=",signif(hakt,3)," min=",signif(min(theta),3)," max=",signif(max(theta),3)))
       image(tobj$bi[,,n3%/%2+1],col=gray((0:255)/255),xaxt="n",yaxt="n")
       title(paste("Sum of weights: min=",signif(min(tobj$bi),3)," mean=",signif(mean(tobj$bi),3)," max=",signif(max(tobj$bi),3)))
     }
@@ -558,7 +558,7 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
       gwght <- outer(gw1,outer(gw2,gw3,"*"),"*")
       gwght <- gwght/sum(gwght)
       dgw <- dim(gwght)
-      vred <- .Fortran("chawsvr",as.double(y),
+      z <- .Fortran("chawsvr",as.double(y),
                        as.double(sigma2),
                        as.integer(n1),
                        as.integer(n2),
@@ -569,6 +569,7 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
                        as.double(lambda0),
                        as.double(theta0),# thats the theta needed for the weights
                        as.double(bi0), # thats the bi needed for the weights
+		       var=double(n),
 		       vred=double(n),
                        as.integer(lkern),
 	               as.double(spmin),
@@ -581,8 +582,8 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 		       as.double(vwghts),
 		       double(dv0),#thi
 		       double(dv0),#thj
-		       PACKAGE="fmri")$vred
-      dim(vred) <- dim(sigma2)
+		       PACKAGE="fmri")[c("vred","var")]
+      dim(z$vred) <- dim(z$var) <- dim(sigma2)
       nqg <- .Fortran("nqg",as.double(gwght),
                        as.double(gwght^2),
                        as.integer(dgw[1]),
@@ -596,10 +597,9 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 		       PACKAGE="fmri")[c("qg","ng")]
       qg <- array(nqg$qg,dim(sigma2))
       ng <- array(nqg$ng,dim(sigma2))
-  vr<-vred
   dim(tobj$bi)<-dim(vred)
-  vartheta <- vred/tobj$bi^2/qg
-  vred <- vartheta*sigma2/ng^2*qg
+  vartheta <- z$var/tobj$bi^2/qg
+  vred <- z$vred/tobj$bi^2/ng^2
 # 
 #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
 #

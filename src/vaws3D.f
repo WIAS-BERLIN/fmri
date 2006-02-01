@@ -510,8 +510,8 @@ C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine chawsvr(y,si2,n1,n2,n3,dv,dv0,hakt,lambda,theta,bi,
-     1      var,kern,spmin,spmax,lwght,gwght,swght,dgw,wght,vwghts,
-     2      thi,thj)
+     1      var,vred,kern,spmin,spmax,lwght,gwght,swght,dgw,wght,
+     2      vwghts,thi,thj)
 C   
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
@@ -537,8 +537,8 @@ C
      1        iind,jind,jind3,jind2,clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n,
      2        cgw1,dgw1,dgw2,dgw3,j1a,j1e,j2a,j2e,j3a,j3e,l1,l2,l3,
      3        m1,m2,m3,cgw10,cgw20,cgw30,k1,k2,k3,indg,m10,m20,m30
-      real*8 bii,sij,swj,swj2,z1,z2,z3,wj,hakt2,
-     1        si2(n1,n2,n3),var(1)
+      real*8 bii,sij,swj,swj2,z1,z2,z3,wj,hakt2,swj2vr,
+     1        si2(n1,n2,n3),var(1),vred(1)
       integer ngw
       hakt2=hakt*hakt
       ih1=hakt
@@ -655,7 +655,8 @@ C   if sij <= spmin  this just keeps the location penalty
 C    spmin = 0 corresponds to old choice of K_s 
 C   new kernel is flat in [0,spmin] and then decays exponentially
                         END IF
-                        swght(j1,j2,j3)=wj*dsqrt(si2(j1,j2,j3))
+C                        swght(j1,j2,j3)=wj*dsqrt(si2(j1,j2,j3))
+                        swght(j1,j2,j3)=wj*si2(j1,j2,j3)
                      END DO
                   END DO
                END DO
@@ -663,6 +664,7 @@ C
 C     now the convolution
 C
                swj2=0.d0
+	       swj2vr=0.d0
                DO l3=j3a-cgw30,j3e+cgw30
 	          if(l3.lt.1.or.l3.gt.n3) CYCLE
 	          DO l2=j2a-cgw20,j2e+cgw20
@@ -687,12 +689,14 @@ C
 			      END DO
 			   END DO
 	                END DO
-			swj2=swj2+swj*swj
+			swj2=swj2+swj*swj/si2(l1,l2,l3)
+			swj2vr=swj2vr+swj*swj
 C           /si2(l1,l2,l3)
 		     END DO
 		  END DO
 	       END DO
 	       var(iind)=swj2
+	       vred(iind)=swj2vr
             END DO
          END DO
       END DO
@@ -703,7 +707,7 @@ C           /si2(l1,l2,l3)
       integer dg1,dg2,dg3,n1,n2,n3
       real*8 gwght(dg1,dg2,dg3),gwght2(dg1,dg2,dg3),qg(n1,n2,n3),
      1       ng(n1,n2,n3)
-      integer cg1,cg2,cg3,cn1,cn2,cn3,i1,i2,i3,kk,ll,mm,rn1,rn2,rn3
+      integer cg1,cg2,cg3,cn1,cn2,cn3,i1,i2,i3,kk,ll,mm
       real*8 zn,zq,zrown,zrowq,z
       cg1=dg1/2
       cg2=dg2/2
@@ -778,7 +782,7 @@ C      call intpr("boundary",8,cg3,1)
          zrown=0.d0
 	 zrowq=0.d0
 	 DO i1=1,dg1
-	    DO i3=1,dg3
+	    DO i2=1,dg2
 	       zrown=zrown+gwght(i1,i2,cg3+1-ll)
 	       zrowq=zrowq+gwght2(i1,i2,cg3+1-ll)
 	    END DO
