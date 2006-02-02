@@ -1,4 +1,4 @@
-pvalue <- function(z,i,j,k,rx,ry,rz,type="norm",df=4,dim=3) {
+pvalue <- function(z,i,j,k,rx,ry,rz,type="norm",df=4) {
   rho0 <- 0
   rho1 <- 0
   rho2 <- 0
@@ -28,31 +28,27 @@ pvalue <- function(z,i,j,k,rx,ry,rz,type="norm",df=4,dim=3) {
   r2 <- (i-1)*(j-1)*rx*ry + (j-1)*(k-1)*ry*rz +(i-1)*(k-1)*rx*rz
   r3 <- (i-1)*(j-1)*(k-1)*rx*ry*rz
   
-  if (dim == 2) {
-    rho0 * r0 + rho1 * r1 + rho2 * r2
-  } else {
-    rho0 * r0 + rho1 * r1 + rho2 * r2 + rho3 * r3
-  }
+  rho0 * r0 + rho1 * r1 + rho2 * r2 + rho3 * r3
 }
 
 
 resel <- function(voxeld, hmax, hv=1) hv * voxeld / hmax # hv=0.919 for larger bandwidths than typically fmri
 
 
-threshold <- function(p,i,j,k,rx,ry,rz,type="norm",df=4,dim=3,step=.001) {
+threshold <- function(p,i,j,k,rx,ry,rz,type="norm",df=4,step=.001) {
   n <- length(rx)
   thr <- numeric(n)
   fixed <- logical(n)
   x <- 3
-  pxyz<-rx*ry*rz
-  ind<-(1:length(pxyz))[pxyz==min(pxyz)][1]
-  pv<-1
-  while(pv>p) {
-     pv <- pvalue(x,i,j,k,rx[ind],ry[ind],rz[ind],type,df,dim)
+  pxyz <- rx*ry*rz
+  ind <- (1:length(pxyz))[pxyz==min(pxyz)][1]
+  pv <- 1
+  while (pv>p) {
+     pv <- pvalue(x,i,j,k,rx[ind],ry[ind],rz[ind],type,df)
      x <- x+5*step
   }
-  x<-x-5*step
-#  this runs faster to the lowest level and therefore allows for smaller value of step
+  x <- x-5*step
+  # this runs faster to the lowest level and therefore allows for smaller value of step
   while (any(!fixed)) {  
     pv <- pvalue(x,i,j,k,rx,ry,rz,type,df,dim)
     ind <- (1:n)[!fixed][pv[!fixed]<p]

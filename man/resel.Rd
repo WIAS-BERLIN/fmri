@@ -1,44 +1,33 @@
 \name{resel}
 \alias{resel}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{ ~~function to do ... ~~ }
+\title{ Expected Euler Characteristic densities }
 \description{
-  ~~ A concise (1-5 lines) description of what the function does. ~~
+  Calculate voxel size in resel space.
 }
 \usage{
-resel(voxeld, hmax, hv = 1)
+resel(voxeld, hmax)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{voxeld}{ ~~Describe \code{voxeld} here~~ }
-  \item{hmax}{ ~~Describe \code{hmax} here~~ }
-  \item{hv}{ ~~Describe \code{hv} here~~ }
+  \item{voxeld}{ voxeldimension in mm }
+  \item{hmax}{ FWHM bandwidth of used gaussian kernel for smoothing }
+  \item{hv}{ correction factor (not needed) }
 }
 \details{
   ~~ If necessary, more details than the description above ~~
 }
 \value{
-  ~Describe the value returned
-  If it is a LIST, use
-  \item{comp1 }{Description of 'comp1'}
-  \item{comp2 }{Description of 'comp2'}
-  ...
+  Calculate voxel size in resel space. See references for detailed
+  description. 
 }
-\references{ ~put references to the literature/web site here ~ }
-\author{ ~~who you are~~ }
-\note{ ~~further notes~~ 
-
- ~Make other sections like Warning with \section{Warning }{....} ~
-}
-\seealso{ ~~objects to See Also as \code{\link{help}}, ~~~ }
+\references{ K.J. Worsley, S. Marrett, P. Neelin, A.C. Vandal,
+  K.J. Friston, and A.C. Evans (1996), A Unified Statistical Approach
+  for Determining Significant Signals in Images of Cerebral Activation, 
+  Human Brain Mapping, 4:58-73.}
+\author{ Karsten Tabelow (tabelow@wias-berlin.de }
+\seealso{ \code{\link{pvalue}}, \code{\link{threshold}} }
 \examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
-
-## The function is currently defined as
-function (voxeld, hmax, hv = 1) 
-hv * voxeld/hmax
+  # Example 1
+  resel(4,10)
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
