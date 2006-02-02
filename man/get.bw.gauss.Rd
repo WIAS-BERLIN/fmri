@@ -1,17 +1,18 @@
-\name{create.designmatrix}
-\alias{create.designmatrix}
+\name{get.bw.gauss}
+\alias{get.bw.gauss}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ ~~function to do ... ~~ }
 \description{
   ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-create.designmatrix(hrf, order = 0)
+get.bw.gauss(corr, step = 1.001, interv = 2)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{hrf}{ ~~Describe \code{hrf} here~~ }
-  \item{order}{ ~~Describe \code{order} here~~ }
+  \item{corr}{ ~~Describe \code{corr} here~~ }
+  \item{step}{ ~~Describe \code{step} here~~ }
+  \item{interv}{ ~~Describe \code{interv} here~~ }
 }
 \details{
   ~~ If necessary, more details than the description above ~~
@@ -36,33 +37,28 @@ create.designmatrix(hrf, order = 0)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (hrf, order = 0) 
+function (corr, step = 1.001, interv = 2) 
 {
-    stimuli <- dim(hrf)[2]
-    scans <- dim(hrf)[1]
-    z <- matrix(0, scans, stimuli + order + 1)
-    for (i in 1:stimuli) {
-        z[, i] <- hrf[, i]
+    get.corr.gauss <- function(h, interv = 1) {
+        h <- h/2.3548 * interv
+        ih <- trunc(4 * h + 2 * interv - 1)
+        dx <- 2 * ih + 1
+        penl <- dnorm(((-ih):ih)/h)
+        sum(penl[-(1:interv)] * penl[-((dx - interv + 1):dx)])/sum(penl^2)
     }
-    ortho <- matrix(0, stimuli, stimuli)
-    for (i in 1:stimuli) {
-        for (j in 1:stimuli) {
-            ortho[i, j] <- z[, i] \%*\% z[, j]
+    if (corr < 0.1) {
+        h <- 0
+    }
+    else {
+        h <- 0.5
+        z <- 0
+        while (z < corr) {
+            h <- h * step
+            z <- get.corr.gauss(h, interv)
         }
+        h <- h/step
     }
-    z[, stimuli + 1] <- 1
-    if (order != 0) {
-        for (i in (stimuli + 2):(stimuli + order + 1)) {
-            z[, i] <- (1:scans)^(i - stimuli - 1)
-            hz <- numeric(stimuli)
-            for (j in 1:stimuli) {
-                hz[j] <- z[, j] \%*\% z[, i]
-            }
-            tmp <- lm(-hz ~ ortho - 1)
-            z[, i] <- z[, i] + as.vector(hrf \%*\% as.vector(tmp$coeff))
-        }
-    }
-    z
+    h
   }
 }
 \keyword{ ~kwd1 }% at least one, from doc/KEYWORDS

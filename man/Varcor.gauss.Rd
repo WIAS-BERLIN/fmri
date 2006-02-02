@@ -1,17 +1,17 @@
-\name{create.designmatrix}
-\alias{create.designmatrix}
+\name{Varcor.gauss}
+\alias{Varcor.gauss}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ ~~function to do ... ~~ }
 \description{
   ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-create.designmatrix(hrf, order = 0)
+Varcor.gauss(h, interv = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{hrf}{ ~~Describe \code{hrf} here~~ }
-  \item{order}{ ~~Describe \code{order} here~~ }
+  \item{h}{ ~~Describe \code{h} here~~ }
+  \item{interv}{ ~~Describe \code{interv} here~~ }
 }
 \details{
   ~~ If necessary, more details than the description above ~~
@@ -36,33 +36,19 @@ create.designmatrix(hrf, order = 0)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (hrf, order = 0) 
+function (h, interv = 1) 
 {
-    stimuli <- dim(hrf)[2]
-    scans <- dim(hrf)[1]
-    z <- matrix(0, scans, stimuli + order + 1)
-    for (i in 1:stimuli) {
-        z[, i] <- hrf[, i]
-    }
-    ortho <- matrix(0, stimuli, stimuli)
-    for (i in 1:stimuli) {
-        for (j in 1:stimuli) {
-            ortho[i, j] <- z[, i] \%*\% z[, j]
-        }
-    }
-    z[, stimuli + 1] <- 1
-    if (order != 0) {
-        for (i in (stimuli + 2):(stimuli + order + 1)) {
-            z[, i] <- (1:scans)^(i - stimuli - 1)
-            hz <- numeric(stimuli)
-            for (j in 1:stimuli) {
-                hz[j] <- z[, j] \%*\% z[, i]
-            }
-            tmp <- lm(-hz ~ ortho - 1)
-            z[, i] <- z[, i] + as.vector(hrf \%*\% as.vector(tmp$coeff))
-        }
-    }
-    z
+    h <- h/2.3548 * interv
+    ih <- trunc(4 * h) + 1
+    dx <- 2 * ih + 1
+    d <- length(h)
+    penl <- dnorm(((-ih[1]):ih[1])/h[1])
+    if (d == 2) 
+        penl <- outer(penl, dnorm(((-ih[2]):ih[2])/h[2]), "*")
+    if (d == 3) 
+        penl <- outer(penl, outer(dnorm(((-ih[2]):ih[2])/h[2]), 
+            dnorm(((-ih[3]):ih[3])/h[3]), "*"), "*")
+    2 * sum(penl)^2/sum(diff(penl, interv)^2)/interv^(d)
   }
 }
 \keyword{ ~kwd1 }% at least one, from doc/KEYWORDS

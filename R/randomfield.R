@@ -66,26 +66,3 @@ threshold <- function(p,i,j,k,rx,ry,rz,type="norm",df=4,dim=3,step=.001) {
   }
   thr
 }
-
-
-correlation <- function(res,mask = array(1,dim=dim(res)[1:3])) {
-  meanpos <- function(a) mean(a[a!=0])
-  varpos <- function(a) var(a[a!=0])
-
-  dr <- dim(res)
-  if (length(dim(mask)) == 3) {
-    if (sum(dim(mask)[1:3] != dr[1:3]) == 0) {
-      mask <- rep(mask,dr[4])
-      dim(mask) <- dr
-      vrm <- varpos(res*mask)
-      x <- meanpos(res[-1,,,]*res[-dr[1],,,]*mask[-1,,,])/vrm
-      y <- meanpos(res[,-1,,]*res[,-dr[2],,]*mask[,-1,,])/vrm
-      z <- meanpos(res[,,-1,]*res[,,-dr[3],]*mask[,,-1,])/vrm
-      c(x,y,z)
-    } else {
-      warning("Error: dimension of mask and residui matrices do not match\n")    
-    }
-  } else {
-    warning("Error: can only handle 3 dimensional arrays\n")    
-  }    
-}

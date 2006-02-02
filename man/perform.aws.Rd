@@ -1,36 +1,67 @@
 \name{perform.aws}
 \alias{perform.aws}
-
-\title{Perform adaptive weights smoothing}
-\description{This functions performs adaptive weights smoothing on the
-  parameters \code{beta}.
+%- Also NEED an '\alias' for EACH other topic documented here.
+\title{ ~~function to do ... ~~ }
+\description{
+  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
-
-\usage{perform.aws(beta, varianz, hmax = 4, hinit = 1, weights =
-c(1,1,1), qlambda = NULL)}
-
+\usage{
+perform.aws(beta, variance, hmax = 4, hinit = 1, weights = c(1, 1, 1), qlambda = 1, lkern = "Gaussian", scorr = 0, ...)
+}
+%- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{beta}{Data to smooth}
-  \item{varianz}{Variance estimate for heteroscedastic smoothing}
-  \item{hmax}{Paramter \code{hmax} of AWS procedure}
-  \item{hinit}{Paramter \code{hinit} of AWS procedure}
-  \item{weights}{Paramter \code{weights} of AWS procedure}
-  \item{vweights}{Paramter \code{vweights} of AWS procedure}  
-  \item{qlambda}{Paramter \code{qlambda} of AWS procedure}
+  \item{beta}{ ~~Describe \code{beta} here~~ }
+  \item{variance}{ ~~Describe \code{variance} here~~ }
+  \item{hmax}{ ~~Describe \code{hmax} here~~ }
+  \item{hinit}{ ~~Describe \code{hinit} here~~ }
+  \item{weights}{ ~~Describe \code{weights} here~~ }
+  \item{qlambda}{ ~~Describe \code{qlambda} here~~ }
+  \item{lkern}{ ~~Describe \code{lkern} here~~ }
+  \item{scorr}{ ~~Describe \code{scorr} here~~ }
+  \item{\dots}{ ~~Describe \code{\dots} here~~ }
 }
-
+\details{
+  ~~ If necessary, more details than the description above ~~
+}
 \value{
-  \item{hat}{Estimate of parameter after smoothing}
-  \item{var}{Variance of the estimate}
+  ~Describe the value returned
+  If it is a LIST, use
+  \item{comp1 }{Description of 'comp1'}
+  \item{comp2 }{Description of 'comp2'}
+  ...
 }
+\references{ ~put references to the literature/web site here ~ }
+\author{ ~~who you are~~ }
+\note{ ~~further notes~~ 
 
-\examples{
-hrf <- create.stimulus(107, c(22, 52, 82), 12)
-dim(hrf) <- c(107,1)
-z <- create.designmatrix(hrf,2)
-a <- create.arcorrection(107, rho=0.3)
-ttt <- rnorm(1000)
-dim(ttt) <- c(10,10,10)
-model <- calculate.lm(ttt,z,a)
-result4 <- analyze.fmri(model$beta[,,,1],model$varianz,hmax=4,weights=c(1,1,1.4))
+ ~Make other sections like Warning with \section{Warning }{....} ~
 }
+\seealso{ ~~objects to See Also as \code{\link{help}}, ~~~ }
+\examples{
+##---- Should be DIRECTLY executable !! ----
+##-- ==>  Define data, use random,
+##--	or do  help(data=index)  for the standard data sets.
+
+## The function is currently defined as
+function (beta, variance, hmax = 4, hinit = 1, weights = c(1, 
+    1, 1), qlambda = 1, lkern = "Gaussian", scorr = 0, ...) 
+{
+    variance[variance < quantile(variance, 0.25)] <- quantile(variance, 
+        0.25)
+    ttthat <- vaws3D(beta, sigma2 = variance, hmax = hmax, hinit = hinit, 
+        qlambda = qlambda, qtau = 1, heta = 1000, wghts = weights, 
+        lkern = lkern, scorr = scorr, ...)
+    if (dim(ttthat$theta)[4] == 1) {
+        list(hat = ttthat$theta[, , , 1], var = ttthat$var, ni = ttthat$ni, 
+            hmax = ttthat$hmax, lseq = ttthat$lseq, y = ttthat$y, 
+            mae = ttthat$mae, vred = ttthat$vred)
+    }
+    else {
+        list(hat = ttthat$theta, var = ttthat$var, ni = ttthat$ni, 
+            hmax = ttthat$hmax, lseq = ttthat$lseq, y = ttthat$y, 
+            mae = ttthat$mae, vred = ttthat$vred)
+    }
+  }
+}
+\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
+\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line

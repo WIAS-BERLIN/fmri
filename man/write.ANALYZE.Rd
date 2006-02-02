@@ -1,17 +1,19 @@
-\name{create.designmatrix}
-\alias{create.designmatrix}
+\name{write.ANALYZE}
+\alias{write.ANALYZE}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ ~~function to do ... ~~ }
 \description{
   ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-create.designmatrix(hrf, order = 0)
+write.ANALYZE(ttt, name = "data", size = "int", voxelsize = c(2, 2, 2))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{hrf}{ ~~Describe \code{hrf} here~~ }
-  \item{order}{ ~~Describe \code{order} here~~ }
+  \item{ttt}{ ~~Describe \code{ttt} here~~ }
+  \item{name}{ ~~Describe \code{name} here~~ }
+  \item{size}{ ~~Describe \code{size} here~~ }
+  \item{voxelsize}{ ~~Describe \code{voxelsize} here~~ }
 }
 \details{
   ~~ If necessary, more details than the description above ~~
@@ -36,33 +38,16 @@ create.designmatrix(hrf, order = 0)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (hrf, order = 0) 
+function (ttt, name = "data", size = "int", voxelsize = c(2, 
+    2, 2)) 
 {
-    stimuli <- dim(hrf)[2]
-    scans <- dim(hrf)[1]
-    z <- matrix(0, scans, stimuli + order + 1)
-    for (i in 1:stimuli) {
-        z[, i] <- hrf[, i]
+    if (require(AnalyzeFMRI)) {
+        f.write.analyze(ttt, file = name, size = size, voxelsize)
     }
-    ortho <- matrix(0, stimuli, stimuli)
-    for (i in 1:stimuli) {
-        for (j in 1:stimuli) {
-            ortho[i, j] <- z[, i] \%*\% z[, j]
-        }
+    else {
+        warning("Error: library AnalyzeFMRI not found\n")
+        invisible(NULL)
     }
-    z[, stimuli + 1] <- 1
-    if (order != 0) {
-        for (i in (stimuli + 2):(stimuli + order + 1)) {
-            z[, i] <- (1:scans)^(i - stimuli - 1)
-            hz <- numeric(stimuli)
-            for (j in 1:stimuli) {
-                hz[j] <- z[, j] \%*\% z[, i]
-            }
-            tmp <- lm(-hz ~ ortho - 1)
-            z[, i] <- z[, i] + as.vector(hrf \%*\% as.vector(tmp$coeff))
-        }
-    }
-    z
   }
 }
 \keyword{ ~kwd1 }% at least one, from doc/KEYWORDS

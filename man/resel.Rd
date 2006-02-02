@@ -1,17 +1,18 @@
-\name{create.designmatrix}
-\alias{create.designmatrix}
+\name{resel}
+\alias{resel}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ ~~function to do ... ~~ }
 \description{
   ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-create.designmatrix(hrf, order = 0)
+resel(voxeld, hmax, hv = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{hrf}{ ~~Describe \code{hrf} here~~ }
-  \item{order}{ ~~Describe \code{order} here~~ }
+  \item{voxeld}{ ~~Describe \code{voxeld} here~~ }
+  \item{hmax}{ ~~Describe \code{hmax} here~~ }
+  \item{hv}{ ~~Describe \code{hv} here~~ }
 }
 \details{
   ~~ If necessary, more details than the description above ~~
@@ -36,34 +37,8 @@ create.designmatrix(hrf, order = 0)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (hrf, order = 0) 
-{
-    stimuli <- dim(hrf)[2]
-    scans <- dim(hrf)[1]
-    z <- matrix(0, scans, stimuli + order + 1)
-    for (i in 1:stimuli) {
-        z[, i] <- hrf[, i]
-    }
-    ortho <- matrix(0, stimuli, stimuli)
-    for (i in 1:stimuli) {
-        for (j in 1:stimuli) {
-            ortho[i, j] <- z[, i] \%*\% z[, j]
-        }
-    }
-    z[, stimuli + 1] <- 1
-    if (order != 0) {
-        for (i in (stimuli + 2):(stimuli + order + 1)) {
-            z[, i] <- (1:scans)^(i - stimuli - 1)
-            hz <- numeric(stimuli)
-            for (j in 1:stimuli) {
-                hz[j] <- z[, j] \%*\% z[, i]
-            }
-            tmp <- lm(-hz ~ ortho - 1)
-            z[, i] <- z[, i] + as.vector(hrf \%*\% as.vector(tmp$coeff))
-        }
-    }
-    z
-  }
+function (voxeld, hmax, hv = 1) 
+hv * voxeld/hmax
 }
 \keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
 \keyword{ ~kwd2 }% __ONLY ONE__ keyword per line

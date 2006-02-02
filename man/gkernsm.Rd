@@ -1,17 +1,17 @@
-\name{create.designmatrix}
-\alias{create.designmatrix}
+\name{gkernsm}
+\alias{gkernsm}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ ~~function to do ... ~~ }
 \description{
   ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-create.designmatrix(hrf, order = 0)
+gkernsm(y, h = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{hrf}{ ~~Describe \code{hrf} here~~ }
-  \item{order}{ ~~Describe \code{order} here~~ }
+  \item{y}{ ~~Describe \code{y} here~~ }
+  \item{h}{ ~~Describe \code{h} here~~ }
 }
 \details{
   ~~ If necessary, more details than the description above ~~
@@ -36,33 +36,30 @@ create.designmatrix(hrf, order = 0)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (hrf, order = 0) 
+function (y, h = 1) 
 {
-    stimuli <- dim(hrf)[2]
-    scans <- dim(hrf)[1]
-    z <- matrix(0, scans, stimuli + order + 1)
-    for (i in 1:stimuli) {
-        z[, i] <- hrf[, i]
+    grid <- function(d) {
+        d0 <- d\%/\%2 + 1
+        gd <- seq(0, 1, length = d0)
+        if (2 * d0 == d + 1) 
+            gd <- c(gd, -gd[d0:2])
+        else gd <- c(gd, -gd[(d0 - 1):2])
+        gd
     }
-    ortho <- matrix(0, stimuli, stimuli)
-    for (i in 1:stimuli) {
-        for (j in 1:stimuli) {
-            ortho[i, j] <- z[, i] \%*\% z[, j]
-        }
-    }
-    z[, stimuli + 1] <- 1
-    if (order != 0) {
-        for (i in (stimuli + 2):(stimuli + order + 1)) {
-            z[, i] <- (1:scans)^(i - stimuli - 1)
-            hz <- numeric(stimuli)
-            for (j in 1:stimuli) {
-                hz[j] <- z[, j] \%*\% z[, i]
-            }
-            tmp <- lm(-hz ~ ortho - 1)
-            z[, i] <- z[, i] + as.vector(hrf \%*\% as.vector(tmp$coeff))
-        }
-    }
-    z
+    dy <- dim(y)
+    if (is.null(dy)) 
+        dy <- length(y)
+    ldy <- length(dy)
+    if (length(h) != ldy) 
+        h <- rep(h[1], ldy)
+    kern <- switch(ldy, dnorm(grid(dy), 0, 2 * h/dy), outer(dnorm(grid(dy[1]), 
+        0, 2 * h[1]/dy[1]), dnorm(grid(dy[2]), 0, 2 * h[2]/dy[2]), 
+        "*"), outer(outer(dnorm(grid(dy[1]), 0, 2 * h[1]/dy[1]), 
+        dnorm(grid(dy[2]), 0, 2 * h[2]/dy[2]), "*"), dnorm(grid(dy[3]), 
+        0, 2 * h[3]/dy[3]), "*"))
+    kern <- kern/sum(kern)
+    kernsq <- sum(kern^2)
+    list(gkernsm = convolve(y, kern, conj = TRUE), kernsq = kernsq)
   }
 }
 \keyword{ ~kwd1 }% at least one, from doc/KEYWORDS

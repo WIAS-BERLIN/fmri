@@ -1,17 +1,17 @@
-\name{create.designmatrix}
-\alias{create.designmatrix}
+\name{correlation}
+\alias{correlation}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ ~~function to do ... ~~ }
 \description{
   ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-create.designmatrix(hrf, order = 0)
+correlation(res, mask = array(1, dim = dim(res)[1:3]))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{hrf}{ ~~Describe \code{hrf} here~~ }
-  \item{order}{ ~~Describe \code{order} here~~ }
+  \item{res}{ ~~Describe \code{res} here~~ }
+  \item{mask}{ ~~Describe \code{mask} here~~ }
 }
 \details{
   ~~ If necessary, more details than the description above ~~
@@ -36,33 +36,31 @@ create.designmatrix(hrf, order = 0)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (hrf, order = 0) 
+function (res, mask = array(1, dim = dim(res)[1:3])) 
 {
-    stimuli <- dim(hrf)[2]
-    scans <- dim(hrf)[1]
-    z <- matrix(0, scans, stimuli + order + 1)
-    for (i in 1:stimuli) {
-        z[, i] <- hrf[, i]
-    }
-    ortho <- matrix(0, stimuli, stimuli)
-    for (i in 1:stimuli) {
-        for (j in 1:stimuli) {
-            ortho[i, j] <- z[, i] \%*\% z[, j]
+    meanpos <- function(a) mean(a[a != 0])
+    varpos <- function(a) var(a[a != 0])
+    dr <- dim(res)
+    if (length(dim(mask)) == 3) {
+        if (sum(dim(mask)[1:3] != dr[1:3]) == 0) {
+            mask <- rep(mask, dr[4])
+            dim(mask) <- dr
+            vrm <- varpos(res * mask)
+            x <- meanpos(res[-1, , , ] * res[-dr[1], , , ] * 
+                mask[-1, , , ])/vrm
+            y <- meanpos(res[, -1, , ] * res[, -dr[2], , ] * 
+                mask[, -1, , ])/vrm
+            z <- meanpos(res[, , -1, ] * res[, , -dr[3], ] * 
+                mask[, , -1, ])/vrm
+            c(x, y, z)
+        }
+        else {
+            warning("Error: dimension of mask and residui matrices do not match\n")
         }
     }
-    z[, stimuli + 1] <- 1
-    if (order != 0) {
-        for (i in (stimuli + 2):(stimuli + order + 1)) {
-            z[, i] <- (1:scans)^(i - stimuli - 1)
-            hz <- numeric(stimuli)
-            for (j in 1:stimuli) {
-                hz[j] <- z[, j] \%*\% z[, i]
-            }
-            tmp <- lm(-hz ~ ortho - 1)
-            z[, i] <- z[, i] + as.vector(hrf \%*\% as.vector(tmp$coeff))
-        }
+    else {
+        warning("Error: can only handle 3 dimensional arrays\n")
     }
-    z
   }
 }
 \keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
