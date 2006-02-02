@@ -1,8 +1,4 @@
 pvalue <- function(z,i,j,k,rx,ry,rz,type="norm",df=4,dim=3) {
-  chihelp <- function(z,df,d) {
-    z^((df-d)/2) * exp(-z/2) / 2^((df-2)/2) / gamma(df/2)
-  }
-
   rho0 <- 0
   rho1 <- 0
   rho2 <- 0
@@ -10,9 +6,9 @@ pvalue <- function(z,i,j,k,rx,ry,rz,type="norm",df=4,dim=3) {
   
   if (type == "norm") {
     rho0 <- 1 - pnorm(z)
-    rho1 <- (4 * log(2))^.5 / (2 * pi) * exp(-z*z/2)
-    rho2 <- (4 * log(2)) / (2 * pi)^1.5 * exp(-z*z/2) * z
-    rho3 <- (4 * log(2))^1.5 / (2 * pi)^2 * exp(-z*z/2) * (z*z -1)
+    rho1 <- (4 * log(2))^.5 / sqrt(2 * pi) * dnorm(z)
+    rho2 <- (4 * log(2)) / (2 * pi) * dnorm(z) * z
+    rho3 <- (4 * log(2))^1.5 / (2 * pi)^1.5 * dnorm(z) * (z*z -1)
   }
   if (type == "t") {
     rho0 <- 1 - pt(z,df)
@@ -22,9 +18,9 @@ pvalue <- function(z,i,j,k,rx,ry,rz,type="norm",df=4,dim=3) {
   }
   if (type == "chisq") {
     rho0 <- 1 - pchisq(z,df)
-    rho1 <- (4 * log(2))^.5 / (2 * pi)^.5 * chihelp(z,df,1)
-    rho2 <- (4 * log(2)) / (2 * pi) * chihelp(z,df,2) * (z-df+1)
-    rho3 <- (4 * log(2))^1.5 / (2 * pi)^1.5 * chihelp(z,df,3) * (z*z - (2*df-1)*z + (df-1) * (df-2))    
+    rho1 <- (4 * log(2))^.5 / (2 * pi)^.5 * 2 * sqrt(z) * dchisq(z, df)
+    rho2 <- (4 * log(2)) / (2 * pi) * 2 * dchisq(z, df) * (z-df+1)
+    rho3 <- (4 * log(2))^1.5 / (2 * pi)^1.5 * 2 * dchisq(z, df) / sqrt(z) * (z*z - (2*df-1)*z + (df-1) * (df-2))    
   }
   
   r0 <- 1
