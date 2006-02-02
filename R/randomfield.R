@@ -50,7 +50,7 @@ threshold <- function(p,i,j,k,rx,ry,rz,type="norm",df=4,step=.001) {
   x <- x-5*step
   # this runs faster to the lowest level and therefore allows for smaller value of step
   while (any(!fixed)) {  
-    pv <- pvalue(x,i,j,k,rx,ry,rz,type,df,dim)
+    pv <- pvalue(x,i,j,k,rx,ry,rz,type,df)
     ind <- (1:n)[!fixed][pv[!fixed]<p]
     thr[ind] <- x
     fixed[ind] <- TRUE
