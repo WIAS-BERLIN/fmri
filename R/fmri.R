@@ -40,7 +40,7 @@ perform.aws2 <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),qlambda=1
 # blue for !mask1 && mask2
 # mark position pos with lines
 #
-plot.diff <- function(mask1, mask2, anatomic = array(0,dim=dim(mask1)), pos = c(-1,-1,-1), device="X11", file="plot.png") {
+fmriplot.diff <- function(mask1, mask2, anatomic = array(0,dim=dim(mask1)), pos = c(-1,-1,-1), device="X11", file="plot.png") {
   partition <- ceiling(sqrt(dim(anatomic)[3]))
 
   switch (device,
@@ -81,7 +81,7 @@ plot.diff <- function(mask1, mask2, anatomic = array(0,dim=dim(mask1)), pos = c(
 # varying quantity) as overlay over anatomic image
 # mark position pos with lines
 #
-plot.signal <- function(signal, anatomic = array(0,dim=dim(signal)), pos = c(-1,-1,-1), device="X11", file="plot.png") {
+fmriplot.signal <- function(signal, anatomic = array(0,dim=dim(signal)), pos = c(-1,-1,-1), device="X11", file="plot.png") {
   partition <- ceiling(sqrt(dim(anatomic)[3]))
 
   switch (device,
@@ -118,7 +118,7 @@ plot.signal <- function(signal, anatomic = array(0,dim=dim(signal)), pos = c(-1,
 # sigvec and tvec (2+1-dim!) for any voxel. print voxel position
 # starting from origin. mark active voxel given by threshold with red
 # data points. 
-plot.timeseries <- function(fmri, fit, sigvec, tvec, thr, origin, device="X11", file="plot.png") {
+fmriplot.timeseries <- function(fmri, fit, sigvec, tvec, thr, origin, device="X11", file="plot.png") {
   partition <- dim(fmri)[2:1]
   switch (device,
           "png" = png(filename=file, width = 200*partition[2], height = 200*partition[1], pointsize=12, bg="transparent", res=NA),
@@ -150,4 +150,36 @@ plot.timeseries <- function(fmri, fit, sigvec, tvec, thr, origin, device="X11", 
           "png" = dev.off(),
           "jpeg" = dev.off(),
           "ppm" = dev.off())
+}
+
+fmriplot.slices3d <- function(signal, anatomic =
+                              array(0,dim=dim(signal)), pos =
+                              c(-1,-1,-1)) {
+
+  if (require(misc3d)) {
+
+    mri.colors <- function (n1, n2, factor=n1/(n1+n2), from=0, to=.2) {
+      colors1 <- gray((0:n1)/(n1+n2))
+      colors2 <- hsv(h = seq(from,to,length=n2),
+                     s = seq(from = n2/(n2+factor*n1) - 1/(2 * (n2+factor*n1)), to =
+                       1/(2 * (n2+factor*n1)), length = n2),
+                     v = 1,
+                     gamma=1)
+      list(all=c(colors1,colors2),gray=colors1,col=colors2)
+    }
+
+    # re-scale anatomic to 0 ... 0.5
+    anatomic <- 0.5 * (anatomic - min(anatomic)) / diff(range(anatomic))
+
+    # re-scale signal to 0.5 ... 1
+    signal <-  0.5 + 0.5 * (signal - min(signal)) / diff(range(signal))
+
+    anatomic[signal > 0.5] <- signal[signal > 0.5]
+
+    slices3d(anatomic,col=mri.colors(256,256)$all)
+    
+  } else {
+    stop("misc3d is required.")
+  }
+  
 }
