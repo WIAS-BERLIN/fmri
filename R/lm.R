@@ -31,7 +31,7 @@ create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, rt=3,
 
 
 
-create.designmatrix <- function(hrf, order=0) {
+create.designmatrix <- function(hrf, order=1) {
   stimuli <- dim(hrf)[2]
   scans <- dim(hrf)[1]
 

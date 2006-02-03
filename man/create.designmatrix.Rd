@@ -1,69 +1,37 @@
 \name{create.designmatrix}
 \alias{create.designmatrix}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{ ~~function to do ... ~~ }
+\title{ Linear Model for FMRI Data }
 \description{
-  ~~ A concise (1-5 lines) description of what the function does. ~~
+  Returns a designmatrix for a linear model with given stimulus and
+  possible polynomial drift terms.
 }
 \usage{
-create.designmatrix(hrf, order = 0)
+create.designmatrix(hrf, 2)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{hrf}{ ~~Describe \code{hrf} here~~ }
-  \item{order}{ ~~Describe \code{order} here~~ }
+  \item{hrf}{ matrix containing signal functions for the linear model }
+  \item{order}{ order of the polynomial drift terms }
 }
 \details{
-  ~~ If necessary, more details than the description above ~~
+  The stimuli given in \code{hrf} are used as first columns in
+  the designmatrix.
+
+  The order of the polynomial drift terms is given
+  by\code{order}, which defaults to 1.
+
+  The polynomials are defined orthogonal to the stimuli given in
+  \code{hrf}. 
 }
 \value{
-  ~Describe the value returned
-  If it is a LIST, use
-  \item{comp1 }{Description of 'comp1'}
-  \item{comp2 }{Description of 'comp2'}
-  ...
+  designmatrix of the linear model
 }
-\references{ ~put references to the literature/web site here ~ }
-\author{ ~~who you are~~ }
-\note{ ~~further notes~~ 
-
- ~Make other sections like Warning with \section{Warning }{....} ~
-}
-\seealso{ ~~objects to See Also as \code{\link{help}}, ~~~ }
+\author{ Karsten Tabelow (tabelow@wias-berlin.de) }
+\seealso{ \code{\link{create.stimulus}}, \code{\link{calculate.lm}} }
 \examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
-
-## The function is currently defined as
-function (hrf, order = 0) 
-{
-    stimuli <- dim(hrf)[2]
-    scans <- dim(hrf)[1]
-    z <- matrix(0, scans, stimuli + order + 1)
-    for (i in 1:stimuli) {
-        z[, i] <- hrf[, i]
-    }
-    ortho <- matrix(0, stimuli, stimuli)
-    for (i in 1:stimuli) {
-        for (j in 1:stimuli) {
-            ortho[i, j] <- z[, i] \%*\% z[, j]
-        }
-    }
-    z[, stimuli + 1] <- 1
-    if (order != 0) {
-        for (i in (stimuli + 2):(stimuli + order + 1)) {
-            z[, i] <- (1:scans)^(i - stimuli - 1)
-            hz <- numeric(stimuli)
-            for (j in 1:stimuli) {
-                hz[j] <- z[, j] \%*\% z[, i]
-            }
-            tmp <- lm(-hz ~ ortho - 1)
-            z[, i] <- z[, i] + as.vector(hrf \%*\% as.vector(tmp$coeff))
-        }
-    }
-    z
-  }
+  # Example 1
+  hrf <- create.stimulus(107, c(18, 48, 78), 15, 2)
+  z <- create.designmatrix(hrf,2)
+  dim(hrf)
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
