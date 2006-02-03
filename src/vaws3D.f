@@ -85,8 +85,9 @@ C
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
      1        iind,jind,jind3,jind2,clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
       real*8 bii,sij,swj,swj2,swj0,swjy(dv),z1,z2,z3,wj,hakt2,
-     1        bii0
+     1        bii0,spf
       hakt2=hakt*hakt
+      spf=spmax/(spmax-spmin)
       ih1=hakt
       aws=lambda.lt.1d40
 C
@@ -181,8 +182,8 @@ C  first stochastic term
 	                   thj(k)=theta(jind+(k-1)*n)
 	                END DO
                         sij=bii*kldist(thi,thj,dv0,vwghts)
-                           IF (sij.gt.spmax) CYCLE
-			   IF (sij.gt.spmin) wj=wj*exp(-sij+spmin)
+                         IF (sij.gt.spmax) CYCLE
+			 IF (sij.gt.spmin) wj=wj*exp(-spf*(sij-spmin))
 C   if sij <= spmin  this just keeps the location penalty
 C    spmin = 0 corresponds to old choice of K_s 
 C   new kernel is flat in [0,spmin] and then decays exponentially
@@ -237,8 +238,9 @@ C
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
      1        iind,jind,jind3,jind2,clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
       real*8 bii,sij,swj,swj2,swj0,swjy(dv),z1,z2,z3,wj,hakt2,
-     1        bii0,si2(1),vred(1),sv1,sv2
+     1        bii0,si2(1),vred(1),sv1,sv2,spf
       hakt2=hakt*hakt
+      spf=spmax/(spmax-spmin)
       ih1=hakt
       aws=lambda.lt.1d40
 C
@@ -336,7 +338,7 @@ C  first stochastic term
 	                END DO
                         sij=bii*kldist(thi,thj,dv0,vwghts)
                            IF (sij.gt.spmax) CYCLE
-			   IF (sij.gt.spmin) wj=wj*exp(-sij+spmin)
+			IF (sij.gt.spmin) wj=wj*exp(-spf*(sij-spmin))
 C   if sij <= spmin  this just keeps the location penalty
 C    spmin = 0 corresponds to old choice of K_s 
 C   new kernel is flat in [0,spmin] and then decays exponentially
@@ -392,8 +394,9 @@ C
      1       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),thj(dv0)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
      1        iind,jind,jind3,jind2,clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
-      real*8 bii,sij,swj,swjy(dv),z1,z2,z3,wj,hakt2,si2(1)
+      real*8 bii,sij,swj,swjy(dv),z1,z2,z3,wj,hakt2,si2(1),spf
       hakt2=hakt*hakt
+      spf=spmax/(spmax-spmin)
       ih1=hakt
       aws=lambda.lt.1d40
 C
@@ -483,7 +486,7 @@ C  first stochastic term
 	                END DO
                         sij=bii*kldist(thi,thj,dv0,vwghts)
                            IF (sij.gt.spmax) CYCLE
-			   IF (sij.gt.spmin) wj=wj*exp(-sij+spmin)
+			IF (sij.gt.spmin) wj=wj*exp(-spf*(sij-spmin))
 C   if sij <= spmin  this just keeps the location penalty
 C    spmin = 0 corresponds to old choice of K_s 
 C   new kernel is flat in [0,spmin] and then decays exponentially
@@ -537,10 +540,11 @@ C
      1        iind,jind,jind3,jind2,clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n,
      2        cgw1,dgw1,dgw2,dgw3,j1a,j1e,j2a,j2e,j3a,j3e,l1,l2,l3,
      3        m1,m2,m3,cgw10,cgw20,cgw30,k1,k2,k3,indg,m10,m20,m30
-      real*8 bii,sij,swj,swj2,z1,z2,z3,wj,hakt2,swj2vr,
+      real*8 bii,sij,swj,swj2,z1,z2,z3,wj,hakt2,swj2vr,spf,
      1        si2(n1,n2,n3),var(1),vred(1)
       integer ngw
       hakt2=hakt*hakt
+      spf=spmax/(spmax-spmin)
       ih1=hakt
       aws=lambda.lt.1d40
 C
@@ -650,7 +654,7 @@ C  first stochastic term
 	                END DO
                         sij=bii*kldist(thi,thj,dv0,vwghts)
                            IF (sij.gt.spmax) CYCLE
-			   IF (sij.gt.spmin) wj=wj*exp(-sij+spmin)
+			IF (sij.gt.spmin) wj=wj*exp(-spf*(sij-spmin))
 C   if sij <= spmin  this just keeps the location penalty
 C    spmin = 0 corresponds to old choice of K_s 
 C   new kernel is flat in [0,spmin] and then decays exponentially
