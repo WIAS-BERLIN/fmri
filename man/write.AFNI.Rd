@@ -12,11 +12,11 @@ write.AFNI(file, ttt, label, note = "", origin = c(0, 0, 0), delta = c(4, 4, 4),
 \arguments{
   \item{file}{ name of the file }
   \item{ttt}{ datacube }
-  \item{label}{ labels (BRICK_LABS) }
-  \item{note}{ notes on data (HISTORY_NOTE) }
+  \item{label}{ labels (BRICK\_LABS) }
+  \item{note}{ notes on data (HISTORY\_NOTE) }
   \item{origin}{ origin of datacube (ORIGIN) }
   \item{delta}{ voxel dimension (DELTA) }
-  \item{idcode}{ idcode of data (IDCODE_STRING) }
+  \item{idcode}{ idcode of data (IDCODE\_STRING) }
 }
 \details{
   Write out BRIK/HEAD files as required by AFNI. Most arguments
