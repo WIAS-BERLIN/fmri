@@ -1,26 +1,34 @@
 \name{fmriplot.signal}
 \alias{fmriplot.signal}
-\docType{data}
-\title{ ~~ data name/kind ... ~~}
+%- Also NEED an '\alias' for EACH other topic documented here.
+\title{ FMRI Results }
 \description{
-  ~~ A concise (1-5 lines) description of the dataset. ~~
+  Plot fMRI results with underlay slicewise.
 }
-\usage{data(fmriplot.signal)}
-\format{
-  The format is:
- chr "fmriplot.signal"
+\usage{
+fmriplot.signal(signal, anatomic = array(0, dim = dim(signal)), pos = c(-1, -1, -1), device = "X11", file = "plot.png")
+}
+%- maybe also 'usage' for other objects documented here.
+\arguments{
+  \item{signal}{ 3 dimensional array of signal strengths (or p-value or
+  ...). }
+  \item{anatomic}{ Underlay for signal. (anatomic) }
+  \item{pos}{ Mark this voxel }
+  \item{device}{ Output device. "X11", "png", "jpeg", "ppm" }
+  \item{file}{ Name of the file for output if device is not X11 }
 }
 \details{
-  ~~ If necessary, more details than the __description__ above ~~
+  Plots slicewise the results given by \code{signal} with underlay given
+  in \code{anatomic}. Voxel \code{pos} is marked.
+
+  Output can be X11 and a graphics file \code{device}.
 }
-\source{
-  ~~ reference to a publication or URL from which the data were obtained ~~
-}
-\references{
-  ~~ possibly secondary sources and usages ~~
-}
+\value{
+  Nothing is returned}
+\author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
+\seealso{ \code{\link{fmriplot.timeseries}}, \code{\link{fmriplot.slices3d}}, \code{\link{fmriplot.diff}} }
 \examples{
-data(fmriplot.signal)
-## maybe str(fmriplot.signal) ; plot(fmriplot.signal) ...
+  \dontrun{fmriplot.signal(signal, anatomic = array(0, dim = dim(signal)), pos = c(-1, -1, -1), device = "X11", file = "plot.png")}
 }
-\keyword{datasets}
+\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
+\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line

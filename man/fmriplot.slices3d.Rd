@@ -1,26 +1,35 @@
 \name{fmriplot.slices3d}
 \alias{fmriplot.slices3d}
-\docType{data}
-\title{ ~~ data name/kind ... ~~}
+%- Also NEED an '\alias' for EACH other topic documented here.
+\title{ FMRI Results }
 \description{
-  ~~ A concise (1-5 lines) description of the dataset. ~~
+  Plot 3D slices of the FMRI results.
 }
-\usage{data(fmriplot.slices3d)}
-\format{
-  The format is:
- chr "fmriplot.slices3d"
+\usage{
+fmriplot.slices3d(signal, anatomic = array(0, dim = dim(signal)), pos = c(-1, -1, -1))
+}
+%- maybe also 'usage' for other objects documented here.
+\arguments{
+  \item{signal}{ 3 dimensional array of signal strengths (or p-value or
+  ...). }
+  \item{anatomic}{ Underlay for signal. (anatomic) }
+  \item{pos}{ Mark this voxel }
 }
 \details{
-  ~~ If necessary, more details than the __description__ above ~~
+  Plot 3D slices of the FMRI results with underlay. If \code{pos} is
+  negativ, no voxel is marked.
 }
-\source{
-  ~~ reference to a publication or URL from which the data were obtained ~~
+\value{
+  Nothing is returned}
+\author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
+\note{
+  This code is still experimental! Should rely on tkrplot only in future
+  versions.
 }
-\references{
-  ~~ possibly secondary sources and usages ~~
-}
+\seealso{ \code{\link{fmriplot.signal}},
+  \code{\link{fmriplot.timeseries}}, \code{\link{fmriplot.diff}} }
 \examples{
-data(fmriplot.slices3d)
-## maybe str(fmriplot.slices3d) ; plot(fmriplot.slices3d) ...
+  \dontrun{fmriplot.slices3d(signal, anatomic = array(0, dim = dim(signal)), pos = c(-1, -1, -1))}
 }
-\keyword{datasets}
+\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
+\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
