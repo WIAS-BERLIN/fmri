@@ -1,96 +1,53 @@
 \name{read.ANALYZE}
 \alias{read.ANALYZE}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{ ~~function to do ... ~~ }
+\title{ I/O Functions }
 \description{
-  ~~ A concise (1-5 lines) description of what the function does. ~~
+  Read fMRI data from ANALYZE file.
+}
+\synopsis{
+read.ANALYZE(prefix = "", numbered = FALSE, postfix = "", picstart = 1, numbpic = 1)
 }
 \usage{
-read.ANALYZE(prefix = "", numbered = FALSE, postfix = "", picstart = 1, numbpic = 1)
+read.ANALYZE("run",TRUE,"_new",40,120)
+read.ANALYZE("filename")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{prefix}{ ~~Describe \code{prefix} here~~ }
-  \item{numbered}{ ~~Describe \code{numbered} here~~ }
-  \item{postfix}{ ~~Describe \code{postfix} here~~ }
-  \item{picstart}{ ~~Describe \code{picstart} here~~ }
-  \item{numbpic}{ ~~Describe \code{numbpic} here~~ }
+  \item{prefix}{ string. part of the file name before the number }
+  \item{numbered}{ logical. if \code{FALSE} only \code{prefix} is taken
+    as file name.}
+  \item{postfix}{ string. part of the file name after the number}
+  \item{picstart}{ number of the first picture to be read. }
+  \item{numbpic}{ number of pictures to be read }
 }
 \details{
-  ~~ If necessary, more details than the description above ~~
+  This function read in fMRI data file(s) in ANALYZE format as used in
+  SPM. It takes the string in \code{prefix} and \code{postfix} and
+  number of the form "007" in between to create the file name.
+
+  If \code{numbered} is \code{FALSE}, only the string in \code{prefix}
+  is used for file name (default).
+
+  The number is assumed to be 3 digits (including leading zeros). First
+  number is given is \code{picstart}, while \code{numbpic} defines the
+  number of total numbur of pictures to be read. Data in multiple files
+  will be combined into one four dimensional datacube.
 }
 \value{
-  ~Describe the value returned
-  If it is a LIST, use
-  \item{comp1 }{Description of 'comp1'}
-  \item{comp2 }{Description of 'comp2'}
-  ...
+  \item{ttt}{four dimensional data cube}
+  \item{header}{header information of the data}
 }
-\references{ ~put references to the literature/web site here ~ }
-\author{ ~~who you are~~ }
-\note{ ~~further notes~~ 
+\author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
+\note{ This function requires the AnalyzeFMRI package and the
+  f.read.analyze.volume() and f.read.analyze.header() functions
+  therein. This is because until now, we did not implement an input
+  routine ourselves.
 
- ~Make other sections like Warning with \section{Warning }{....} ~
+  Since numbering and naming of ANALYZE files widely varies, this
+  function may not meet your personal needs. See Details for description.
 }
-\seealso{ ~~objects to See Also as \code{\link{help}}, ~~~ }
-\examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
-
-## The function is currently defined as
-function (prefix = "", numbered = FALSE, postfix = "", picstart = 1, 
-    numbpic = 1) 
-{
-    counter <- c(paste("00", 1:9, sep = ""), paste("0", 10:99, 
-        sep = ""), paste(100:999, sep = ""))
-    if (require(AnalyzeFMRI)) {
-        if (numbered) {
-            filename <- paste(prefix, counter[picstart], postfix, 
-                ".img", sep = "")
-        }
-        else {
-            filename <- paste(prefix, ".img", sep = "")
-        }
-        if (length(system(paste("ls", filename), TRUE, TRUE)) != 
-            0) {
-            ttt <- f.read.analyze.volume(filename)
-            dt <- dim(ttt)
-            cat(".")
-            header <- f.read.analyze.header(filename)
-            if (numbpic > 1) {
-                for (i in (picstart + 1):(picstart + numbpic - 
-                  1)) {
-                  if (numbered) {
-                    filename <- paste(prefix, counter[i], postfix, 
-                      ".img", sep = "")
-                  }
-                  else {
-                    filename <- paste(prefix, ".img", sep = "")
-                  }
-                  a <- f.read.analyze.volume(filename)
-                  if (sum() != 0) 
-                    cat("Error: wrong spatial dimension in picture", 
-                      i)
-                  ttt <- c(ttt, a)
-                  dt[4] <- dt[4] + dim(a)[4]
-                  cat(".")
-                }
-            }
-            cat("\n")
-            dim(ttt) <- c(dt)
-            invisible(list(ttt = ttt, header = header))
-        }
-        else {
-            warning(paste("Error: file", filename, "does not exist!"))
-            list(ttt = NULL, header = NULL)
-        }
-    }
-    else {
-        warning("Error: library AnalyzeFMRI not found\n")
-        list(ttt = NULL, header = NULL)
-    }
-  }
-}
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\seealso{ \code{\link{write.ANLAYZE}} }
+\examples{ \dontrun{analyze <- read.ANALYZE("run",TRUE,"_new",40,120)}}
+\keyword{ SPM }% at least one, from doc/KEYWORDS
+\keyword{ ANALYZE file format }% __ONLY ONE__ keyword per line

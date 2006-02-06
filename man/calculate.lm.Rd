@@ -47,7 +47,7 @@
 \seealso{ \code{\link{create.designmatrix}}, \code{\link{create.stimulus}} }
 \examples{
   # Example 1
-  ttt <- array(rnorm(32*32*32*107,c(32,32,32,107)))
+  ttt <- array(rnorm(32*32*32*107),c(32,32,32,107))
   hrf <- create.stimulus(107, c(18, 48, 78), 15, 2)
   z <- create.designmatrix(hrf,2)
   model <- calculate.lm(ttt,z)

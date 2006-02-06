@@ -13,13 +13,9 @@ read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart =
       cat(".")
       header <- f.read.analyze.header(filename);
 
-      if (numbpic > 1) { 
+      if ((numbpic > 1) && !numbered) { 
         for (i in (picstart+1):(picstart+numbpic-1)) {
-          if (numbered) {
-            filename <- paste(prefix, counter[i], postfix, ".img", sep="")
-          } else {
-            filename <- paste(prefix, ".img", sep="")
-          }
+          filename <- paste(prefix, counter[i], postfix, ".img", sep="")
           a <- f.read.analyze.volume(filename)
           if (sum() != 0)
             cat("Error: wrong spatial dimension in picture",i)
@@ -30,7 +26,7 @@ read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart =
       }
 
       cat("\n")
-      dim(ttt) <- c(dt)
+      dim(ttt) <- dt
       invisible(list(ttt=ttt,header=header))
     } else {
         warning(paste("Error: file",filename,"does not exist!"))
