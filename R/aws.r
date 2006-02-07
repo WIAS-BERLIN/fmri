@@ -635,7 +635,7 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",skern="Exp",aggker
 #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
 #
   z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,y=y,
-            hmax=tobj$hakt,mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg,gw=gwght)
+            hmax=tobj$hakt,mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg)
   class(z) <- "aws.gaussian"
   z
 }

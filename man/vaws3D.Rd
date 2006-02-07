@@ -48,9 +48,9 @@ vaws3D(y, qlambda = NULL, qtau = NULL, lkern = "Triangle", skern="Exp", aggkern 
   \item{wghts}{\code{wghts} specifies the  diagonal elements of a weight matrix to adjust for different distances between grid-points
   in different coordinate directions, i.e. allows to define a more appropriate metric in the design space. }
   \item{spmin}{\code{spmin} specifies parameter value in the kernel \eqn{K_s(x)=\min(0,e^{-spmax/(spmax-spmin)(x-spmin)}I_{x<spmax}}. Defaults
-  to \code{spmin=0}.}
+  to \code{spmin=0}. Not used if \code{skern="Triangle"}.}
   \item{spmax}{\code{spmax} specifies the cut point in the kernel \eqn{K_s(x)=\min(0,e^{-spmax/(spmax-spmin)(x-spmin)}I_{x<spmax}} }. Defaults
-  to \code{spmax=5}.}
+  to \code{spmax=5}. Not used if \code{skern="Triangle"}.}
   \item{scorr}{\code{scorr} specifies the spatial correlation in the three coordinate directions. Defaults to \code{scorr=c(0,0,0)}. }
   \item{vwghts}{\code{vwghts} specifies weights for the components of the data vector. These weights are used in the evaluation of the statistical
   penalty \eqn{s_ij=N_i/\lambda/\sigma^2_i sum_k vwghts[k] (theta_{ik}-\theta_{jk})^2}{} where \eqn{k} denotes the \eqn{k}-th component of the 
@@ -71,10 +71,10 @@ The essential parameter in the procedure is \code{qlambda}. This parameter has a
    provide, with a high probability, the global (parametric) estimate.
    More formally we require the parameter \code{qlambda} and eventually \code{lseq}
    to be specified such that
-   \code{\bf{E} |\hat{\theta}^k - \theta| \le (1+\alpha) \bf{E} |\tilde{\theta}^k - \theta|}
-   where \code{\hat{\theta}^k} is the aws-estimate in step \code{k} and \code{\tilde{\theta}^k}
+   \eqn{\bf{E} |\hat{\theta}^k - \theta| \le (1+\alpha) \bf{E} |\tilde{\theta}^k - \theta|}
+   where \code{\hat{\theta}^k} is the aws-estimate in step \code{k} and \eqn{\tilde{\theta}^k}
    is corresponding nonadaptive estimate using the same bandwidth (\code{qlambda=1}).
-   Default values are selected to fulfil this condition for \code{\alpha=0.1}.
+   Default values are selected to fulfil this condition for \eqn{\alpha=0.1}.
    
    The optimal values only slightly depend on the model parameters, i.e. the
    default parameters should work in most situations. Larger values of \code{qlambda}
