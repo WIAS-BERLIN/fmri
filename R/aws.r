@@ -29,10 +29,10 @@
 #             sagg:          heta=2   qtau=.95     
 #             Gaussian:      qlambda=.96          
 #
-vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
+vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform",
                    sigma2=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
                    heta=NULL,u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
-                   spmin=0,spmax=5,scorr=0,vwghts=1) {
+                   spmin=0,spmax=1.1,scorr=0,vwghts=1) {
   #  Auxilary functions
   IQRdiff <- function(y) IQR(diff(y))/1.908
 
@@ -97,6 +97,18 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
   # define heta
   if (is.null(heta)) heta <- max(2,hinit+.5)
   heta <- max(heta,2)
+  # set the code for the kernel (used in lkern and skern)
+  lkern <- switch(lkern,
+                  Triangle=2,
+                  Quadratic=3,
+                  Cubic=4,
+                  Uniform=1,
+                  Gaussian=5,
+                  2)
+  skern <- switch(skern,
+                  Triangle=1,
+                  Exp=2,
+                  2)
 
   # define qlambda, lambda, qtau, tau1, tau2
   if (is.null(qlambda)) qlambda <- .985
@@ -123,19 +135,15 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
   } else {
     lambda <- 1e50
   }
-
+    if(skern==1) {
+#  to have similar preformance compared to skern="Exp"
+        lambda<-4/3*lambda
+	spmin <- 0
+	spmax <- 1
+    }
   # define cpar
   cpar <- list(heta=heta,tau1=tau1,tau2=tau2)
   cpar$kstar <- log(5)
-
-  # set the code for the kernel (used in lkern) and set lambda
-  lkern <- switch(lkern,
-                  Triangle=2,
-                  Quadratic=3,
-                  Cubic=4,
-                  Uniform=1,
-                  Gaussian=5,
-                  2)
 
   # set hinit and hincr if not provided
   if (is.null(hinit)||hinit<1) hinit <- 1
@@ -236,6 +244,7 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 		       vred=double(n),
                        ai=as.double(zobj$ai),
                        as.integer(lkern),
+		       as.integer(skern),
 	               as.double(spmin),
 		       as.double(spmax),
 		       double(prod(dlw)),
@@ -244,7 +253,7 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 		       double(dv),#swjy
 		       double(dv0),#thi
 		       double(dv0),#thj
-		       PACKAGE="fmri")[c("bi","bi0","bi2","vred","ai","hakt")]
+		       PACKAGE="fmri",DUP=FALSE)[c("bi","bi0","bi2","vred","ai","hakt")]
       vred[!tobj$fix] <- zobj$vred[!tobj$fix]
     } else { # all other cases
       zobj <- .Fortran("caws",as.double(y),
@@ -262,6 +271,7 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
                        bi0=as.double(zobj$bi0),
                        ai=as.double(zobj$ai),
                        as.integer(lkern),
+		       as.integer(skern),
                        as.double(spmin),
 		       as.double(spmax),
 		       double(prod(dlw)),
@@ -270,7 +280,7 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 		       double(dv),#swjy
 		       double(dv0),#thi
 		       double(dv0),#thj
-		       PACKAGE="fmri")[c("bi","bi0","bi2","ai","hakt")]
+		       PACKAGE="fmri",DUP=FALSE)[c("bi","bi0","bi2","ai","hakt")]
     }
     gc()
     dim(zobj$ai) <- dy
@@ -373,10 +383,10 @@ vaws3D <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 #             sagg:          heta=2   qtau=.95     
 #             Gaussian:      qlambda=.96          
 #
-vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
+vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform",
                    sigma2=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
                    heta=NULL,u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
-                   spmin=0,spmax=5,scorr=0,vwghts=1) {
+                   spmin=0,spmax=1.1,scorr=c(0,0,0),vwghts=1) {
   #  Auxilary functions
   IQRdiff <- function(y) IQR(diff(y))/1.908
 
@@ -410,6 +420,19 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
   mae <- NULL
 
 
+  # set the code for the kernel (used in lkern) and set lambda
+  lkern <- switch(lkern,
+                  Triangle=2,
+                  Quadratic=3,
+                  Cubic=4,
+                  Uniform=1,
+                  Gaussian=5,
+                  2)
+  skern <- switch(skern,
+                  Triangle=1,
+                  Exp=2,
+                  2)
+
   # define qlambda, lambda
   if (is.null(qlambda)) qlambda <- .985
   if (qlambda<.9) warning("Inappropriate value of qlambda")
@@ -420,15 +443,12 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
   } else {
     lambda <- 1e50
   }
-
-  # set the code for the kernel (used in lkern) and set lambda
-  lkern <- switch(lkern,
-                  Triangle=2,
-                  Quadratic=3,
-                  Cubic=4,
-                  Uniform=1,
-                  Gaussian=5,
-                  2)
+    if(skern==1) {
+#  to have similar preformance compared to skern="Exp"
+        lambda<-4/3*lambda
+	spmin <- 0
+	spmax <- 1
+    }
 
   # set hinit and hincr if not provided
   if (is.null(hinit)||hinit<1) hinit <- 1
@@ -518,6 +538,7 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
                        bi=as.double(bi0),
                        ai=as.double(tobj$ai),
                        as.integer(lkern),
+		       as.integer(skern),
 	               as.double(spmin),
 		       as.double(spmax),
 		       double(prod(dlw)),
@@ -526,7 +547,7 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 		       double(dv),#swjy
 		       double(dv0),#thi
 		       double(dv0),#thj
-		       PACKAGE="fmri")[c("bi","ai","hakt")]
+		       PACKAGE="fmri",DUP=TRUE)[c("bi","ai","hakt")]
     gc()
     dim(tobj$ai) <- dy
     gc()
@@ -581,6 +602,7 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 		       var=double(n),
 		       vred=double(n),
                        as.integer(lkern),
+		       as.integer(skern),
 	               as.double(spmin),
 		       as.double(spmax),
 		       double(prod(dlw)),# lwghts
@@ -591,7 +613,7 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
 		       as.double(vwghts),
 		       double(dv0),#thi
 		       double(dv0),#thj
-		       PACKAGE="fmri")[c("vred","var")]
+		       PACKAGE="fmri",DUP=FALSE)[c("vred","var")]
       dim(z$vred) <- dim(z$var) <- dim(sigma2)
       nqg <- .Fortran("nqg",as.double(gwght),
                        as.double(gwght^2),
@@ -603,7 +625,7 @@ vaws3D2 <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",aggkern="Uniform",
                        as.integer(n3),
                        qg=double(n),
 		       ng=double(n),
-		       PACKAGE="fmri")[c("qg","ng")]
+		       PACKAGE="fmri",DUP=FALSE)[c("qg","ng")]
       qg <- array(nqg$qg,dim(sigma2))
       ng <- array(nqg$ng,dim(sigma2))
   dim(tobj$bi)<-dim(sigma2)

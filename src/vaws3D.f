@@ -61,7 +61,7 @@ C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine caws(y,fix,n1,n2,n3,dv,dv0,hakt,lambda,theta,bi,bi2,
-     1       bi0,ai,kern,spmin,spmax,lwght,wght,vwghts,swjy,thi,thj)
+     1  bi0,ai,kern,skern,spmin,spmax,lwght,wght,vwghts,swjy,thi,thj)
 C   
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
@@ -78,7 +78,7 @@ C
       implicit logical (a-z)
       external kldist,lkern
       real*8 kldist,lkern
-      integer n1,n2,n3,kern,dv,dv0
+      integer n1,n2,n3,kern,skern,dv,dv0
       logical aws,fix(1)
       real*8 y(1),theta(1),bi(1),bi0(1),ai(1),lambda,spmax,wght(2),
      1       bi2(1),hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),thj(dv0)
@@ -183,10 +183,13 @@ C  first stochastic term
 	                END DO
                         sij=bii*kldist(thi,thj,dv0,vwghts)
                          IF (sij.gt.spmax) CYCLE
-			 IF (sij.gt.spmin) wj=wj*exp(-spf*(sij-spmin))
-C   if sij <= spmin  this just keeps the location penalty
-C    spmin = 0 corresponds to old choice of K_s 
-C   new kernel is flat in [0,spmin] and then decays exponentially
+		     IF (skern.eq.1) THEN
+C  skern == "Triangle"
+                        wj=wj*(1.d0-sij)
+		     ELSE
+C  skern == "Exp"
+		        IF (sij.gt.spmin) wj=wj*dexp(-spf*(sij-spmin))
+		     ENDIF
                         END IF
                         swj=swj+wj
                         swj2=swj2+wj*wj
@@ -213,8 +216,8 @@ C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine chaws(y,fix,si2,n1,n2,n3,dv,dv0,hakt,lambda,theta,bi,
-     1    bi2,bi0,vred,ai,kern,spmin,spmax,lwght,wght,vwghts,swjy,
-     2    thi,thj)
+     1  bi2,bi0,vred,ai,kern,skern,spmin,spmax,lwght,wght,vwghts,swjy,
+     2  thi,thj)
 C   
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
@@ -231,7 +234,7 @@ C
       implicit logical (a-z)
       external kldist,lkern
       real*8 kldist,lkern
-      integer n1,n2,n3,kern,dv,dv0
+      integer n1,n2,n3,kern,skern,dv,dv0
       logical aws,fix(1)
       real*8 y(1),theta(1),bi(1),bi0(1),ai(1),lambda,spmax,wght(2),
      1       bi2(1),hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),thj(dv0)
@@ -338,7 +341,13 @@ C  first stochastic term
 	                END DO
                         sij=bii*kldist(thi,thj,dv0,vwghts)
                            IF (sij.gt.spmax) CYCLE
-			IF (sij.gt.spmin) wj=wj*exp(-spf*(sij-spmin))
+		     IF (skern.eq.1) THEN
+C  skern == "Triangle"
+                        wj=wj*(1.d0-sij)
+		     ELSE
+C  skern == "Exp"
+		        IF (sij.gt.spmin) wj=wj*dexp(-spf*(sij-spmin))
+		     ENDIF
 C   if sij <= spmin  this just keeps the location penalty
 C    spmin = 0 corresponds to old choice of K_s 
 C   new kernel is flat in [0,spmin] and then decays exponentially
@@ -371,7 +380,7 @@ C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine chaws2(y,si2,n1,n2,n3,dv,dv0,hakt,lambda,theta,bi,
-     1    ai,kern,spmin,spmax,lwght,wght,vwghts,swjy,thi,thj)
+     1    ai,kern,skern,spmin,spmax,lwght,wght,vwghts,swjy,thi,thj)
 C   
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
@@ -388,7 +397,7 @@ C
       implicit logical (a-z)
       external kldist,lkern
       real*8 kldist,lkern
-      integer n1,n2,n3,kern,dv,dv0
+      integer n1,n2,n3,kern,skern,dv,dv0
       logical aws
       real*8 y(1),theta(1),bi(1),ai(1),lambda,spmax,wght(2),
      1       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),thj(dv0)
@@ -486,10 +495,17 @@ C  first stochastic term
 	                END DO
                         sij=bii*kldist(thi,thj,dv0,vwghts)
                            IF (sij.gt.spmax) CYCLE
-			IF (sij.gt.spmin) wj=wj*exp(-spf*(sij-spmin))
+		     IF (skern.eq.1) THEN
+C  skern == "Triangle"
+                        wj=wj*(1.d0-sij)
+		     ELSE
+C  skern == "Exp"
+		        IF (sij.gt.spmin) wj=wj*dexp(-spf*(sij-spmin))
+		     ENDIF
 C   if sij <= spmin  this just keeps the location penalty
 C    spmin = 0 corresponds to old choice of K_s 
 C   new kernel is flat in [0,spmin] and then decays exponentially
+C   truncated at spmax
                         END IF
                         swj=swj+wj*si2(jind)
 			DO k=1,dv
@@ -513,8 +529,8 @@ C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine chawsvr(y,si2,n1,n2,n3,dv,dv0,hakt,lambda,theta,bi,
-     1      var,vred,kern,spmin,spmax,lwght,gwght,swght,dgw,wght,
-     2      vwghts,thi,thj)
+     1   var,vred,kern,skern,spmin,spmax,lwght,gwght,swght,dgw,wght,
+     2   vwghts,thi,thj)
 C   
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
@@ -531,7 +547,7 @@ C
       implicit logical (a-z)
       external kldist,lkern
       real*8 kldist,lkern
-      integer n1,n2,n3,kern,dv,dv0,dgw(3)
+      integer n1,n2,n3,kern,skern,dv,dv0,dgw(3)
       logical aws
       real*8 y(1),theta(1),bi(1),lambda,spmax,wght(2),gwght(1),
      1       swght(n1,n2,n3),hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),
@@ -654,12 +670,14 @@ C  first stochastic term
 	                END DO
                         sij=bii*kldist(thi,thj,dv0,vwghts)
                            IF (sij.gt.spmax) CYCLE
-			IF (sij.gt.spmin) wj=wj*exp(-spf*(sij-spmin))
-C   if sij <= spmin  this just keeps the location penalty
-C    spmin = 0 corresponds to old choice of K_s 
-C   new kernel is flat in [0,spmin] and then decays exponentially
+		     IF (skern.eq.1) THEN
+C  skern == "Triangle"
+                        wj=wj*(1.d0-sij)
+		     ELSE
+C  skern == "Exp"
+		        IF (sij.gt.spmin) wj=wj*dexp(-spf*(sij-spmin))
+		     ENDIF
                         END IF
-C                        swght(j1,j2,j3)=wj*dsqrt(si2(j1,j2,j3))
                         swght(j1,j2,j3)=wj*si2(j1,j2,j3)
                      END DO
                   END DO
@@ -695,7 +713,6 @@ C
 	                END DO
 			swj2=swj2+swj*swj/si2(l1,l2,l3)
 			swj2vr=swj2vr+swj*swj
-C           /si2(l1,l2,l3)
 		     END DO
 		  END DO
 	       END DO

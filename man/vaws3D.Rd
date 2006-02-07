@@ -6,7 +6,7 @@
 using the Propagation-Separation approach from Polzehl \& Spokoiny (2006). 
 }
 \usage{
-vaws3D(y, qlambda = NULL, qtau = NULL, lkern = "Triangle", aggkern = "Uniform", sigma2 = NULL, hinit = NULL, hincr = NULL, hmax = NULL, lseq = NULL, heta = NULL, u = NULL, graph = FALSE, demo = FALSE, wghts = NULL, spmin = 0, spmax = 5, scorr = 0, vwghts = 1)
+vaws3D(y, qlambda = NULL, qtau = NULL, lkern = "Triangle", skern="Exp", aggkern = "Uniform", sigma2 = NULL, hinit = NULL, hincr = NULL, hmax = NULL, lseq = NULL, heta = NULL, u = NULL, graph = FALSE, demo = FALSE, wghts = NULL, spmin = 0, spmax = 5, scorr = 0, vwghts = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -26,6 +26,8 @@ vaws3D(y, qlambda = NULL, qtau = NULL, lkern = "Triangle", aggkern = "Uniform", 
   \item{lkern}{ \code{lkern} specifies the location kernel. Defaults to "Triangle", other choices are "Gaussian", "Quadratic", "Cubic" and "Uniform".
     Note that the location kernel is applied to \code{(x-x_j)^2/h^2}, i.e. the use of "Triangle" corresponds to the Epanechnicov kernel 
     nonparametric kernel regression.}
+  \item{skern}{ \code{lkern} specifies the kernel for the statistikal penalty. Defaults to "Exp", the alternative is "Triangle".
+    \code{lkern="Triangle"} allows for much faster computation (saves up to 50%) but needs some additional testing.}
   \item{aggkern}{\code{aggkern} specifies the kernel for the statistical panalty in stagewise aggregation. Defaults to "Uniform", the alternative choice is
    "Triangle" }
   \item{sigma2}{\code{sigma2} allows to specify the variance \eqn{\sigma^2_i} of the first component of the data vector in each voxel \eqn{i}. 
@@ -115,7 +117,60 @@ WIAS-Preprint 1079.}
 }
 \seealso{\code{\link{perform.aws}}}
 \examples{
-\dontrun{vaws3D(y, qlambda = NULL, qtau = NULL, lkern = "Triangle", aggkern = "Uniform", sigma2 = NULL, hinit = NULL, hincr = NULL, hmax = NULL, lseq = NULL, heta = NULL, u = NULL, graph = FALSE, demo = FALSE, wghts = NULL, spmin = 0, spmax = 5, scorr = 0, vwghts = 1)}
+#
+#  create an 3D phantom
+#
+mask<-matrix(0,65,65)
+mask[5:10,5:10]<-1
+mask[7:8,7:8]<-0
+mask[8:10,8:10]<-0
+mask[14:17,14:17]<-1
+mask[16:17,16:17]<-0
+mask[21:23,21:23]<-1
+mask[22:23,23]<-0
+mask[23,22]<-0
+mask[27:28,27:28]<-1
+mask[28,28]<-0
+mask[5:7,29:33]<-1
+mask[7,32:33]<-0
+mask[14:15,30:33]<-1
+mask[15,30]<-0
+mask[21,31:33]<-1
+mask[22,33]<-1
+mask[27,32:33]<-1
+mask[29:33,5:7]<-1
+mask[32:33,7]<-0
+mask[30:33,14:15]<-1
+mask[30,15]<-0
+mask[31:33,21]<-1
+mask[33,22]<-1
+mask[32:33,27]<-1
+mask[34:65,1:33]<-mask[32:1,1:33]
+mask[1:33,34:65]<-mask[1:33,32:1]
+mask[34:65,34:65]<-mask[32:1,32:1]
+image(mask)
+size<-mask
+signal<-1
+factor<-1.1
+size[29:37,38:65]<-signal
+size[38:65,38:65]<-signal*factor
+size[38:65,29:37]<-signal*factor^2
+size[38:65,1:28]<-signal*factor^3
+size[29:37,1:28]<-signal*factor^4
+size[1:28,1:28]<-signal*factor^5
+size[1:28,29:37]<-signal*factor^6
+size[1:28,38:65]<-signal*factor^7
+size<-size*mask
+data<-array(0,c(65,65,10,1))
+for(i in 1:10) data[,,i,1]<-size
+mdata<-2*data
+#  
+#   add some noise
+#
+data<-mdata+array(rnorm(data),dim(data))
+#
+#   smooth the data ( takes about 6s on a Pentium IV 3.2GHz )
+#
+ttt<-vaws3D(data,sigma2=array(1,dim(data)[-4]),skern="Triangle",hmax=4,graph=FALSE,u=mdata,qtau=1)$theta
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{smooth}% at least one, from doc/KEYWORDS

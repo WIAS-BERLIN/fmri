@@ -26,7 +26,6 @@ get3Dh.gauss(vred, h0, vwghts, step = 1.002, interv = 1)
 \author{ Joerg Polzehl, \email{polzehl@wias-berlin.de} }
 \seealso{ \code{\link{vaws3D}} }
 \examples{
-\dontrun{get3Dh.gauss(vred, h0, vwghts, step = 1.002, interv = 1)}
+\dontrun{get3Dh.gauss(.01, h0=c(.5,.7,.3), vwghts=c(1,1,1), step = 1.002, interv = 1)}
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{internal }% at least one, from doc/KEYWORDS
