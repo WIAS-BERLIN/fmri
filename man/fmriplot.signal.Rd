@@ -6,7 +6,8 @@
   Plot fMRI results with underlay slicewise.
 }
 \usage{
-fmriplot.signal(signal, anatomic = array(0, dim = dim(signal)), pos = c(-1, -1, -1), device = "X11", file = "plot.png")
+fmriplot.signal(signal, anatomic = array(0, dim = dim(signal)), 
+         pos = c(-1, -1, -1), device = "X11", file = "plot.png")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -28,7 +29,7 @@ fmriplot.signal(signal, anatomic = array(0, dim = dim(signal)), pos = c(-1, -1, 
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \seealso{ \code{\link{fmriplot.timeseries}}, \code{\link{fmriplot.slices3d}}, \code{\link{fmriplot.diff}} }
 \examples{
-  \dontrun{fmriplot.signal(signal, anatomic = array(0, dim = dim(signal)), pos = c(-1, -1, -1), device = "X11", file = "plot.png")}
+  \dontrun{fmriplot.signal(signal, anatomic = array(0, dim = dim(signal)), 
+            pos = c(-1, -1, -1), device = "X11", file = "plot.png")}
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{ hplot }% at least one, from doc/KEYWORDS

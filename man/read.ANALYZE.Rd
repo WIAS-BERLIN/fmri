@@ -9,8 +9,9 @@
 read.ANALYZE(prefix = "", numbered = FALSE, postfix = "", picstart = 1, numbpic = 1)
 }
 \usage{
-read.ANALYZE("run",TRUE,"_new",40,120)
-read.ANALYZE("filename")
+read.ANALYZE(prefix = "run", numbered = TRUE, postfix = "_new", 
+                                 picstart = 40, numbpic = 120)
+read.ANALYZE(prefix = "filename")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -47,7 +48,7 @@ read.ANALYZE("filename")
   Since numbering and naming of ANALYZE files widely varies, this
   function may not meet your personal needs. See Details for description.
 }
-\seealso{ \code{\link{write.ANLAYZE}} }
+\seealso{ \code{\link{write.ANALYZE}} }
 \examples{ \dontrun{analyze <- read.ANALYZE("run",TRUE,"_new",40,120)}}
-\keyword{ SPM }% at least one, from doc/KEYWORDS
-\keyword{ ANALYZE file format }% __ONLY ONE__ keyword per line
+\keyword{ IO }% at least one, from doc/KEYWORDS
+\keyword{ utilities }% __ONLY ONE__ keyword per line

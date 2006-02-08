@@ -6,7 +6,8 @@
   Plot difference between fMRI results with underlay slicewise.
 }
 \usage{
-fmriplot.diff(mask1, mask2, anatomic = array(0, dim = dim(mask1)), pos = c(-1, -1, -1), device = "X11", file = "plot.png")
+fmriplot.diff(mask1, mask2, anatomic = array(0, dim = dim(mask1)), 
+          pos = c(-1, -1, -1), device = "X11", file = "plot.png")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -35,7 +36,7 @@ fmriplot.diff(mask1, mask2, anatomic = array(0, dim = dim(mask1)), pos = c(-1, -
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \seealso{ \code{\link{fmriplot.signal}}, \code{\link{fmriplot.slices3d}}, \code{\link{fmriplot.timeseries}} }
 \examples{
-\dontrun{fmriplot.diff(mask1, mask2, anatomic = array(0, dim = dim(mask1)), pos = c(-1, -1, -1), device = "X11", file = "plot.png")}
+\dontrun{fmriplot.diff(mask1, mask2, anatomic = array(0, dim = dim(mask1)), 
+          pos = c(-1, -1, -1), device = "X11", file = "plot.png")}
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{hplot  }% at least one, from doc/KEYWORDS

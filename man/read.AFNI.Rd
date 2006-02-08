@@ -24,5 +24,5 @@ read.AFNI(file)
 \examples{
 \dontrun{afni <- read.AFNI("afnifile")}
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{ IO }% at least one, from doc/KEYWORDS
+\keyword{ utilities }% __ONLY ONE__ keyword per line

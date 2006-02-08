@@ -30,7 +30,8 @@ write.ANALYZE(ttt, name = "data", size = "int", voxelsize = c(2, 2, 2))
 \seealso{ \code{\link{read.ANALYZE}} }
 \examples{
 ## Example 1
-write.ANALYZE(as.integer(array(65526*runif(10*10*10*20),c(10,10,10,20))),"random_data")
+write.ANALYZE(array(as.integer(65526*runif(10*10*10*20)),c(10,10,10,20)),
+                                                           "random_data")
 }
-\keyword{ SPM }% at least one, from doc/KEYWORDS
-\keyword{ ANALYZE file format }% __ONLY ONE__ keyword per line
+\keyword{ IO }% at least one, from doc/KEYWORDS
+\keyword{ utilities }% __ONLY ONE__ keyword per line

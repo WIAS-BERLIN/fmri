@@ -7,8 +7,7 @@
   t-, or chisq-field.
 }
 \usage{
-pvalue(z, i, j, k, rx, ry, rz)
-pvalue(z, i, j, k, rx, ry, rz, type = "t", df = 40)
+pvalue(z, i, j, k, rx, ry, rz, type = "norm", df = 4)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -51,3 +50,4 @@ pvalue(z, i, j, k, rx, ry, rz, type = "t", df = 40)
   p <- pvalue(z,64,64,30,rx,ry,rz)
   plot(z,p,type="l")
 }
+\keyword{ distribution }% __ONLY ONE__ keyword per line

@@ -7,7 +7,7 @@
   possible polynomial drift terms.
 }
 \usage{
-create.designmatrix(hrf, 2)
+create.designmatrix(hrf, order = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -35,3 +35,5 @@ create.designmatrix(hrf, 2)
   z <- create.designmatrix(hrf,2)
   dim(hrf)
 }
+\keyword{ regression }% at least one, from doc/KEYWORDS
+\keyword{ design }% __ONLY ONE__ keyword per line

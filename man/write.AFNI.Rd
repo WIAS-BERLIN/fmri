@@ -6,7 +6,8 @@
   Write BRIK file.
 }
 \usage{
-write.AFNI(file, ttt, label, note = "", origin = c(0, 0, 0), delta = c(4, 4, 4), idcode = "WIAS_noid")
+write.AFNI(file, ttt, label, note = "", origin = c(0, 0, 0), 
+               delta = c(4, 4, 4), idcode = "WIAS_noid")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -30,8 +31,9 @@ write.AFNI(file, ttt, label, note = "", origin = c(0, 0, 0), delta = c(4, 4, 4),
 }
 \seealso{ \code{\link{read.AFNI}} }
 \examples{
- write.AFNI("afnitest",as.integer(array(65526*runif(10*10*10*20),c(10,10,10,20))),c("signal"),note="random data",origin=c(0,0,0), delta=c(4,4,5), idcode="unique ID")
+ write.AFNI("afnitest", array(as.integer(65526*runif(10*10*10*20)), c(10,10,10,20)),
+     c("signal"), note="random data", origin=c(0,0,0), delta=c(4,4,5), idcode="unique ID")
 
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{ IO }% at least one, from doc/KEYWORDS
+\keyword{ utilities }% __ONLY ONE__ keyword per line

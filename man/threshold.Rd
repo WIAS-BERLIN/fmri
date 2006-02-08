@@ -49,3 +49,4 @@ threshold(p, i, j, k, rx, ry, rz, type = "norm", df = 4, step = 0.001)
   # threshold for gaussian field with given dimension and smoothness
   threshold(0.05,64,64,30,rx,ry,rz)
 }
+\keyword{ misc }% __ONLY ONE__ keyword per line

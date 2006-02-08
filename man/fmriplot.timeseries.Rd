@@ -6,7 +6,8 @@
   Plot fMRI time series and fitted model.
 } 
 \usage{
-fmriplot.timeseries(fmri, fit, sigvec, tvec, thr, origin, device = "X11", file = "plot.png")
+fmriplot.timeseries(fmri, fit, sigvec, tvec, thr, origin, 
+                       device = "X11", file = "plot.png")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -34,7 +35,7 @@ fmriplot.timeseries(fmri, fit, sigvec, tvec, thr, origin, device = "X11", file =
   analysis. It may not be of much help.}
 \seealso{ \code{\link{fmriplot.signal}}, \code{\link{fmriplot.slices3d}}, \code{\link{fmriplot.diff}}  }
 \examples{
-  \dontrun{fmriplot.timeseries(fmri, fit, sigvec, tvec, thr, origin, device = "X11", file = "plot.png")}
+  \dontrun{fmriplot.timeseries(fmri, fit, sigvec, tvec, thr, origin, 
+                   device = "X11", file = "plot.png")}
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{ hplot }% at least one, from doc/KEYWORDS

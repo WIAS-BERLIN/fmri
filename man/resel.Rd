@@ -6,7 +6,7 @@
   Calculate voxel size in resel space.
 }
 \usage{
-resel(voxeld, hmax)
+resel(voxeld, hmax, hv = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -31,3 +31,4 @@ resel(voxeld, hmax)
   # Example 1
   resel(4,10)
 }
+\keyword{ misc }% at least one, from doc/KEYWORDS

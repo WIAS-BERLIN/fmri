@@ -6,12 +6,14 @@
   Estimate the parameters and variances of a linear model. 
 }
 \usage{
-  calculate.lm(ttt, z, actype = "accalc", contrast = c(1,-1))
+  calculate.lm(ttt, z, actype = "smooth", hmax = 3.52, vtype = "var",
+                 step = 0.01, contrast = c(1), vvector = c(1))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{ttt}{ 4 dimensional data cube }
-  \item{z}{ designmatrix }
+  \item{ttt}{ 4 dimensional data cube, dimension \eqn{(d_x,d_y,d_z,T)}. }
+  \item{z}{ designmatrix specifying the expected hemodynamic response 
+  and aadditional components for trend and other effects. Dimension \eqn{(p,T)}. }
   \item{actype}{ string describing the type of handling autocorrelation
     of time series. "nonac", "ac", "accalc", "smooth"}
   \item{hmax}{ bandwidth for smoothing autocorrelation parameter if
@@ -25,7 +27,16 @@
     covariance matrix is returned. }
 }
 \details{
-  ~~ If necessary, more details than the description above ~~
+  This function performs parameter estimation in the linear model.
+  It implements a two step procedure. In the first step residuals
+  are obtained and if \code{actype \%in\% c("ac", "accalc", "smooth")} 
+  in each voxel an AR(1) model is fitted to 
+  the the time series of residuals, and the AR-coefficient is corrected for bias. 
+  If \code{actype=="smooth"}
+  the AR-coefficients are spatially smoothed using bandwidth \code{hmax}.
+  If \code{actype\%in\%c("ac","smooth")} the linear model is prewithened
+  using the estimated (smoothed) AR-coefficients. Parameter 
+  and variance estimates are then obtained from the prewithened data.
 }
 \value{
   \item{beta}{Estimated parameters }
@@ -54,3 +65,5 @@
   plot(ttt[16,16,16,])
   lines(ttt[16,16,16,] - model$res[16,16,16,],col=2)
 }
+\keyword{ regression }% at least one, from doc/KEYWORDS
+

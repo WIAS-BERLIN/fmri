@@ -6,7 +6,8 @@
   Plot 3D slices of the FMRI results.
 }
 \usage{
-fmriplot.slices3d(signal, anatomic = array(0, dim = dim(signal)), pos = c(-1, -1, -1))
+fmriplot.slices3d(signal, anatomic = array(0, dim = dim(signal)), 
+                                        pos = c(-1, -1, -1))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -29,7 +30,8 @@ fmriplot.slices3d(signal, anatomic = array(0, dim = dim(signal)), pos = c(-1, -1
 \seealso{ \code{\link{fmriplot.signal}},
   \code{\link{fmriplot.timeseries}}, \code{\link{fmriplot.diff}} }
 \examples{
-  \dontrun{fmriplot.slices3d(signal, anatomic = array(0, dim = dim(signal)), pos = c(-1, -1, -1))}
+  \dontrun{fmriplot.slices3d(signal, anatomic = array(0, dim = dim(signal)), 
+                                  pos = c(-1, -1, -1))}
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{ hplot }% at least one, from doc/KEYWORDS
+\keyword{ dynamic }% __ONLY ONE__ keyword per line

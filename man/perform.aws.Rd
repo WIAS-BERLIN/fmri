@@ -6,7 +6,8 @@
   Perform the adaptive weights smoothing procedure 
 }
 \usage{
-perform.aws(beta, variance, hmax = 4, hinit = 1, weights = c(1, 1, 1), qlambda = 1, lkern = "Gaussian", scorr = 0, ...)
+perform.aws(beta, variance, hmax = 4, hinit = 1, weights = c(1, 1, 1), 
+                      qlambda = 1, lkern = "Gaussian", scorr = 0, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -49,7 +50,7 @@ perform.aws(beta, variance, hmax = 4, hinit = 1, weights = c(1, 1, 1), qlambda =
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \seealso{ \code{\link{vaws3D}}, \code{\link{correlation}} }
 \examples{
-\dontrun{perform.aws(beta, variance, hmax = 4, hinit = 1, weights = c(1, 1, 1), qlambda = 1, lkern = "Gaussian", scorr = 0, ...)}
+\dontrun{perform.aws(beta, variance, hmax = 4, hinit = 1, weights = c(1, 1, 1), 
+                             qlambda = 1, lkern = "Gaussian", scorr = 0, ...)}
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{ smooth }% at least one, from doc/KEYWORDS

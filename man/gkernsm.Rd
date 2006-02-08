@@ -30,5 +30,4 @@ gkernsm(y, h = 1)
   image(ysmooth)
   par(oldpar)
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{ smooth }% at least one, from doc/KEYWORDS

@@ -78,7 +78,7 @@ determine2.eigenvalue <- function(diff,only.values=TRUE) {
   n<-3
   ddiff<-prod(dim(diff)[-4])
   z<-.Fortran("eigen3", as.integer(ddiff), as.double(diff), evectors = double(ddiff*9), evalues = double(ddiff*3),
-            !only.values, ierr = integer(ddiff), package="fmri")[c("evalues","evectors","ierr")]
+            !only.values, ierr = integer(ddiff), PACKAGE="fmri")[c("evalues","evectors","ierr")]
   list(evalues=array(t(matrix(z$evalues,3,ddiff)),c(dim(diff)[-4],3)),evectors=array(t(matrix(z$evectors,9,ddiff)),c(dim(diff)[-4],3,3)),ierr=z$ierr)
 }
 

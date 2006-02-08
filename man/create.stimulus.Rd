@@ -6,7 +6,8 @@
   Creates expected BOLD response for a given task indicator function.
 }
 \usage{
-  create.stimulus(107, c(18,48,78), 15, 3)
+  create.stimulus(scans = 1, onsets = c(1), length = 1, rt = 3, mean =
+                 TRUE, a1 = 6, a2 = 12, b1 = 0.9, b2 = 0.9, cc = 0.35)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -53,3 +54,5 @@
   dim(hrf)
 
 }
+\keyword{ regression }% at least one, from doc/KEYWORDS
+\keyword{ design }% __ONLY ONE__ keyword per line

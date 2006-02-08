@@ -6,7 +6,11 @@
 using the Propagation-Separation approach from Polzehl \& Spokoiny (2006). 
 }
 \usage{
-vaws3D(y, qlambda = NULL, qtau = NULL, lkern = "Triangle", skern="Exp", aggkern = "Uniform", sigma2 = NULL, hinit = NULL, hincr = NULL, hmax = NULL, lseq = NULL, heta = NULL, u = NULL, graph = FALSE, demo = FALSE, wghts = NULL, spmin = 0, spmax = 5, scorr = 0, vwghts = 1)
+vaws3D(y, qlambda = NULL, qtau = NULL, lkern = "Triangle", skern="Exp", 
+       aggkern = "Uniform", sigma2 = NULL, hinit = NULL, hincr = NULL, 
+       hmax = NULL, lseq = NULL, heta = NULL, u = NULL, graph = FALSE, 
+       demo = FALSE, wghts = NULL, spmin = 0, spmax = 1.1, 
+       scorr = 0, vwghts = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -24,10 +28,10 @@ vaws3D(y, qlambda = NULL, qtau = NULL, lkern = "Triangle", skern="Exp", aggkern 
    \code{qtau} determines the scaling parameter \code{\tau} in the Stagewise Aggregation algorithm in the same way as \code{qlambda} does
    for the PS-approach. Default values are again selected by a propagation condition.}
   \item{lkern}{ \code{lkern} specifies the location kernel. Defaults to "Triangle", other choices are "Gaussian", "Quadratic", "Cubic" and "Uniform".
-    Note that the location kernel is applied to \code{(x-x_j)^2/h^2}, i.e. the use of "Triangle" corresponds to the Epanechnicov kernel 
+    Note that the location kernel is applied to \eqn{(x-x_j)^2/h^2}, i.e. the use of \code{"Triangle"} corresponds to the Epanechnicov kernel 
     nonparametric kernel regression.}
   \item{skern}{ \code{lkern} specifies the kernel for the statistikal penalty. Defaults to "Exp", the alternative is "Triangle".
-    \code{lkern="Triangle"} allows for much faster computation (saves up to 50%) but needs some additional testing.}
+    \code{lkern="Triangle"} allows for much faster computation (saves up to 50\%) but needs some additional testing.}
   \item{aggkern}{\code{aggkern} specifies the kernel for the statistical panalty in stagewise aggregation. Defaults to "Uniform", the alternative choice is
    "Triangle" }
   \item{sigma2}{\code{sigma2} allows to specify the variance \eqn{\sigma^2_i} of the first component of the data vector in each voxel \eqn{i}. 
@@ -47,13 +51,13 @@ vaws3D(y, qlambda = NULL, qtau = NULL, lkern = "Triangle", skern="Exp", aggkern 
   \item{demo}{If \code{demo=TRUE} the function pauses after each iteration. Defaults to \code{demo=FALSE}. }
   \item{wghts}{\code{wghts} specifies the  diagonal elements of a weight matrix to adjust for different distances between grid-points
   in different coordinate directions, i.e. allows to define a more appropriate metric in the design space. }
-  \item{spmin}{\code{spmin} specifies parameter value in the kernel \eqn{K_s(x)=\min(0,e^{-spmax/(spmax-spmin)(x-spmin)}I_{x<spmax}}. Defaults
+  \item{spmin}{\code{spmin} specifies parameter value in the kernel \deqn{K_s(x)=\min(0,e^{-spmax/(spmax-spmin)(x-spmin)}I_{x<spmax}.} Defaults
   to \code{spmin=0}. Not used if \code{skern="Triangle"}.}
-  \item{spmax}{\code{spmax} specifies the cut point in the kernel \eqn{K_s(x)=\min(0,e^{-spmax/(spmax-spmin)(x-spmin)}I_{x<spmax}} }. Defaults
+  \item{spmax}{\code{spmax} specifies the cut point in the kernel \deqn{K_s(x)=\min(0,e^{-spmax/(spmax-spmin)(x-spmin)}I_{x<spmax}.} Defaults
   to \code{spmax=5}. Not used if \code{skern="Triangle"}.}
   \item{scorr}{\code{scorr} specifies the spatial correlation in the three coordinate directions. Defaults to \code{scorr=c(0,0,0)}. }
   \item{vwghts}{\code{vwghts} specifies weights for the components of the data vector. These weights are used in the evaluation of the statistical
-  penalty \eqn{s_ij=N_i/\lambda/\sigma^2_i sum_k vwghts[k] (theta_{ik}-\theta_{jk})^2}{} where \eqn{k} denotes the \eqn{k}-th component of the 
+  penalty \deqn{s_ij=N_i/\lambda/\sigma^2_i sum_k vwghts[k] (theta_{ik}-\theta_{jk})^2}{} where \eqn{k} denotes the \eqn{k}-th component of the 
   vector. The parameter can be used to adjust for different variability of the components of the data vector. Defaults to \code{vwghts=rep(1,dv)}.  }
 }
 \details{The function implements the propagation separation approach to 
@@ -94,7 +98,7 @@ The essential parameter in the procedure is \code{qlambda}. This parameter has a
   \item{qi}{Array of dimension \code{dim(y)[1:3]} containing the voxelwise sum of
   squared weights.}
   \item{cgh}{The value \code{cgh}.}
-  \item{var}{The estimated variances of \code{theta[,,,1]}.}
+  \item{var}{The estimated variances of \code{theta[ , , , 1]}.}
   \item{vred}{The amount of variance reduction achieved in each voxel.}
   \item{y}{The data.}
   \item{hmax}{The largest bandwidth used.}
@@ -113,8 +117,6 @@ WIAS-Preprint 1079.}
  }
 \author{Joerg Polzehl, \email{polzehl@wias-berlin.de}, 
 \url{http://www.wias-berlin.de/project-areas/stat/projects/adaptive-image-processing.html} }
-#\note{} 
-}
 \seealso{\code{\link{perform.aws}}}
 \examples{
 #
@@ -171,6 +173,7 @@ data<-mdata+array(rnorm(data),dim(data))
 #
 #   smooth the data ( takes about 6s on a Pentium IV 3.2GHz )
 #
-ttt<-vaws3D(data,sigma2=array(1,dim(data)[-4]),skern="Triangle",hmax=4,graph=FALSE,u=mdata,qtau=1)$theta
+ttt<-vaws3D(data,sigma2=array(1,dim(data)[-4]),skern="Triangle",hmax=4,
+                                     graph=FALSE,u=mdata,qtau=1)$theta
 }
 \keyword{smooth}% at least one, from doc/KEYWORDS
