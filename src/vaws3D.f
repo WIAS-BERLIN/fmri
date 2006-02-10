@@ -136,6 +136,7 @@ C  first stochastic term
             END DO
          END DO
       END DO
+      call rchkusr()
       DO i3=1,n3
          DO i2=1,n2
              DO i1=1,n1
@@ -205,6 +206,7 @@ C  skern == "Exp"
                bi(iind)=swj
                bi2(iind)=swj2
                bi0(iind)=swj0
+               call rchkusr()
             END DO
          END DO
       END DO
@@ -292,6 +294,7 @@ C  first stochastic term
             END DO
          END DO
       END DO
+      call rchkusr()
       DO i3=1,n3
          DO i2=1,n2
              DO i1=1,n1
@@ -369,6 +372,7 @@ C   new kernel is flat in [0,spmin] and then decays exponentially
                bi2(iind)=swj2
                bi0(iind)=swj0
 	       vred(iind)=sv2/sv1/sv1
+               call rchkusr()
             END DO
          END DO
       END DO
@@ -454,6 +458,7 @@ C  first stochastic term
             END DO
          END DO
       END DO
+      call rchkusr()
       DO i3=1,n3
          DO i2=1,n2
              DO i1=1,n1
@@ -518,6 +523,7 @@ C   truncated at spmax
                   ai(iind+(k-1)*n)=swjy(k)
 	       END DO
                bi(iind)=swj
+               call rchkusr()
             END DO
          END DO
       END DO
@@ -617,6 +623,7 @@ C  first stochastic term
             END DO
          END DO
       END DO
+      call rchkusr()
       DO i3=1,n3
          DO i2=1,n2
              DO i1=1,n1
@@ -718,6 +725,7 @@ C
 	       END DO
 	       var(iind)=swj2
 	       vred(iind)=swj2vr
+               call rchkusr()
             END DO
          END DO
       END DO
@@ -756,6 +764,7 @@ C
       END DO
 C   now handle boundary surfaces
 C      call intpr("boundary",8,cg1,1)
+      call rchkusr()
       ll=cg1
       DO WHILE(ll.gt.0) 
          zrown=0.d0
@@ -777,6 +786,7 @@ C      call intpr("boundary",8,cg1,1)
 	 ll=ll-1
       END DO
 C      call intpr("boundary",8,cg2,1)
+      call rchkusr()
       ll=cg2
       DO WHILE(ll.gt.0) 
          zrown=0.d0
@@ -798,6 +808,7 @@ C      call intpr("boundary",8,cg2,1)
 	 ll=ll-1
       END DO
 C      call intpr("boundary",8,cg3,1)
+      call rchkusr()
       ll=cg3
       DO WHILE(ll.gt.0) 
          zrown=0.d0
@@ -822,6 +833,7 @@ C  now edges
 C      call intpr("edges",5,cg3,1)
       ll=cg1
       mm=cg2
+      call rchkusr()
       DO WHILE(ll.gt.0)
          DO WHILE(mm.gt.0)
             zrown=0.d0
@@ -845,6 +857,7 @@ C      call intpr("edges",5,cg3,1)
 C      call intpr("edges",5,cg2,1)
       ll=cg1
       mm=cg3
+      call rchkusr()
       DO WHILE(ll.gt.0)
          DO WHILE(mm.gt.0)
             zrown=0.d0
@@ -866,6 +879,7 @@ C      call intpr("edges",5,cg2,1)
 	 ll=ll-1
       END DO
 C      call intpr("edges",5,cg3,1)
+      call rchkusr()
       ll=cg2
       mm=cg3
       DO WHILE(ll.gt.0)
@@ -888,6 +902,7 @@ C      call intpr("edges",5,cg3,1)
 	 END DO
 	 ll=ll-1
       END DO
+      call rchkusr()
 C  now the corner
 C      call intpr("corner",6,cg3,1)
       kk=cg1
@@ -912,7 +927,7 @@ C      call intpr("corner",6,cg3,1)
 	 END DO
 	 kk=kk-1
       END DO
-      
+      call rchkusr()      
 C  now symmetries
       DO i1=1,cn1
          DO i2=1,cn2
