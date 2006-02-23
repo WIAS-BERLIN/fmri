@@ -1,35 +1,87 @@
-perform.aws <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),qlambda=1,lkern="Gaussian",scorr=0,...) {
-  variance[variance < quantile(variance,0.25)] <- quantile(variance,0.25)
+fmri.smooth <- function(spm,hmax=4,...) {
+  cat("fmri.smooth: entering function\n")
   
-  ttthat <- vaws3D(beta, sigma2=variance, hmax=hmax, hinit=hinit,
-                 qlambda=qlambda, qtau=1,heta=1000,wghts=weights,lkern=lkern,scorr=scorr,...)
+  if (!class(spm) == "fmrispm") {
+    warning("fmri.smooth: data not of class <fmrispm>. Try to proceed but strange things may happen")
+  }
+
+  if (!is.null(spm$smooth)) {
+    if (spm$smooth) {
+      warning("fmri.smooth: Parametric Map seems to be smoothed already!")
+    }
+  }
+  
+  variance <- spm$var
+#  variance[variance < quantile(variance,0.25)] <- quantile(variance,0.25)
+  variance[variance == 0] <- 1e20
+
+
+  if (is.null(spm$weights)) {
+    weights <- c(1,1,1)
+  } else {
+    weights <- spm$weights
+  }
+  if (is.null(spm$scorr)) {
+    scorr <- 0
+  } else {
+    scorr <- spm$scorr
+  }
+
+  cat("fmri.smooth: smoothing the Statistical Paramteric Map\n")
+  ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, wghts=weights, scorr=scorr, ...)
+  cat("\n")
+
+  cat("fmri.smooth: determine local smoothness (this may take some minutes!)\n")
+  bw <- get3Dh.gauss(ttthat$vred,c(0,0,0),weights)
+  rxyz <- c(resel(1,bw[,1]), resel(1,bw[,2]), resel(1,bw[,3]))
+  dim(rxyz) <- c(dim(bw)[1],3)
+  
+  cat("fmri.smooth: exiting function\n")
 
   if (dim(ttthat$theta)[4] == 1) {
-    list(hat=ttthat$theta[,,,1], var=ttthat$var, ni=ttthat$ni,
-         hmax=ttthat$hmax, lseq=ttthat$lseq, y = ttthat$y, mae=ttthat$mae, vred=ttthat$vred)
+    z <- list(cbeta = ttthat$theta[,,,1], var = ttthat$var, rxyz =
+              rxyz, scorr = spm$scorr, weights = spm$weights, smooth =
+              TRUE, hmax = ttthat$hmax, dim = spm$dim)
   } else {
-    list(hat=ttthat$theta, var=ttthat$var, ni=ttthat$ni,
-         hmax=ttthat$hmax, lseq=ttthat$lseq, y = ttthat$y, mae=ttthat$mae, vred=ttthat$vred)
+    z <- list(cbeta = ttthat$theta, var = ttthat$var, rxyz = rxyz,
+              scorr = spm$scorr, weights = spm$weights, smooth = TRUE,
+              hmax = ttthat$hmax, dim = spm$dim)
   }    
+
+  class(z) <- "fmrispm"
+  z
 }
 
-## NOTE: INTERFACE TO EXPERIMENTAL AWS FUNCTION !!! 
-perform.aws2 <- function(beta,variance,hmax=4,hinit=1,weights=c(1,1,1),qlambda=1,lkern="Gaussian",scorr=0,...) {
-  cat("\nNOTE: This code is still experimental!\n") 
-  variance[variance < quantile(variance,0.25)] <- quantile(variance,0.25)
+fmri.detect <- function(spm, pvalue = 0.05, mode="plog") {
+  cat("fmri.detect: entering function\n")
 
+  if (!class(spm) == "fmrispm") {
+    warning("fmri.detect: data not of class <fmrispm>. Try to proceed but strange things may happen")
+  }
+
+  stat <- spm$cbeta/sqrt(spm$var)
+  dim(stat) <- prod(spm$dim[1:3])
+  cat("fmri.detect: calculate local treshold\n")
+  thresh <- threshold(pvalue,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="norm")
+  cat("fmri.detect: calculate local p-value\n")
+  pv <- pvalue(stat,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="norm")
+  cat("fmri.detect: thresholding\n")
+  mask <- rep(1,length=prod(spm$dim[1:3]))
+  mask[stat < thresh] <- 0
+  pv[!mask] <- 1
+  pv[pv <= 1e-113] <- 1e-113 # ????????
+  pvlog <- -log(pv)
+  pvlog[mask == 0] <- 0
+  dim(pvlog) <- spm$dim[1:3]
+
+  cat("fmri.detect: exiting function\n")
+
+  z <- list(detect = pvlog)
   
-  ttthat <- vaws3D2(beta, sigma2=variance, hmax=hmax, hinit=hinit,
-                 qlambda=qlambda, qtau=1,heta=1000,wghts=weights,lkern=lkern,scorr=scorr,...)
-
-  if (dim(ttthat$theta)[4] == 1) {
-    list(hat=ttthat$theta[,,,1], var=ttthat$var, ni=ttthat$ni,
-         hmax=ttthat$hmax, lseq=ttthat$lseq, y = ttthat$y, mae=ttthat$mae, vred=ttthat$vred)
-  } else {
-    list(hat=ttthat$theta, var=ttthat$var, ni=ttthat$ni,
-         hmax=ttthat$hmax, lseq=ttthat$lseq, y = ttthat$y, mae=ttthat$mae, vred=ttthat$vred)
-  }    
+  class(z) <- "fmridetect"
+  z
 }
+
 
 
 #
@@ -182,4 +234,68 @@ fmriplot.slices3d <- function(signal, anatomic =
     stop("misc3d is required.")
   }
   
+}
+
+plot.fmridetect <- function(detect, anatomic =
+                             array(0,dim=dim(detect$detect)),
+                             pos = c(-1,-1,-1), type="slice",
+                             device="X11", file="plot.png") {
+  mri.colors <- function (n1, n2, factor=n1/(n1+n2), from=0, to=.2) {
+    colors1 <- gray((0:n1)/(n1+n2))
+    colors2 <- hsv(h = seq(from,to,length=n2),
+                   s = seq(from = n2/(n2+factor*n1) - 1/(2 * (n2+factor*n1)), to =
+                     1/(2 * (n2+factor*n1)), length = n2),
+                   v = 1,
+                   gamma=1)
+    list(all=c(colors1,colors2),gray=colors1,col=colors2)
+  }
+
+  signal <- detect$detect
+  
+  if (type == "3d") {
+    if (require(misc3d)) {
+                                       # re-scale anatomic to 0 ... 0.5
+      anatomic <- 0.5 * (anatomic - min(anatomic)) / diff(range(anatomic))
+      
+                                        # re-scale signal to 0.5 ... 1
+      signal <-  0.5 + 0.5 * (signal - min(signal)) / diff(range(signal))
+      
+      anatomic[signal > 0.5] <- signal[signal > 0.5]
+      
+      slices3d(anatomic,col=mri.colors(256,256)$all)
+      
+    } else {
+      stop("misc3d is required.")
+    }
+  } else {
+    partition <- ceiling(sqrt(dim(anatomic)[3]))
+
+    switch (device,
+            "png" = png(filename=file, width = 200*partition, height = 200*partition, pointsize=12, bg="transparent", res=NA),
+            "jpeg" = jpeg(filename=file, width = 200*partition, height = 200*partition,
+              quality = 100, pointsize = 12, bg = "transparent", res=NA),
+            "ppm" = bitmap(file,type="ppm",height=2*partition,width=2*partition,res=64,pointsize=12),
+            X11())
+    
+    oldpar <- par(mfrow=c(partition,partition), mar=c(0.25,0.25,0.25,.25), mgp=c(2,1,0))
+    
+    alim <- range(anatomic)
+    zlim <- range(signal)
+    for (i in 1:dim(anatomic)[3]) {
+      image(anatomic[,,i], xaxt="n", yaxt="n", zlim=alim, col=mri.colors(256,256)$gray)
+      if (any(signal[,,i])) image(signal[,,i], zlim=zlim ,col=c(0,mri.colors(256,256)$col), add=TRUE)
+      
+      if (i == pos[3]) {
+        lines(c(0,1),c(pos[2],pos[2])/dim(anatomic)[2],col=2)
+        lines(c(pos[1],pos[2])/dim(anatomic)[1],c(0,1),col=2)
+      }     
+    }
+    
+    par(oldpar)
+    switch (device,
+            "png" = dev.off(),
+            "jpeg" = dev.off(),
+            "ppm" = dev.off())
+  }
+  invisible(NULL)
 }

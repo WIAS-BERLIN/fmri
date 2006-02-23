@@ -32,8 +32,13 @@ pvalue <- function(z,i,j,k,rx,ry,rz,type="norm",df=4) {
 }
 
 
-resel <- function(voxeld, hmax, hv=1) hv * voxeld / hmax # hv=0.919 for larger bandwidths than typically fmri
+resel <- function(voxeld, hmax, hv=1) {
+  reselc <- hv * voxeld / hmax # hv=0.919 for larger bandwidths than typically fmri
+  reselc[reselc>1] <- 1
+  reselc
+}
 
+  
 
 threshold <- function(p,i,j,k,rx,ry,rz,type="norm",df=4,step=.001) {
   n <- length(rx)

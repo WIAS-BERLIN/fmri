@@ -1,12 +1,12 @@
-\name{create.stimulus}
-\alias{create.stimulus}
+\name{fmri.stimulus}
+\alias{fmri.stimulus}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Linear Model for FMRI Data }
 \description{
   Creates expected BOLD response for a given task indicator function.
 }
 \usage{
-  create.stimulus(scans = 1, onsets = c(1), length = 1, rt = 3, mean =
+  fmri.stimulus(scans = 1, onsets = c(1), length = 1, rt = 3, mean =
                  TRUE, a1 = 6, a2 = 12, b1 = 0.9, b2 = 0.9, cc = 0.35)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -32,7 +32,7 @@
   c1 * exp(-(x - d1)/b1) - c2 * exp(-(x - d2)/b2)
 
   The parameters of this function can be changed in the call of
-  create.stimulus.
+  fmri.stimulus.
 
   Dimension of the function value is set to c(scans,1).
 
@@ -46,11 +46,11 @@
   G.H., Morales, F., Evans, A.C. (2002). A general statistical analysis
   for fMRI data. NeuroImage, 15:1:15. }
 \author{ Karsten Tabelow (tabelow@wias-berlin.de) }
-\seealso{ \code{\link{create.designmatrix}}, \code{\link{calculate.lm}} }
+\seealso{ \code{\link{fmri.design}}, \code{\link{fmri.lm}} }
 \examples{
   # Example 1
-  hrf <- create.stimulus(107, c(18, 48, 78), 15, 2)
-  z <- create.designmatrix(hrf,2)
+  hrf <- fmri.stimulus(107, c(18, 48, 78), 15, 2)
+  z <- fmri.design(hrf,2)
   dim(hrf)
 
 }

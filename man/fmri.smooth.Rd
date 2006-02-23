@@ -1,25 +1,17 @@
-\name{perform.aws}
-\alias{perform.aws}
+\name{fmri.smooth}
+\alias{fmri.smooth}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Smoothing Statistical Parametric Maps }
 \description{
   Perform the adaptive weights smoothing procedure 
 }
 \usage{
-perform.aws(beta, variance, hmax = 4, hinit = 1, weights = c(1, 1, 1), 
-                      qlambda = 1, lkern = "Gaussian", scorr = 0, ...)
+fmri.smooth(spm, hmax = 4, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{beta}{ 3 or 4 dimensional parameter map to smooth }
-  \item{variance}{ variance estimate of the parameter map. }
+  \item{spm}{ object of class \code{fmri.spm} }
   \item{hmax}{ maximum bandwidth to smooth }
-  \item{hinit}{ initial bandwidth of the smoothing iteration. }
-  \item{weights}{ weights vector for smoothing describing slice
-    distances in x-, y-, and z-direction. }
-  \item{qlambda}{ parameter qlambda for AWS procedure }
-  \item{lkern}{ localization kernel to be used }
-  \item{scorr}{ vector with estimated correlation in x-, y-, and z-direction. }
   \item{\dots}{ Other arguments passed to vaws3D }
 }
 \details{
@@ -38,19 +30,18 @@ perform.aws(beta, variance, hmax = 4, hinit = 1, weights = c(1, 1, 1),
   \code{scorr} is the estimated correlation in x-, y-, and z-direction.
 }
 \value{
-  \item{hat}{ smoothed parameter estimate}
+  object of class \code{fmri.spm}
+  \item{cbeta}{ smoothed parameter estimate}
   \item{var}{ variance of the parameter}
-  \item{ni}{ sum of weights}
   \item{hmax}{ achieved maximum bandwidth }
-  \item{lseq}{ The sequence specified in \code{lseq} of vaws3D }
-  \item{y}{ The data. }
-  \item{mae}{ MAE }
-  \item{vred}{ achieved variance reduction}
+  \item{rxyz}{ smoothness in resel space. all directions }
+  \item{scorr}{ spatial correlation of original data }
+  \item{weights}{ ratio of voxel dimensions }
+  \item{smooth}{ indicates that SPM is smoothed. "TRUE" }
 }
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \seealso{ \code{\link{vaws3D}}, \code{\link{correlation}} }
 \examples{
-\dontrun{perform.aws(beta, variance, hmax = 4, hinit = 1, weights = c(1, 1, 1), 
-                             qlambda = 1, lkern = "Gaussian", scorr = 0, ...)}
+\dontrun{fmri.smooth(spm, hmax = 4, lkern = "Gaussian", ...)}
 }
 \keyword{ smooth }% at least one, from doc/KEYWORDS

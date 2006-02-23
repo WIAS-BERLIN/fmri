@@ -1,4 +1,4 @@
-create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, rt=3,
+fmri.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, rt=3,
   mean=TRUE, a1 = 6, a2 = 12, b1 = 0.9, b2 = 0.9, cc = 0.35) {
   numberofonsets <- length(onsets)
   stimulus <- rep(0, scans)
@@ -31,7 +31,7 @@ create.stimulus <- function(scans=1 ,onsets=c(1) ,length=1, rt=3,
 
 
 
-create.designmatrix <- function(hrf, order=1) {
+fmri.design <- function(hrf, order=2) {
   stimuli <- dim(hrf)[2]
   scans <- dim(hrf)[1]
 
@@ -69,7 +69,15 @@ create.designmatrix <- function(hrf, order=1) {
 
 
 
-calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,contrast=c(1),vvector=c(1)) {
+fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contrast=c(1),vvector=c(1),keep="essential") {
+  cat("fmri.lm: entering function\n")
+
+  if (!class(data) == "fmridata") {
+    warning("fmri.lm: data not of class <fmridata>. Try to proceed but strange things may happen")
+  }
+
+  ttt <- data$ttt
+  
   create.arcorrection <- function(scans, rho=0) {
     rho0 <- 1/sqrt(1-rho^2)
     a <- numeric(scans*scans)
@@ -82,8 +90,6 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,c
     
     a
   }
-
-  cat("calculate.lm: entering function with:",actype, hmax, vtype, "\n")
 
   # first consider contrast vector! NO test whether it is real contrast!!
   if (length(contrast) <= dim(z)[2]) contrast <- c(contrast,rep(0,dim(z)[2]-length(contrast)))
@@ -131,7 +137,7 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,c
   # only needed for "smooth"
   if ((actype == "smooth") || (actype == "accalc") || (actype == "ac")) { 
     progress = 0
-    cat("calculate.lm: calculating AR(1) model\n")
+    cat("fmri.lm: calculating AR(1) model\n")
     for (i in 1:voxelcount) {
       if (i > progress/100*voxelcount) {
         cat(progress,"% . ",sep="")
@@ -157,21 +163,20 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,c
       
     }
     cat("\n")
-    cat("calculate.lm: finished\n")
     
     if (actype == "smooth") {
-      cat("calculate.lm: smoothing with (hmax):",hmax,"\n")
+      cat("fmri.lm: smoothing with (hmax):",hmax,"\n")
       dim(arfactor) <- dy[1:3]
       # now smooth (if actype is such) with AWS
       hinit <- 1
       arfactor <- gkernsm(arfactor,rep(hmax,3)*0.42445)$gkernsm
       dim(arfactor) <- voxelcount
-      cat("calculate.lm: finished\n")
+      cat("fmri.lm: finished\n")
     }
 
     if ((actype == "smooth") || (actype == "accalc")) {
       progress = 0
-      cat("calculate.lm: re-calculating linear model with prewithened data\n")
+      cat("fmri.lm: re-calculating linear model with prewithened data\n")
       # re- calculated the linear model with prewithened data
       # NOTE: sort arfactors and bin them! this combines calculation in
       # NOTE: voxels with similar arfactor, see Worsley
@@ -203,7 +208,6 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,c
       variance <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * variancepart
       if (length(vvector) > 1) variancem <- as.vector((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * t(variancepartm)
       cat("\n")
-      cat("calculate.lm: finished\n")
     } else {
       b <- rep(1/dy[4],length=dy[4])
       cxtx <- t(contrast) %*% xtx %*% contrast
@@ -226,13 +230,39 @@ calculate.lm <- function(ttt,z,actype="smooth",hmax=3.52,vtype="var",step=0.01,c
   if (length(vvector) > 1) dim(variancem) <- c(dy[1:3],sum(as.logical(vvector)),sum(as.logical(vvector)))
   dim(arfactor) <- dy[1:3]
   dim(residuals) <- dy
+
+  cat("fmri.lm: calculate spatial correlation\n")
+
+  corr <- correlation(residuals,data$mask)
+  bwx <- get.bw.gauss(corr[1])
+  bwy <- get.bw.gauss(corr[2])
+  bwz <- get.bw.gauss(corr[3])
+
+  rxyz <- c(resel(1,bwx), resel(1,bwy), resel(1,bwz))
+  dim(rxyz) <- c(1,3)
+
+  variance[variance == 0] <- 1e20
   
-  cat("calculate.lm: exiting function\n")
+  cat("fmri.lm: exiting function\n")
   
-  if (length(vvector) > 1) {
-    list(beta = beta, cbeta = cbeta, var = variance, varm = variancem, res = residuals, arfactor = arfactor)
+  if (keep == "all") {
+    z <- list(beta = beta, cbeta = cbeta, var = variance, res =
+              residuals, arfactor = arfactor, rxyz = rxyz, scorr = corr, weights =
+              data$weights, smooth= FALSE, dim = data$dim)
+  } else if (keep == "diagnostic") {
+    z <- list(cbeta = cbeta, var = variance, res = residuals, rxyz = rxyz, scorr =
+              corr, weights = data$weights, smooth= FALSE, dim = data$dim)
   } else {
-    list(beta = beta, cbeta = cbeta, var = variance, res = residuals, arfactor = arfactor)
+    z <- list(cbeta = cbeta, var = variance, rxyz = rxyz, scorr = corr, weights =
+              data$weights, smooth= FALSE, dim = data$dim)
   }
+
+  if (length(vvector) > 1) {
+    z$varm <- variancem
+  }
+  
+  class(z) <- "fmrispm"
+
+  z
 }
 

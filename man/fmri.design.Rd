@@ -1,5 +1,5 @@
-\name{create.designmatrix}
-\alias{create.designmatrix}
+\name{fmri.design}
+\alias{fmri.design}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Linear Model for FMRI Data }
 \description{
@@ -7,7 +7,7 @@
   possible polynomial drift terms.
 }
 \usage{
-create.designmatrix(hrf, order = 1)
+fmri.design(hrf, order = 2)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -28,11 +28,11 @@ create.designmatrix(hrf, order = 1)
   designmatrix of the linear model
 }
 \author{ Karsten Tabelow (tabelow@wias-berlin.de) }
-\seealso{ \code{\link{create.stimulus}}, \code{\link{calculate.lm}} }
+\seealso{ \code{\link{fmri.stimulus}}, \code{\link{fmri.lm}} }
 \examples{
   # Example 1
-  hrf <- create.stimulus(107, c(18, 48, 78), 15, 2)
-  z <- create.designmatrix(hrf,2)
+  hrf <- fmri.stimulus(107, c(18, 48, 78), 15, 2)
+  z <- fmri.design(hrf,2)
   dim(hrf)
 }
 \keyword{ regression }% at least one, from doc/KEYWORDS

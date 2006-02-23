@@ -3,55 +3,50 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Three dimensional adaptive smoothing of vector valued data}
 \description{Performs three dimensional adaptive smoothing of vector valued data
-using the Propagation-Separation approach from Polzehl \& Spokoiny (2006). 
-}
+using the Propagation-Separation approach from Polzehl \& Spokoiny (2006).  }
 \usage{
-vaws3D(y, qlambda = NULL, qtau = NULL, lkern = "Triangle", skern="Exp", 
-       aggkern = "Uniform", sigma2 = NULL, hinit = NULL, hincr = NULL, 
-       hmax = NULL, lseq = NULL, heta = NULL, u = NULL, graph = FALSE, 
-       demo = FALSE, wghts = NULL, spmin = 0, spmax = 1.1, 
-       scorr = 0, vwghts = 1)
+vaws3D(y, qlambda = NULL, lkern = "Triangle", skern = "Exp", 
+        aggkern = "Uniform", sigma2 = NULL, hinit = NULL, hincr = NULL, 
+        hmax = NULL, lseq = NULL, u = NULL, graph = FALSE,  
+	demo = FALSE, wghts = NULL, spmin = 0, spmax = 1.1, 
+	scorr = c(0, 0, 0), vwghts = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{y}{ Data array of dimension \code{c(dx,dy,dz,dv)}. The
+  \item{y}{Data array of dimension \code{c(dx,dy,dz,dv)}. The
   first three values specify the size of the 3D data volume. \code{dv}
   specifies the length of the data vector in each voxel.  }
-  \item{qlambda}{ \code{qlambda} is the main smoothing parameter. It determines the scaling parameter \code{\lambda} in the statistical penalty
+  \item{qlambda}{\code{qlambda} is the main smoothing parameter. It determines the scaling parameter \code{\lambda} in the statistical penalty
   (see description of the algorithm in the references) as \code{qchisq(qlambda,sum(vwghts^2)^2/sum(vwghts^4))}. \code{qlambda=1} disables adaptation, i.e. the 
   resulting estimate is a kernel estimate using the largest inspected bandwidth less or equal to \code{hmax}.
   The default value for \code{qlambda} is selected as the smallest value that fulfils a propagation condition.
   This means that in a parametric, in this case constant, model the resulting estimate is, for a large \code{hmax} almost parametric. 
    Larger values of 
   \code{qlambda} lead to less sensitivity to structural differences, smaller values may lead to a random structure (segmentation) of the resulting estimate.}
-  \item{qtau}{Stagewise Aggregation, see Belomestny and Spokoiny (2004) is used as an adaptive control step if \code{qtau<1}. 
-   \code{qtau} determines the scaling parameter \code{\tau} in the Stagewise Aggregation algorithm in the same way as \code{qlambda} does
-   for the PS-approach. Default values are again selected by a propagation condition.}
   \item{lkern}{ \code{lkern} specifies the location kernel. Defaults to "Triangle", other choices are "Gaussian", "Quadratic", "Cubic" and "Uniform".
-    Note that the location kernel is applied to \eqn{(x-x_j)^2/h^2}, i.e. the use of \code{"Triangle"} corresponds to the Epanechnicov kernel 
-    nonparametric kernel regression.}
-  \item{skern}{ \code{lkern} specifies the kernel for the statistikal penalty. Defaults to "Exp", the alternative is "Triangle".
-    \code{lkern="Triangle"} allows for much faster computation (saves up to 50\%) but needs some additional testing.}
+    Note that the location kernel is applied to \code{(x-x_j)^2/h^2}, i.e. the use of "Triangle" corresponds to the Epanechnicov kernel 
+    nonparametric kernel regression. }
+  \item{skern}{\code{lkern} specifies the kernel for the statistikal penalty. Defaults to "Exp", the alternative is "Triangle".
+    \code{lkern="Triangle"} allows for much faster computation (saves up to 50\%) but needs some additional testing. }
   \item{aggkern}{\code{aggkern} specifies the kernel for the statistical panalty in stagewise aggregation. Defaults to "Uniform", the alternative choice is
-   "Triangle" }
+   "Triangle"  }
   \item{sigma2}{\code{sigma2} allows to specify the variance \eqn{\sigma^2_i} of the first component of the data vector in each voxel \eqn{i}. 
    Defaults to \code{NULL}. In this case a homoskedastic variance estimate is generated. If \code{length(sigma2)==1} a homoskedastic
-   variance is assumed. }
-  \item{hinit}{\code{hinit} specifies the initial bandwidth. Defaults to \code{hinit=1} (\code{hinit=1/4} in case of \code{lkern="Gaussian"}).  }
+   variance is assumed.  }
+  \item{hinit}{\code{hinit} specifies the initial bandwidth. Defaults to \code{hinit=1} (\code{hinit=1/4} in case of \code{lkern="Gaussian"}).   }
   \item{hincr}{\code{hincr} specifies the factor used to increase the size of local neigborhoods after each iteration. The bandwidth is increased by
    a factor \code{hincr^(1/3)}. Defaults to \code{hincr=1.25}   }
   \item{hmax}{\code{hmax} specifies the maximal bandwidth. Defaults to \code{hmax= 5}}
-  \item{lseq}{\code{lseq} allows to increase the value of the scaling parameter \code{\lambda} for the first \code{length(lseq)} iteration steps by
+  \item{lseq}{ \code{lseq} allows to increase the value of the scaling parameter \code{\lambda} for the first \code{length(lseq)} iteration steps by
   the factor specified in \code{lseq}. Defaults to NULL. In this case a default sequence is used that fulfils the propagation condition.}
-  \item{heta}{\code{heta} specifies the minimal bandwidth to use with stagewise aggregation. }
   \item{u}{\code{u} allows to specify the true parameter. This is only used to test the algorithm and to select the smoothing parameters 
     \code{qlambda} and \code{qtau} by a propagation condition. If \code{u} is specified MSE and MAE of the estimates are 
-    printed for each iteration step. }
+    printed for each iteration step.  }
   \item{graph}{If  \code{graph=TRUE} intermediate results are illustrated after each iteration step. Defaults to \code{graph=FALSE}.  }
   \item{demo}{If \code{demo=TRUE} the function pauses after each iteration. Defaults to \code{demo=FALSE}. }
   \item{wghts}{\code{wghts} specifies the  diagonal elements of a weight matrix to adjust for different distances between grid-points
-  in different coordinate directions, i.e. allows to define a more appropriate metric in the design space. }
-  \item{spmin}{\code{spmin} specifies parameter value in the kernel \deqn{K_s(x)=\min(0,e^{-spmax/(spmax-spmin)(x-spmin)}I_{x<spmax}.} Defaults
+  in different coordinate directions, i.e. allows to define a more appropriate metric in the design space.  }
+  \item{spmin}{ \code{spmin} specifies parameter value in the kernel \deqn{K_s(x)=\min(0,e^{-spmax/(spmax-spmin)(x-spmin)}I_{x<spmax}.} Defaults
   to \code{spmin=0}. Not used if \code{skern="Triangle"}.}
   \item{spmax}{\code{spmax} specifies the cut point in the kernel \deqn{K_s(x)=\min(0,e^{-spmax/(spmax-spmin)(x-spmin)}I_{x<spmax}.} Defaults
   to \code{spmax=5}. Not used if \code{skern="Triangle"}.}
@@ -60,7 +55,16 @@ vaws3D(y, qlambda = NULL, qtau = NULL, lkern = "Triangle", skern="Exp",
   penalty \deqn{s_ij=N_i/\lambda/\sigma^2_i sum_k vwghts[k] (theta_{ik}-\theta_{jk})^2}{} where \eqn{k} denotes the \eqn{k}-th component of the 
   vector. The parameter can be used to adjust for different variability of the components of the data vector. Defaults to \code{vwghts=rep(1,dv)}.  }
 }
-\details{The function implements the propagation separation approach to 
+\details{
+ This function differs from \code{\link{vaws3D}} in three points:\cr
+ 1) it computes  estimates \code{vartheta} and \code{vred} (variance reduction)
+ that are more accurate.\cr
+ 2) it does not implement stagewise aggregation, that is, corresponds to the
+ case \code{qtau=1}.\cr
+ 3) the information needed for \code{vartheta} and \code{vred} is only
+ evaluated at after the estimates are fixed.\cr
+ 
+ The function implements the propagation separation approach to 
 nonparametric smoothing (formerly introduced as Adaptive weights smoothing) 
 for multivariate regression models regression with additive "Gaussian" errors on a 3D grid. A homoskedastic 
 or heteroskedastic model is used depending on the content of \code{sigma2}. 
@@ -95,19 +99,19 @@ The essential parameter in the procedure is \code{qlambda}. This parameter has a
   \item{theta}{Array of dimension \code{dim(y)} containing the smoothed data. }
   \item{ni}{Array of dimension \code{dim(y)[1:3]} containing the voxelwise sum of
   weights.}
-  \item{qi}{Array of dimension \code{dim(y)[1:3]} containing the voxelwise sum of
-  squared weights.}
-  \item{cgh}{The value \code{cgh}.}
   \item{var}{The estimated variances of \code{theta[ , , , 1]}.}
   \item{vred}{The amount of variance reduction achieved in each voxel.}
   \item{y}{The data.}
+  \item{qi}{Array of dimension \code{dim(y)[1:3]} containing the voxelwise sum of
+  squared weights.}
+  \item{cgh}{The value \code{cgh}.}
   \item{hmax}{The largest bandwidth used.}
   \item{mae}{Mean absolute error if \code{!is.null(u)}.}
-  \item{mse}{Mean squared error if \code{!is.null(u)}.}
   \item{lseq}{The sequence specified in \code{lseq}.}
-  \item{args}{The arguments used in the call of function vaws3D}  
+  \item{call}{The arguments used in the call of function vaws3D}  
+  \item{ng}{Array of dimension \code{dim(y)[1:3]} containing the voxelwise sums \eqn{N_g}
+  \item{qg}{Array of dimension \code{dim(y)[1:3]} containing the voxelwise sums \eqn{Q_g}
 }
-\references{ 
 \item{ }{Polzehl, J. and Spokoiny, V. (2004a). \emph{Propagation-Separation Approach for Local Likelihood Estimation}, 
 Probab. Theory & Relat. Fields, in print.}
 \item{ }{Belomestny, D. and Spokoiny, V. (2004a). \emph{Local likelihood modeling via stagewise aggregation}, 
@@ -116,8 +120,9 @@ WIAS-Preprint 1000.}
 WIAS-Preprint 1079.} 
  }
 \author{Joerg Polzehl, \email{polzehl@wias-berlin.de}, 
-\url{http://www.wias-berlin.de/project-areas/stat/projects/adaptive-image-processing.html} }
-\seealso{\code{\link{perform.aws}}}
+\url{http://www.wias-berlin.de/project-areas/stat/projects/adaptive-image-processing.html} } 
+}
+\seealso{\code{\link{fmri.smooth}}}
 \examples{
 #
 #  create an 3D phantom
@@ -174,6 +179,6 @@ data<-mdata+array(rnorm(data),dim(data))
 #   smooth the data ( takes about 6s on a Pentium IV 3.2GHz )
 #
 ttt<-vaws3D(data,sigma2=array(1,dim(data)[-4]),skern="Triangle",hmax=4,
-                                     graph=FALSE,u=mdata,qtau=1)$theta
+             graph=FALSE,u=mdata)$theta
 }
 \keyword{smooth}% at least one, from doc/KEYWORDS

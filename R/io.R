@@ -27,15 +27,31 @@ read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart =
 
       cat("\n")
       dim(ttt) <- dt
-      invisible(list(ttt=ttt,header=header))
+
+      if (min(abs(header$pixdim[2:4])) != 0) {
+        weights <-
+          abs(header$pixdim[2:4]/min(abs(header$pixdim[2:4])))
+      } else {
+        weights <- NULL
+      }
+  
+      z <- list(ttt=ttt,format="ANALYZE",delta=header$pixdim[2:4],origin=NULL,orient=NULL,dim=header$dim[2:5],weights=weights,header=header)
     } else {
         warning(paste("Error: file",filename,"does not exist!"))
-        list(ttt=NULL,header=NULL)
+        z <- list(ttt=NULL,format="ANALYZE",delta=NULL,origin=NULL,orient=NULL,dim=NULL,weights=NULL,header=NULL)
     }
   } else {
     warning("Error: library AnalyzeFMRI not found\n")
-    list(ttt=NULL,header=NULL)
+    z <- list(ttt=NULL,format="ANALYZE",delta=NULL,origin=NULL,orient=NULL,dim=NULL,weights=NULL,header=NULL)
   }
+
+  mask <- ttt[,,,1]
+  mask[mask < quantile(mask,0.75)] <- 0
+  mask[mask != 0] <- 1
+  z$mask <- mask
+
+  class(z) <- "fmridata"
+  invisible(z)
 }
 
 
@@ -97,6 +113,13 @@ read.AFNI <- function(file) {
     endian <- "little"
   }
 
+  if (min(abs(values$DELTA)) != 0) {
+    weights <-
+      abs(values$DELTA/min(abs(values$DELTA)))
+  } else {
+    weights <- NULL
+  }
+  
   if (as.integer(size) == size) {
     conbrik <- file(paste(file,".BRIK",sep=""),"rb")
     myttt<- readBin(conbrik, "int", n=dx*dy*dz*dt*size, size=size, signed=TRUE, endian=endian)
@@ -110,11 +133,20 @@ read.AFNI <- function(file) {
         cat(range(myttt[,,,k]),"\n")
       }
     }
-    list(ttt=myttt,header=values)
+    z <-
+      list(ttt=myttt,format="HEAD/BRIK",delta=values$DELTA,origin=values$ORIGIN,orient=values$ORIENT_SPECIFIC,dim=c(dx,dy,dz,dt),weights=weights, header=values)
   } else {
     warning("Error reading file: Could not detect size per voxel\n")
-    list(ttt=NULL,header=values)    
+    z <- list(ttt=NULL,format="HEAD/BRIK",delta=NULL,origin=NULL,orient=NULL,dim=NULL,weights=NULL,header=values)    
   }
+
+  mask <- myttt[,,,1]
+  mask[mask < quantile(mask,0.75)] <- 0
+  mask[mask != 0] <- 1
+  z$mask <- mask
+
+  class(z) <- "fmridata"
+  invisible(z)
 }
 
 

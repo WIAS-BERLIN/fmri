@@ -1,17 +1,17 @@
-\name{calculate.lm}
-\alias{calculate.lm}
+\name{fmri.lm}
+\alias{fmri.lm}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Linear Model For FMRI Data }
 \description{
   Estimate the parameters and variances of a linear model. 
 }
 \usage{
-  calculate.lm(ttt, z, actype = "smooth", hmax = 3.52, vtype = "var",
-                 step = 0.01, contrast = c(1), vvector = c(1))
+  fmri.lm(data, z, actype = "accalc", hmax = 3.52, vtype = "var",
+                 step = 0.01, contrast = c(1), vvector = c(1), keep = "essential")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{ttt}{ 4 dimensional data cube, dimension \eqn{(d_x,d_y,d_z,T)}. }
+  \item{data}{ object of class \code{fmri.data} }
   \item{z}{ designmatrix specifying the expected hemodynamic response 
   and aadditional components for trend and other effects. Dimension \eqn{(p,T)}. }
   \item{actype}{ string describing the type of handling autocorrelation
@@ -25,6 +25,8 @@
   \item{contrast}{ contrast vector }
   \item{vvector}{ vector defining the parameters for which the
     covariance matrix is returned. }
+  \item{keep}{ string describing the amount of data returned:
+    "essential", "diagnostic", "all" }
 }
 \details{
   This function performs parameter estimation in the linear model.
@@ -36,15 +38,22 @@
   the AR-coefficients are spatially smoothed using bandwidth \code{hmax}.
   If \code{actype\%in\%c("ac","smooth")} the linear model is prewithened
   using the estimated (smoothed) AR-coefficients. Parameter 
-  and variance estimates are then obtained from the prewithened data.
+  and variance estimates are then obtained from the prewithened
+  data. The argument \code{keep} describes the amount of data which is
+  returned. If "essential" only the contrast of parameters and its
+  estimated variance are returned. "all" gives the full data, including
+  residuals, temporal autocorrelation.
 }
 \value{
+  object of class \code{fmri.spm}
   \item{beta}{Estimated parameters }
   \item{cbeta}{Estimated contrast of parameters}
   \item{var}{Estimated variance of the contrast of parameters.}
   \item{varm}{Covariance matrix of the parameters given by \code{vvector}}
   \item{res}{Residuals of the estimated linear model}
   \item{arfactor}{Estimated autocorrelation parameter}
+  \item{scorr}{ spatial correlation of data }
+  \item{weights}{ ratio of voxel dimensions }
 }
 \references{ Worsley, K.J. (2005). Spatial smoothing of autocorrelations
   to control the degrees of freedom in fMRI analysis. NeuroImage,
@@ -55,15 +64,16 @@
   for fMRI data. NeuroImage, 15:1:15.
 }
 \author{ Karsten Tabelow (tabelow@wias-berlin.de) }
-\seealso{ \code{\link{create.designmatrix}}, \code{\link{create.stimulus}} }
+\seealso{ \code{\link{fmri.design}}, \code{\link{fmri.stimulus}} }
 \examples{
   # Example 1
-  ttt <- array(rnorm(32*32*32*107),c(32,32,32,107))
-  hrf <- create.stimulus(107, c(18, 48, 78), 15, 2)
-  z <- create.designmatrix(hrf,2)
-  model <- calculate.lm(ttt,z)
-  plot(ttt[16,16,16,])
-  lines(ttt[16,16,16,] - model$res[16,16,16,],col=2)
+  data <- list(ttt=array(rnorm(32*32*32*107),c(32,32,32,107)))
+  class(data) <- "fmri.data"
+  hrf <- fmri.stimulus(107, c(18, 48, 78), 15, 2)
+  z <- fmri.design(hrf,2)
+  model <- fmri.lm(data,z,keep="all")
+  plot(data$ttt[16,16,16,])
+  lines(data$ttt[16,16,16,] - model$res[16,16,16,],col=2)
 }
 \keyword{ regression }% at least one, from doc/KEYWORDS
 
