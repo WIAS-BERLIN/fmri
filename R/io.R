@@ -46,7 +46,7 @@ read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart =
   }
 
   mask <- ttt[,,,1]
-  mask[mask < quantile(mask,0.75)] <- 0
+  mask[mask > quantile(mask,0.75)] <- 0
   mask[mask != 0] <- 1
   z$mask <- mask
 

@@ -1,4 +1,4 @@
-fmri.smooth <- function(spm,hmax=4,...) {
+fmri.smooth <- function(spm,hmax=4,type="",...) {
   cat("fmri.smooth: entering function\n")
   
   if (!class(spm) == "fmrispm") {
@@ -27,17 +27,30 @@ fmri.smooth <- function(spm,hmax=4,...) {
     scorr <- spm$scorr
   }
 
-  cat("fmri.smooth: smoothing the Statistical Paramteric Map\n")
-  ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, wghts=weights, scorr=scorr, ...)
-  cat("\n")
+  if (type == "old") {
+    cat("fmri.smooth: smoothing the Statistical Paramteric Map\n")
+    ttthat <- vaws3Dold(y=spm$cbeta, sigma2=variance, hmax=hmax, wghts=weights, scorr=scorr, qtau=1, ...)
+    cat("\n")
+    cat("fmri.smooth: determine local smoothness\n")
+    bwx <- get.bw.gauss(corr[1])
+    bwy <- get.bw.gauss(corr[2])
+    bwz <- get.bw.gauss(corr[3])
+    bw <- get3Dh.gauss.old(ttthat$vred,c(bwx,bwy,bwz),weights)
+    rxyz <- c(resel(1,bw[,1]), resel(1,bw[,2]), resel(1,bw[,3]))
+    dim(rxyz) <- c(dim(bw)[1],3)
+  } else {
+    cat("fmri.smooth: smoothing the Statistical Paramteric Map\n")
+    ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, wghts=weights, scorr=scorr, ...)
+    cat("\n")
+    
+    cat("fmri.smooth: determine local smoothness\n")
+    bw <- get3Dh.gauss(ttthat$vred,weights)
+    rxyz <- c(resel(1,bw[,1]), resel(1,bw[,2]), resel(1,bw[,3]))
+    dim(rxyz) <- c(dim(bw)[1],3)
+  }
 
-  cat("fmri.smooth: determine local smoothness (this may take some minutes!)\n")
-  bw <- get3Dh.gauss(ttthat$vred,c(0,0,0),weights)
-  rxyz <- c(resel(1,bw[,1]), resel(1,bw[,2]), resel(1,bw[,3]))
-  dim(rxyz) <- c(dim(bw)[1],3)
-  
   cat("fmri.smooth: exiting function\n")
-
+    
   if (dim(ttthat$theta)[4] == 1) {
     z <- list(cbeta = ttthat$theta[,,,1], var = ttthat$var, rxyz =
               rxyz, scorr = spm$scorr, weights = spm$weights, smooth =
@@ -73,10 +86,11 @@ fmri.detect <- function(spm, pvalue = 0.05, mode="plog") {
   pvlog <- -log(pv)
   pvlog[mask == 0] <- 0
   dim(pvlog) <- spm$dim[1:3]
-
+  dim(mask) <- spm$dim[1:3]
+  
   cat("fmri.detect: exiting function\n")
 
-  z <- list(detect = pvlog)
+  z <- list(detect = pvlog, mask = mask)
   
   class(z) <- "fmridetect"
   z

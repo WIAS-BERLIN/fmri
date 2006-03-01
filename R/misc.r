@@ -86,7 +86,7 @@ Spatialvar.gauss<-function(h,h0,d,interv=1){
   sum(z^2)/sum(z)^2*interv^d
 }
 
-get3Dh.gauss<-function(vred,vwghts,step=1.002,interv=1){
+get3Dh.gauss <- function(vred,vwghts,step=1.002,interv=1){
 #
 #  interv allows for further discretization of the Gaussian Kernel, result depends on
 #  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
@@ -106,6 +106,38 @@ get3Dh.gauss<-function(vred,vwghts,step=1.002,interv=1){
   hv[,!fixed] <- hvred[i,1]
   
   invisible(t(hv))
+}
+
+get3Dh.gauss.old <- function(vred,h0,vwghts,step=1.002,interv=1){
+#
+#  interv allows for further discretization of the Gaussian Kernel, result depends on
+#  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
+#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
+#  discretisation into voxel) 
+#
+  h0 <- pmax(h0,1e-5)
+  n<-length(vred)
+  vred1<-vred
+  h<-.5/vwghts
+  fixed<-rep(FALSE,length(vred))
+  while(any(!fixed)){
+    ind<-(1:n)[!fixed][vred[!fixed]>=Spatialvar.gauss(h,1e-5,3,interv)]
+    vred1[ind]<-Spatialvar.gauss(h,h0,3,interv)
+    fixed[ind]<-TRUE
+    h<-h*step
+  }
+  hvred<-matrix(0,3,n)
+  hh<-.01/vwghts
+  h<-h0
+  fixed<-rep(FALSE,length(vred))
+  while(any(!fixed)){
+    ind<-(1:n)[!fixed][vred1[!fixed]>=Spatialvar.gauss(h,1e-5,3,interv)]
+    hvred[,ind]<-h
+    fixed[ind]<-TRUE
+    hh<-hh*step
+    h<-sqrt(h0^2+hh^2)
+  }
+  t(hvred)
 }
 
 gkernsm <- function(y,h=1) {
