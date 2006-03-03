@@ -81,7 +81,7 @@
 \seealso{ \code{\link{fmri.design}}, \code{\link{fmri.stimulus}} }
 \examples{
   # Example 1
-  data <- list(ttt=array(rnorm(32*32*32*107),c(32,32,32,107)))
+  data <- list(ttt=array(rnorm(32*32*32*107),c(32,32,32,107)),mask=array(1,c(32,32,32)))
   class(data) <- "fmri.data"
   hrf <- fmri.stimulus(107, c(18, 48, 78), 15, 2)
   z <- fmri.design(hrf,2)

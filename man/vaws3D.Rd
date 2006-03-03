@@ -119,7 +119,7 @@ The essential parameter in the procedure is \code{qlambda}. This parameter has a
 \author{Joerg Polzehl, \email{polzehl@wias-berlin.de} }
 \seealso{\code{\link{fmri.smooth}}}
 \examples{
-#
+\dontrun{#
 #  create an 3D phantom
 #
 mask<-matrix(0,65,65)
@@ -174,6 +174,6 @@ data<-mdata+array(rnorm(data),dim(data))
 #   smooth the data ( takes about 6s on a Pentium IV 3.2GHz )
 #
 ttt<-vaws3D(data,sigma2=array(1,dim(data)[-4]),skern="Triangle",hmax=4,
-             graph=FALSE,u=mdata)$theta
+             graph=FALSE,u=mdata)$theta}
 }
 \keyword{smooth}% at least one, from doc/KEYWORDS

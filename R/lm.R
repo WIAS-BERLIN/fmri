@@ -242,7 +242,7 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   dim(rxyz) <- c(1,3)
 
   variance[variance == 0] <- 1e20
-  variancem[variancem == 0] <- 1e20
+  if (length(vvector) > 1) variancem[variancem == 0] <- 1e20
 
   if (length(vvector) > 1) {
     cbeta <- beta[,,,1:sum(vvector>0)]
