@@ -4,5 +4,6 @@ export(fmri.stimulus,fmri.design,fmri.lm)
 export(fmri.smooth,fmri.detect)
 export(plot.fmridetect)
 export(fmriplot.diff)
+export(vaws3D,vaws3Dold)
 useDynLib(fmri)
 

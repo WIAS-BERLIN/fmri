@@ -34,7 +34,7 @@
 vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform",
                    sigma2=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
                    u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
-                   spmin=0,spmax=1.1,scorr=c(0,0,0),vwghts=1) {
+                   spmin=0,spmax=1.1,scorr=c(0,0,0),vwghts=1,vred="Partial") {
   #  Auxilary functions
   IQRdiff <- function(y) IQR(diff(y))/1.908
 
@@ -198,7 +198,6 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
 		       as.double(vwghts),
 		       double(dv),#swjy
 		       double(dv0),#thi
-		       double(dv0),#thj
 		       PACKAGE="fmri",DUP=TRUE)[c("bi","ai","hakt")]
     gc()
     dim(tobj$ai) <- dy
@@ -245,8 +244,8 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
   gwght <- outer(gw1,outer(gw2,gw3,"*"),"*")
   gwght <- gwght/sum(gwght)
   dgw <- dim(gwght)
-  lambda0 <- 1e50
-  z <- .Fortran("chawsvr",as.double(y),
+  if(vred=="Full"){
+  z <- .Fortran("chawsvr",
                 as.double(sigma2),
                 as.integer(n1),
                 as.integer(n2),
@@ -270,9 +269,48 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
                 as.double(wghts),
                 as.double(vwghts),
                 double(dv0),#thi
-                double(dv0),#thj
                 PACKAGE="fmri",DUP=FALSE)[c("vred","var")]
   dim(z$vred) <- dim(z$var) <- dim(sigma2)
+  } else {
+  z1 <- .Fortran("chawsvr1",
+                as.double(sigma2),
+                as.integer(n1),
+                as.integer(n2),
+                as.integer(n3),
+                as.integer(dv0),
+                as.double(tobj$hakt),
+                as.double(lambda0),
+                as.double(theta0),# thats the theta needed for the weights
+                bi2=as.double(bi0), # thats the bi needed for the weights, sum of square wghts as output
+                Qh=double(n),
+                Qh0=double(n),
+                as.integer(lkern),
+                as.integer(skern),
+                as.double(spmin),
+                as.double(spmax),
+                double(prod(dlw)),# lwghts
+                as.double(wghts),
+                as.double(vwghts),
+                double(dv0),#thi
+                PACKAGE="fmri",DUP=FALSE)[c("bi2","Qh","Qh0")]
+  bi2 <- array(z1$bi2,dim(sigma2))
+  Qh <- array(z1$Qh,dim(sigma2))
+  Qh0 <- array(z1$Qh0,dim(sigma2))
+  z2<-.Fortran("chawsvr2",
+                as.integer(n1),
+                as.integer(n2),
+                as.integer(n3),
+                as.double(tobj$hakt),
+                Qhg=double(n),
+                as.integer(lkern),
+                double(prod(dlw)),# lwghts
+                as.double(gwght),# gwghts
+                double(n), # to keep the wij
+                as.integer(dgw),
+                as.double(wghts),
+                PACKAGE="fmri",DUP=FALSE)[c("Qhg")]
+  Qhg <- array(z2$Qhg,dim(sigma2))
+  }
   nqg <- .Fortran("nqg",as.double(gwght),
                   as.double(gwght^2),
                   as.integer(dgw[1]),
@@ -287,11 +325,16 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
   qg <- array(nqg$qg,dim(sigma2))
   ng <- array(nqg$ng,dim(sigma2))
   dim(tobj$bi)<-dim(sigma2)
+  if(vred=="Full"){
   vartheta <- z$var/tobj$bi^2/qg
   vred <- z$vred/tobj$bi^2/ng^2
-                                        # 
-                                        #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
-                                        #
+  } else {
+  vartheta <- Qhg/Qh0/qg*bi2/tobj$bi^2
+  vred <- Qhg/Qh0/qg*Qh/tobj$bi^2
+  }
+ # 
+ #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
+ #
   z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,y=y,
             hmax=tobj$hakt,mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg)
   class(z) <- "aws.gaussian"
@@ -522,8 +565,7 @@ vaws3Dold <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",skern="Exp",aggk
 		       as.double(vwghts),
 		       double(dv),#swjy
 		       double(dv0),#thi
-		       double(dv0),#thj
-		       PACKAGE="fmriold",DUP=FALSE)[c("bi","bi0","bi2","vred","ai","hakt")]
+		       PACKAGE="fmri",DUP=FALSE)[c("bi","bi0","bi2","vred","ai","hakt")]
       vred[!tobj$fix] <- zobj$vred[!tobj$fix]
     } else { # all other cases
       zobj <- .Fortran("caws",as.double(y),
@@ -549,8 +591,7 @@ vaws3Dold <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",skern="Exp",aggk
 		       as.double(vwghts),
 		       double(dv),#swjy
 		       double(dv0),#thi
-		       double(dv0),#thj
-		       PACKAGE="fmriold",DUP=FALSE)[c("bi","bi0","bi2","ai","hakt")]
+		       PACKAGE="fmri",DUP=FALSE)[c("bi","bi0","bi2","ai","hakt")]
     }
     gc()
     dim(zobj$ai) <- dy
