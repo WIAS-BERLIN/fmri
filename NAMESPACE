@@ -3,4 +3,6 @@ export(write.AFNI,write.ANALYZE)
 export(fmri.stimulus,fmri.design,fmri.lm)
 export(fmri.smooth,fmri.detect)
 export(fmri.plot)
+export(fmriplot.diff)
+useDynLib(fmri)
 

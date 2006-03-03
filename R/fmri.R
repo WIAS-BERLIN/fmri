@@ -261,10 +261,10 @@ fmriplot.slices3d <- function(signal, anatomic =
   
 }
 
-fmri.plot <- function(detect, anatomic =
+plot.fmridetect <- function(x, anatomic =
                              array(0,dim=dim(detect$detect)),
                              pos = c(-1,-1,-1), type="slice",
-                             device="X11", file="plot.png") {
+                             device="X11", file="plot.png",...) {
   mri.colors <- function (n1, n2, factor=n1/(n1+n2), from=0, to=.2) {
     colors1 <- gray((0:n1)/(n1+n2))
     colors2 <- hsv(h = seq(from,to,length=n2),
@@ -275,7 +275,7 @@ fmri.plot <- function(detect, anatomic =
     list(all=c(colors1,colors2),gray=colors1,col=colors2)
   }
 
-  signal <- detect$detect
+  signal <- x$detect
   
   if (type == "3d") {
     if (require(misc3d)) {

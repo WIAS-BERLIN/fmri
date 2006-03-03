@@ -1,16 +1,16 @@
-\name{fmri.plot}
-\alias{fmri.plot}
+\name{plot.fmridetect}
+\alias{plot.fmridetect}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ I/O functions }
 \description{
   Plot the fMRI detection result.
 }
 \usage{
-fmri.plot(detect, anatomic = array(0, dim = dim(detect$detect)), pos = c(-1, -1, -1), type = "slice", device = "X11", file = "plot.png")
+plot.fmridetect(x, anatomic = array(0, dim = dim(detect$detect)), pos = c(-1, -1, -1), type = "slice", device = "X11", file = "plot.png",...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{detect}{ object of class \code{fmridetect} }
+  \item{x}{ object of class \code{fmridetect} }
   \item{anatomic}{ overlay of same dimension as the functional data }
   \item{pos}{ voxel to be marked on output }
   \item{type}{ string. "slice" for slicewise view and "3d" for
@@ -18,6 +18,7 @@ fmri.plot(detect, anatomic = array(0, dim = dim(detect$detect)), pos = c(-1, -1,
   \item{device}{ output device if \code{type} is \code{slice}. "png",
     "jpeg", "ppm", default is "X11"}
   \item{file}{ name of output file if \code{device} is not "X11" }
+  \item{...}{ additional arguments for plot}
 }
 \details{
   Gives sliceswise view of \code{fmridetect} objects with overlay (if
