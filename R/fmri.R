@@ -29,7 +29,7 @@ fmri.smooth <- function(spm,hmax=4,type="",...) {
 
   if (type == "old") {
     cat("fmri.smooth: smoothing the Statistical Paramteric Map\n")
-    ttthat <- vaws3Dold(y=spm$cbeta, sigma2=variance, hmax=hmax, wghts=weights, scorr=scorr, qtau=1, ...)
+    ttthat <- vaws3Dold(y=spm$cbeta, sigma2=variance, hmax=hmax, wghts=weights, scorr=scorr, qtau=1, vwghts = spm$vwghts, ...)
     cat("\n")
     cat("fmri.smooth: determine local smoothness\n")
     bwx <- get.bw.gauss(corr[1])
@@ -40,7 +40,7 @@ fmri.smooth <- function(spm,hmax=4,type="",...) {
     dim(rxyz) <- c(dim(bw)[1],3)
   } else {
     cat("fmri.smooth: smoothing the Statistical Paramteric Map\n")
-    ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, wghts=weights, scorr=scorr, ...)
+    ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, wghts=weights, scorr=scorr, vwghts = spm$vwghts, ...)
     cat("\n")
     
     cat("fmri.smooth: determine local smoothness\n")
@@ -53,11 +53,11 @@ fmri.smooth <- function(spm,hmax=4,type="",...) {
     
   if (dim(ttthat$theta)[4] == 1) {
     z <- list(cbeta = ttthat$theta[,,,1], var = ttthat$var, rxyz =
-              rxyz, scorr = spm$scorr, weights = spm$weights, smooth =
+              rxyz, scorr = spm$scorr, weights = spm$weights, vwghts = spm$vwghts, smooth =
               TRUE, hmax = ttthat$hmax, dim = spm$dim)
   } else {
     z <- list(cbeta = ttthat$theta, var = ttthat$var, rxyz = rxyz,
-              scorr = spm$scorr, weights = spm$weights, smooth = TRUE,
+              scorr = spm$scorr, weights = spm$weights, vwghts = spm$vwghts, smooth = TRUE,
               hmax = ttthat$hmax, dim = spm$dim)
   }    
 
@@ -72,12 +72,23 @@ fmri.detect <- function(spm, pvalue = 0.05, mode="plog") {
     warning("fmri.detect: data not of class <fmrispm>. Try to proceed but strange things may happen")
   }
 
-  stat <- spm$cbeta/sqrt(spm$var)
-  dim(stat) <- prod(spm$dim[1:3])
-  cat("fmri.detect: calculate local treshold\n")
-  thresh <- threshold(pvalue,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="norm")
-  cat("fmri.detect: calculate local p-value\n")
-  pv <- pvalue(stat,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="norm")
+  if (length(dim(spm$cbeta)) < 4) {
+    stat <- spm$cbeta/sqrt(spm$var)
+    dim(stat) <- prod(spm$dim[1:3])
+    cat("fmri.detect: calculate local treshold\n")
+    thresh <- threshold(pvalue,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="norm")
+    cat("fmri.detect: calculate local p-value\n")
+    pv <- pvalue(stat,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="norm")
+  } else {
+    stat <- spm$cbeta[,,,1]^2/spm$var + spm$cbeta[,,,2]^2/spm$var/spm$vwghts[2]  # Wert der Statistik
+    dim(stat) <- prod(spm$dim[1:3])
+    cat("fmri.detect: calculate local treshold\n")
+    thresh <- 
+      threshold(pvalue,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="chisq",df=2)
+    cat("fmri.detect: calculate local p-value\n")
+    pv <-
+      pvalue(stat,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="chisq",df=2)
+  }
   cat("fmri.detect: thresholding\n")
   mask <- rep(1,length=prod(spm$dim[1:3]))
   mask[stat < thresh] <- 0
@@ -90,7 +101,7 @@ fmri.detect <- function(spm, pvalue = 0.05, mode="plog") {
   
   cat("fmri.detect: exiting function\n")
 
-  z <- list(detect = pvlog, mask = mask)
+  z <- list(detect = pvlog)
   
   class(z) <- "fmridetect"
   z
@@ -250,7 +261,7 @@ fmriplot.slices3d <- function(signal, anatomic =
   
 }
 
-plot.fmridetect <- function(detect, anatomic =
+fmri.plot <- function(detect, anatomic =
                              array(0,dim=dim(detect$detect)),
                              pos = c(-1,-1,-1), type="slice",
                              device="X11", file="plot.png") {

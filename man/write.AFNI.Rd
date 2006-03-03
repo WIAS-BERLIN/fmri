@@ -31,8 +31,9 @@ write.AFNI(file, ttt, label, note = "", origin = c(0, 0, 0),
 }
 \seealso{ \code{\link{read.AFNI}} }
 \examples{
- write.AFNI("afnitest", array(as.integer(65526*runif(10*10*10*20)), c(10,10,10,20)),
-     c("signal"), note="random data", origin=c(0,0,0), delta=c(4,4,5), idcode="unique ID")
+ write.AFNI("afnitest", array(as.integer(65526*runif(10*10*10*20)),
+     c(10,10,10,20)), c("signal"), note="random data",
+     origin=c(0,0,0), delta=c(4,4,5), idcode="unique ID")
 
 }
 \keyword{ IO }% at least one, from doc/KEYWORDS

@@ -242,19 +242,28 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   dim(rxyz) <- c(1,3)
 
   variance[variance == 0] <- 1e20
+  variancem[variancem == 0] <- 1e20
+
+  if (length(vvector) > 1) {
+    cbeta <- beta[,,,1:sum(vvector>0)]
+    vwghts <- numeric(sum(vvector>0))
+    for (i in 1:sum(vvector>0))  vwghts[i] <- median(variancem[,,,i,i]/variancem[,,,1,1])
+  } else {
+    vwghts <- 1
+  }
   
   cat("fmri.lm: exiting function\n")
   
   if (keep == "all") {
     z <- list(beta = beta, cbeta = cbeta, var = variance, res =
               residuals, arfactor = arfactor, rxyz = rxyz, scorr = corr, weights =
-              data$weights, smooth= FALSE, dim = data$dim)
+              data$weights, vwghts = vwghts, smooth= FALSE, dim = data$dim)
   } else if (keep == "diagnostic") {
     z <- list(cbeta = cbeta, var = variance, res = residuals, rxyz = rxyz, scorr =
-              corr, weights = data$weights, smooth= FALSE, dim = data$dim)
+              corr, weights = data$weights, vwghts = vwghts, smooth= FALSE, dim = data$dim)
   } else {
     z <- list(cbeta = cbeta, var = variance, rxyz = rxyz, scorr = corr, weights =
-              data$weights, smooth= FALSE, dim = data$dim)
+              data$weights, vwghts = vwghts, smooth= FALSE, dim = data$dim)
   }
 
   if (length(vvector) > 1) {

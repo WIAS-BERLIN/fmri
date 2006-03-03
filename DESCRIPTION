@@ -1,6 +1,6 @@
 Package: fmri
-Version: 0.2
-Date: 2006-2-02
+Version: 0.9
+Date: 2006-3-03
 Title: FMRI Analysis
 Author: Karsten Tabelow <tabelow@wias-berlin.de>
         Joerg Polzehl <polzehl@wias-berlin.de>
@@ -14,4 +14,4 @@ License: GPL version 2 or newer
                                    Applied Analysis and Stochastics.
 URL: http://www.wias-berlin.de/
 Note: This software comes with NO warranty! It is NOT intended to be used 
-      in clinical applications but for research purposes only!
+      in clinical applications!

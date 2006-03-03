@@ -39,7 +39,7 @@ threshold(p, i, j, k, rx, ry, rz, type = "norm", df = 4, step = 0.001)
   K.J. Friston, and A.C. Evans (1996), A Unified Statistical Approach
   for Determining Significant Signals in Images of Cerebral Activation, 
   Human Brain Mapping, 4:58-73.}
-\author{ Karsten Tabelow (tabelow@wias-berlin.de }
+\author{ Karsten Tabelow tabelow@wias-berlin.de }
 \seealso{ \code{\link{pvalue}},\code{\link{resel}} }
 \examples{
   # Example 1

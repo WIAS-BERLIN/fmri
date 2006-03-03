@@ -29,7 +29,9 @@
   between two gamma functions as given in the reference (with defaults
   given there):
   
-  c1 * exp(-(x - d1)/b1) - c2 * exp(-(x - d2)/b2)
+  \deqn{\left(\frac{t}{d_1}\right)^{a_1} \exp \left(-\frac{t-d_1}{b_1}\right) 
+- c \left(\frac{t}{d_2}\right)^{a_2} \exp
+\left(-\frac{t-d_2}{b_2}\right) }{(x/d1)^a1 * exp(-(x - d1)/b1) - c * (x/d2)^a2 * exp(-(x - d2)/b2)}
 
   The parameters of this function can be changed in the call of
   fmri.stimulus.

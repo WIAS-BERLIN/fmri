@@ -7,7 +7,8 @@
 }
 \usage{
   fmri.lm(data, z, actype = "accalc", hmax = 3.52, vtype = "var",
-                 step = 0.01, contrast = c(1), vvector = c(1), keep = "essential")
+          step = 0.01, contrast = c(1), vvector = c(1),
+          keep = "essential")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -31,7 +32,7 @@
 \details{
   This function performs parameter estimation in the linear model.
   It implements a two step procedure. In the first step residuals
-  are obtained and if \code{actype \%in\% c("ac", "accalc", "smooth")} 
+  are obtained and if \code{actype} \code{\%in\%} \code{c("ac", "accalc", "smooth")} 
   in each voxel an AR(1) model is fitted to 
   the the time series of residuals, and the AR-coefficient is corrected for bias. 
   If \code{actype=="smooth"}
@@ -43,9 +44,13 @@
   returned. If "essential" only the contrast of parameters and its
   estimated variance are returned. "all" gives the full data, including
   residuals, temporal autocorrelation.
+  If \code{vvector} is given and has length greater than 1, the
+  covariance matrix for the stimuli given therein are returned
+  (\code{varm}) and \code{vwghts} contains an estimate for the ratio of
+  the variances of the parameter for the stimuli indicated in \code{vvector}.
 }
 \value{
-  object of class \code{fmri.spm}
+  object of class \code{fmrispm}
   \item{beta}{Estimated parameters }
   \item{cbeta}{Estimated contrast of parameters}
   \item{var}{Estimated variance of the contrast of parameters.}
@@ -54,6 +59,11 @@
   \item{arfactor}{Estimated autocorrelation parameter}
   \item{scorr}{ spatial correlation of data }
   \item{weights}{ ratio of voxel dimensions }
+  \item{vwghts}{ ratio of estimated variances for the stimululi given by
+  \code{vvector}}
+  \item{rxyz}{array of resel counts from estimated correlation for each
+    voxel (for analysis without smoothing)}
+  \item{smooth}{ FALSE }
 }
 \references{ Worsley, K.J. (2005). Spatial smoothing of autocorrelations
   to control the degrees of freedom in fMRI analysis. NeuroImage,
@@ -64,6 +74,10 @@
   for fMRI data. NeuroImage, 15:1:15.
 }
 \author{ Karsten Tabelow (tabelow@wias-berlin.de) }
+\note{ \code{vvector} is intended to be used for delay of HRF using
+  first derivative. Do not mix with \code{contrast} argument, since
+  unexpected side effects may occur. Look out for updates of this package.
+}
 \seealso{ \code{\link{fmri.design}}, \code{\link{fmri.stimulus}} }
 \examples{
   # Example 1

@@ -3,7 +3,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ I/O Functions }
 \description{
-  Read fMRI data from ANALYZE file.
+  Read fMRI data from ANALYZE file(s).
 }
 \synopsis{
 read.ANALYZE(prefix = "", numbered = FALSE, postfix = "", picstart = 1, numbpic = 1)
@@ -17,14 +17,14 @@ read.ANALYZE(prefix = "filename")
 \arguments{
   \item{prefix}{ string. part of the file name before the number }
   \item{numbered}{ logical. if \code{FALSE} only \code{prefix} is taken
-    as file name.}
+    as file name (default).}
   \item{postfix}{ string. part of the file name after the number}
   \item{picstart}{ number of the first picture to be read. }
   \item{numbpic}{ number of pictures to be read }
 }
 \details{
-  This function read in fMRI data file(s) in ANALYZE format as used in
-  SPM. It takes the string in \code{prefix} and \code{postfix} and
+  This function read in fMRI data file(s) in ANALYZE format.
+  It takes the string in \code{prefix} and \code{postfix} and
   number of the form "007" in between to create the file name.
 
   If \code{numbered} is \code{FALSE}, only the string in \code{prefix}
@@ -36,8 +36,17 @@ read.ANALYZE(prefix = "filename")
   will be combined into one four dimensional datacube.
 }
 \value{
+  Object of class \code{fmridata} with the following list entries:
   \item{ttt}{four dimensional data cube}
   \item{header}{header information of the data}
+  \item{format}{data source. string ANALYZE}
+  \item{delta}{voxel size in mm}
+  \item{origin}{position of the datacube origin}
+  \item{orient}{orientation code}
+  \item{dim}{dimension of the datacube}
+  \item{weights}{weights vector coding the different voxel sizes in x,
+    y, z}
+  \item{header}{complete header information}
 }
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \note{ This function requires the AnalyzeFMRI package and the

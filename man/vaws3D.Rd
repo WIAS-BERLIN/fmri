@@ -46,24 +46,16 @@ vaws3D(y, qlambda = NULL, lkern = "Triangle", skern = "Exp",
   \item{demo}{If \code{demo=TRUE} the function pauses after each iteration. Defaults to \code{demo=FALSE}. }
   \item{wghts}{\code{wghts} specifies the  diagonal elements of a weight matrix to adjust for different distances between grid-points
   in different coordinate directions, i.e. allows to define a more appropriate metric in the design space.  }
-  \item{spmin}{ \code{spmin} specifies parameter value in the kernel \deqn{K_s(x)=\min(0,e^{-spmax/(spmax-spmin)(x-spmin)}I_{x<spmax}.} Defaults
+  \item{spmin}{ \code{spmin} specifies parameter value in the kernel \deqn{K_s(x)=\min(0,e^{-spmax/(spmax-spmin)(x-spmin)})I_{x<spmax}.} Defaults
   to \code{spmin=0}. Not used if \code{skern="Triangle"}.}
-  \item{spmax}{\code{spmax} specifies the cut point in the kernel \deqn{K_s(x)=\min(0,e^{-spmax/(spmax-spmin)(x-spmin)}I_{x<spmax}.} Defaults
+  \item{spmax}{\code{spmax} specifies the cut point in the kernel \deqn{K_s(x)=\min(0,e^{-spmax/(spmax-spmin)(x-spmin)})I_{x<spmax}.} Defaults
   to \code{spmax=5}. Not used if \code{skern="Triangle"}.}
   \item{scorr}{\code{scorr} specifies the spatial correlation in the three coordinate directions. Defaults to \code{scorr=c(0,0,0)}. }
   \item{vwghts}{\code{vwghts} specifies weights for the components of the data vector. These weights are used in the evaluation of the statistical
-  penalty \deqn{s_ij=N_i/\lambda/\sigma^2_i sum_k vwghts[k] (theta_{ik}-\theta_{jk})^2}{} where \eqn{k} denotes the \eqn{k}-th component of the 
+  penalty \deqn{s_ij=N_i/\lambda/\sigma^2_i \sum_k vwghts[k] (\theta_{ik}-\theta_{jk})^2} where \eqn{k} denotes the \eqn{k}-th component of the 
   vector. The parameter can be used to adjust for different variability of the components of the data vector. Defaults to \code{vwghts=rep(1,dv)}.  }
 }
 \details{
- This function differs from \code{\link{vaws3D}} in three points:\cr
- 1) it computes  estimates \code{vartheta} and \code{vred} (variance reduction)
- that are more accurate.\cr
- 2) it does not implement stagewise aggregation, that is, corresponds to the
- case \code{qtau=1}.\cr
- 3) the information needed for \code{vartheta} and \code{vred} is only
- evaluated at after the estimates are fixed.\cr
- 
  The function implements the propagation separation approach to 
 nonparametric smoothing (formerly introduced as Adaptive weights smoothing) 
 for multivariate regression models regression with additive "Gaussian" errors on a 3D grid. A homoskedastic 
@@ -109,19 +101,22 @@ The essential parameter in the procedure is \code{qlambda}. This parameter has a
   \item{mae}{Mean absolute error if \code{!is.null(u)}.}
   \item{lseq}{The sequence specified in \code{lseq}.}
   \item{call}{The arguments used in the call of function vaws3D}  
-  \item{ng}{Array of dimension \code{dim(y)[1:3]} containing the voxelwise sums \eqn{N_g}
-  \item{qg}{Array of dimension \code{dim(y)[1:3]} containing the voxelwise sums \eqn{Q_g}
+  \item{ng}{Array of dimension \code{dim(y)[1:3]} containing the voxelwise sums \eqn{N_g}}
+  \item{qg}{Array of dimension \code{dim(y)[1:3]} containing the
+    voxelwise sums \eqn{Q_g}}
 }
-\item{ }{Polzehl, J. and Spokoiny, V. (2004a). \emph{Propagation-Separation Approach for Local Likelihood Estimation}, 
-Probab. Theory & Relat. Fields, in print.}
-\item{ }{Belomestny, D. and Spokoiny, V. (2004a). \emph{Local likelihood modeling via stagewise aggregation}, 
-WIAS-Preprint 1000.}
-\item{ }{Tabelow, K., Polzehl, J. and Spokoiny, V. (2005). \emph{Analysing {fMRI} experiments with structure adaptive smoothing procedures},
-WIAS-Preprint 1079.} 
+\references{ Polzehl, J. and Spokoiny, V. (2004a). \emph{Propagation-Separation Approach for Local Likelihood Estimation}, 
+  Probab. Theory & Relat. Fields, in print.
+  
+  Belomestny, D. and Spokoiny, V. (2004a). \emph{Local likelihood modeling via stagewise aggregation}, 
+  WIAS-Preprint 1000.
+  
+  Tabelow, K., Polzehl, J. and Spokoiny, V. (2005). \emph{Analysing {fMRI} experiments with structure adaptive smoothing procedures},
+  WIAS-Preprint 1079.
+
+  http://www.wias-berlin.de/project-areas/stat/projects/adaptive-image-processing.html
  }
-\author{Joerg Polzehl, \email{polzehl@wias-berlin.de}, 
-\url{http://www.wias-berlin.de/project-areas/stat/projects/adaptive-image-processing.html} } 
-}
+\author{Joerg Polzehl, \email{polzehl@wias-berlin.de} }
 \seealso{\code{\link{fmri.smooth}}}
 \examples{
 #
