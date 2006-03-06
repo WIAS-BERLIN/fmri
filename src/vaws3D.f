@@ -556,13 +556,13 @@ C
       DO i3=1,n3
          DO i2=1,n2
              DO i1=1,n1
-               bii=bi2(n1,n2,n3)/lambda
+               bii=bi2(i1,i2,i3)/lambda
 C   scaling of sij outside the loop
                swj=0.d0
                swj0=0.d0
                swj00=0.d0
 	       DO k=1,dv0
-	          thi(k)=theta(n1,n2,n3,k)
+	          thi(k)=theta(i1,i2,i3,k)
 	       END DO
                DO jw3=1,dlw3
 	          j3=jw3-clw3+i3

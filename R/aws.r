@@ -158,7 +158,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
   k <- 1
   hakt <- hinit
   hakt0 <- hinit
-  lambda0 <- lambda
+  lambda0 <- lambda*lseq[k]
   if (hinit>1) lambda0 <- 1e50 # that removes the stochstic term for the first step
 
   progress <- 0
