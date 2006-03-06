@@ -44,7 +44,11 @@ threshold <- function(p,i,j,k,rx,ry,rz,type="norm",df=4,step=.001) {
   n <- length(rx)
   thr <- numeric(n)
   fixed <- logical(n)
-  x <- 3
+  if (type == "chisq") {
+    x <- 10
+  } else {
+    x <- 3
+  }
   pxyz <- rx*ry*rz
   ind <- (1:length(pxyz))[pxyz==min(pxyz)][1]
   pv <- 1
