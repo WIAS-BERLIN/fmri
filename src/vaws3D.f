@@ -45,9 +45,10 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       implicit logical (a-z)
       integer n1,n2,n3,j1,j2,j3,dv0,skern
       real*8 thi(dv0),theta(n1,n2,n3,dv0),vwghts(dv0),spf,spmin,spmax,
-     1       bii,wj
+     1       bii,wj,wjin
       integer k
       real*8 sij,z
+      wjin=wj
       sij=0.d0
 C  compute distance in sij
       DO k=1,dv0
@@ -55,8 +56,9 @@ C  compute distance in sij
 	 sij=sij+z*z*vwghts(k)
       END DO
       sij=bii*sij
-      IF (sij.gt.spmax) RETURN
-      IF (skern.eq.1) THEN
+      IF (sij.gt.spmax) THEN
+         wj=0.d0
+      ELSE IF (skern.eq.1) THEN
 C  skern == "Triangle"
          wj=wj*(1.d0-sij)
       ELSE
@@ -337,7 +339,7 @@ C
       call rchkusr()
       DO i3=1,n3
          DO i2=1,n2
-             DO i1=1,n3
+             DO i1=1,n1
                bii=bi(i1,i2,i3)/lambda
 C   scaling of sij outside the loop
                swj=0.d0
@@ -945,6 +947,11 @@ C
       clw2=(dlw2+1)/2
       clw3=(dlw3+1)/2
       DO j3=1,dlw3
+         Do j2=1,dlw2
+	    DO j1=1,dlw1
+	       lwght(j1,j2,j3)=0.d0
+	    END DO
+	 END DO
          z3=(clw3-j3)*wght(2)
          z3=z3*z3
          ih2=dsqrt(hakt2-z3)/wght(1)

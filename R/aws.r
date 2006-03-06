@@ -244,6 +244,9 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
   gwght <- outer(gw1,outer(gw2,gw3,"*"),"*")
   gwght <- gwght/sum(gwght)
   dgw <- dim(gwght)
+    if (scorr[1]>=0.1) lambda0 <- lambda0 * Spatialvar.gauss(hakt0/hincr/0.42445/4*c(1,wghts),h0*c(1,wghts),d) /
+                                            Spatialvar.gauss(h0*c(1,wghts),1e-5,d) /
+                                            Spatialvar.gauss(hakt0/hincr/0.42445/4*c(1,wghts),1e-5,d)
   if(vred=="Full"){
   z <- .Fortran("chawsvr",
                 as.double(sigma2),
