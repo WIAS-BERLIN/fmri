@@ -85,8 +85,8 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
   if (is.null(qlambda)) qlambda <- .985
   if (qlambda<.9) warning("Inappropriate value of qlambda")
   if (qlambda<1) {
-    vwghts <- vwghts/max(vwghts)
-    df <- sum(vwghts^2)^2/sum(vwghts^4)
+    vwghts0 <- vwghts/max(vwghts)
+    df <- sum(vwghts0^2)^2/sum(vwghts0^4)
     lambda <- qchisq(qlambda,df) 
   } else {
     lambda <- 1e50

@@ -231,7 +231,7 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   dim(arfactor) <- dy[1:3]
   dim(residuals) <- dy
 
-  cat("fmri.lm: calculate spatial correlation\n")
+  cat("fmri.lm: calculating spatial correlation\n")
 
   corr <- correlation(residuals,data$mask)
   bwx <- get.bw.gauss(corr[1])
