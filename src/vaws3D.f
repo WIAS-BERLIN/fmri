@@ -767,7 +767,7 @@ C
          DO jw2=1,dlw2
 	    j2=jw2-clw2+i2
 	    if(j2.lt.1.or.j2.gt.n2) CYCLE
-            DO jw1=1,dlw3
+            DO jw1=1,dlw1
 	       wj=lwght(jw1,jw2,jw3)
 	       if(wj.le.0.d0) CYCLE
 C  first stochastic term
@@ -818,7 +818,7 @@ C
          DO jw2=1,dlw2
 	    j2=jw2-clw2+i2
 	    if(j2.lt.1.or.j2.gt.n2) CYCLE
-            DO jw1=1,dlw3
+            DO jw1=1,dlw1
 	       wj=lwght(jw1,jw2,jw3)
 	       if(wj.le.0.d0) CYCLE
 C  first stochastic term
