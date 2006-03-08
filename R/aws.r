@@ -282,9 +282,9 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
                 as.double(tobj$hakt),
                 as.double(lambda0),
                 as.double(theta0),# thats the theta needed for the weights
-                bi2=as.double(bi0), # thats the bi needed for the weights, sum of square wghts as output
-                Qh=double(n),
-                Qh0=double(n),
+                bi2=as.double(bi0), # thats the bi needed for the weights, sum of squared weights  \sum_j \tilde{w}_ij^2 \sigma_j^2 as output
+                Qh=double(n),#  sum of squared weights \sum_j \tilde{w}_ij^2 
+                Qh0=double(n),#  sum of squared non-adaptive weights \sum_j K(l_ij)^2  
                 as.integer(lkern),
                 as.integer(skern),
                 as.double(spmin),
@@ -331,7 +331,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
   vred <- z$vred/tobj$bi^2/ng^2
   } else {
   vartheta <- Qhg/Qh0/qg*bi2/tobj$bi^2
-  vred <- Qhg/Qh0/qg*Qh/tobj$bi^2
+  vred <- Qhg/Qh0/ng^2*Qh/tobj$bi^2
   }
  # 
  #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
