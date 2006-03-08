@@ -62,7 +62,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
 
   # define vwghts
   if (length(vwghts)>dv) vwghts <- vwghts[1:dv]
-  dv0 <- length(vwghts)
+  dv0 <- sum(vwghts>0)
 
   # MAE
   mae <- NULL
@@ -85,9 +85,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
   if (is.null(qlambda)) qlambda <- .985
   if (qlambda<.9) warning("Inappropriate value of qlambda")
   if (qlambda<1) {
-    vwghts0 <- vwghts/max(vwghts)
-    df <- sum(vwghts0^2)^2/sum(vwghts0^4)
-    lambda <- qchisq(qlambda,df) 
+    lambda <- qchisq(qlambda,dv0) 
   } else {
     lambda <- 1e50
   }
@@ -405,7 +403,7 @@ vaws3Dold <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",skern="Exp",aggk
 
   # define vwghts
   if (length(vwghts)>dv) vwghts <- vwghts[1:dv]
-  dv0 <- length(vwghts)
+  dv0 <- sum(vwghts>0)
 
   # MAE
   mae <- NULL
@@ -445,9 +443,7 @@ vaws3Dold <- function(y,qlambda=NULL,qtau=NULL,lkern="Triangle",skern="Exp",aggk
     tau2 <- tau1/2
   }
   if (qlambda<1) {
-    vwghts <- vwghts/max(vwghts)
-    df <- sum(vwghts^2)^2/sum(vwghts^4)
-    lambda <- qchisq(qlambda,df) 
+    lambda <- qchisq(qlambda,dv0) 
   } else {
     lambda <- 1e50
   }
