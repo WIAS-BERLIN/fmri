@@ -85,7 +85,7 @@ fmri.detect <- function(spm, maxpvalue = 0.05, mode="plog", delta=NULL) {
     theta1 <- atan(l1)
     theta2 <- atan(l2)
     t1 <- spm$cbeta[,,,1]/sqrt(spm$var)
-    t2 <- spm$cbeta[,,,2]/sqrt(spm$var)
+    t2 <- spm$cbeta[,,,2]/sqrt(spm$var * spm$vwghts[2])
     ratio <- t2/t1
     w1 <- (t1 + t2 * l1) / sqrt(1+l1^2)
     w2 <- (t1 + t2 * l2) / sqrt(1+l2^2)
