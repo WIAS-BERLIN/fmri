@@ -65,7 +65,7 @@ fmri.smooth <- function(spm,hmax=4,type="",...) {
   z
 }
 
-fmri.detect <- function(spm, maxpvalue = 0.05, mode="plog", delta=NULL) {
+fmri.detect <- function(spm, maxpvalue = 0.05, mode="plog", global=FALSE, delta=NULL) {
   cat("fmri.detect: entering function\n")
 
   if (!class(spm) == "fmrispm") {
@@ -75,16 +75,16 @@ fmri.detect <- function(spm, maxpvalue = 0.05, mode="plog", delta=NULL) {
   if (length(dim(spm$cbeta)) < 4) {
     stat <- spm$cbeta/sqrt(spm$var)
     dim(stat) <- prod(spm$dim[1:3])
-    cat("fmri.detect: calculate local treshold\n")
+    cat("fmri.detect: calculate treshold\n")
     thresh <- threshold(maxpvalue,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="norm")
-    cat("fmri.detect: calculate local p-value\n")
+    cat("fmri.detect: calculate p-value\n")
     pv <- pvalue(stat,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="norm")
   } else if (!is.null(delta)) {
-    l1 <- sqrt(spm$vwghts[2]) * delta[1]
-    l2 <- sqrt(spm$vwghts[2]) * delta[2]
+    l1 <- sqrt(spm$vwghts[2]/spm$vwghts[1]) * delta[1]
+    l2 <- sqrt(spm$vwghts[2]/spm$vwghts[1]) * delta[2]
     theta1 <- atan(l1)
     theta2 <- atan(l2)
-    t1 <- spm$cbeta[,,,1]/sqrt(spm$var)
+    t1 <- spm$cbeta[,,,1]/sqrt(spm$var * spm$vwghts[1])
     t2 <- spm$cbeta[,,,2]/sqrt(spm$var * spm$vwghts[2])
     ratio <- t2/t1
     w1 <- (t1 + t2 * l1) / sqrt(1+l1^2)
@@ -92,24 +92,25 @@ fmri.detect <- function(spm, maxpvalue = 0.05, mode="plog", delta=NULL) {
     w3 <- (t1 > 0) * (l1 <= ratio) * (ratio <= l2) * sqrt(t1^2 + t2^2)
     stat <- pmax(w1,w2,w3)
     dim(stat) <- prod(spm$dim[1:3])
-    cat("fmri.detect: calculate local treshold\n")
+    cat("fmri.detect: calculate treshold\n")
     thresh <- 
       thresholdc(maxpvalue,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="norm",cone=theta2-theta1)
-    cat("fmri.detect: calculate local p-value\n")
+    cat("fmri.detect: calculate p-value\n")
     pv <-
       pvaluec(stat,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="norm",cone=theta2-theta1)
   } else {
     stat <- spm$cbeta[,,,1]^2/spm$var + spm$cbeta[,,,2]^2/spm$var/spm$vwghts[2]  # Wert der Statistik
     dim(stat) <- prod(spm$dim[1:3])
-    cat("fmri.detect: calculate local treshold\n")
+    cat("fmri.detect: calculate treshold\n")
     thresh <- 
       threshold(maxpvalue,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="chisq",df=2)
-    cat("fmri.detect: calculate local p-value\n")
+    cat("fmri.detect: calculate p-value\n")
     pv <-
       pvalue(stat,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type="chisq",df=2)
   }
   cat("fmri.detect: thresholding\n")
   mask <- rep(1,length=prod(spm$dim[1:3]))
+  if (global) thresh <- median(thresh)
   mask[stat < thresh] <- 0
   pv[!mask] <- 1
   pv[pv <= 1e-113] <- 1e-113 # ????????
@@ -281,7 +282,7 @@ fmriplot.slices3d <- function(signal, anatomic =
 }
 
 plot.fmridetect <- function(x, anatomic =
-                             array(0,dim=dim(detect$detect)),
+                             array(0,dim=dim(x$detect)),
                              pos = c(-1,-1,-1), type="slice",
                              device="X11", file="plot.png",...) {
   mri.colors <- function (n1, n2, factor=n1/(n1+n2), from=0, to=.2) {
