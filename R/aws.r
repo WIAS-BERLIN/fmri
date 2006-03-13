@@ -283,6 +283,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
                 as.double(lambda0),
                 as.double(theta0),# thats the theta needed for the weights
                 bi2=as.double(bi0), # thats the bi needed for the weights, sum of squared weights  \sum_j \tilde{w}_ij^2 \sigma_j^2 as output
+                bi0=double(n), # thats the bi0 needed, sum of nonadaptive weights  \sum_j K(l_ij) / \sigma_j^2 as output
                 Qh=double(n),#  sum of squared weights \sum_j \tilde{w}_ij^2 
                 Qh0=double(n),#  sum of squared non-adaptive weights \sum_j K(l_ij)^2  
                 as.integer(lkern),
@@ -295,6 +296,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
                 double(dv0),#thi
                 PACKAGE="fmri",DUP=FALSE)[c("bi2","Qh","Qh0")]
   bi2 <- array(z1$bi2,dim(sigma2))
+  bi0 <- array(z1$bi0,dim(sigma2))
   Qh <- array(z1$Qh,dim(sigma2))
   Qh0 <- array(z1$Qh0,dim(sigma2))
   z2<-.Fortran("chawsvr2",
@@ -329,14 +331,16 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
   if(vred=="Full"){
   vartheta <- z$var/tobj$bi^2/qg
   vred <- z$vred/tobj$bi^2/ng^2
+  vred0 <- vred
   } else {
   vartheta <- Qhg/Qh0/qg*bi2/tobj$bi^2
   vred <- Qhg/Qh0/ng^2*Qh/tobj$bi^2
+  vred0 <- Qhg/Qh0/ng^2*Qh/bi0^2
   }
  # 
  #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
  #
-  z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,y=y,
+  z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,vred0=vred0,y=y,
             hmax=tobj$hakt,mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg)
   class(z) <- "aws.gaussian"
   z

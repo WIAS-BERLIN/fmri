@@ -511,7 +511,7 @@ C                Q_{h,aws} = \sum_j \tilde{w}_ij^2                  in vi2
 C                Q_{h,loc} = \sum_j K_h(i,j)^2                      in vi20
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine chawsvr1(si2,n1,n2,n3,dv0,hakt,lambda,theta,bi2,
+      subroutine chawsvr1(si2,n1,n2,n3,dv0,hakt,lambda,theta,bi2,bi0,
      1    vi2,vi20,kern,skern,spmin,spmax,lwght,wght,vwghts,thi)
 C   
 C   y        observed values of regression function
@@ -531,10 +531,10 @@ C
       logical aws
       real*8 theta(n1,n2,n3,dv0),bi2(n1,n2,n3),vi2(n1,n2,n3),
      1       vi20(n1,n2,n3),lambda,spmax,wght(2),si2(n1,n2,n3),
-     2       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0)
+     2       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),bi0(n1,n2,n3)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
-      real*8 bii,swj,swj0,swj00,wj,hakt2,spf
+      real*8 bii,swj,swj0,swj00,slwj0,wj,hakt2,spf
       hakt2=hakt*hakt
       spf=spmax/(spmax-spmin)
       aws=lambda.lt.1d40
@@ -561,6 +561,7 @@ C   scaling of sij outside the loop
                swj=0.d0
                swj0=0.d0
                swj00=0.d0
+	       slwj0=0.d0
 	       DO k=1,dv0
 	          thi(k)=theta(i1,i2,i3,k)
 	       END DO
@@ -580,6 +581,7 @@ C  first stochastic term
 	                if(j1.lt.1.or.j1.gt.n1) CYCLE
  			swj00=swj00+wj*wj
 			wj=wj*si2(j1,j2,j3)
+			slwj0=slwj0+wj
                         IF (aws) THEN
                            call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
      1                     theta,vwghts,skern,spf,spmin,spmax,bii,wj)
@@ -591,6 +593,7 @@ C  first stochastic term
                   END DO
                END DO
                bi2(i1,i2,i3)=swj
+               bi0(i1,i2,i3)=slwj0
                vi2(i1,i2,i3)=swj0
                vi20(i1,i2,i3)=swj00
                call rchkusr()

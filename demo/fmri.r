@@ -1,25 +1,7 @@
 require(fmri)
 
-# some values describing the data
-signal <- 1.5
-noise <- 20
-arfactor <- .3
-
-# maximaum bandwidth for adaptive smoothing
-hmax <- 3.06
-
-# datacube dimension 
-i <- 65
-j <- 65
-k <- 26
-scans <- 107
-
-# define needed arrays
-ttt <- array(0,dim=c(i,j,k,scans))
-sig <- array(0,dim=c(i,j,k))
-mask <- array(0,dim=c(i,j,k))
-
-# create the mask for activation
+create.mask <- function(){
+mask <- array(0,dim=c(65,65,26))
 mask[5:10,5:10,] <- 1
 mask[7:8,7:8,] <- 0
 mask[8:10,8:10,] <- 0
@@ -47,9 +29,11 @@ mask[32:33,27,] <- 1
 mask[34:65,1:33,] <- mask[32:1,1:33,]
 mask[1:33,34:65,] <- mask[1:33,32:1,]
 mask[34:65,34:65,] <- mask[32:1,32:1,]
+mask
+}
 
-# create different signal strength
-factor <- 1.2
+create.sig <- function(signal=1.5,factor=1.2){
+sig <- array(0,dim=c(65,65,26))
 sig[29:37,38:65,] <- signal
 sig[38:65,38:65,] <- signal * factor
 sig[38:65,29:37,] <- signal * factor^2
@@ -58,7 +42,31 @@ sig[29:37,1:28,] <- signal * factor^4
 sig[1:28,1:28,] <- signal * factor^5
 sig[1:28,29:37,] <- signal * factor^6
 sig[1:28,38:65,] <- signal * factor^7
-sig <- sig * mask
+sig * create.mask()
+}
+# some values describing the data
+signal <- 1.5
+noise <- 20
+arfactor <- .3
+
+# maximaum bandwidth for adaptive smoothing
+hmax <- 3.06
+
+# datacube dimension 
+i <- 65
+j <- 65
+k <- 26
+scans <- 107
+
+# define needed arrays
+ttt <- array(0,dim=c(i,j,k,scans))
+sig <- array(0,dim=c(i,j,k))
+
+# create the mask for activation
+mask <- create.mask()
+
+# assign amplitudes of signals to activated areas 
+sig <- create.sig(signal,factor)
 
 # expected BOLD response for some stimulus
 hrf <- signal * fmri.stimulus(scans, c(18, 48, 78), 15, 2)
