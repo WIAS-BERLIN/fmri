@@ -149,8 +149,12 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
   steps <- as.integer(log(hmax/hinit)/log(hincr)+1)
 
   # define lseq
-  if (is.null(lseq)) lseq <- c(1.75,1.35,1.2,1.2,1.2,1.2)
-  if (length(lseq)<steps) lseq <- c(lseq,rep(1,steps-length(lseq)))
+  if (is.null(lseq)) {
+     lseqgauss <- c(rep(1,6),1.1,1.3,1.45,1.55,1.6,1.5,1.4,1.35,1.25,1.25,1.2,1.2,1.15,1.15,1.15,1.15,1.2,1.15,1.15,1.15,1.15,1.15)    
+     lseqtriangle <- c(2,1.6,1.25,1.15,1.35,1.4,1.15,1.1,1.1,1.1,1.1,1.15,1.2,1.1,1.1,1.15,1.15,1.15)
+     lseq <- switch(lkern,Gaussian=lseqgauss,Triangle=lseqtriangle,lseqtriangle)
+  }
+  if (length(lseq)<steps) lseq <- c(lseq,rep(1.1,steps-length(lseq)))
   lseq <- lseq[1:steps]
 
   k <- 1
@@ -164,8 +168,8 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
   total <- (hincr^(d*ceiling(log(hmax/hinit)/log(hincr)))-1)/(hincr^d-1)
     if(testprop) {
        if(is.null(u)) u <- 0
-       propagation <- 0
-    } else propagation <- NULL
+    } 
+    propagation <- NULL
   # run single steps to display intermediate results
   while (hakt<=hmax) {
     dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
@@ -234,7 +238,8 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
        gc()
        propagation <- c(propagation,sum(abs(theta-ptheta))/sum(abs(ptheta-u)))
        cat("Propagation with alpha=",max(propagation),"\n")
-       cat("alpha values:",propagation,"\n")
+       cat("alpha values:","\n")
+       print(rbind(lseq[1:length(propagation[-1])],signif(propagation[-1],3)))
       }
     if (graph) {
       par(mfrow=c(1,3),mar=c(1,1,3,.25),mgp=c(2,1,0))
