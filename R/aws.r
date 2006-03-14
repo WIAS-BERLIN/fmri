@@ -34,7 +34,7 @@
 vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform",
                    sigma2=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
                    u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
-                   spmin=0,spmax=1.1,scorr=c(0,0,0),vwghts=1,vred="Partial") {
+                   spmin=0,spmax=1.1,scorr=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE) {
   #  Auxilary functions
   IQRdiff <- function(y) IQR(diff(y))/1.908
 
@@ -162,6 +162,10 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
   progress <- 0
   step <- 0
   total <- (hincr^(d*ceiling(log(hmax/hinit)/log(hincr)))-1)/(hincr^d-1)
+    if(testprop) {
+       if(is.null(u)) u <- 0
+       propagation <- 0
+    } else propagation <- NULL
   # run single steps to display intermediate results
   while (hakt<=hmax) {
     dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
@@ -202,6 +206,36 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
     gc()
     theta <- array(tobj$ai/tobj$bi,dy) 
     dim(tobj$bi) <- dy[-4]
+    if(testprop) {
+       pobj <- .Fortran("chaws2",as.double(y),
+                       as.double(sigma2),
+                       as.integer(n1),
+                       as.integer(n2),
+                       as.integer(n3),
+		       as.integer(dv),
+		       as.integer(dv0),
+                       hakt=as.double(hakt),
+                       as.double(1e50),
+                       as.double(theta0),
+                       bi=as.double(bi0),
+                       ai=double(n1*n2*n3*dv),
+                       as.integer(lkern),
+		       as.integer(skern),
+	               as.double(spmin),
+		       as.double(spmax),
+		       double(prod(dlw)),
+		       as.double(wghts),
+		       as.double(vwghts),
+		       double(dv),#swjy
+		       double(dv0),#thi
+		       PACKAGE="fmri",DUP=TRUE)[c("bi","ai")]
+       ptheta <- array(pobj$ai/pobj$bi,dy) 
+       rm(pobj) 
+       gc()
+       propagation <- c(propagation,sum(abs(theta-ptheta))/sum(abs(ptheta-u)))
+       cat("Propagation with alpha=",max(propagation),"\n")
+       cat("alpha values:",propagation,"\n")
+      }
     if (graph) {
       par(mfrow=c(1,3),mar=c(1,1,3,.25),mgp=c(2,1,0))
       image(y[,,n3%/%2+1,1],col=gray((0:255)/255),xaxt="n",yaxt="n")
@@ -294,7 +328,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
                 as.double(wghts),
                 as.double(vwghts),
                 double(dv0),#thi
-                PACKAGE="fmri",DUP=FALSE)[c("bi2","Qh","Qh0")]
+                PACKAGE="fmri",DUP=FALSE)[c("bi0","bi2","Qh","Qh0")]
   bi2 <- array(z1$bi2,dim(sigma2))
   bi0 <- array(z1$bi0,dim(sigma2))
   Qh <- array(z1$Qh,dim(sigma2))
@@ -341,7 +375,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Exp",aggkern="Uniform"
  #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
  #
   z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,vred0=vred0,y=y,
-            hmax=tobj$hakt,mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg)
+            hmax=tobj$hakt,mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg,alpha=propagation)
   class(z) <- "aws.gaussian"
   z
 }
