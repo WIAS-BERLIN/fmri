@@ -1,47 +1,207 @@
+read.ANALYZE.header <- function(filename) {
+  if (is.na(file.info(filename)$size) | (file.info(filename)$size != 348))
+    stop("Hmmm! This does not seem to be an ANALYZE header! Wrong size or does not exist!");
+
+  con <- file(filename,"rb")
+
+  header <- list()
+  
+  # read 4 bytes and get the endianess by comparing filesize with 348
+  endian <- if ((sizeofhdr <- readBin(con,"int",1,4,endian="little")) == 348) "little" else "big"
+  header$sizeofhdr <- 348
+  header$endian <- endian
+  
+  header$datatype1 <- readChar(con,10)
+  header$dbname <- readChar(con,18)
+  header$extents <- readBin(con,"int",1,4,endian=endian)
+  header$sessionerror <- readBin(con,"int",1,2,endian=endian)
+  header$regular <- readChar(con,1)
+  header$hkey <- readChar(con,1)
+  header$dimension <- readBin(con,"int",8,2,endian=endian)
+  header$unused <- readBin(con,"int",7,2,endian=endian)
+  header$datatype <- readBin(con,"int",1,2,endian=endian)
+  header$bitpix <- readBin(con,"int",1,2,endian=endian)
+  header$dimun0 <- readBin(con,"int",1,2,endian=endian)
+  header$pixdim <- readBin(con,"double",8,4,endian=endian)
+  header$voxoffset <- readBin(con,"double",1,4,endian=endian)
+  header$funused <- readBin(con,"double",3,4,endian=endian)
+  header$calmax <- readBin(con,"double",1,4,endian=endian)
+  header$calmin <- readBin(con,"double",1,4,endian=endian)
+  header$compressed <- readBin(con,"double",1,4,endian=endian)
+  header$verified <- readBin(con,"double",1,4,endian=endian)
+  header$glmax <- readBin(con,"int",1,4,endian=endian)
+  header$glmin <- readBin(con,"int",1,4,endian=endian)
+  header$describ <- readChar(con,80)
+  header$auxfile<- readChar(con,24)
+  header$orient <- readChar(con,1) # is this really a character?
+  header$originator <- readBin(con,"int",5,2,endian=endian) # documented as 10 byte character!!
+  header$generated <- readChar(con,10)
+  header$scannum <- readChar(con,10)
+  header$patientid <- readChar(con,10)
+  header$expdate <- readChar(con,10)
+  header$exptime <- readChar(con,10)
+  header$histun0 <- readChar(con,3)
+  header$views <- readBin(con,"int",1,4,endian=endian)
+  header$voladded<- readBin(con,"int",1,4,endian=endian)
+  header$startfield <- readBin(con,"int",1,4,endian=endian)
+  header$fieldskip <- readBin(con,"int",1,4,endian=endian)
+  header$omax <- readBin(con,"int",1,4,endian=endian)
+  header$omin <- readBin(con,"int",1,4,endian=endian)
+  header$smax <- readBin(con,"int",1,4,endian=endian)
+  header$smin <- readBin(con,"int",1,4,endian=endian)
+
+  close(con)
+
+  header
+}
+
+read.ANALYZE.volume <- function(filename) {
+  file.name <- substring(filename, 1, nchar(filename) - 4)
+  file.hdr <- paste(file.name, ".hdr", sep = "")
+  file.img <- paste(file.name, ".img", sep = "")
+
+  header <- read.ANALYZE.header(file.hdr)
+  dx <- header$dimension[2]
+  dy <- header$dimension[3]
+  dz <- header$dimension[4]
+  dt <- header$dimension[5]
+  endian <- header$endian
+  if (header$datatype == 1) { # logical
+    what <- "raw"
+    signed <- TRUE
+    size <- 1
+  } else if (header$datatype == 4) { # signed short
+    what <- "int"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 2
+  } else if (header$datatype == 8) { # signed integer
+    what <- "int"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 4
+  } else if (header$datatype == 16) { # float
+    what <- "double"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 4
+  } else if (header$datatype == 32) { # complex
+    what <- "complex"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 8
+  } else if (header$datatype == 64) { # double
+    what <- "double"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 8
+  } else { # all other
+    what <- "raw"
+    signed <- TRUE
+    size <- 1
+  }
+  
+  con <- file(filename,"rb")
+  if (header$datatype == 2) {
+    ttt <- readChar(con,file.info(filename)$size)
+  } else {
+    ttt <- readBin(con, what, n=dx*dy*dz*dt*size, size=size, signed=signed, endian=endian)
+  }
+  close(con)
+
+  dim(ttt) <- c(dx,dy,dz,dt)
+  
+  invisible(list(ttt=ttt,header=header))
+}
+
+write.ANALYZE.header <- function(header,filename) {
+  con <- file(paste(filename, ".hdr", sep=""), "wb")
+
+  writeBin(as.integer(348), con, 4)
+  writeChar(header$datatype1, con, 10, NULL)
+  writeChar(header$dbname, con, 18, NULL)
+  writeBin(as.integer(header$extents), con, 4)
+  writeBin(as.integer(header$sessionerror), con, 2)
+  writeChar(header$regular, con, 1, NULL)
+  writeChar(header$hkey, con, 1, NULL)
+  writeBin(as.integer(header$dimension), con, 2)
+  writeBin(as.integer(header$unused), con, 2)
+  writeBin(as.integer(header$datatype), con, 2)
+  writeBin(as.integer(header$bitpix), con, 2)
+  writeBin(as.integer(header$dimun0), con, 2)
+  writeBin(header$pixdim, con, 4)
+  writeBin(header$voxoffset, con, 4)
+  writeBin(header$funused, con, 4)
+  writeBin(header$calmax, con, 4)
+  writeBin(header$calmin, con, 4)
+  writeBin(header$compressed, con, 4)
+  writeBin(header$verified, con, 4)
+  writeBin(as.integer(header$glmax), con, 4)
+  writeBin(as.integer(header$glmin), con, 4)
+  writeChar(header$describ, con, 80, NULL)
+  writeChar(header$auxfile, con, 24, NULL)
+  writeChar(header$orient, con, 1, NULL) # is this really a character?
+  writeBin(as.integer(header$originator), con, 2) # documented as 10 byte character!!
+  writeChar(header$generated, con, 10, NULL)
+  writeChar(header$scannum, con, 10, NULL)
+  writeChar(header$patientid, con, 10, NULL)
+  writeChar(header$expdate, con, 10, NULL)
+  writeChar(header$exptime, con, 10, NULL)
+  writeChar(header$histun0, con, 3, NULL)
+  writeBin(as.integer(header$views), con, 4)
+  writeBin(as.integer(header$voladded), con, 4)
+  writeBin(as.integer(header$startfield), con, 4)
+  writeBin(as.integer(header$fieldskip), con, 4)
+  writeBin(as.integer(header$omax), con, 4)
+  writeBin(as.integer(header$omin), con, 4)
+  writeBin(as.integer(header$smax), con, 4)
+  writeBin(as.integer(header$smin), con, 4)
+  
+  close(con)
+}
+
+write.ANALYZE.volume <- function(ttt,filename) {
+  con <- file(paste(filename, ".img", sep=""), "wb")
+  dim(ttt) <- NULL
+  writeBin(as.integer(ttt), con, 2)
+  close(con)
+}
+
 read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart = 1, numbpic = 1) {
   counter <- c(paste("00", 1:9, sep=""), paste("0", 10:99, sep=""),paste(100:999,sep=""));
-  if (require(AnalyzeFMRI)) {
-    if (numbered) {
-      filename <- paste(prefix, counter[picstart], postfix, ".img", sep="")
-    } else {
-      filename <- paste(prefix, ".img", sep="")
+  if (numbered) {
+    file.img <- paste(prefix, counter[picstart], postfix, ".img", sep="")
+  } else {
+    file.img <- paste(prefix, ".img", sep="")
+  }
+  
+  if (length(system(paste("ls",file.img),TRUE,TRUE)) != 0) {
+    analyze <- read.ANALYZE.volume(file.img);
+    ttt <- analyze$ttt
+    dt <- dim(ttt)
+    cat(".")
+    header <- analyze$header;
+    
+    if ((numbpic > 1) && !numbered) { 
+      for (i in (picstart+1):(picstart+numbpic-1)) {
+        filename <- paste(prefix, counter[i], postfix, ".img", sep="")
+        a <- read.ANALYZE.volume(filename)$ttt
+        if (sum() != 0)
+          cat("Error: wrong spatial dimension in picture",i)
+        ttt <- c(ttt,a);
+        dt[4] <- dt[4] + dim(a)[4]
+        cat(".")
+      }
     }
     
-    if (length(system(paste("ls",filename),TRUE,TRUE)) != 0) {
-      ttt <- f.read.analyze.volume(filename);
-      dt <- dim(ttt)
-      cat(".")
-      header <- f.read.analyze.header(filename);
-
-      if ((numbpic > 1) && !numbered) { 
-        for (i in (picstart+1):(picstart+numbpic-1)) {
-          filename <- paste(prefix, counter[i], postfix, ".img", sep="")
-          a <- f.read.analyze.volume(filename)
-          if (sum() != 0)
-            cat("Error: wrong spatial dimension in picture",i)
-          ttt <- c(ttt,a);
-          dt[4] <- dt[4] + dim(a)[4]
-          cat(".")
-        }
-      }
-
-      cat("\n")
-      dim(ttt) <- dt
-
-      if (min(abs(header$pixdim[2:4])) != 0) {
-        weights <-
-          abs(header$pixdim[2:4]/min(abs(header$pixdim[2:4])))
-      } else {
-        weights <- NULL
-      }
-  
-      z <- list(ttt=ttt,format="ANALYZE",delta=header$pixdim[2:4],origin=NULL,orient=NULL,dim=header$dim[2:5],weights=weights,header=header)
+    cat("\n")
+    dim(ttt) <- dt
+    
+    if (min(abs(header$pixdim[2:4])) != 0) {
+      weights <-
+        abs(header$pixdim[2:4]/min(abs(header$pixdim[2:4])))
     } else {
-        warning(paste("Error: file",filename,"does not exist!"))
-        z <- list(ttt=NULL,format="ANALYZE",delta=NULL,origin=NULL,orient=NULL,dim=NULL,weights=NULL,header=NULL)
+      weights <- NULL
     }
+    
+    z <- list(ttt=ttt,format="ANALYZE",delta=header$pixdim[2:4],origin=NULL,orient=NULL,dim=header$dimension[2:5],weights=weights,header=header)
   } else {
-    warning("Error: library AnalyzeFMRI not found\n")
+    warning(paste("Error: file",filename,"does not exist!"))
     z <- list(ttt=NULL,format="ANALYZE",delta=NULL,origin=NULL,orient=NULL,dim=NULL,weights=NULL,header=NULL)
   }
 
@@ -56,13 +216,56 @@ read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart =
 
 
 
-write.ANALYZE <- function(ttt, name = "data", size="int", voxelsize = c(2,2,2)) {
-  if (require(AnalyzeFMRI)) {
-    f.write.analyze(ttt, file=name, size=size, voxelsize)
-  } else {
-    warning("Error: library AnalyzeFMRI not found\n")
-    invisible(NULL)
-  }
+write.ANALYZE <- function(ttt, header=NULL, file) {
+  if (is.null(header)) header <- list()
+
+  if (!("datatype1" %in% names(header))) header$datatype1 <- paste(rep(" ",10),collapse="")
+  if (!("dbname" %in% names(header))) header$dbname <- paste(rep(" ",18),collapse="")
+  if (!("extents" %in% names(header))) header$extents <- c(0)
+  if (!("sessionerror" %in% names(header))) header$sessionerror <- c(0)
+  if (!("regular" %in% names(header))) header$regular <- "r"
+  if (!("hkey" %in% names(header))) header$hkey <- " "
+  if (!("dimension" %in% names(header))) {header$dimension <- rep(0,8); header$dimension <- c(length(dim(ttt)),dim(ttt))}
+  if (length(header$dimension) < 8) header$dimension[(length(header$dimension)+1):8] <- 0
+  if (!("unused" %in% names(header))) header$unused <- rep(0,7)
+  if (length(header$unused) < 7) header$unused[(length(header$unused)+1):7] <- 0
+  if (!("datatype" %in% names(header))) header$datatype <- c(4)
+  if (!("bitpix" %in% names(header))) header$bitpix <- c(0)
+  if (!("dimun0" %in% names(header))) header$dimun0 <- c(0)
+  if (!("pixdim" %in% names(header))) header$pixdim <- c(0,4,4,4,rep(0,4))
+  if (length(header$pixdim) < 8) header$pixdim[(length(header$pixdim)+1):8] <- 0
+  if (!("voxoffset" %in% names(header))) header$voxoffset <- c(0)
+  if (!("funused" %in% names(header))) header$funused <- rep(0,3)
+  if (length(header$funused) < 3) header$funused[(length(header$funused)+1):3] <- 0
+  if (!("calmax" %in% names(header))) header$calmax <- c(0)
+  if (!("calmin" %in% names(header))) header$calmin <- c(0)
+  if (!("compressed" %in% names(header))) header$compressed <- c(0)
+  if (!("verified" %in% names(header))) header$verified <- c(0)
+  if (!("glmax" %in% names(header))) header$glmax <- c(0)
+  if (!("glmin" %in% names(header))) header$glmin <- c(0)
+  if (!("describ" %in% names(header))) header$describ <- paste(rep(" ",80),collapse="")
+  if (!("auxfile" %in% names(header))) header$auxfile <- paste(rep(" ",24),collapse="")
+  if (!("orient" %in% names(header))) header$orient <- " "
+  if (!("originator" %in% names(header))) header$originator <- rep(0,5)
+  if (length(header$originator) < 5) header$originator[(length(header$originator)+1):8] <- 0
+  if (!("generated" %in% names(header))) header$generated <- paste(rep(" ",10),collapse="")
+  if (!("scannum" %in% names(header))) header$scannum <- paste(rep(" ",10),collapse="")
+  if (!("patientid" %in% names(header))) header$patientid <- paste(rep(" ",10),collapse="")
+  if (!("expdate" %in% names(header))) header$expdate <- paste(rep(" ",10),collapse="")
+  if (!("exptime" %in% names(header))) header$exptime <- paste(rep(" ",10),collapse="")
+  if (!("histun0" %in% names(header))) header$histun0 <- paste(rep(" ",3),collapse="")
+  if (!("views" %in% names(header))) header$views <- c(0)
+  if (!("voladded" %in% names(header))) header$voladded <- c(0)
+  if (!("startfield" %in% names(header))) header$startfield <- c(0)
+  if (!("fieldskip" %in% names(header))) header$fieldskip <- c(0)
+  if (!("omax" %in% names(header))) header$omax <- c(0)
+  if (!("omin" %in% names(header))) header$omin <- c(0)
+  if (!("smax" %in% names(header))) header$smax <- c(0)
+  if (!("smin" %in% names(header))) header$smin <- c(0)
+
+  write.ANALYZE.header(header,file)
+
+  write.ANALYZE.volume(ttt, file)
 }
 
 
@@ -153,6 +356,10 @@ read.AFNI <- function(file) {
 
 
 write.AFNI <- function(file, ttt, label, note="", origin=c(0,0,0), delta=c(4,4,4), idcode="WIAS_noid") {
+  ## TODO:
+  ## 
+  ## create object oriented way!!!!
+  
   AFNIheaderpart <- function(type, name, value) {
     a <- "\n"
     a <- paste(a, "type = ", type, "\n", sep="")

@@ -31,13 +31,14 @@
 }
 \details{
   This function performs parameter estimation in the linear model.
-  It implements a two step procedure. In the first step residuals
+  It implements a two step procedure. After primary estimation of the
+  parameters in the first step residuals
   are obtained and if \code{actype} \code{\%in\%} \code{c("ac", "accalc", "smooth")} 
   in each voxel an AR(1) model is fitted to 
-  the the time series of residuals, and the AR-coefficient is corrected for bias. 
+  the time series of residuals, and the AR-coefficient is corrected for bias. 
   If \code{actype=="smooth"}
   the AR-coefficients are spatially smoothed using bandwidth \code{hmax}.
-  If \code{actype\%in\%c("ac","smooth")} the linear model is prewithened
+  If \code{actype} \code{\%in\%} \code{c("ac", "smooth")} the linear model is prewithened
   using the estimated (smoothed) AR-coefficients. Parameter 
   and variance estimates are then obtained from the prewithened
   data. The argument \code{keep} describes the amount of data which is
@@ -50,7 +51,7 @@
   the variances of the parameter for the stimuli indicated in \code{vvector}.
 }
 \value{
-  object of class \code{fmrispm}
+  object of class \code{fmrispm} and \code{fmridata}
   \item{beta}{Estimated parameters }
   \item{cbeta}{Estimated contrast of parameters}
   \item{var}{Estimated variance of the contrast of parameters.}
@@ -63,6 +64,7 @@
   \code{vvector}}
   \item{rxyz}{array of resel counts from estimated correlation for each
     voxel (for analysis without smoothing)}
+  \item{hrf}{ Expected BOLD response for contrast }
   \item{smooth}{ FALSE }
 }
 \references{ Worsley, K.J. (2005). Spatial smoothing of autocorrelations
@@ -73,7 +75,7 @@
   G.H., Morales, F., Evans, A.C. (2002). A general statistical analysis
   for fMRI data. NeuroImage, 15:1:15.
 }
-\author{ Karsten Tabelow (tabelow@wias-berlin.de) }
+\author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \note{ \code{vvector} is intended to be used for delay of HRF using
   first derivative. Do not mix with \code{contrast} argument, since
   unexpected side effects may occur. Look out for updates of this package.

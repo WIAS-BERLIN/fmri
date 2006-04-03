@@ -22,13 +22,17 @@ read.AFNI(file)
   \item{format}{data source. string HEAD/BRIK}
   \item{delta}{voxel size in mm}
   \item{origin}{position of the datacube origin}
-  \item{orient}{orientation code}
+  \item{orient}{data orientation code. see AFNI documentation}
   \item{dim}{dimension of the datacube}
   \item{weights}{weights vector coding the different voxel sizes in x,
     y, z}
-  \item{header}{complete header information}
+  \item{mask}{head mask}
 }
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
+\references{R. W. Cox (1996). AFNI: Software for analysis and visualization of
+  functional magnetic resonance neuroimages. Computers and Biomed. Res. 
+  29:162-173.
+}
 \seealso{ \code{\link{write.AFNI}} }
 \examples{
 \dontrun{afni <- read.AFNI("afnifile")}

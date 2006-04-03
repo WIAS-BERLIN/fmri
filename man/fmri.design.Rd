@@ -3,7 +3,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Linear Model for FMRI Data }
 \description{
-  Returns a designmatrix for a linear model with given stimulus and
+  Returns a designmatrix for a linear model with given stimuli and
   possible polynomial drift terms.
 }
 \usage{
@@ -27,13 +27,13 @@ fmri.design(hrf, order = 2)
 \value{
   designmatrix of the linear model
 }
-\author{ Karsten Tabelow (tabelow@wias-berlin.de) }
+\author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \seealso{ \code{\link{fmri.stimulus}}, \code{\link{fmri.lm}} }
 \examples{
   # Example 1
   hrf <- fmri.stimulus(107, c(18, 48, 78), 15, 2)
   z <- fmri.design(hrf,2)
-  dim(hrf)
+  plot(hrf,type="l")
 }
 \keyword{ regression }% at least one, from doc/KEYWORDS
 \keyword{ design }% __ONLY ONE__ keyword per line

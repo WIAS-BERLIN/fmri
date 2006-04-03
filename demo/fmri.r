@@ -1,5 +1,27 @@
 require(fmri)
 
+gkernsm <- function(y,h=1) {
+  grid <- function(d) {
+    d0 <- d%/%2+1
+    gd <- seq(0,1,length=d0)
+    if (2*d0==d+1) gd <- c(gd,-gd[d0:2]) else gd <- c(gd,-gd[(d0-1):2])
+    gd
+  }
+  dy <- dim(y)
+  if (is.null(dy)) dy<-length(y)
+  ldy <- length(dy)
+  if (length(h)!=ldy) h <- rep(h[1],ldy)
+  kern <- switch(ldy,dnorm(grid(dy),0,2*h/dy),
+                 outer(dnorm(grid(dy[1]),0,2*h[1]/dy[1]),
+                       dnorm(grid(dy[2]),0,2*h[2]/dy[2]),"*"),
+                 outer(outer(dnorm(grid(dy[1]),0,2*h[1]/dy[1]),
+                             dnorm(grid(dy[2]),0,2*h[2]/dy[2]),"*"),
+                       dnorm(grid(dy[3]),0,2*h[3]/dy[3]),"*"))
+  kern <- kern/sum(kern)
+  kernsq <- sum(kern^2)
+  list(gkernsm=convolve(y,kern,conj=TRUE),kernsq=kernsq)
+}
+
 create.mask <- function(){
 mask <- array(0,dim=c(65,65,26))
 mask[5:10,5:10,] <- 1

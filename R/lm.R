@@ -255,23 +255,24 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   cat("fmri.lm: exiting function\n")
   
   if (keep == "all") {
-    z <- list(beta = beta, cbeta = cbeta, var = variance, res =
+    result <- list(beta = beta, cbeta = cbeta, var = variance, res =
               residuals, arfactor = arfactor, rxyz = rxyz, scorr = corr, weights =
-              data$weights, vwghts = vwghts, smooth= FALSE, dim = data$dim)
+              data$weights, vwghts = vwghts, smooth= FALSE, dim =
+              data$dim, hrf = z %*% contrast)
   } else if (keep == "diagnostic") {
-    z <- list(cbeta = cbeta, var = variance, res = residuals, rxyz = rxyz, scorr =
-              corr, weights = data$weights, vwghts = vwghts, smooth= FALSE, dim = data$dim)
+    result <- list(cbeta = cbeta, var = variance, res = residuals, rxyz = rxyz, scorr =
+              corr, weights = data$weights, vwghts = vwghts, smooth= FALSE, dim = data$dim, hrf = z %*% contrast)
   } else {
-    z <- list(cbeta = cbeta, var = variance, rxyz = rxyz, scorr = corr, weights =
-              data$weights, vwghts = vwghts, smooth= FALSE, dim = data$dim)
+    result <- list(cbeta = cbeta, var = variance, rxyz = rxyz, scorr = corr, weights =
+              data$weights, vwghts = vwghts, smooth= FALSE, dim = data$dim, hrf = z %*% contrast)
   }
 
   if (length(vvector) > 1) {
-    z$varm <- variancem
+    result$varm <- variancem
   }
   
-  class(z) <- "fmrispm"
+  class(result) <- c("fmridata","fmrispm")
 
-  z
+  invisible(result)
 }
 

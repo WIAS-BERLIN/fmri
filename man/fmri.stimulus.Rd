@@ -15,7 +15,7 @@
   \item{onsets}{ vector of onset times (in scans) }
   \item{length}{ length of ON stimulus (in scans) }
   \item{rt}{ time between scans in seconds (TR) }
-  \item{mean}{ logical. if TRUE apply meann correction to resulting vector }
+  \item{mean}{ logical. if TRUE apply mean correction to resulting vector }
   \item{a1}{ parameter of hemodynamic response function (see details) }
   \item{a2}{ parameter of hemodynamic response function (see details) }
   \item{b1}{ parameter of hemodynamic response function (see details) } 
@@ -23,9 +23,9 @@
   \item{cc}{ parameter of hemodynamic response function (see details) }
 }
 \details{
-  The functions calculates and expected BOLD response for the task
-  indicator function given as argument as convolution with the
-  hemodynamic response function. The latter is modelled difference
+  The functions calculates the expected BOLD response for the task
+  indicator function given by the argument as convolution with the
+  hemodynamic response function. The latter is modelled by the difference
   between two gamma functions as given in the reference (with defaults
   given there):
   
@@ -33,27 +33,27 @@
 - c \left(\frac{t}{d_2}\right)^{a_2} \exp
 \left(-\frac{t-d_2}{b_2}\right) }{(x/d1)^a1 * exp(-(x - d1)/b1) - c * (x/d2)^a2 * exp(-(x - d2)/b2)}
 
-  The parameters of this function can be changed in the call of
-  fmri.stimulus.
-
+  The parameters of this function can be changed through the arguments
+  \code{a1}, \code{a2}, \code{b1}, \code{b2}, \code{cc}.
+  
   Dimension of the function value is set to c(scans,1).
 
   If \code{mean} is TRUE (default) the resulting vector is
   mean-corrected.
 }
 \value{
-  Vector with \code{scans} elements. Dimension is set to c(scans,1).
+  Vector with \code{scans} elements and dimension c(scans,1).
 }
 \references{ Worsley, K.J., Liao, C., Aston, J., Petre, V., Duncan,
   G.H., Morales, F., Evans, A.C. (2002). A general statistical analysis
   for fMRI data. NeuroImage, 15:1:15. }
-\author{ Karsten Tabelow (tabelow@wias-berlin.de) }
+\author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \seealso{ \code{\link{fmri.design}}, \code{\link{fmri.lm}} }
 \examples{
   # Example 1
   hrf <- fmri.stimulus(107, c(18, 48, 78), 15, 2)
   z <- fmri.design(hrf,2)
-  dim(hrf)
+  plot(hrf,type="l")
 
 }
 \keyword{ regression }% at least one, from doc/KEYWORDS

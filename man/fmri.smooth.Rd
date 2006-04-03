@@ -6,44 +6,55 @@
   Perform the adaptive weights smoothing procedure 
 }
 \usage{
-fmri.smooth(spm, hmax = 4, type = "", ...)
+fmri.smooth(spm, hmax = 4, adaptive=TRUE,
+            lkern="Triangle", skern="Triangle")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{spm}{ object of class \code{fmri.spm} }
+  \item{spm}{ object of class \code{fmrispm} }
   \item{hmax}{ maximum bandwidth to smooth }
-  \item{type}{ if "old" switch to older version of AWS. for advanced use
-    only! }
-  \item{\dots}{ Other arguments passed to vaws3D }
+  \item{adaptive}{ logical. TRUE (default) for adaptive smoothing }
+  \item{lkern}{ \code{lkern} specifies the location kernel. Defaults to
+    "Triangle", other choices are "Gaussian", "Quadratic", "Cubic" and
+    "Uniform". Note that the location kernel is applied to
+    \code{(x-x_j)^2/h^2}, i.e. the use of "Triangle" corresponds to the
+    Epanechnicov kernel nonparametric kernel regression. }
+  \item{skern}{ \code{skern} specifies the kernel for the statistical
+    penalty. Defaults to "Triangle", the alternative is "Exp".
+    \code{lkern="Triangle"} allows for much faster computation (saves up
+    to 50\%).}
 }
 \details{
-  This function is a wrapper for the vaws3D function. It first
-  eliminates zero variances by assigning 1e20 (thus will be excluded
-  from smoothing!)
+  This function performs the smoothing on the Statistical Parametric Map
+  spm.
 
-  \code{hmax} is the maximum bandwidth of the iteration. \code{qlambda} is the
-  adaptation parameter. Choose 1 (and hinit > hmax) for non adaptive
-  smoothing here use default  value for adaptive smoothing. \code{lkern} can be used for specifying the
+  \code{hmax} is the maximum bandwidth of the iteration. Choose
+  \code{adaptive} as \code{FALSE} for non adaptive
+  smoothing. \code{lkern} can be used for specifying the
   localization kernel. For comparison with non adaptive methods use
   "Gaussian" (hmax given in FWHM), for better adaptation use "Triangle"
-  (hmax given in voxel). See \code{\link{vaws3D}} for more details).
+  (default, hmax given in voxel). \code{skern} can be used for specifying the
+  kernel for the statistical penalty.  
 
+  The function eliminates zero variances by assigning 1e20. 
 }
 \value{
-  object of class \code{fmrispm}
+  object of class \code{fmrispm} and \code{fmridata}
   \item{cbeta}{ smoothed parameter estimate}
   \item{var}{ variance of the parameter}
   \item{hmax}{ achieved maximum bandwidth }
   \item{rxyz}{ smoothness in resel space. all directions }
+  \item{rxyz0}{ smoothness in resel space as would be achieved by
+    Gaussian filter with same bandwidth. all directions }
   \item{scorr}{ spatial correlation of original data }
   \item{weights}{ ratio of voxel dimensions }
   \item{smooth}{ indicates that SPM is smoothed. "TRUE" }
   \item{vwghts}{ ratio of estimated variances for the stimululi given by
   \code{vvector}}
+  \item{hrf}{ Expected BOLD response for contrast }
 }
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
-\seealso{ \code{\link{vaws3D}} }
 \examples{
-\dontrun{fmri.smooth(spm, hmax = 4, lkern = "Gaussian", ...)}
+\dontrun{fmri.smooth(spm, hmax = 4, lkern = "Gaussian")}
 }
 \keyword{ smooth }% at least one, from doc/KEYWORDS

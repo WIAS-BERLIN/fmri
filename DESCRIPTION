@@ -5,7 +5,7 @@ Title: FMRI Analysis
 Author: Karsten Tabelow <tabelow@wias-berlin.de>
         Joerg Polzehl <polzehl@wias-berlin.de>
 Maintainer: Karsten Tabelow <tabelow@wias-berlin.de>
-Suggests: misc3d, tkrplot, AnalyzeFMRI
+Suggests: misc3d, tkrplot
 Description: The library contains R-functions to perform an fmri analysis
      based on the adaptive weights smoothing (AWS) (Polzehl and Spokoiny, 
      Probab. Theory Relat. Fields, in print (2005)) described in Tabelow, 
