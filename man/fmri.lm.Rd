@@ -34,17 +34,19 @@
   This function performs parameter estimation in the linear model.
   It implements a two step procedure. After primary estimation of the
   parameters in the first step residuals
-  are obtained and if \code{actype} \code{\%in\%} \code{c("ac", "accalc", "smooth")} 
-  in each voxel an AR(1) model is fitted to 
-  the time series of residuals, and the AR-coefficient is corrected for bias. 
+  are obtained. If \code{actype} \code{\%in\%} \code{c("ac", "accalc", "smooth")} 
+   an AR(1) model is fitted, in each voxel, to 
+  the time series of residuals. The estimated AR-coefficient is corrected for bias. 
   If \code{actype=="smooth"}
-  the AR-coefficients are spatially smoothed using bandwidth \code{hmax}.
-  If \code{actype} \code{\%in\%} \code{c("accalc", "smooth")} the linear model is prewithened
-  using the estimated (smoothed if \code{actype == "smooth"}) AR-coefficients. Parameter 
+  the estimated AR-coefficients are spatially smoothed using bandwidth \code{hmax}.
+  If \code{actype} \code{\%in\%} \code{c("ac", "smooth")} the linear model is prewithened
+  using the estimated (smoothed) AR-coefficients. Parameter 
   and variance estimates are then obtained from the prewithened
   data. The argument \code{keep} describes the amount of data which is
-  returned. If "essential" only the contrast \deqn{\gamma_i = c^T \beta_i} of parameters and its
-  estimated variance are returned. "all" gives the full data, including
+  returned. If "essential" only the estimated effects 
+  \deqn{\tilde{\gamma}_i = C^T\tilde{\beta}_i}
+   and their
+  estimated variances are returned. "all" gives the full data, including
   residuals, temporal autocorrelation.
   If \code{vvector} is given and has length greater than 1, the
   covariance matrix for the stimuli given therein are returned

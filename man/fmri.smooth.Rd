@@ -28,7 +28,7 @@ fmri.smooth(spm, hmax = 4, adaptive=TRUE,
   This function performs the smoothing on the Statistical Parametric Map
   spm.
 
-  \code{hmax} is the maximum bandwidth of the iteration. Choose
+  \code{hmax} is the (maximal) bandwidth used in the last iteration. Choose
   \code{adaptive} as \code{FALSE} for non adaptive
   smoothing. \code{lkern} can be used for specifying the
   localization kernel. For comparison with non adaptive methods use
@@ -43,15 +43,15 @@ fmri.smooth(spm, hmax = 4, adaptive=TRUE,
   object with class attributes "fmrispm" and "fmridata"
   \item{cbeta}{ smoothed parameter estimate}
   \item{var}{ variance of the parameter}
-  \item{hmax}{ achieved maximum bandwidth }
+  \item{hmax}{ maximum bandwidth used}
   \item{rxyz}{ smoothness in resel space. all directions }
   \item{rxyz0}{ smoothness in resel space as would be achieved by
-    a Gaussian filter with same bandwidth. all directions }
+    a Gaussian filter with the same bandwidth. all directions }
   \item{scorr}{ spatial correlation of original data }
   \item{weights}{ ratio of voxel dimensions }
   \item{vwghts}{ ratio of estimated variances for the stimululi given by
   \code{vvector}}
-  \item{hrf}{ Expected BOLD response for contrast }
+  \item{hrf}{ Expected BOLD response for the specified effect }
 }
 \author{ Joerg Polzehl \email{polzehl@wias-berlin.de},
   Karsten Tabelow \email{tabelow@wias-berlin.de}  }

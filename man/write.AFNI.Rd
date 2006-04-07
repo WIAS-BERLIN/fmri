@@ -3,7 +3,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ I/O functions }
 \description{
-  Write BRIK file.
+  Write BRIK/HEAD files.
 }
 \usage{
 write.AFNI(file, ttt, label, note = "", origin = c(0, 0, 0), 
@@ -16,7 +16,7 @@ write.AFNI(file, ttt, label, note = "", origin = c(0, 0, 0),
   \item{label}{ labels (BRICK\_LABS) }
   \item{note}{ notes on data (HISTORY\_NOTE) }
   \item{origin}{ origin of datacube (ORIGIN) }
-  \item{delta}{ voxel dimension (DELTA) }
+  \item{delta}{ voxel dimensions (DELTA) }
   \item{idcode}{ idcode of data (IDCODE\_STRING) }
 }
 \details{

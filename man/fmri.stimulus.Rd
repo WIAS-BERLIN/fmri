@@ -3,7 +3,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Linear Model for FMRI Data }
 \description{
-  Creates expected BOLD response for a given task indicator function.
+  Create the expected BOLD response for a given task indicator function.
 }
 \usage{
   fmri.stimulus(scans = 1, onsets = c(1), length = 1, rt = 3,
@@ -16,16 +16,16 @@
   \item{onsets}{ vector of onset times (in scans) }
   \item{length}{ length of ON stimulus (in scans) }
   \item{rt}{ time between scans in seconds (TR) }
-  \item{mean}{ logical. if TRUE apply mean correction to resulting vector }
-  \item{a1}{ parameter of hemodynamic response function (see details) }
-  \item{a2}{ parameter of hemodynamic response function (see details) }
-  \item{b1}{ parameter of hemodynamic response function (see details) } 
-  \item{b2}{ parameter of hemodynamic response function (see details) }
-  \item{cc}{ parameter of hemodynamic response function (see details) }
+  \item{mean}{ logical. if TRUE the mean is substracted from the resulting vector }
+  \item{a1}{ parameter of the hemodynamic response function (see details) }
+  \item{a2}{ parameter of the hemodynamic response function (see details) }
+  \item{b1}{ parameter of the hemodynamic response function (see details) } 
+  \item{b2}{ parameter of the hemodynamic response function (see details) }
+  \item{cc}{ parameter of the hemodynamic response function (see details) }
 }
 \details{
   The functions calculates the expected BOLD response for the task
-  indicator function given by the argument as convolution with the
+  indicator function given by the argument as a convolution with the
   hemodynamic response function. The latter is modelled by the difference
   between two gamma functions as given in the reference (with the defaults
   for a1, a2, b1, b2, cc given therein):
@@ -37,10 +37,10 @@
   The parameters of this function can be changed through the arguments
   \code{a1}, \code{a2}, \code{b1}, \code{b2}, \code{cc}.
   
-  Dimension of the function value is set to \code{c(scans,1)}.
+  The dimension  of the function value is set to \code{c(scans,1)}.
 
   If \code{mean} is TRUE (default) the resulting vector is
-  mean-corrected.
+  corrected to have zero mean.
 }
 \value{
   Vector with dimension \code{c(scans,1)}.

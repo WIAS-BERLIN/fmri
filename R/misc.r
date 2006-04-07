@@ -138,20 +138,7 @@ get.bw.gauss <- function(corr, step = 1.001,interv=2) {
   #  interv allows for further discretization of the Gaussian Kernel, result depends on
   #  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
   #  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
-  #  discretisation into voxel) 
-
-  get.corr.gauss <- function(h,interv=1) {
-    #
-    #   Calculates the correlation of 
-    #   colored noise that was produced by smoothing with "gaussian" kernel and bandwidth h
-    #   Result does not depend on d for "Gaussian" kernel !!
-    h <- h/2.3548*interv
-    ih <- trunc(4*h+ 2*interv-1)
-    dx <- 2*ih+1
-    penl <- dnorm(((-ih):ih)/h)
-    sum(penl[-(1:interv)]*penl[-((dx-interv+1):dx)])/sum(penl^2)
-  }
-  
+  #  discretisation into voxel)   
   if (corr < 0.1) {
     h <- 0
   } else { 
@@ -164,6 +151,18 @@ get.bw.gauss <- function(corr, step = 1.001,interv=2) {
     h <- h/step
   }
   h
+}
+
+get.corr.gauss <- function(h,interv=1) {
+    #
+    #   Calculates the correlation of 
+    #   colored noise that was produced by smoothing with "gaussian" kernel and bandwidth h
+    #   Result does not depend on d for "Gaussian" kernel !!
+    h <- h/2.3548*interv
+    ih <- trunc(4*h+ 2*interv-1)
+    dx <- 2*ih+1
+    penl <- dnorm(((-ih):ih)/h)
+    sum(penl[-(1:interv)]*penl[-((dx-interv+1):dx)])/sum(penl^2)
 }
 
 correlation <- function(res,mask = array(1,dim=dim(res)[1:3])) {

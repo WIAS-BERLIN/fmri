@@ -19,9 +19,9 @@ read.ANALYZE(prefix = "", numbered = FALSE, postfix = "",
   \item{numbpic}{ number of images to be read }
 }
 \details{
-  This function read in fMRI data file(s) in ANALYZE format.
-  It takes the string in \code{prefix} and \code{postfix} and
-  number of the form "007" in between to create the file name.
+  This function reads fMRI data files in ANALYZE format.
+  It takes the strings in \code{prefix} and \code{postfix} and
+  a number of the form "007" in between to create the file name.
 
   If \code{numbered} is \code{FALSE}, only the string in \code{prefix}
   is used for file name (default).
@@ -49,7 +49,7 @@ read.ANALYZE(prefix = "", numbered = FALSE, postfix = "",
 \references{Biomedical Imaging Resource (2001). Analyze Program. Mayo Foundation.
 }
 \note{   Since numbering and naming of ANALYZE files widely varies, this
-  function may not meet your personal needs. See Details for description.
+  function may not meet your personal needs. See Details for a description.
 }
 \seealso{ \code{\link{write.ANALYZE}}, \code{\link{read.AFNI}} }
 \examples{ \dontrun{analyze <- read.ANALYZE("analyze",TRUE,"file",31,107)}}
