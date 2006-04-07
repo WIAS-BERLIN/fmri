@@ -5,10 +5,8 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Triangle",skern="Triangl
     warning("fmri.smooth: data not of class <fmrispm>. Try to proceed but strange things may happen")
   }
 
-  if (!is.null(spm$smooth)) {
-    if (spm$smooth) {
-      warning("fmri.smooth: Parametric Map seems to be smoothed already!")
-    }
+  if (!is.null(attr(spm,"smooth"))) {
+    warning("fmri.smooth: Parametric Map seems to be smoothed already!")
   }
   
   variance <- spm$var
@@ -49,15 +47,35 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Triangle",skern="Triangl
     
   if (dim(ttthat$theta)[4] == 1) {
     z <- list(cbeta = ttthat$theta[,,,1], var = ttthat$var, rxyz =
-              rxyz, rxyz0 = rxyz0, scorr = spm$scorr, weights = spm$weights, vwghts = spm$vwghts, smooth =
-              TRUE, hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf)
+              rxyz, rxyz0 = rxyz0, scorr = spm$scorr, weights =
+              spm$weights, vwghts = spm$vwghts,
+              hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf)
   } else {
     z <- list(cbeta = ttthat$theta, var = ttthat$var, rxyz = rxyz, rxyz0 = rxyz0, 
-              scorr = spm$scorr, weights = spm$weights, vwghts = spm$vwghts, smooth = TRUE,
+              scorr = spm$scorr, weights = spm$weights, vwghts = spm$vwghts,
               hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf)
   }    
 
   class(z) <- c("fmridata","fmrispm")
+
+  attr(z, "file") <- attr(spm, "file")
+  attr(z, "white") <- attr(spm, "white")
+  attr(z, "design") <- attr(spm, "design")
+
+  if (!is.null(attr(spm, "smooth"))) {
+    attr(z, "smooth") <-
+      paste("Already smoothed before:\n",attr(spm, "smooth"),
+            "\nnow with:\n  adaptive  :",as.character(adaptive),
+            "\n  bandwidth :",signif(hmax,3),
+            "\n  lkern     :",lkern,
+            "\n  skern     :",skern,"\n")
+  } else {
+    attr(z, "smooth") <-
+      paste("Smoothed with:\n  adaptive  :",as.character(adaptive),
+            "\n  bandwidth :",signif(hmax,3),
+            "\n  lkern     :",lkern,
+            "\n  skern     :",skern,"\n")      
+  }
   z
 }
 
@@ -168,6 +186,18 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL) {
   z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim, hrf = spm$hrf)
   
   class(z) <- c("fmridata","fmripvalue")
+
+  attr(z, "file") <- attr(spm, "file")
+  attr(z, "white") <- attr(spm, "white")
+  attr(z, "design") <- attr(spm, "design")
+  if (is.null(attr(spm, "smooth"))) {
+    attr(z, "smooth") <- "Not smoothed"
+  } else {
+    attr(z, "smooth") <- attr(spm, "smooth")
+  }
+  attr(z, "maxpvalue") <- paste("Maximum p-value:",maxpvalue,"\n")
+  attr(z, "mode") <- paste("Threshold mode:",mode,"\n")
+   
   z
 }
 
@@ -213,9 +243,9 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue =
     if (type == "3d") {
       tt <- fmri.view3d(anatomic,col=mri.colors(255,255)$all,
                         weights=x$weights, scale=scale,scalecol=mri.colors(255,255)$col,
-                        type= "pvalue",maxpvalue=maxpvalue)
+                        type= "pvalue",maxpvalue=maxpvalue,pos=pos)
     } else {
-      fmri.view2d(anatomic, device, file, mri.colors(255,255)$all, scale=scale,scalecol=mri.colors(255,255)$col,type="pvalue",maxpvalue=maxpvalue)
+      fmri.view2d(anatomic, device, file, mri.colors(255,255)$all, scale=scale,scalecol=mri.colors(255,255)$col,type="pvalue",maxpvalue=maxpvalue,pos=pos)
     }
   } else if ("fmrispm" %in% class(x)) {
 
@@ -234,15 +264,15 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue =
         tt <- fmri.view3d(signal,col=mri.colors(255,0)$gray,
                           weights=x$weights,
                           scale=scale,scalecol=mri.colors(255,0)$gray,
-                          type="spm")
+                          type="spm",pos=pos)
       } else {
         tt <- fmri.view3d(signal,sigma=sqrt(x$var),col=mri.colors(255,0)$gray,
                           weights=x$weights,
-                          scale=scale,scalecol=mri.colors(255,0)$gray, type="spm",hrf=x$hrf, quant = quant)
+                          scale=scale,scalecol=mri.colors(255,0)$gray, type="spm",hrf=x$hrf, quant = quant,pos=pos)
       } 
     } else {
       fmri.view2d(signal, device, file, mri.colors(255,0)$gray, scale=scale,scalecol=mri.colors(255,0)$gray,
-                          type="spm")
+                          type="spm",pos=pos)
     }
   } else if ("fmridata" %in% class(x)) {
     signal <- x$ttt
@@ -255,9 +285,9 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue =
     
     if (type == "3d") {
       tt <- fmri.view3d(signal,col=mri.colors(255,0)$gray,
-                        weights=x$weights, scale=scale,scalecol=mri.colors(255,0)$gray, type="data")
+                        weights=x$weights, scale=scale,scalecol=mri.colors(255,0)$gray, type="data",pos=pos)
     } else {
-      fmri.view2d(signal, device, file, mri.colors(255,0)$gray, scale=scale,scalecol=mri.colors(255,0)$gray, type="data")
+      fmri.view2d(signal, device, file, mri.colors(255,0)$gray, scale=scale,scalecol=mri.colors(255,0)$gray, type="data",pos=pos)
     }
 
   } else {
@@ -285,7 +315,7 @@ fmri.view2d <- function(ttt, device, file,  col=grey(0:255/255),
           "png" = png(filename=file, width = 200*partitionx, height = 200*partitiony, pointsize=12, bg="transparent", res=NA),
           "jpeg" = jpeg(filename=file, width = 200*partitionx, height = 200*partitiony,
             quality = 100, pointsize = 12, res=NA),
-          "ppm" = bitmap(file,type="ppm",height=2*partitionx,width=2*partitiony,res=64,pointsize=12),
+          "ppm" = bitmap(file,type="ppm",height=2*partitiony,width=2*partitionx,res=64,pointsize=12),
           X11(width=1.2*partitionx,height=1.2*partitiony))
   
   oldpar <- par(mar=c(0.25,0.25,0.25,.25))
@@ -349,7 +379,7 @@ fmri.view2d <- function(ttt, device, file,  col=grey(0:255/255),
   
 fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ext = 1, weights =
                         c(1,1,1), scale=c(0,1), scalecol = col,
-                        hrf=rep(0,100), quant =3, maxpvalue = 0.05) {
+                        hrf=rep(0,100), quant =3, maxpvalue = 0.05,pos=c(-1,-1,-1)) {
   # check wether Tk/Tcl environment is present
   if (!require(tkrplot))
     stop("required package tkrplot not found. Please install from cran.r-project.org")
@@ -360,7 +390,11 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
   label <- c("x", "y", "z", "t", "signal cut-off")
 
   # center position with Tcl objects
-  pos <- c(round(dt[1:3])/2, 1, scale[1])
+  if (pos[1] == -1) {
+    pos <- c(round(dt[1:3])/2, 1, scale[1])
+  } else {
+    pos <- c(pos,1,scal[1])
+  }
   posv <- lapply(pos, tclVar)
 
 
@@ -595,16 +629,28 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 summary.fmridata <- function(object,...) {
   if ("fmripvalue" %in% class(object)) {
     dt <- dim(object$pvalue)
-    cat("Data Dimension:", dt,"\n")
+    cat("Data Dimension  :", dt,"\n")
     values <- range(object$pvalue)
-    cat("Data Range    :", values[1], "...", values[2], "\n")
-    invisible(list(dim=dt,values=values))
+    cat("Data Range      :", values[1], "...", values[2], "\n")
+    cat("File(s)", attr(object, "file"),"\n\n")
+    cat("Design Dimension:", dim(attr(object, "design")), "\n")
+    cat(attr(object, "white"), "\n")
+    if (!is.null(attr(object, "smooth"))) cat(attr(object, "smooth"),"\n")
+    cat(attr(object, "maxpvalue"))
+    cat(attr(object, "mode"), "\n")
+    invisible(list(dim=dt,values=values, files=attr(object, "read"),
+                   z=attr(object, "design")))
   } else if ("fmrispm" %in% class(object)) {
     dt <- object$dim
-    cat("Data Dimension:", dt,"\n")
+    cat("Data Dimension  :", dt,"\n")
     values <- range(object$cbeta)
-    cat("Data Range    :", values[1], "...", values[2], "\n")
-    invisible(list(dim=dt,values=values))
+    cat("Data Range      :", values[1], "...", values[2], "\n")
+    cat("File(s)         :", attr(object, "file"),"\n\n")
+    cat("Design Dimension:", dim(attr(object, "design")), "\n")
+    cat(attr(object, "white"), "\n")
+    if (!is.null(attr(object, "smooth"))) cat(attr(object, "smooth"))
+    invisible(list(dim=dt,values=values, files=attr(object, "read"),
+              z=attr(object, "design")))
   } else {
     dt <- object$dim
     cat("Data Dimension:", dt,"\n")
@@ -612,7 +658,8 @@ summary.fmridata <- function(object,...) {
     cat("Data Range    :", values[1], "...", values[2], "\n")
     delta <- object$delta
     cat("Voxel Size    :", delta,"\n")
-    invisible(list(dim=dt,delta=delta,values=values))
+    cat("File(s)", attr(object, "file"),"\n")
+    invisible(list(dim=dt,delta=delta,values=values, files=attr(object, "read")))
   }
 
 }
@@ -622,15 +669,28 @@ print.fmridata <- function(x,...) {
     cat("Data Dimension:", dim(x$pvalue),"\n")
     values <- range(x$pvalue)
     cat("Data Range    :", values[1], "...", values[2], "\n")
+    cat("File(s)", attr(x, "file"),"\n\n")
+    cat("Design Dimension:", dim(attr(x, "design")), "\n")
+    cat(attr(x, "white"), "\n")
+    if (!is.null(attr(x, "smooth"))) cat(attr(x, "smooth"),"\n")
+    cat(attr(x, "maxpvalue"))
+    cat(attr(x, "mode"), "\n")
   } else if ("fmrispm" %in% class(x)) {
     cat("Data Dimension:", x$dim,"\n")
     values <- range(x$cbeta)
     cat("Data Range    :", values[1], "...", values[2], "\n")
+    cat("File(s)", attr(x, "file"),"\n\n")
+    cat("Design Dimension:", dim(attr(x, "design")), "\n")
+    cat(attr(x, "white"), "\n")
+    if (!is.null(attr(x, "smooth"))) cat(attr(x, "smooth"))
+#    lmcall <- attr(x, "lm")
+#    cat("Linear Model - Number of stimuli
   } else {
     cat("Data Dimension: ", x$dim,"\n")
     cat("Voxel Size    :", x$delta,"\n")
     values <- range(x$ttt)
     cat("Data Range    :", values[1], "...", values[2], "\n")
+    cat("File(s)", attr(x, "file"),"\n")
   }
   invisible(NULL)
 }

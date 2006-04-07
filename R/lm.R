@@ -257,14 +257,14 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   if (keep == "all") {
     result <- list(beta = beta, cbeta = cbeta, var = variance, res =
               residuals, arfactor = arfactor, rxyz = rxyz, scorr = corr, weights =
-              data$weights, vwghts = vwghts, smooth= FALSE, dim =
+              data$weights, vwghts = vwghts, dim =
               data$dim, hrf = z %*% contrast)
   } else if (keep == "diagnostic") {
     result <- list(cbeta = cbeta, var = variance, res = residuals, rxyz = rxyz, scorr =
-              corr, weights = data$weights, vwghts = vwghts, smooth= FALSE, dim = data$dim, hrf = z %*% contrast)
+              corr, weights = data$weights, vwghts = vwghts, dim = data$dim, hrf = z %*% contrast)
   } else {
     result <- list(cbeta = cbeta, var = variance, rxyz = rxyz, scorr = corr, weights =
-              data$weights, vwghts = vwghts, smooth= FALSE, dim = data$dim, hrf = z %*% contrast)
+              data$weights, vwghts = vwghts, dim = data$dim, hrf = z %*% contrast)
   }
 
   if (length(vvector) > 1) {
@@ -273,6 +273,19 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   
   class(result) <- c("fmridata","fmrispm")
 
+  attr(result, "file") <- attr(data, "file")
+  if (actype == "smooth") {
+    attr(result, "white") <-
+      paste("Prewhitening performed with smoothed (bandwidth",hmax,") map\nof autocorrelation parameter in AR(1) model for time series!\n")
+  } else if (actype == "accalc") {
+    attr(result, "white") <-
+      paste("Prewhitening performed with map of autocorrelation parameter in AR(1) model for time series\n")
+  } else {
+    attr(result, "white") <-
+      paste("No prewhitening performed!\n")
+  }
+  attr(result, "design") <- z
+    
   invisible(result)
 }
 

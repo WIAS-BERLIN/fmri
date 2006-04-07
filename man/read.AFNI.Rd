@@ -3,7 +3,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ I/O function }
 \description{
-  Read BRIK file.
+  Read HEAD/BRIK file.
 }
 \usage{
 read.AFNI(file)
@@ -13,19 +13,20 @@ read.AFNI(file)
   \item{file}{ name of the file (without extension) }
 }
 \details{
-  The function reads a BRIK/HEAD file.
+  The function reads a HEAD/BRIK file.
 }
 \value{
-  Object of class \code{fmridata} with the following list entries:
-  \item{ttt}{4 dimensional datacube}
+  Object of class "fmridata" with the following list entries:
+  \item{ttt}{4 dimensional datacube, the first three dimensions are voxel
+    dimensions, the fourth dimension denotes the time }
   \item{header}{header information list}
-  \item{format}{data source. string HEAD/BRIK}
+  \item{format}{data source. string "HEAD/BRIK"}
   \item{delta}{voxel size in mm}
   \item{origin}{position of the datacube origin}
   \item{orient}{data orientation code. see AFNI documentation}
   \item{dim}{dimension of the datacube}
-  \item{weights}{weights vector coding the different voxel sizes in x,
-    y, z}
+  \item{weights}{weights vector coding the relative voxel sizes in x,
+    y, z-direction.}
   \item{mask}{head mask}
 }
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
@@ -33,7 +34,7 @@ read.AFNI(file)
   functional magnetic resonance neuroimages. Computers and Biomed. Res. 
   29:162-173.
 }
-\seealso{ \code{\link{write.AFNI}} }
+\seealso{ \code{\link{write.AFNI}}, \code{\link{read.ANALYZE}} }
 \examples{
 \dontrun{afni <- read.AFNI("afnifile")}
 }

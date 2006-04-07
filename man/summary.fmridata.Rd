@@ -24,6 +24,7 @@ summary.fmridata(object, ...)
   \item{dim }{data dimension}
   \item{delta }{voxel dimension, if available}
   \item{values }{value range}
+  \item{z}{ design matrix }
 }
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \seealso{ \code{\link{print.fmridata}} }

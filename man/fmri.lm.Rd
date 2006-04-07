@@ -3,7 +3,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Linear Model For FMRI Data }
 \description{
-  Estimate the parameters and variances of a linear model. 
+  Estimate the parameters and variances in a linear model. 
 }
 \usage{
   fmri.lm(data, z, actype = "accalc", hmax = 3.52, vtype = "var",
@@ -12,20 +12,21 @@
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{data}{ object of class \code{fmri.data} }
-  \item{z}{ designmatrix specifying the expected hemodynamic response 
-  and aadditional components for trend and other effects. Dimension \eqn{(p,T)}. }
+  \item{data}{ object of class "fmridata" }
+  \item{z}{ designmatrix specifying the expected BOLD response(s) 
+  and additional components for trend and other effects. }
   \item{actype}{ string describing the type of handling autocorrelation
     of time series. "nonac", "ac", "accalc", "smooth"}
   \item{hmax}{ bandwidth for smoothing autocorrelation parameter if
     actype = "smooth" }
-  \item{vtype}{ type of estimation of estimating residual variance (only
+  \item{vtype}{ method of estimating residual variance (only
   "var" implemented) }
-  \item{step}{ step size for binning autocorrelation handling (see
+  \item{step}{ step size for binning autocorrelations (see
     details) }
   \item{contrast}{ contrast vector }
   \item{vvector}{ vector defining the parameters for which the
-    covariance matrix is returned. }
+    covariance matrix is returned as well as the corresponding length of
+    the vector \code{cbeta} in each voxel}
   \item{keep}{ string describing the amount of data returned:
     "essential", "diagnostic", "all" }
 }
@@ -38,20 +39,22 @@
   the time series of residuals, and the AR-coefficient is corrected for bias. 
   If \code{actype=="smooth"}
   the AR-coefficients are spatially smoothed using bandwidth \code{hmax}.
-  If \code{actype} \code{\%in\%} \code{c("ac", "smooth")} the linear model is prewithened
-  using the estimated (smoothed) AR-coefficients. Parameter 
+  If \code{actype} \code{\%in\%} \code{c("accalc", "smooth")} the linear model is prewithened
+  using the estimated (smoothed if \code{actype == "smooth"}) AR-coefficients. Parameter 
   and variance estimates are then obtained from the prewithened
   data. The argument \code{keep} describes the amount of data which is
-  returned. If "essential" only the contrast of parameters and its
+  returned. If "essential" only the contrast \deqn{\gamma_i = c^T \beta_i} of parameters and its
   estimated variance are returned. "all" gives the full data, including
   residuals, temporal autocorrelation.
   If \code{vvector} is given and has length greater than 1, the
   covariance matrix for the stimuli given therein are returned
   (\code{varm}) and \code{vwghts} contains an estimate for the ratio of
-  the variances of the parameter for the stimuli indicated in \code{vvector}.
+  the variances of the parameter for the stimuli indicated in
+  \code{vvector}. \code{cbeta} then contains the corresponding parameter
+  estimates and thus is a vector of corresponding length in each voxel.
 }
 \value{
-  object of class \code{fmrispm} and \code{fmridata}
+  object with class attributes "fmrispm" and "fmridata"
   \item{beta}{Estimated parameters }
   \item{cbeta}{Estimated contrast of parameters}
   \item{var}{Estimated variance of the contrast of parameters.}
@@ -62,10 +65,9 @@
   \item{weights}{ ratio of voxel dimensions }
   \item{vwghts}{ ratio of estimated variances for the stimululi given by
   \code{vvector}}
-  \item{rxyz}{array of resel counts from estimated correlation for each
-    voxel (for analysis without smoothing)}
+  \item{rxyz}{array of smoothness from estimated correlation for each
+    voxel in resel space (for analysis without smoothing)}
   \item{hrf}{ Expected BOLD response for contrast }
-  \item{smooth}{ FALSE }
 }
 \references{ Worsley, K.J. (2005). Spatial smoothing of autocorrelations
   to control the degrees of freedom in fMRI analysis. NeuroImage,
@@ -73,17 +75,18 @@
 
   Worsley, K.J., Liao, C., Aston, J., Petre, V., Duncan,
   G.H., Morales, F., Evans, A.C. (2002). A general statistical analysis
-  for fMRI data. NeuroImage, 15:1:15.
+  for fMRI data. NeuroImage, 15:1-15.
 }
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
-\note{ \code{vvector} is intended to be used for delay of HRF using
-  first derivative. Do not mix with \code{contrast} argument, since
+\note{ \code{vvector} is intended to be used for delay of the HRF using
+  its first derivative. Do not mix with the \code{contrast} argument, since
   unexpected side effects may occur. Look out for updates of this package.
 }
 \seealso{ \code{\link{fmri.design}}, \code{\link{fmri.stimulus}} }
 \examples{
   # Example 1
-  data <- list(ttt=array(rnorm(32*32*32*107),c(32,32,32,107)),mask=array(1,c(32,32,32)))
+  data <- list(ttt=array(rnorm(32*32*32*107),c(32,32,32,107)),
+               mask=array(1,c(32,32,32)))
   class(data) <- "fmri.data"
   hrf <- fmri.stimulus(107, c(18, 48, 78), 15, 2)
   z <- fmri.design(hrf,2)

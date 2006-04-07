@@ -42,13 +42,11 @@ write.ANALYZE(ttt, header=NULL, file)
   Nothing is returned.
 }
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
-\note{ This function requires the AnalyzeFMRI package and the
-  f.write.analyze() function therein. This is because until now, we did
-  not implement an output routine ourselves. }
-\seealso{ \code{\link{read.ANALYZE}} }
+\seealso{ \code{\link{read.ANALYZE}}, \code{\link{write.AFNI}} }
 \examples{
 ## Example 1
-write.ANALYZE(array(as.integer(65526*runif(10*10*10*20)),c(10,10,10,20)),file="random_data")
+write.ANALYZE(array(as.integer(65526*runif(10*10*10*20)),c(10,10,10,20)),
+              file="analyzefile")
 }
 \keyword{ IO }% at least one, from doc/KEYWORDS
 \keyword{ utilities }% __ONLY ONE__ keyword per line

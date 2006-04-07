@@ -164,6 +164,7 @@ write.ANALYZE.volume <- function(ttt,filename) {
 
 read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart = 1, numbpic = 1) {
   counter <- c(paste("00", 1:9, sep=""), paste("0", 10:99, sep=""),paste(100:999,sep=""));
+
   if (numbered) {
     file.img <- paste(prefix, counter[picstart], postfix, ".img", sep="")
   } else {
@@ -206,11 +207,20 @@ read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart =
   }
 
   mask <- ttt[,,,1]
-  mask[mask > quantile(mask,0.75)] <- 0
+  mask[mask < quantile(mask,0.75)] <- 0
   mask[mask != 0] <- 1
   z$mask <- mask
 
   class(z) <- "fmridata"
+
+  if (numbered) {
+    attr(z,"file") <- paste(prefix, counter[picstart], postfix, ".hdr/img", "...",
+                            prefix, counter[picstart+numbpic-1], postfix, ".hdr/img",
+                            sep="")
+  } else {
+    attr(z,"file") <- paste(prefix, ".hdr/img", sep="")
+  }
+  
   invisible(z)
 }
 
@@ -349,6 +359,7 @@ read.AFNI <- function(file) {
   z$mask <- mask
 
   class(z) <- "fmridata"
+  attr(z,"file") <- paste(file,".HEAD/BRIK",sep="")
   invisible(z)
 }
 

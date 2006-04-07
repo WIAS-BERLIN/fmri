@@ -6,8 +6,9 @@
   Creates expected BOLD response for a given task indicator function.
 }
 \usage{
-  fmri.stimulus(scans = 1, onsets = c(1), length = 1, rt = 3, mean =
-                 TRUE, a1 = 6, a2 = 12, b1 = 0.9, b2 = 0.9, cc = 0.35)
+  fmri.stimulus(scans = 1, onsets = c(1), length = 1, rt = 3,
+                mean = TRUE,
+                a1 = 6, a2 = 12, b1 = 0.9, b2 = 0.9, cc = 0.35)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -26,8 +27,8 @@
   The functions calculates the expected BOLD response for the task
   indicator function given by the argument as convolution with the
   hemodynamic response function. The latter is modelled by the difference
-  between two gamma functions as given in the reference (with defaults
-  given there):
+  between two gamma functions as given in the reference (with the defaults
+  for a1, a2, b1, b2, cc given therein):
   
   \deqn{\left(\frac{t}{d_1}\right)^{a_1} \exp \left(-\frac{t-d_1}{b_1}\right) 
 - c \left(\frac{t}{d_2}\right)^{a_2} \exp
@@ -36,24 +37,25 @@
   The parameters of this function can be changed through the arguments
   \code{a1}, \code{a2}, \code{b1}, \code{b2}, \code{cc}.
   
-  Dimension of the function value is set to c(scans,1).
+  Dimension of the function value is set to \code{c(scans,1)}.
 
   If \code{mean} is TRUE (default) the resulting vector is
   mean-corrected.
 }
 \value{
-  Vector with \code{scans} elements and dimension c(scans,1).
+  Vector with dimension \code{c(scans,1)}.
 }
 \references{ Worsley, K.J., Liao, C., Aston, J., Petre, V., Duncan,
   G.H., Morales, F., Evans, A.C. (2002). A general statistical analysis
-  for fMRI data. NeuroImage, 15:1:15. }
+  for fMRI data. NeuroImage, 15:1-15. }
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \seealso{ \code{\link{fmri.design}}, \code{\link{fmri.lm}} }
 \examples{
   # Example 1
   hrf <- fmri.stimulus(107, c(18, 48, 78), 15, 2)
   z <- fmri.design(hrf,2)
-  plot(hrf,type="l")
+  par(mfrow=c(2,2))
+  for (i in 1:4) plot(z[,i],type="l")
 
 }
 \keyword{ regression }% at least one, from doc/KEYWORDS
