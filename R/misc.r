@@ -174,11 +174,16 @@ correlation <- function(res,mask = array(1,dim=dim(res)[1:3])) {
     if (sum(dim(mask)[1:3] != dr[1:3]) == 0) {
       mask <- rep(mask,dr[4])
       dim(mask) <- dr
-      vrm <- varpos(res*mask)
-      x <- meanpos(res[-1,,,]*res[-dr[1],,,]*mask[-1,,,])/vrm
-      y <- meanpos(res[,-1,,]*res[,-dr[2],,]*mask[,-1,,])/vrm
-      z <- meanpos(res[,,-1,]*res[,,-dr[3],]*mask[,,-1,])/vrm
-      c(x,y,z)
+      if (any(res*mask!=0)) {
+        vrm <- varpos(res*mask)
+        x <- meanpos(res[-1,,,]*res[-dr[1],,,]*mask[-1,,,])/vrm
+        y <- meanpos(res[,-1,,]*res[,-dr[2],,]*mask[,-1,,])/vrm
+        z <- meanpos(res[,,-1,]*res[,,-dr[3],]*mask[,,-1,])/vrm
+        c(x,y,z)
+      } else {
+        warning("Warning: did not found any non-zero residual in mask. Correlation probably wrong!")
+        c(0,0,0)
+      }
     } else {
       warning("Error: dimension of mask and residui matrices do not match\n")    
     }

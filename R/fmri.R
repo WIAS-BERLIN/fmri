@@ -117,6 +117,7 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL) {
     t1 <- spm$cbeta[,,,1]/sqrt(spm$var * spm$vwghts[1])
     t2 <- spm$cbeta[,,,2]/sqrt(spm$var * spm$vwghts[2])
     ratio <- t2/t1
+    ratio[t1==0] <- l2 + 1
     w1 <- (t1 + t2 * l1) / sqrt(1+l1^2)
     w2 <- (t1 + t2 * l2) / sqrt(1+l2^2)
     w3 <- (t1 > 0) * (l1 <= ratio) * (ratio <= l2) * sqrt(t1^2 + t2^2)
@@ -230,11 +231,17 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue =
     
     # re-scale anatomic to 0 ... 0.5
     if (diff(range(anatomic)) !=0) {
-      anatomic <- 0.5 * (anatomic - range(anatomic,rm.na=TRUE,finite=TRUE)[1]) / diff(range(anatomic,rm.na=TRUE,finite=TRUE))
+      anatomic <- 0.5 * (anatomic - range(anatomic,finite=TRUE)[1]) / diff(range(anatomic,rm.na=TRUE,finite=TRUE))
     }
     # re-scale signal to 0.5 ... 1
-    scale <- range(signal,rm.na=TRUE,finite=TRUE)
-    signal <-  0.5 + 0.5 * (signal - scale[1]) / diff(scale)
+    scale <- range(signal,finite=TRUE)
+    if (diff(scale) != 0) {
+      signal <- 0.5 + 0.5 * (signal - scale[1]) / diff(scale)
+    } else if (scale[1] == 0) {
+      signal <- 0.5
+    } else {
+      signal <- 1
+    }
     # create an overlay
     anatomic[signal > 0.5] <- signal[signal > 0.5]
     anatomic[is.na(anatomic)] <- 0
@@ -252,8 +259,12 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue =
     signal <- if (spm) x$cbeta/sqrt(x$var) else x$cbeta
     
     # re-scale signal to 0 ... 1
-    scale <- range(signal,rm.na=TRUE,finite=TRUE)
-    signal <-  (signal - scale[1]) / diff(scale)
+    scale <- range(signal,finite=TRUE)
+    if (diff(scale) != 0) {
+      signal <-  (signal - scale[1]) / diff(scale)
+    } else {
+      signal <- 0
+    }
     signal[is.na(signal)] <- 0
     signal[is.infinite(signal)] <- 0
 
@@ -278,8 +289,12 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue =
     signal <- x$ttt
     
     # re-scale signal to 0 ... 1
-    scale <- range(signal,rm.na=TRUE,finite=TRUE)
-#    signal <-  (signal - scale[1]) / diff(scale)
+    scale <- range(signal,finite=TRUE)
+    if (diff(scale) != 0) {    
+      signal <-  (signal - scale[1]) / diff(scale)
+    } else {
+      signal <- 0
+    }
     signal[is.na(signal)] <- 0
     signal[is.infinite(signal)] <- 0
     
@@ -303,7 +318,8 @@ fmri.view2d <- function(ttt, device, file,  col=grey(0:255/255),
                         type = "data", maxpvalue = 0.05) {
 
   # some basic data properties
-  zlim <- range(ttt)
+#  zlim <- range(ttt)
+  zlim <- c(0,1) # requires rescaled data
   dt <- dim(ttt)
 
   # determine the number of images in x- and y-direction
@@ -338,33 +354,34 @@ fmri.view2d <- function(ttt, device, file,  col=grey(0:255/255),
   # add a scale
   par(mgp=c(2,1,0), mar=c(2,0.25,2,0.25))
 
-  if (type == "pvalue") {
-    image(seq(-log(maxpvalue),scale[2],length=100),seq(scale[1],scale[2],length=10)/10,
-          matrix(rep(seq(-log(maxpvalue),scale[2],length=100),10),100,10),
-          yaxt="n",xaxt="n",xlab="", ylab="",zlim=c(-log(maxpvalue),scale[2]), col=scalecol)
-
-    lines(c(-log(0.01),-log(0.01)),scale,col=2)
-    text(-log(0.01),scale[1]+0.01*diff(scale),pos=4,"1e-2")
-    lines(c(-log(0.001),-log(0.001)),scale,col=2)
-    text(-log(0.001),scale[1]+0.01*diff(scale),pos=4,"1e-3")
-    lines(c(-log(0.0001),-log(0.0001)),scale,col=2)
-    text(-log(0.0001),scale[1]+0.01*diff(scale),pos=4,"1e-4")
-    lines(c(-log(0.00001),-log(0.00001)),scale,col=2)
-    text(-log(0.00001),scale[1]+0.01*diff(scale),pos=4,"1e-5")
-    lines(c(-log(0.000001),-log(0.000001)),scale,col=2)
-    text(-log(0.000001),scale[1]+0.01*diff(scale),pos=4,"1e-6")
-    lines(c(-log(0.0000001),-log(0.0000001)),scale,col=2)
-    text(-log(0.0000001),scale[1]+0.01*diff(scale),pos=4,"1e-7")
-    lines(c(-log(0.00000001),-log(0.00000001)),scale,col=2)
-    text(-log(0.00000001),scale[1]+0.01*diff(scale),pos=4,"1e-8")
-    lines(c(-log(0.000000001),-log(0.000000001)),scale,col=2)
-    text(-log(0.000000001),scale[1]+0.01*diff(scale),pos=4,"1e-9")
-  } else {
-    image(seq(scale[1],scale[2],length=100),seq(scale[1],scale[2],length=10)/10,
-          matrix(rep(seq(scale[1],scale[2],length=100),10),100,10),
-          yaxt="n",xlab="", ylab="",zlim=scale, col=scalecol)
-  }    
-  
+  if (diff(scale) != 0) {
+    if (type == "pvalue") {
+      image(seq(-log(maxpvalue),scale[2],length=100),seq(scale[1],scale[2],length=10)/10,
+            matrix(rep(seq(-log(maxpvalue),scale[2],length=100),10),100,10),
+            yaxt="n",xaxt="n",xlab="", ylab="",zlim=c(-log(maxpvalue),scale[2]), col=scalecol)
+      
+      lines(c(-log(0.01),-log(0.01)),scale,col=2)
+      text(-log(0.01),scale[1]+0.01*diff(scale),pos=4,"1e-2")
+      lines(c(-log(0.001),-log(0.001)),scale,col=2)
+      text(-log(0.001),scale[1]+0.01*diff(scale),pos=4,"1e-3")
+      lines(c(-log(0.0001),-log(0.0001)),scale,col=2)
+      text(-log(0.0001),scale[1]+0.01*diff(scale),pos=4,"1e-4")
+      lines(c(-log(0.00001),-log(0.00001)),scale,col=2)
+      text(-log(0.00001),scale[1]+0.01*diff(scale),pos=4,"1e-5")
+      lines(c(-log(0.000001),-log(0.000001)),scale,col=2)
+      text(-log(0.000001),scale[1]+0.01*diff(scale),pos=4,"1e-6")
+      lines(c(-log(0.0000001),-log(0.0000001)),scale,col=2)
+      text(-log(0.0000001),scale[1]+0.01*diff(scale),pos=4,"1e-7")
+      lines(c(-log(0.00000001),-log(0.00000001)),scale,col=2)
+      text(-log(0.00000001),scale[1]+0.01*diff(scale),pos=4,"1e-8")
+      lines(c(-log(0.000000001),-log(0.000000001)),scale,col=2)
+      text(-log(0.000000001),scale[1]+0.01*diff(scale),pos=4,"1e-9")
+    } else {
+      image(seq(scale[1],scale[2],length=100),seq(scale[1],scale[2],length=10)/10,
+            matrix(rep(seq(scale[1],scale[2],length=100),10),100,10),
+            yaxt="n",xlab="", ylab="",zlim=scale, col=scalecol)
+    }    
+  }
 
   # close the device
   par(oldpar)

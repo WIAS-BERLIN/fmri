@@ -77,6 +77,10 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   }
 
   ttt <- data$ttt
+
+  if (length(dim(ttt)) != 4) {
+    stop("Hmmmm, this does not seem to be a fMRI time series. I better stop executing! Sorry!\n")
+  }
   
   create.arcorrection <- function(scans, rho=0) {
     rho0 <- 1/sqrt(1-rho^2)
