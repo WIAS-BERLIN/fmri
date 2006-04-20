@@ -176,7 +176,7 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL) {
     }
 
   }
-  cat("fmri.detect: thresholding\n")
+  cat("fmri.pvalue: thresholding\n")
   mask <- rep(1,length=prod(spm$dim[1:3]))
   mask[stat < thresh] <- 0
   pv[!mask] <- 1
@@ -196,7 +196,6 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL) {
   } else {
     attr(z, "smooth") <- attr(spm, "smooth")
   }
-  attr(z, "maxpvalue") <- paste("Maximum p-value:",maxpvalue,"\n")
   attr(z, "mode") <- paste("Threshold mode:",mode,"\n")
    
   z
@@ -231,7 +230,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue =
     
     # re-scale anatomic to 0 ... 0.5
     if (diff(range(anatomic)) !=0) {
-      anatomic <- 0.5 * (anatomic - range(anatomic,finite=TRUE)[1]) / diff(range(anatomic,rm.na=TRUE,finite=TRUE))
+      anatomic <- 0.5 * (anatomic - range(anatomic,finite=TRUE)[1]) / diff(range(anatomic,finite=TRUE))
     }
     # re-scale signal to 0.5 ... 1
     scale <- range(signal,finite=TRUE)
@@ -653,7 +652,6 @@ summary.fmridata <- function(object,...) {
     cat("Design Dimension:", dim(attr(object, "design")), "\n")
     cat(attr(object, "white"), "\n")
     if (!is.null(attr(object, "smooth"))) cat(attr(object, "smooth"),"\n")
-    cat(attr(object, "maxpvalue"))
     cat(attr(object, "mode"), "\n")
     invisible(list(dim=dt,values=values, files=attr(object, "read"),
                    z=attr(object, "design")))
@@ -690,7 +688,6 @@ print.fmridata <- function(x,...) {
     cat("Design Dimension:", dim(attr(x, "design")), "\n")
     cat(attr(x, "white"), "\n")
     if (!is.null(attr(x, "smooth"))) cat(attr(x, "smooth"),"\n")
-    cat(attr(x, "maxpvalue"))
     cat(attr(x, "mode"), "\n")
   } else if ("fmrispm" %in% class(x)) {
     cat("Data Dimension:", x$dim,"\n")
