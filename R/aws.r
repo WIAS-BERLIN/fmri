@@ -315,9 +315,9 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
                    as.double(lambda0),
                    as.double(theta0),# thats the theta needed for the weights
                    bi2=as.double(bi0), # thats the bi needed for the weights, sum of squared weights  \sum_j \tilde{w}_ij^2 \sigma_j^2 as output
-                   bi0=double(n), # thats the bi0 needed, sum of nonadaptive weights  \sum_j K(l_ij) / \sigma_j^2 as output
-                   Qh=double(n),#  sum of squared weights \sum_j \tilde{w}_ij^2 
-                   Qh0=double(n),#  sum of squared non-adaptive weights \sum_j K(l_ij)^2  
+                   bi0=as.double(bi0), # thats the bi0 needed, sum of nonadaptive weights  \sum_j K(l_ij) / \sigma_j^2 as output
+                   Qh=as.double(bi0),#  sum of squared weights \sum_j \tilde{w}_ij^2 
+                   Qh0=as.double(bi0),#  sum of squared non-adaptive weights \sum_j K(l_ij)^2  
                    as.integer(lkern),
                    as.integer(skern),
                    as.double(spmin),
