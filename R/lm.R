@@ -157,6 +157,8 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
         arfactor[i] <- 0
       }
 
+      if (arfactor[i] >= 1) arfactor[i] <- 0.999
+      
       ### this method does have a bias!
 #      if (sum(abs(residuals[i,]))) {
 #        arfactor[i] <- residuals[i,2:dim(z)[1]] %*% residuals[i,1:(dim(z)[1]-1)] / residuals[i,] %*% residuals[i,]
