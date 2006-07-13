@@ -7,7 +7,7 @@
 }
 \usage{
 fmri.smooth(spm, hmax = 4, adaptive=TRUE,
-            lkern="Triangle", skern="Triangle")
+            lkern="Triangle", skern="Triangle", na.rm=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,6 +23,13 @@ fmri.smooth(spm, hmax = 4, adaptive=TRUE,
     penalty. Defaults to "Triangle", the alternative is "Exp".
     \code{lkern="Triangle"} allows for much faster computation (saves up
     to 50\%).}
+  \item{na.rm}{\code{na.rm} specifies how NA's in the SPM are handled. NA's may occur
+   in voxel where the time series information did not allow for estimating parameters and their variances
+   or where the time series information where constant over time. A high (1e19) value of the variance 
+   and a parameter of 0 are used to characterize NA's. If \code{na.rm=FALSE} these values are simply downweigthed
+   by their high variance and estimates in these voxels are produced as nonadaptive averages
+   of values from neighboring voxels. If \code{na.rm=TRUE} no estimates are computed (the values 
+   for mean and variance are kept) in these voxels.}
 }
 \details{
   This function performs the smoothing on the Statistical Parametric Map

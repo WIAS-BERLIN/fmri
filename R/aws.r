@@ -29,7 +29,7 @@
 
 vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
                    sigma2=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
-                   u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
+                   u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,na.rm=FALSE,
                    spmin=0,spmax=1.1,scorr=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE) {
 
   #  Auxilary functions
@@ -196,6 +196,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
                      as.double(vwghts),
                      double(dv),#swjy
                      double(dv0),#thi
+		     as.logical(na.rm),#narm
                      PACKAGE="fmri",DUP=TRUE)[c("bi","ai","hakt")]
     gc()
     dim(tobj$ai) <- dy
@@ -224,6 +225,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
 		       as.double(vwghts),
 		       double(dv),#swjy
 		       double(dv0),#thi
+                       as.logical(na.rm),#narm
 		       PACKAGE="fmri",DUP=TRUE)[c("bi","ai")]
       ptheta <- array(pobj$ai/pobj$bi,dy) 
       rm(pobj) 
@@ -299,6 +301,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
                   as.double(wghts),
                   as.double(vwghts),
                   double(dv0),#thi
+                  as.logical(na.rm),#narm
                   PACKAGE="fmri",DUP=FALSE)[c("vred","var")]
     dim(z$vred) <- dim(z$var) <- dim(sigma2)
   } else {
@@ -323,6 +326,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
                    as.double(wghts),
                    as.double(vwghts),
                    double(dv0),#thi
+                   as.logical(na.rm),#narm
                    PACKAGE="fmri",DUP=FALSE)[c("bi0","bi2","Qh","Qh0")]
     bi2 <- array(z1$bi2,dim(sigma2))
     bi0 <- array(z1$bi0,dim(sigma2))
