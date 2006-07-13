@@ -315,7 +315,7 @@ C
      1       ai(n1,n2,n3,dv),lambda,spmax,wght(2),si2(n1,n2,n3),
      1       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
-     1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
+     1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n,ij(6)
       real*8 bii,swj,swjy(dv),wj,hakt2,spf,si2j,si2i
       hakt2=hakt*hakt
       spf=spmax/(spmax-spmin)
@@ -364,13 +364,13 @@ C   scaling of sij outside the loop
 		     jwind2=jwind3+(jw2-1)*dlw1
                      DO jw1=1,dlw1
 C  first stochastic term
-			si2j=si2(j1,j2,j3)
-                        if(narm.and.si2j.lt.1d-18) CYCLE
-C    si2j.lt.1d-18   indicates that we have an NA in (j1,j2,j3)
                         wj=lwght(jw1+jwind2)
 			if(wj.le.0.d0) CYCLE
 	                j1=jw1-clw1+i1
 	                if(j1.lt.1.or.j1.gt.n1) CYCLE
+			si2j=si2(j1,j2,j3)
+                        if(narm.and.si2j.lt.1d-18) CYCLE
+C    si2j.lt.1d-18   indicates that we have an NA in (j1,j2,j3)
                         IF (aws) THEN
                            call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
      1                     theta,vwghts,skern,spf,spmin,spmax,bii,wj)
