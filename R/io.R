@@ -226,7 +226,7 @@ read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart =
 
 
 
-write.ANALYZE <- function(ttt, header=NULL, file) {
+write.ANALYZE <- function(ttt, header=NULL, filename) {
   if (is.null(header)) header <- list()
 
   if (!("datatype1" %in% names(header))) header$datatype1 <- paste(rep(" ",10),collapse="")
@@ -273,15 +273,15 @@ write.ANALYZE <- function(ttt, header=NULL, file) {
   if (!("smax" %in% names(header))) header$smax <- c(0)
   if (!("smin" %in% names(header))) header$smin <- c(0)
 
-  write.ANALYZE.header(header,file)
+  write.ANALYZE.header(header,filename)
 
-  write.ANALYZE.volume(ttt, file)
+  write.ANALYZE.volume(ttt, filename)
 }
 
 
 
-read.AFNI <- function(file) {
-  conhead <- file(paste(file,".HEAD",sep=""),"r")
+read.AFNI <- function(filename) {
+  conhead <- file(paste(filename,".HEAD",sep=""),"r")
   header <- readLines(conhead)
   close(conhead)
 
@@ -318,7 +318,7 @@ read.AFNI <- function(file) {
   dz <- values$DATASET_DIMENSIONS[3]
   dt <- values$DATASET_RANK[2]
   scale <- values$BRICK_FLOAT_FACS
-  size <- file.info(paste(file,".BRIK",sep=""))$size/(dx*dy*dz*dt)
+  size <- file.info(paste(filename,".BRIK",sep=""))$size/(dx*dy*dz*dt)
 
   if (regexpr("MSB",values$BYTEORDER_STRING[1]) != -1) {
     endian <- "big"
@@ -334,7 +334,7 @@ read.AFNI <- function(file) {
   }
   
   if (as.integer(size) == size) {
-    conbrik <- file(paste(file,".BRIK",sep=""),"rb")
+    conbrik <- file(paste(filename,".BRIK",sep=""),"rb")
     myttt<- readBin(conbrik, "int", n=dx*dy*dz*dt*size, size=size, signed=TRUE, endian=endian)
     close(conbrik)
     dim(myttt) <- c(dx,dy,dz,dt)
@@ -359,14 +359,14 @@ read.AFNI <- function(file) {
   z$mask <- mask
 
   class(z) <- "fmridata"
-  attr(z,"file") <- paste(file,".HEAD/BRIK",sep="")
+  attr(z,"file") <- paste(filename,".HEAD/BRIK",sep="")
   invisible(z)
 }
 
 
 
 
-write.AFNI <- function(file, ttt, label, note="", origin=c(0,0,0), delta=c(4,4,4), idcode="WIAS_noid") {
+write.AFNI <- function(filename, ttt, label, note="", origin=c(0,0,0), delta=c(4,4,4), idcode="WIAS_noid") {
   ## TODO:
   ## 
   ## create object oriented way!!!!
@@ -392,7 +392,7 @@ write.AFNI <- function(file, ttt, label, note="", origin=c(0,0,0), delta=c(4,4,4
     a
   }
   
-  conhead <- file(paste(file, ".HEAD", sep=""), "w")
+  conhead <- file(paste(filename, ".HEAD", sep=""), "w")
   writeChar(AFNIheaderpart("string-attribute","HISTORY_NOTE",note),conhead,eos=NULL)
   writeChar(AFNIheaderpart("string-attribute","TYPESTRING","3DIM_HEAD_FUNC"),conhead,eos=NULL)  
   writeChar(AFNIheaderpart("string-attribute","IDCODE_STRING",idcode),conhead,eos=NULL)  
@@ -419,10 +419,185 @@ write.AFNI <- function(file, ttt, label, note="", origin=c(0,0,0), delta=c(4,4,4
   writeChar(AFNIheaderpart("string-attribute","BYTEORDER_STRING","MSB_FIRST"),conhead,eos=NULL)  
   close(conhead)
 
-  conbrik <- file(paste(file, ".BRIK", sep=""), "wb")
+  conbrik <- file(paste(filename, ".BRIK", sep=""), "wb")
   dim(ttt) <- NULL
   writeBin(as.integer(ttt), conbrik,size=2, endian="big")
   close(conbrik)
 }
 
+
+read.DICOM <- function(filename,includedata=TRUE) {
+  read.DICOM.groupelement <- function(con,endian="little") {
+    if (endian == "little") {
+      paste(paste(rev(readBin(con,"raw",2,1)),collapse=""),paste(rev(readBin(con,"raw",2,1)),collapse=""),sep=",")
+    } else {
+      paste(paste(readBin(con,"raw",2,1),collapse=""),paste(readBin(con,"raw",2,1),collapse=""),sep=",")
+    }    
+  }
+  
+  con <- file(filename,"rb")
+
+  endian <- "little"
+  
+  headerdetails <- list()
+  bytes <- 0
+
+  empty <- paste(readBin(con,"character",128,1),collapse="")
+  bytes <- bytes + 128
+  if (empty != "") {
+    warning("This does not seem to be a DICOM file\n")
+  }
+  dicom <- readChar(con,4)
+  bytes <- bytes + 4
+  if (dicom != "DICM") {
+    warning("This does not seem to be a DICOM file\n")
+  }
+  
+  groupelement <- 0
+  while (TRUE) {
+    groupelement <- read.DICOM.groupelement(con)
+    bytes <- bytes + 4
+    if (groupelement == "7fe0,0010") break
+    vr <- readChar(con,2)
+    bytes <- bytes + 2
+
+    if (vr %in% c("OB","OW","OF","SQ","UT","UN")) {
+      reserved <- readBin(con,"raw",2)
+      bytes <- bytes + 2
+      length <- readBin(con,"integer",1,4,signed=FALSE,endian=endian)
+      bytes <- bytes + 4
+      if (length == -1) {
+        while (TRUE) {
+          groupelement <- read.DICOM.groupelement(con)
+          bytes <- bytes + 4
+          if (groupelement == "fffe,e0dd") break
+          length <- readBin(con,"integer",1,4,signed=FALSE,endian=endian)
+          bytes <- bytes + 4
+          value <- readBin(con,"raw",length,1)
+          bytes <- bytes + length
+        }
+        length <- readBin(con,"integer",1,4,signed=FALSE,endian=endian)
+        bytes <- bytes + 4
+        value <- "undecoded sequence"
+      }
+    } else {
+      length <- readBin(con,"integer",1,2,signed=FALSE,endian=endian)
+      bytes <- bytes + 2
+    }
+
+    if (length != 0) {
+      if (vr %in% c("UI","DS","SH","IS")) {
+        value <- readChar(con,length)      
+        bytes <- bytes + length
+      } else if (vr %in% c("US")) {
+        total <- 0
+        value <- ""
+        while (total < length) {
+          value <- paste(value,readBin(con,"integer",1,2,signed=FALSE,endian=endian),sep="")
+          bytes <- bytes + 2
+          total <- total + 2
+        }
+      } else {
+        value <- readBin(con,"raw",length,1)
+        bytes <- bytes + length
+      }
+    }
+#    cat(groupelement,vr,length,paste(value,collapse=""),"\n")
+    if (groupelement %in% c("0002,0010",
+                            "0018,0050",
+                            "0020,0010",
+                            "0020,0011",
+                            "0020,0012",
+                            "0020,0013",
+                            "0020,0032",
+                            "0020,1041",
+                            "0028,0002",
+                            "0028,0010",
+                            "0028,0011",
+                            "0028,0030",
+                            "0028,0100",
+                            "0028,1050",
+                            "0028,1051",
+                            "0028,1052",
+                            "0028,1053")) {
+      headerdetails[[groupelement]] <- value
+    }
+  }
+
+  # belongs to last groupelement "7fe0,0010"
+  vr <- readChar(con,2)
+  bytes <- bytes + 2
+  if (vr %in% c("OB","OW","OF","SQ","UT","UN")) {
+    reserved <- readBin(con,"raw",2)
+    bytes <- bytes + 2
+    length <- readBin(con,"integer",1,4,signed=FALSE,endian=endian)
+    bytes <- bytes + 4
+  } else {
+    length <- readBin(con,"integer",1,2,signed=FALSE,endian=endian)
+    bytes <- bytes + 2
+  }
+  headerdetails[[groupelement]] <- length
+#  cat("Bytes for Header:",bytes,"\n")
+
+  close(con)
+  
+  if (!is.null(headerdetails[["0028,0010"]])) {
+    xdim <- as.integer(headerdetails[["0028,0010"]])
+  } else {
+    xdim <- NULL
+  }
+  if (!is.null(headerdetails[["0028,0011"]])) {
+    ydim <- as.integer(headerdetails[["0028,0011"]])
+  } else {
+    ydim <- NULL
+  }
+  if (!is.null(headerdetails[["0028,0100"]])) {
+    if (headerdetails[["0028,0100"]] == 16) {
+      depth <- 2
+    } else {
+      depth <- 1
+    }
+  } else {
+    depth <- 1
+  }
+  if (!is.null(headerdetails[["0028,0030"]])) {
+    delta <- as.numeric(strsplit(headerdetails[["0028,0030"]],"\\",fixed=TRUE)[[1]])
+    if (!is.null(headerdetails[["0018,0050"]])) {
+      delta <- c(delta,as.numeric(headerdetails[["0018,0050"]]))
+    }
+  } else {
+    delta <- NULL
+  }
+  if (!is.null(headerdetails[["0020,0011"]])) {
+    series <- as.integer(headerdetails[["0020,0011"]])
+  } else {
+    series <- NULL
+  }
+  if (!is.null(headerdetails[["0020,0013"]])) {
+    image <- as.integer(headerdetails[["0020,0013"]])
+  } else {
+    image <- NULL
+  }
+
+  # read again 
+  con <- file(filename,"rb")
+
+  header <- readBin(con,"raw",bytes)
+  
+  if (includedata) {
+    if (is.null(xdim) || is.null(ydim)) {
+      ttt <- readBin(con,"integer",length/depth,depth,signed=FALSE,endian=endian)
+      warning("Cannot assign dimension to image because information was not found!")
+    } else {
+      ttt <- array(readBin(con,"integer",length/depth,depth,signed=FALSE,endian=endian),c(xdim,ydim))
+    }
+    
+    z <- list(header=header,ttt=ttt,format="DICOM",delta=delta,series=series,image=image,dim=c(xdim,ydim))
+  } else {
+    z <- list(header=header,format="DICOM",delta=delta,series=series,image=image,dim=c(xdim,ydim))
+  }
+  close(con)
+  attr(z,"file") <- filename
+  invisible(z)
+}
 
