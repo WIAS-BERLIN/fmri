@@ -70,6 +70,10 @@ read.ANALYZE.volume <- function(filename) {
     what <- "raw"
     signed <- TRUE
     size <- 1
+  } else if (header$datatype == 2) { # unsigned char????
+    what <- "int"
+    signed <- FALSE
+    size <- if (header$bitpix) header$bitpix/8 else 2
   } else if (header$datatype == 4) { # signed short
     what <- "int"
     signed <- TRUE
@@ -281,7 +285,21 @@ write.ANALYZE <- function(ttt, header=NULL, filename) {
 
 
 read.AFNI <- function(filename) {
-  conhead <- file(paste(filename,".HEAD",sep=""),"r")
+  fileparts <- strsplit(filename,"\\.")[[1]]
+  ext <- tolower(fileparts[length(fileparts)])
+
+  if (ext == "head") {
+    filename.head <- filename
+    filename.brik <- paste(c(fileparts[-length(fileparts)],"BRIK"),collapse=".")
+  } else if (ext == "brik") {
+    filename.head <- paste(c(fileparts[-length(fileparts)],"HEAD"),collapse=".")
+    filename.brik <- filename
+  } else {
+    filename.head <- paste(filename,".HEAD",sep="")
+    filename.brik <- paste(filename,".BRIK",sep="")
+  }
+  
+  conhead <- file(filename.head,"r")
   header <- readLines(conhead)
   close(conhead)
 
@@ -318,7 +336,7 @@ read.AFNI <- function(filename) {
   dz <- values$DATASET_DIMENSIONS[3]
   dt <- values$DATASET_RANK[2]
   scale <- values$BRICK_FLOAT_FACS
-  size <- file.info(paste(filename,".BRIK",sep=""))$size/(dx*dy*dz*dt)
+  size <- file.info(filename.brik)$size/(dx*dy*dz*dt)
 
   if (regexpr("MSB",values$BYTEORDER_STRING[1]) != -1) {
     endian <- "big"
@@ -334,7 +352,7 @@ read.AFNI <- function(filename) {
   }
   
   if (as.integer(size) == size) {
-    conbrik <- file(paste(filename,".BRIK",sep=""),"rb")
+    conbrik <- file(filename.brik,"rb")
     myttt<- readBin(conbrik, "int", n=dx*dy*dz*dt*size, size=size, signed=TRUE, endian=endian)
     close(conbrik)
     dim(myttt) <- c(dx,dy,dz,dt)
@@ -601,3 +619,155 @@ read.DICOM <- function(filename,includedata=TRUE) {
   invisible(z)
 }
 
+read.NIFTI.header <- function(con) {
+  header <- list()
+  
+  # read 4 bytes and get the endianess by comparing filesize with 348
+  endian <- if ((sizeofhdr <- readBin(con,"int",1,4,endian="little")) == 348) "little" else "big"
+  header$sizeofhdr <- 348
+  header$endian <- endian
+  
+  header$datatype1 <- readChar(con,10)
+  header$dbname <- readChar(con,18)
+  header$extents <- readBin(con,"int",1,4,endian=endian)
+  header$sessionerror <- readBin(con,"int",1,2,endian=endian)
+  header$regular <- readChar(con,1)
+  header$diminfo <- readChar(con,1)
+  header$dimension <- readBin(con,"int",8,2,endian=endian)
+  header$intentp1 <- readBin(con,"double",1,4,endian=endian)
+  header$intentp2 <- readBin(con,"double",1,4,endian=endian)
+  header$intentp3 <- readBin(con,"double",1,4,endian=endian)
+  header$intentcode <- readBin(con,"int",1,2,endian=endian)
+  header$datatype <- readBin(con,"int",1,2,endian=endian)
+  header$bitpix <- readBin(con,"int",1,2,endian=endian)
+  header$slicestart <- readBin(con,"int",1,2,endian=endian)
+  header$pixdim <- readBin(con,"double",8,4,endian=endian)
+  header$voxoffset <- readBin(con,"double",1,4,endian=endian)
+  header$sclslope <- readBin(con,"double",1,4,endian=endian)
+  header$sclinter <- readBin(con,"double",1,4,endian=endian)
+  header$sliceend <- readBin(con,"int",1,2,endian=endian)
+  header$slicecode <- readChar(con,1)
+  header$xyztunits <- readChar(con,1)
+  header$calmax <- readBin(con,"double",1,4,endian=endian)
+  header$calmin <- readBin(con,"double",1,4,endian=endian)
+  header$sliceduration <- readBin(con,"double",1,4,endian=endian)
+  header$toffset <- readBin(con,"double",1,4,endian=endian)
+  header$glmax <- readBin(con,"int",1,4,endian=endian)
+  header$glmin <- readBin(con,"int",1,4,endian=endian)
+  header$describ <- readChar(con,80)
+  header$auxfile <- readChar(con,24)
+  header$qform <- readBin(con,"int",1,2,endian=endian)
+  header$sform <- readBin(con,"int",1,2,endian=endian)
+  header$quaternb <- readBin(con,"double",1,4,endian=endian)
+  header$quaternc <- readBin(con,"double",1,4,endian=endian)
+  header$quaternd <- readBin(con,"double",1,4,endian=endian)
+  header$qoffsetx <- readBin(con,"double",1,4,endian=endian)
+  header$qoffsety <- readBin(con,"double",1,4,endian=endian)
+  header$qoffsetz <- readBin(con,"double",1,4,endian=endian)
+  header$srowx <- readBin(con,"double",4,4,endian=endian)
+  header$srowy <- readBin(con,"double",4,4,endian=endian)
+  header$srowz <- readBin(con,"double",4,4,endian=endian)
+  header$intentname <- readChar(con,16)
+  header$magic <- readChar(con,4)
+  
+  header
+}
+
+read.NIFTI <- function(filename) {
+  fileparts <- strsplit(filename,"\\.")[[1]]
+  ext <- tolower(fileparts[length(fileparts)])
+
+  if (ext == "nii") {
+    filename.nii <- filename
+    filename.hdr <- paste(c(fileparts[-length(fileparts)],"hdr"),collapse=".")
+    filename.img <- paste(c(fileparts[-length(fileparts)],"img"),collapse=".")
+  } else if (ext == "hdr") {
+    filename.hdr <- filename
+    filename.img <- paste(c(fileparts[-length(fileparts)],"img"),collapse=".")
+  } else if (ext == "img") {
+    filename.hdr <- paste(c(fileparts[-length(fileparts)],"hdr"),collapse=".")
+    filename.img <- filename
+  } else {
+    filename.nii <- paste(filename,".nii",sep="")
+    filename.hdr <- paste(filename,".hdr",sep="")
+    filename.img <- paste(filename,".img",sep="")
+  }
+
+  if ((ext != "hdr") && (ext != "img") && (!is.na(file.info(filename.nii)$size))) {
+    con <- file(filename.nii,"rb")
+    header <- read.NIFTI.header(con)
+    if (!(header$magic == "n+1") && !(header$magic == "ni1")) 
+      warning("Hmmm! Dont see the magic NIFTI string! Try to proceed, but maybe some weird results will occur!");
+    bytes <- header$voxoffset - 348
+    header$extension <- readBin(con,"raw",bytes)
+  } else {
+    if (is.na(file.info(filename.hdr)$size) | (file.info(filename.hdr)$size < 348))
+      stop("Hmmm! This does not seem to be a NIFTI header (hdr/img-pair)! Wrong size or does not exist!");
+    con <- file(filename.hdr,"rb")
+    header <- read.NIFTI.header(con)
+    header$extension <- NULL  
+    close(con)
+    if (is.na(file.info(filename.img)$size))     
+      stop("Hmmm! This does not seem to be a NIFTI header (hdr/img-pair)! img-file not found!");
+    con <- file(filename.img,"rb")
+  }
+    
+  dx <- header$dimension[2]
+  dy <- header$dimension[3]
+  dz <- header$dimension[4]
+  dt <- header$dimension[5]
+  endian <- header$endian
+  if (header$datatype == 1) { # logical
+    what <- "raw"
+    signed <- TRUE
+    size <- 1
+  } else if (header$datatype == 2) { # unsigned char????
+    what <- "int"
+    signed <- FALSE
+    size <- if (header$bitpix) header$bitpix/8 else 2
+  } else if (header$datatype == 4) { # signed short
+    what <- "int"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 2
+  } else if (header$datatype == 8) { # signed integer
+    what <- "int"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 4
+  } else if (header$datatype == 16) { # float
+    what <- "double"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 4
+  } else if (header$datatype == 32) { # complex
+    what <- "complex"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 8
+  } else if (header$datatype == 64) { # double
+    what <- "double"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 8
+  } else { # all other
+    what <- "raw"
+    signed <- TRUE
+    size <- 1
+  }
+  ttt <- readBin(con, what, n=dx*dy*dz*dt*size, size=size, signed=signed, endian=endian) 
+  close(con)
+
+  if (min(abs(header$pixdim[2:4])) != 0) {
+    weights <-
+      abs(header$pixdim[2:4]/min(abs(header$pixdim[2:4])))
+  } else {
+    weights <- NULL
+  }
+  dim(ttt) <- c(dx,dy,dz,dt)
+
+  mask <- ttt[,,,1]
+  mask[mask < quantile(mask,0.75)] <- 0
+  mask[mask != 0] <- 1
+  z$mask <- mask
+
+  class(z) <- "fmridata"
+
+  z <- list(ttt=ttt,format="NIFTI",delta=header$pixdim[2:4],origin=NULL,orient=NULL,dim=header$dimension[2:5],weights=weights,header=header,mask=mask)
+  invisible(z)
+}
