@@ -27,6 +27,7 @@ read.DICOM(filename,includedata = TRUE)
   \item{dim}{dimension of the data if available}
 }
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
+\references{http://medical.nema.org}
 \note{ Since the DICOM standard is rather complicated, there may be
   cases where this function cannot read a DICOM file. Known issue: it
   cannot read header with implicit VR. Return value may change in future

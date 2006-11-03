@@ -61,10 +61,10 @@ read.ANALYZE.volume <- function(filename) {
   file.img <- paste(file.name, ".img", sep = "")
 
   header <- read.ANALYZE.header(file.hdr)
-  dx <- header$dimension[2]
-  dy <- header$dimension[3]
-  dz <- header$dimension[4]
-  dt <- header$dimension[5]
+  (dx <- header$dimension[2]) || (dx <- 1)
+  (dy <- header$dimension[3]) || (dy <- 1)
+  (dz <- header$dimension[4]) || (dz <- 1)
+  (dt <- header$dimension[5]) || (dt <- 1)
   endian <- header$endian
   if (header$datatype == 1) { # logical
     what <- "raw"
@@ -175,7 +175,7 @@ read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart =
     file.img <- paste(prefix, ".img", sep="")
   }
   
-  if (length(system(paste("ls",file.img),TRUE,TRUE)) != 0) {
+  if (!is.na(file.info(file.img)$size)) {
     analyze <- read.ANALYZE.volume(file.img);
     ttt <- analyze$ttt
     dt <- dim(ttt)
@@ -204,9 +204,9 @@ read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart =
       weights <- NULL
     }
     
-    z <- list(ttt=ttt,format="ANALYZE",delta=header$pixdim[2:4],origin=NULL,orient=NULL,dim=header$dimension[2:5],weights=weights,header=header)
+    z <- list(ttt=ttt,format="ANALYZE",delta=header$pixdim[2:4],origin=NULL,orient=NULL,dim=dim(ttt),weights=weights,header=header)
   } else {
-    warning(paste("Error: file",filename,"does not exist!"))
+    warning(paste("Error: file",file.img,"does not exist!"))
     z <- list(ttt=NULL,format="ANALYZE",delta=NULL,origin=NULL,orient=NULL,dim=NULL,weights=NULL,header=NULL)
   }
 
@@ -761,6 +761,8 @@ read.NIFTI <- function(filename) {
   }
   dim(ttt) <- c(dx,dy,dz,dt)
 
+  z <- list(ttt=ttt,format="NIFTI",delta=header$pixdim[2:4],origin=NULL,orient=NULL,dim=header$dimension[2:5],weights=weights,header=header)
+
   mask <- ttt[,,,1]
   mask[mask < quantile(mask,0.75)] <- 0
   mask[mask != 0] <- 1
@@ -768,6 +770,5 @@ read.NIFTI <- function(filename) {
 
   class(z) <- "fmridata"
 
-  z <- list(ttt=ttt,format="NIFTI",delta=header$pixdim[2:4],origin=NULL,orient=NULL,dim=header$dimension[2:5],weights=weights,header=header,mask=mask)
   invisible(z)
 }

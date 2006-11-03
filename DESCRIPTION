@@ -1,6 +1,6 @@
 Package: fmri
-Version: 1.01
-Date: 2006-8-30
+Version: 1.0-2
+Date: 2006-11-3
 Title: Analysis of fMRI experiments
 Author: Karsten Tabelow <tabelow@wias-berlin.de>
         Joerg Polzehl <polzehl@wias-berlin.de>
