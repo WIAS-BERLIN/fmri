@@ -1,7 +1,7 @@
 fmri.stimulus <- function(scans=1 ,onsets=c(1) ,length=c(1), rt=3,
   mean=TRUE, a1 = 6, a2 = 12, b1 = 0.9, b2 = 0.9, cc = 0.35) {
   numberofonsets <- length(onsets)
-  if (length(length) = 1) {
+  if (length(length) == 1) {
     length <- rep(length,numberofonsets)
   } else if (length(length) != numberofonsets)  {
     stop("Length of duration vector does not match the number of onsets!")
@@ -9,7 +9,7 @@ fmri.stimulus <- function(scans=1 ,onsets=c(1) ,length=c(1), rt=3,
   stimulus <- rep(0, scans)
   
   for (i in 1:numberofonsets) {
-    for (j in onset[i]:(onset[i]+length[i]-1)) {
+    for (j in onsets[i]:(onsets[i]+length[i]-1)) {
       stimulus[j] <- 1
     }
   }

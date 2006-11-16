@@ -191,7 +191,7 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
     header <- analyze$header;
     
     if ((numbpic > 1) && !numbered) { 
-      for (i in 2numbpic) {
+      for (i in 2:numbpic) {
         a <- read.ANALYZE.volume(filename[i])$ttt
         if (sum() != 0)
           cat("Error: wrong spatial dimension in picture",i)
