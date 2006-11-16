@@ -166,26 +166,33 @@ write.ANALYZE.volume <- function(ttt,filename) {
   close(con)
 }
 
-read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart = 1, numbpic = 1) {
+read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstart = 1, numbpic = 1) {
   counter <- c(paste("00", 1:9, sep=""), paste("0", 10:99, sep=""),paste(100:999,sep=""));
 
+  prefix <- strsplit(prefix,".img")
+  filename <- character(length(prefix))
   if (numbered) {
-    file.img <- paste(prefix, counter[picstart], postfix, ".img", sep="")
+    for (i in picstart:(picstart+numbpic-1)) {
+      filename[i] <- paste(prefix[[1]][1], counter[i], postfix, ".img", sep="")
+    }
   } else {
-    file.img <- paste(prefix, ".img", sep="")
+    for (i in 1:length(prefix)) {
+      if (length(prefix[[i]]) > 1)
+        warning("filename",paste(prefix[[i]],collapse=""),"probably misinterpreted due to extension-like .img in name!")
+      filename[i] <- paste(prefix[[i]][1], ".img", sep="")
+    }
   }
-  
-  if (!is.na(file.info(file.img)$size)) {
-    analyze <- read.ANALYZE.volume(file.img);
+
+  if (!is.na(file.info(filename[1])$size)) {
+    analyze <- read.ANALYZE.volume(filename[1]);
     ttt <- analyze$ttt
     dt <- dim(ttt)
     cat(".")
     header <- analyze$header;
     
     if ((numbpic > 1) && !numbered) { 
-      for (i in (picstart+1):(picstart+numbpic-1)) {
-        filename <- paste(prefix, counter[i], postfix, ".img", sep="")
-        a <- read.ANALYZE.volume(filename)$ttt
+      for (i in 2numbpic) {
+        a <- read.ANALYZE.volume(filename[i])$ttt
         if (sum() != 0)
           cat("Error: wrong spatial dimension in picture",i)
         ttt <- c(ttt,a);
@@ -206,7 +213,7 @@ read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart =
     
     z <- list(ttt=ttt,format="ANALYZE",delta=header$pixdim[2:4],origin=NULL,orient=NULL,dim=dim(ttt),weights=weights,header=header)
   } else {
-    warning(paste("Error: file",file.img,"does not exist!"))
+    warning(paste("Error: file",filename[1],"does not exist!"))
     z <- list(ttt=NULL,format="ANALYZE",delta=NULL,origin=NULL,orient=NULL,dim=NULL,weights=NULL,header=NULL)
   }
 
@@ -217,12 +224,12 @@ read.ANALYZE <- function(prefix = "", numbered = FALSE, postfix = "", picstart =
 
   class(z) <- "fmridata"
 
-  if (numbered) {
-    attr(z,"file") <- paste(prefix, counter[picstart], postfix, ".hdr/img", "...",
-                            prefix, counter[picstart+numbpic-1], postfix, ".hdr/img",
+  if (length(filename) > 1) {
+    attr(z,"file") <- paste(filename[1], "...",
+                            filename[length(filename)],
                             sep="")
   } else {
-    attr(z,"file") <- paste(prefix, ".hdr/img", sep="")
+    attr(z,"file") <- paste(filename[1], sep="")
   }
   
   invisible(z)
@@ -615,6 +622,8 @@ read.DICOM <- function(filename,includedata=TRUE) {
     z <- list(header=header,format="DICOM",delta=delta,series=series,image=image,dim=c(xdim,ydim))
   }
   close(con)
+  class(z) <- "fmridata"
+
   attr(z,"file") <- filename
   invisible(z)
 }
