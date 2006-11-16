@@ -14,7 +14,7 @@
 \arguments{
   \item{scans}{ number of scans }
   \item{onsets}{ vector of onset times (in scans) }
-  \item{length}{ length of ON stimulus (in scans) }
+  \item{length}{ vector of length of ON stimulus (in scans) }
   \item{rt}{ time between scans in seconds (TR) }
   \item{mean}{ logical. if TRUE the mean is substracted from the resulting vector }
   \item{a1}{ parameter of the hemodynamic response function (see details) }
