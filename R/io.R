@@ -159,10 +159,10 @@ write.ANALYZE.header <- function(header,filename) {
   close(con)
 }
 
-write.ANALYZE.volume <- function(ttt,filename) {
+write.ANALYZE.volume <- function(ttt,filename,size) {
   con <- file(paste(filename, ".img", sep=""), "wb")
   dim(ttt) <- NULL
-  writeBin(as.integer(ttt), con, 2)
+  writeBin(as.integer(ttt), con, size)
   close(con)
 }
 
@@ -284,9 +284,43 @@ write.ANALYZE <- function(ttt, header=NULL, filename) {
   if (!("smax" %in% names(header))) header$smax <- c(0)
   if (!("smin" %in% names(header))) header$smin <- c(0)
 
+  if (header$datatype == 1) { # logical
+    what <- "raw"
+    signed <- TRUE
+    size <- 1
+  } else if (header$datatype == 2) { # unsigned char????
+    what <- "int"
+    signed <- FALSE
+    size <- if (header$bitpix) header$bitpix/8 else 2
+  } else if (header$datatype == 4) { # signed short
+    what <- "int"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 2
+  } else if (header$datatype == 8) { # signed integer
+    what <- "int"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 4
+  } else if (header$datatype == 16) { # float
+    what <- "double"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 4
+  } else if (header$datatype == 32) { # complex
+    what <- "complex"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 8
+  } else if (header$datatype == 64) { # double
+    what <- "double"
+    signed <- TRUE
+    size <- if (header$bitpix) header$bitpix/8 else 8
+  } else { # all other
+    what <- "raw"
+    signed <- TRUE
+    size <- 1
+  }
+
   write.ANALYZE.header(header,filename)
 
-  write.ANALYZE.volume(ttt, filename)
+  write.ANALYZE.volume(ttt, filename,size)
 }
 
 
