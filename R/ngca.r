@@ -1,10 +1,11 @@
-ngca <- function(x,L=1000,T=10,m=3,eps=1.5,seigen=.99){
+ngca <- function(x,L=1000,T=10,m=3,eps=1.5,seigen=.99,keepv=FALSE){
 #
 #  NGCA algorithm 
 #
 #  
 #  x - data matrix  (Nxd)
 #
+set.seed(1)
 xdim <- dim(x)
 d <- xdim[2]
 n <- xdim[1]
@@ -12,7 +13,7 @@ xmean <- apply(x,2,mean)
 xvar <- var(x)
 y <- sweep(x,2,xmean)
 z <- svd(xvar)
-dd <- sum(cumsum(z$d)<seigen*sum(z$d))
+dd <- sum(cumsum(z$d)<=seigen*sum(z$d))
 cat("Dimension reduced to:",dd,"\n")
 y <- y%*%z$u%*%diag(z$d^(-.5))[,1:dd]
 y <- t(y)
@@ -42,10 +43,18 @@ fz <- .Fortran("fastica",
               as.double(s),
               DUP=FALSE,
               PACKAGE="fmri")[c("v","normv")]
-dim(fz$v) <- c(dd,4*L)
-fz$v <- t(fz$v[,fz$normv>eps])
-jhat <- prcomp(fz$v)
+v <- fz$v
+normv <- fz$normv
+dim(v) <- c(dd,4*L)
+v <- t(v[,normv>eps])
+jhat <- prcomp(v)
 ihat <- z$u[,1:dd]%*%jhat$rotation[,1:m]
 xhat <- x%*%ihat
-list(ihat=ihat,sdev=jhat$sdev[1:m],xhat=xhat)
+z <- list(ihat=ihat,sdev=jhat$sdev[1:m],xhat=xhat)
+if(keepv) {
+z$v <- v
+z$normv <- normv
+}
+class(z) <- "ngca"
+z
 }

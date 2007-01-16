@@ -6,7 +6,7 @@
   The function performs Non-Gaussian Component Analysis as described in Blanchard et.al. (2005).
 }
 \usage{
-ngca(x, L = 1000, T = 10, m = 3, eps = 1.5, seigen=.99)
+ngca(x, L = 1000, T = 10, m = 3, eps = 1.5, seigen=.99, keepv=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -30,6 +30,8 @@ ngca(x, L = 1000, T = 10, m = 3, eps = 1.5, seigen=.99)
     \item{sdev }{ Standard deviations of the principal components of 
                  the thresholded ICA directions}
     \item{xhat }{first m components of the rotated data}
+    \item{v }{If \code{keepv==TRUE} the set of directions \code{v^{(k)}}}
+    \item{normv }{If \code{keepv==TRUE} the norm of each \code{v^{(k)}}.}
   ...
 }
 \references{ Blanchard, G., Kawanabe, M., Sugiyama, M., Spokoiny, V. and M\"uller 

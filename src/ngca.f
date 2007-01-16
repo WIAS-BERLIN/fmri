@@ -1,25 +1,25 @@
       real*8 function f1(z,s)
       real*8 z,s,z2
       z2=z*z
-      f1=z*z2*dexp(-z2/2.d0/s/s)
+      f1=1.66d0*z*z2*dexp(-z2/2.d0/s/s)
       RETURN
       END
       real*8 function f1d1(z,s)
       real*8 z,s,z2,s2
       z2=z*z
       s2=s*s
-      f1d1=z2*(3.d0-z2/s2)*dexp(-z2/2.d0/s2)
+      f1d1=1.66d0*z2*(3.d0-z2/s2)*dexp(-z2/2.d0/s2)
       RETURN
       END
       real*8 function f2(z,s)
       real*8 z,s
-      f2=dtanh(s*z)
+      f2=2.d0*dtanh(s*z)
       RETURN
       END
       real*8 function f2d1(z,s)
       real*8 z,s,chsz
       chsz=dcosh(z*s)
-      f2d1=s/chsz/chsz
+      f2d1=2.d0*s/chsz/chsz
       RETURN
       END
       real*8 function f3(z,s)
@@ -117,3 +117,4 @@ C this is just to avoid some warnings
       END DO      
       RETURN
       END
+ 
