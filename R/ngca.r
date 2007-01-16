@@ -46,5 +46,6 @@ dim(fz$v) <- c(dd,4*L)
 fz$v <- t(fz$v[,fz$normv>eps])
 jhat <- prcomp(fz$v)
 ihat <- z$u[,1:dd]%*%jhat$rotation[,1:m]
-list(ihat=ihat,sdev=jhat$sdev[1:m])
+xhat <- x%*%ihat
+list(ihat=ihat,sdev=jhat$sdev[1:m],xhat=xhat)
 }

@@ -48,13 +48,16 @@
       real*8 f1,f1d1,f2,f2d1,f3,f3d1,f4,f4d1
       integer i,j,k,o,ifunct
       real*8 nk,z,fw,fwd1,nbeta,srnbeta,zv
+      nk=0.d0
+      nbeta=0.d0
+C this is just to avoid some warnings 
       DO ifunct=1,4
       DO k=1,l
          DO j=1,t
+            nk=0.d0
             DO o=1,d
                beta(o)=0.d0
             END DO
-            nk=0.d0
             DO i=1,n
                z=0.d0
                DO o=1,d
@@ -73,6 +76,9 @@
                case(4) 
                   fw=f4(z,s(k,ifunct))
                   fwd1=f4d1(z,s(k,ifunct))
+               case default
+                  fw=0.d0
+                  fwd1=1.d0
                end select
                DO o=1,d
                   z=y(o,i)*fw-omega(o,k,ifunct)*fwd1
@@ -106,6 +112,7 @@
          ELSE
             normv(k,ifunct)=0.d0
          END IF
+         call rchkusr()
       END DO
       END DO      
       RETURN
