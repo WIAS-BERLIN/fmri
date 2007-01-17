@@ -6,7 +6,7 @@
   The function performs Non-Gaussian Component Analysis as described in Blanchard et.al. (2005).
 }
 \usage{
-ngca(x, L = 1000, T = 10, m = 3, eps = 1.5, seigen=.99, keepv=FALSE)
+ngca(x, L = 1000, T = 10, m = 3, eps = 1.5, npca=dim(x)[2] , keepv=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -15,9 +15,11 @@ ngca(x, L = 1000, T = 10, m = 3, eps = 1.5, seigen=.99, keepv=FALSE)
   \item{T}{ Number of Fast ICA iterations  }
   \item{m}{ Number of non-Gaussian components. }
   \item{eps}{ Threshold (defaults to 1.5)}
-  \item{seigen}{ Reduce space to principal components that account for
-                100*seigen percent of the variability. This can be used to avoid 
-                standardizing by numerically singular covariance matrices.}
+  \item{npca}{ Reduce space to \code{npca} principal components. This can be 
+               used to avoid standardizing by numerically singular covariance matrices.
+               In fMRI this allows to reduce the dimensionality assuming that
+               the interesting non-Gaussian directions are also characterized by
+               larger variances.}
 }
 \details{
   The function performs Non-Gaussian Component Analysis as described in Blanchard et.al. (2006).

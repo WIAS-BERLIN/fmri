@@ -1,4 +1,4 @@
-ngca <- function(x,L=1000,T=10,m=3,eps=1.5,seigen=.99,keepv=FALSE){
+ngca <- function(x,L=1000,T=10,m=3,eps=1.5,npca=dim(x)[2],keepv=FALSE){
 #
 #  NGCA algorithm 
 #
@@ -13,10 +13,8 @@ xmean <- apply(x,2,mean)
 xvar <- var(x)
 y <- sweep(x,2,xmean)
 z <- svd(xvar)
-dd <- sum(cumsum(z$d)<=seigen*sum(z$d))
-cat("Dimension reduced to:",dd,"\n")
-y <- y%*%z$u%*%diag(z$d^(-.5))[,1:dd]
-y <- t(y)
+cat("Dimension reduced to:",npca,"\n")
+y <- t(y%*%z$u%*%diag(z$d^(-.5))[,1:npca])
 #
 #  thats the standardized version of x
 #
@@ -28,27 +26,27 @@ s[,4] <- seq(0,4,length=L)
 #
 #   now fast ICA
 #
-omega <- matrix(rnorm(4*L*dd),dd,L*4)
+omega <- matrix(rnorm(4*L*npca),npca,L*4)
 omega <- sweep(omega,2,sqrt(apply(omega^2,2,sum)),"/")
 fz <- .Fortran("fastica",
               as.double(y),
               as.double(omega),
-              as.integer(dd),
+              as.integer(npca),
               as.integer(n),
               as.integer(L),
               as.integer(T),
-              double(dd),
-              v=double(dd*L*4),
+              double(npca),
+              v=double(npca*L*4),
               normv=double(L*4),
               as.double(s),
               DUP=FALSE,
               PACKAGE="fmri")[c("v","normv")]
 v <- fz$v
 normv <- fz$normv
-dim(v) <- c(dd,4*L)
+dim(v) <- c(npca,4*L)
 v <- t(v[,normv>eps])
 jhat <- prcomp(v)
-ihat <- z$u[,1:dd]%*%jhat$rotation[,1:m]
+ihat <- z$u[,1:npca]%*%jhat$rotation[,1:m]
 xhat <- x%*%ihat
 z <- list(ihat=ihat,sdev=jhat$sdev[1:m],xhat=xhat)
 if(keepv) {
