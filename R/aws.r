@@ -30,7 +30,7 @@
 vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
                    sigma2=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
                    u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,na.rm=FALSE,
-                   spmin=0,spmax=1.1,scorr=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE) {
+                   spmin=.3,spmax=1.1,scorr=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE) {
 
   #  Auxilary functions
   IQRdiff <- function(y) IQR(diff(y))/1.908
@@ -64,14 +64,13 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
   # set the code for the kernel (used in lkern) and set lambda
   lkern <- switch(lkern,
                   Triangle=2,
-                  Quadratic=3,
-                  Cubic=4,
-                  Uniform=1,
-                  Gaussian=5,
-                  2)
+                  Plateau=1,
+                  Gaussian=3,
+                  1)
   skern <- switch(skern,
-                  Triangle=1,
-                  Exp=2,
+                  Triangle=2,
+                  Plateau=1,
+                  Exp=3,
                   2)
 
   # define qlambda, lambda
@@ -82,12 +81,12 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
   } else {
     lambda <- 1e50
   }
-  if(skern==1) {
+  if(skern%in%c(1,2)) {
     # to have similar preformance compared to skern="Exp"
     lambda <- 4/3*lambda
-    spmin <- 0
+    if(skern==1) {if(is.null(spmin)) spmin <- .3} else spmin <- 0
     spmax <- 1
-  }
+  } else spmin <- 0
 
   # set hinit and hincr if not provided
   if (is.null(hinit)||hinit<1) hinit <- 1
@@ -96,7 +95,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
   if (is.null(hmax)) hmax <- 5    # uses a maximum of about 520 points
 
   # re-define bandwidth for Gaussian lkern!!!!
-  if (lkern==5) {
+  if (lkern==3) {
     # assume  hmax was given in  FWHM  units (Gaussian kernel will be truncated at 4)
     hmax <- hmax*0.42445*4
     hinit <- min(hinit,hmax)
@@ -144,7 +143,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
   if (is.null(lseq)) {
     lseqgauss <- c(rep(1,6),1.1,1.3,1.45,1.55,1.6,1.5,1.4,1.35,1.25,1.25,1.2,1.2,1.15,1.15,1.15,1.15,1.2,1.15,1.15,1.15,1.15,1.15)    
     lseqtriangle <- c(2,1.6,1.25,1.15,1.35,1.4,1.15,1.1,1.1,1.1,1.1,1.15,1.2,1.1,1.1,1.15,1.15,1.15)
-    lseq <- switch(lkern,Gaussian=lseqgauss,Triangle=lseqtriangle,lseqtriangle)
+    lseq <- switch(lkern,lseqtriangle,lseqtriangle,lseqgauss)
   }
   if (length(lseq)<steps) lseq <- c(lseq,rep(1.1,steps-length(lseq)))
   lseq <- lseq[1:steps]

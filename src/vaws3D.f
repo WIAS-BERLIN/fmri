@@ -17,16 +17,14 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       IF (xsq.ge.1) THEN
          lkern=0.d0
       ELSE IF (kern.eq.1) THEN
-         lkern=1.d0
+         IF(xsq.le.0.5d0) THEN
+            lkern=1.d0
+         ELSE
+            lkern=2.d0*(1.d0-xsq)
+         END IF
       ELSE IF (kern.eq.2) THEN
          lkern=1.d0-xsq
       ELSE IF (kern.eq.3) THEN
-         z=1.d0-xsq
-         lkern=z*z
-      ELSE IF (kern.eq.4) THEN
-         z=1.d0-xsq
-         lkern=z*z*z
-      ELSE IF (kern.eq.5) THEN
          lkern=dexp(-xsq*8.d0)
       ELSE
 C        use Epanechnikov
@@ -59,6 +57,9 @@ C  compute distance in sij
       IF (sij.gt.spmax) THEN
          wj=0.d0
       ELSE IF (skern.eq.1) THEN
+C  skern == "Triangle"
+         wj=wj*dmin1(1.d0,1.d0-spf*(sij-spmin))
+      ELSE IF (skern.eq.2) THEN
 C  skern == "Triangle"
          wj=wj*(1.d0-sij)
       ELSE

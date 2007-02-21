@@ -15,14 +15,16 @@ fmri.smooth(spm, hmax = 4, adaptive=TRUE,
   \item{hmax}{ maximum bandwidth to smooth }
   \item{adaptive}{ logical. TRUE (default) for adaptive smoothing }
   \item{lkern}{ \code{lkern} specifies the location kernel. Defaults to
-    "Triangle", other choices are "Gaussian", "Quadratic", "Cubic" and
-    "Uniform". Note that the location kernel is applied to
+    "Plateau", other choices are "Triangle" and "Gaussian". Note that the location kernel is applied to
     \code{(x-x_j)^2/h^2}, i.e. the use of "Triangle" corresponds to the
-    Epanechnicov kernel in nonparametric kernel regression. }
+    Epanechnicov kernel in nonparametric kernel regression. "Plateau" specifies a kernel that is equal to 1 in the interval (0,.3),
+    decays linearly in (.5,1) and is 0 for arguments larger than 1.}
   \item{skern}{ \code{skern} specifies the kernel for the statistical
-    penalty. Defaults to "Triangle", the alternative is "Exp".
-    \code{lkern="Triangle"} allows for much faster computation (saves up
-    to 50\%).}
+    penalty. Defaults to "Plateau", the alternatives are "Triangle" and "Exp".
+    "Plateau" specifies a kernel that is equal to 1 in the interval (0,.3),
+    decays linearly in (.3,1) and is 0 for arguments larger than 1.
+    \code{lkern="Plateau"} and \code{lkern="Triangle"} allow for much faster computation (saves up
+    to 50\% CPU-time). \code{lkern="Plateau"} produces a less random weighting scheme.}
   \item{na.rm}{\code{na.rm} specifies how NA's in the SPM are handled. NA's may occur
    in voxel where the time series information did not allow for estimating parameters and their variances
    or where the time series information where constant over time. A high (1e19) value of the variance 
