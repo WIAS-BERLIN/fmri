@@ -1,4 +1,4 @@
-fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Triangle",skern="Triangle",na.rm=FALSE) {
+fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Plateau",skern="Plateau",na.rm=FALSE) {
   cat("fmri.smooth: entering function\n")
   
   if (!("fmrispm" %in% class(spm))) {
