@@ -97,7 +97,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
   # re-define bandwidth for Gaussian lkern!!!!
   if (lkern==3) {
     # assume  hmax was given in  FWHM  units (Gaussian kernel will be truncated at 4)
-    hmax <- hmax*0.42445*4
+    hmax <- hmax*0.424661*4
     hinit <- min(hinit,hmax)
   }
   if (qlambda == 1) hinit <- hmax
