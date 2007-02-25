@@ -27,10 +27,10 @@
 #  USA.
 #
 
-vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
+vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
                    sigma2=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
                    u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,na.rm=FALSE,
-                   spmin=.3,spmax=1.1,scorr=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE) {
+                   spmin=.3,scorr=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE) {
 
   #  Auxilary functions
   IQRdiff <- function(y) IQR(diff(y))/1.908
@@ -70,11 +70,11 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
   skern <- switch(skern,
                   Triangle=2,
                   Plateau=1,
-                  Exp=3,
+                  Exponential=3,
                   2)
 
   # define qlambda, lambda
-  if (is.null(qlambda)) qlambda <- .985
+  if (is.null(qlambda)) qlambda <- switch(skern,.97,.992,.996)
   if (qlambda<.9) warning("Inappropriate value of qlambda")
   if (qlambda<1) {
     lambda <- qchisq(qlambda,dv0) 
@@ -86,8 +86,10 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
     lambda <- 4/3*lambda
     if(skern==1) {if(is.null(spmin)) spmin <- .3} else spmin <- 0
     spmax <- 1
-  } else spmin <- 0
-
+  } else {
+      spmin <- 0
+      spmax <- 4
+  }
   # set hinit and hincr if not provided
   if (is.null(hinit)||hinit<1) hinit <- 1
   
@@ -97,7 +99,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
   # re-define bandwidth for Gaussian lkern!!!!
   if (lkern==3) {
     # assume  hmax was given in  FWHM  units (Gaussian kernel will be truncated at 4)
-    hmax <- hmax*0.424661*4
+    hmax <- hmax/sqrt(8*log(2))*4
     hinit <- min(hinit,hmax)
   }
   if (qlambda == 1) hinit <- hmax
@@ -141,11 +143,13 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
 
   # define lseq
   if (is.null(lseq)) {
-    lseqgauss <- c(rep(1,6),1.1,1.3,1.45,1.55,1.6,1.5,1.4,1.35,1.25,1.25,1.2,1.2,1.15,1.15,1.15,1.15,1.2,1.15,1.15,1.15,1.15,1.15)    
-    lseqtriangle <- c(2,1.6,1.25,1.15,1.35,1.4,1.15,1.1,1.1,1.1,1.1,1.15,1.2,1.1,1.1,1.15,1.15,1.15)
-    lseq <- switch(lkern,lseqtriangle,lseqtriangle,lseqgauss)
+# this is optimized for lkern="Gaussian" such that alpha approx 0.04 -- 0.1 and probability of separated points is approx. 1e-4
+    lseqexp <- c(rep(1.286,11), 1.21, 1.21, 1.14, 1.14, 1.07, 1.07)# alpha=0.1       prob: .36e-4
+    lseqtriangle <- c(1.79, 1.64, 1.57, 1.5, 1.5, 1.43, 1.43, 1.36, 1.36, 1.29, 1.29, 1.21, 1.21, 1.14, 1.14, 1.07, 1.07) # alpha=0.1       prob: .5e-4
+    lseqplateau  <- c(rep(1.25,10),1.1875,1.125,rep(1.0625,3),1)# alpha=0.0428       prob: 1.2e-4
+    lseq <- switch(skern,lseqplateau,lseqtriangle,lseqexp)
   }
-  if (length(lseq)<steps) lseq <- c(lseq,rep(1.1,steps-length(lseq)))
+  if (length(lseq)<steps) lseq <- c(lseq,rep(1,steps-length(lseq)))
   lseq <- lseq[1:steps]
 
   k <- 1
@@ -244,7 +248,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
       title(paste("Sum of weights: min=",signif(min(tobj$bi),3)," mean=",signif(mean(tobj$bi),3)," max=",signif(max(tobj$bi),3)))
     }
     if (!is.null(u)) {
-      cat("bandwidth: ",signif(hakt,3),"eta==1",sum(tobj$eta==1),"   MSE: ",
+      cat("bandwidth: ",signif(hakt*switch(lkern,1,1,sqrt(8*log(2))/4),3),"eta==1",sum(tobj$eta==1),"   MSE: ",
           signif(mean((theta-u)^2),3),"   MAE: ",signif(mean(abs(theta-u)),3)," mean(bi)=",signif(mean(tobj$bi),3),"\n")
       mae <- c(mae,signif(mean(abs(theta-u)),3))
     } else if (total !=0) {
@@ -371,7 +375,8 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Triangle",
  
   #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
   z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,vred0=vred0,y=y,
-            hmax=tobj$hakt,mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg,alpha=propagation)
+            hmax=tobj$hakt*switch(lkern,1,1,sqrt(8*log(2))/4),mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg,alpha=propagation)
+# Bandwidth in FWHM in case of lkern="Gaussian"
   class(z) <- "aws.gaussian"
   invisible(z)
 }
