@@ -128,7 +128,7 @@ detectnonaws <- fmri.pvalue(resultnonaws)
 npmask <- apply(detectnonaws$pvalue<0.05,c(1,2),sum)
 
 # at last show some nice images
-X11(width=11,height=4,canvas="lightyellow")
+X11(width=11,height=4)
 par(mfrow=c(1,3),mar=c(2.5,2.5,3,0.5))
 image(1:i,1:j,sig[,,1],col=grey(0:255/255),xlab="",ylab="",main="True activation")
 image(1:i,1:j,pmask,xlab="",ylab="",main="Detected using AWS")
