@@ -74,7 +74,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
                   2)
 
   # define qlambda, lambda
-  if (is.null(qlambda)) qlambda <- switch(skern,.97,.992,.996)
+  if (is.null(qlambda)) qlambda <- switch(skern,.985,.992,.996)
   if (qlambda<.9) warning("Inappropriate value of qlambda")
   if (qlambda<1) {
     lambda <- qchisq(qlambda,dv0) 
@@ -146,7 +146,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
 # this is optimized for lkern="Gaussian" such that alpha approx 0.04 -- 0.1 and probability of separated points is approx. 1e-4
     lseqexp <- c(rep(1.286,11), 1.21, 1.21, 1.14, 1.14, 1.07, 1.07)# alpha=0.1       prob: .36e-4
     lseqtriangle <- c(1.79, 1.64, 1.57, 1.5, 1.5, 1.43, 1.43, 1.36, 1.36, 1.29, 1.29, 1.21, 1.21, 1.14, 1.14, 1.07, 1.07) # alpha=0.1       prob: .5e-4
-    lseqplateau  <- c(rep(1.25,10),1.1875,1.125,rep(1.0625,3),1)# alpha=0.0428       prob: 1.2e-4
+    lseqplateau  <- c(rep(1.25,10),1.1875,1.125,rep(1.0625,3),1)# alpha=0.056       prob: .24e-4
     lseq <- switch(skern,lseqplateau,lseqtriangle,lseqexp)
   }
   if (length(lseq)<steps) lseq <- c(lseq,rep(1,steps-length(lseq)))

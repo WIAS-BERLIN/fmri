@@ -13,7 +13,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       real*8 function lkern(kern,xsq)
       implicit logical (a-z)
       integer kern
-      real*8 xsq,z
+      real*8 xsq
       IF (xsq.ge.1) THEN
          lkern=0.d0
       ELSE IF (kern.eq.1) THEN
