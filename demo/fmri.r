@@ -119,13 +119,13 @@ spm <- fmri.lm(data1,z)
 
 # adaptively smooth the spm
 resultaws <- fmri.smooth(spm,hmax=hmax,lkern="Gaussian")
-detectaws <- fmri.detect(resultaws)
-pmask <- apply(detectaws$detect>-log(0.05),c(1,2),sum)
+detectaws <- fmri.pvalue(resultaws)
+pmask <- apply(detectaws$pvalue<0.05,c(1,2),sum)
 
 # smooth non adaptively
-resultnonaws <- fmri.smooth(spm,hmax=hmax,qlambda=1,lkern="Gaussian")
-detectnonaws <- fmri.detect(resultnonaws)
-npmask <- apply(detectnonaws$detect>-log(0.05),c(1,2),sum)
+resultnonaws <- fmri.smooth(spm,hmax=hmax,adaptive=FALSE,lkern="Gaussian")
+detectnonaws <- fmri.pvalue(resultnonaws)
+npmask <- apply(detectnonaws$pvalue<0.05,c(1,2),sum)
 
 # at last show some nice images
 X11(width=11,height=4,canvas="lightyellow")
