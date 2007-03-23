@@ -120,7 +120,7 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   dim(ttt) <- c(prod(dy[1:3]),dy[4])
   arfactor <- rep(0,length=prod(dy[1:3]))
   variance <- rep(0,length=prod(dy[1:3]))
-  if (length(vvector) > 1) variancem <- array(0,c(dy[1:3],length(vector)^2))
+  if (length(vvector) > 1) variancem <- array(0,c(dy[1:3],length(vvector)^2))
 
   # calculate matrix R for bias correction in correlation coefficient
   # estimate
@@ -213,6 +213,7 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
           variancepart[indar] <- t(contrast) %*% xtx %*% contrast # variance estimate
           if (length(vvector) > 1) variancepartm[,indar] <- as.vector(xtx[as.logical(vvector),as.logical(vvector)])
         }
+        gc()
       }
       b <- rep(1/dy[4],length=dy[4])
       variance <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * variancepart
@@ -243,7 +244,18 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
 
   cat("fmri.lm: calculating spatial correlation\n")
 
-  corr <- correlation(residuals,data$mask)
+  corr <- .Fortran("corr",
+                    as.double(residuals),
+                    as.logical(data$mask),
+                    as.integer(dy[1]),
+                    as.integer(dy[2]),
+                    as.integer(dy[3]),
+                    as.integer(dy[4]),
+                    scorr=double(3),
+                    DUP=FALSE,
+                    PACKAGE="fmri")$scorr
+  gc()
+
   bwx <- get.bw.gauss(corr[1])
   bwy <- get.bw.gauss(corr[2])
   bwz <- get.bw.gauss(corr[3])
