@@ -1,18 +1,5 @@
-fmri.stimulus <- function(scans=1 ,onsets=c(1) ,length=c(1), rt=3,
-  mean=TRUE, a1 = 6, a2 = 12, b1 = 0.9, b2 = 0.9, cc = 0.35) {
-  numberofonsets <- length(onsets)
-  if (length(length) == 1) {
-    length <- rep(length,numberofonsets)
-  } else if (length(length) != numberofonsets)  {
-    stop("Length of duration vector does not match the number of onsets!")
-  }
-  stimulus <- rep(0, scans)
-  
-  for (i in 1:numberofonsets) {
-    for (j in onsets[i]:(onsets[i]+length[i]-1)) {
-      stimulus[j] <- 1
-    }
-  }
+fmri.stimulus <- function(scans=1 ,onsets=c(1) ,durations=c(1),
+  rt=3, times=NULL, mean=TRUE, a1 = 6, a2 = 12, b1 = 0.9, b2 = 0.9, cc = 0.35) {
 
   mygamma <- function(x, a1, a2, b1, b2, c) {
     d1 <- a1 * b1
@@ -23,8 +10,35 @@ fmri.stimulus <- function(scans=1 ,onsets=c(1) ,length=c(1), rt=3,
     res
   }
 
-  hrf <- convolve(stimulus,mygamma(scans:1, a1, a2, b1/rt, b2/rt, cc))
-  dim(hrf) <- c(scans,1)
+
+
+  if (is.null(times)) {
+    scale <- 1
+  } else {
+    scale <- 100
+    onsets <- times/rt*scale
+    durations <- durations/rt*scale
+    rt <- rt/scale
+    scans <- scans*scale
+  }
+  numberofonsets <- length(onsets)
+  
+  if (length(durations) == 1) {
+    durations <- rep(durations,numberofonsets)
+  } else if (length(durations) != numberofonsets)  {
+    stop("Length of duration vector does not match the number of onsets!")
+  }
+  stimulus <- rep(0, scans)
+  
+  for (i in 1:numberofonsets) {
+    for (j in onsets[i]:(onsets[i]+durations[i]-1)) {
+      stimulus[j] <- 1
+    }
+  }
+  hrf <- convolve(stimulus,mygamma(scans:1, a1, a2, b1/rt, b2/rt, cc))/scale
+  hrf <- hrf[unique((scale:scans)%/%scale)*scale]
+  
+  dim(hrf) <- c(scans/scale,1)
   
   if (mean) {
     hrf - mean(hrf)
@@ -32,6 +46,7 @@ fmri.stimulus <- function(scans=1 ,onsets=c(1) ,length=c(1), rt=3,
     hrf
   }
 }
+
 
 
 
