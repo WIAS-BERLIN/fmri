@@ -15,7 +15,7 @@ C  correlation in x
       z2=0.d0
       zcorr=0.d0
       k=0
-      do i1=1,n1
+      do i1=1,n1-1
          do i2=1,n2
             do i3=1,n3
                if (.not.(mask(i1,i2,i3).and.mask(i1+1,i2,i3))) CYCLE
@@ -55,7 +55,7 @@ C  correlation in y
       zcorr=0.d0
       k=0
       do i1=1,n1
-         do i2=1,n2
+         do i2=1,n2-1
             do i3=1,n3
                if (.not.(mask(i1,i2,i3).and.mask(i1,i2+1,i3))) CYCLE
                do i4=1,nv
@@ -95,7 +95,7 @@ C  correlation in z
       k=0
       do i1=1,n1
          do i2=1,n2
-            do i3=1,n3
+            do i3=1,n3-1
                if (.not.(mask(i1,i2,i3).and.mask(i1,i2,i3+1))) CYCLE
                do i4=1,nv
                   resi=res(i1,i2,i3,i4)
