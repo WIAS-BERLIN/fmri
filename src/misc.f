@@ -46,8 +46,12 @@
                enddo
             enddo
          enddo
-         if (k.gt.0) scorr(1)=z/k/vrm
-         
+         if (k.gt.0) THEN
+             scorr(1)=z/k/vrm
+         ELSE
+             scorr(1)=0.d0
+             call intpr("All zero residuals x",20,scorr(1),1)
+         END IF
          k=0
          z=0.d0
          do i1=1,n1
@@ -63,8 +67,12 @@
                enddo
             enddo
          enddo
-         if (k.gt.0) scorr(2)=z/k/vrm
-         
+         if (k.gt.0) THEN
+             scorr(2)=z/k/vrm
+         ELSE
+             scorr(2)=0.d0
+             call intpr("All zero residuals y",20,scorr(2),1)
+         END IF
          k=0
          z=0.d0
          do i1=1,n1
@@ -80,8 +88,17 @@
                enddo
             enddo
          enddo
-         if (k.gt.0) scorr(3)=z/k/vrm
+         if (k.gt.0) THEN
+             scorr(3)=z/k/vrm
+         ELSE
+             scorr(3)=0.d0
+             call intpr("All zero residuals z",20,scorr(3),1)
+         END IF
+      ELSE
+         scorr(1)=0.d0
+         scorr(2)=0.d0
+         scorr(3)=0.d0
+         call intpr("All zero residuals xyz",22,scorr,3)
       endif
-
       return
       end
