@@ -1,5 +1,5 @@
-fwhm2bw <- function(hfwhm) hfwhm*sqrt(2*log(2))
-bw2fwhm <- function(h) h/sqrt(2*log(2))
+fwhm2bw <- function(hfwhm) hfwhm/sqrt(8*log(2))
+bw2fwhm <- function(h) h*sqrt(8*log(2))
 
 Varcor.gauss<-function(h,interv = 1){
 #
@@ -11,6 +11,8 @@ Varcor.gauss<-function(h,interv = 1){
 #  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
 #  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
 #  discretisation into voxel) 
+#
+#  h in FWHM
 #
   h<-fwhm2bw(h)*interv
   ih<-trunc(4*h)+1
@@ -36,6 +38,8 @@ Spatialvar.gauss<-function(h,h0,d,interv=1){
 #  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
 #  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
 #  discretisation into voxel) 
+#
+#  h and h0 in FWHM
 #
   h0 <- pmax(h0,1e-5)
   h <- pmax(h,1e-5)
@@ -112,6 +116,9 @@ get3Dh.gauss <- function(vred,vwghts,step=1.002,interv=1){
 }
 
 gkernsm <- function(y,h=1) {
+#
+# h in SD
+#
   grid <- function(d) {
     d0 <- d%/%2+1
     gd <- seq(0,1,length=d0)
@@ -134,8 +141,7 @@ gkernsm <- function(y,h=1) {
 }
 
 get.bw.gauss <- function(corr, step = 1.001,interv=2) {
-  
-  # get the   bandwidth for lkern corresponding to a given correlation
+  #  get the corresponding FWHM bandwidth for lkern and a given correlation
   #  keep it simple result does not depend on d
 
   #  interv allows for further discretization of the Gaussian Kernel, result depends on
@@ -161,6 +167,9 @@ get.corr.gauss <- function(h,interv=1) {
     #   Calculates the correlation of 
     #   colored noise that was produced by smoothing with "gaussian" kernel and bandwidth h
     #   Result does not depend on d for "Gaussian" kernel !!
+    #
+    #   h in FWHM
+    #
     h <- fwhm2bw(h)*interv
     ih <- trunc(4*h+ 2*interv-1)
     dx <- 2*ih+1

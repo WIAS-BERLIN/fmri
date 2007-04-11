@@ -266,7 +266,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
   }
 
   #   Now compute variance of theta and variance reduction factor (with respect to the spatially uncorrelated situation   
-  g <- trunc(h0/c(1,wghts)/2.3548*4)
+  g <- trunc(fwhm2bw(h0/c(1,wghts))*4)
 
   #  use g <- trunc(fwhm2bw(h0/c(1,wghts))*3)+1 if it takes to long
   cat("estimate variances .")
