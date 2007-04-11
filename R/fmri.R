@@ -208,8 +208,7 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE ) {
 
 
 
-plot.fmridata <- function(x, anatomic = NULL , maxpvalue =
-                          0.05, spm = TRUE,
+plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
                             pos = c(-1,-1,-1), type="slice",
                             device="X11", file="plot.png",...) {
   mri.colors <- function (n1, n2, factor=n1/(n1+n2), from=0, to=.2) {

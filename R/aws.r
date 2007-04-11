@@ -99,7 +99,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
   # re-define bandwidth for Gaussian lkern!!!!
   if (lkern==3) {
     # assume  hmax was given in  FWHM  units (Gaussian kernel will be truncated at 4)
-    hmax <- hmax/sqrt(8*log(2))*4
+    hmax <- fwhm2bw(hmax)*4
     hinit <- min(hinit,hmax)
   }
   if (qlambda == 1) hinit <- hmax
@@ -168,9 +168,9 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
   # run single steps to display intermediate results
   while (hakt<=hmax) {
     dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
-    if (scorr[1]>=0.1) lambda0 <- lambda0 * Spatialvar.gauss(hakt0/0.42445/4*c(1,wghts),h0*c(1,wghts),d) /
+    if (scorr[1]>=0.1) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0)/4*c(1,wghts),h0*c(1,wghts),d) /
       Spatialvar.gauss(h0*c(1,wghts),1e-5,d) /
-        Spatialvar.gauss(hakt0/0.42445/4*c(1,wghts),1e-5,d)
+        Spatialvar.gauss(bw2fwhm(hakt0)/4*c(1,wghts),1e-5,d)
         # Correction C(h0,hakt) for spatial correlation depends on h^{(k-1)}  all bandwidth-arguments in FWHM 
     hakt0 <- hakt
     theta0 <- theta
@@ -248,7 +248,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
       title(paste("Sum of weights: min=",signif(min(tobj$bi),3)," mean=",signif(mean(tobj$bi),3)," max=",signif(max(tobj$bi),3)))
     }
     if (!is.null(u)) {
-      cat("bandwidth: ",signif(hakt*switch(lkern,1,1,sqrt(8*log(2))/4),3),"eta==1",sum(tobj$eta==1),"   MSE: ",
+      cat("bandwidth: ",signif(hakt*switch(lkern,hakt,hakt,bw2fwhm(hakt)/4),3),"eta==1",sum(tobj$eta==1),"   MSE: ",
           signif(mean((theta-u)^2),3),"   MAE: ",signif(mean(abs(theta-u)),3)," mean(bi)=",signif(mean(tobj$bi),3),"\n")
       mae <- c(mae,signif(mean(abs(theta-u)),3))
     } else if (total !=0) {
@@ -268,17 +268,17 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
   #   Now compute variance of theta and variance reduction factor (with respect to the spatially uncorrelated situation   
   g <- trunc(h0/c(1,wghts)/2.3548*4)
 
-  #  use g <- trunc(h0/c(1,wghts)/2.3548*3)+1 if it takes to long
+  #  use g <- trunc(fwhm2bw(h0/c(1,wghts))*3)+1 if it takes to long
   cat("estimate variances .")
-  if(h0[1]>0) gw1 <- dnorm(-(g[1]):g[1],0,h0[1]/2.3548)/dnorm(0,0,h0[1]/2.3548) else gw1 <- 1
-  if(h0[2]>0) gw2 <- dnorm(-(g[2]):g[2],0,h0[2]/2.3548/wghts[1])/dnorm(0,0,h0[2]/2.3548/wghts[1]) else gw2 <- 1
-  if(h0[3]>0) gw3 <- dnorm(-(g[3]):g[3],0,h0[3]/2.3548/wghts[2])/dnorm(0,0,h0[3]/2.3548/wghts[2]) else gw3 <- 1
+  if(h0[1]>0) gw1 <- dnorm(-(g[1]):g[1],0,fwhm2bw(h0[1]))/dnorm(0,0,fwhm2bw(h0[1])) else gw1 <- 1
+  if(h0[2]>0) gw2 <- dnorm(-(g[2]):g[2],0,fwhm2bw(h0[2])/wghts[1])/dnorm(0,0,fwhm2bw(h0[2])/wghts[1]) else gw2 <- 1
+  if(h0[3]>0) gw3 <- dnorm(-(g[3]):g[3],0,fwhm2bw(h0[3])/wghts[2])/dnorm(0,0,fwhm2bw(h0[3])/wghts[2]) else gw3 <- 1
   gwght <- outer(gw1,outer(gw2,gw3,"*"),"*")
   gwght <- gwght/sum(gwght)
   dgw <- dim(gwght)
-  if (scorr[1]>=0.1) lambda0 <- lambda0 * Spatialvar.gauss(hakt0/hincr/0.42445/4*c(1,wghts),h0*c(1,wghts),d) /
+  if (scorr[1]>=0.1) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0/hincr)/4*c(1,wghts),h0*c(1,wghts),d) /
     Spatialvar.gauss(h0*c(1,wghts),1e-5,d) /
-      Spatialvar.gauss(hakt0/hincr/0.42445/4*c(1,wghts),1e-5,d)
+      Spatialvar.gauss(bw2fwhm(hakt0/hincr)/4*c(1,wghts),1e-5,d)
   if(vred=="Full"){
     z <- .Fortran("chawsvr",
                   as.double(sigma2),
@@ -375,7 +375,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
  
   #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
   z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,vred0=vred0,y=y,
-            hmax=tobj$hakt*switch(lkern,1,1,sqrt(8*log(2))/4),mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg,alpha=propagation)
+            hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg,alpha=propagation)
 # Bandwidth in FWHM in case of lkern="Gaussian"
   class(z) <- "aws.gaussian"
   invisible(z)

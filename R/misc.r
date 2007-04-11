@@ -1,3 +1,6 @@
+fwhm2bw <- function(hfwhm) hfwhm*sqrt(2*log(2))
+bw2fwhm <- function(h) h/sqrt(2*log(2))
+
 Varcor.gauss<-function(h,interv = 1){
 #
 #   Calculates a correction for the variance estimate obtained by (IQRdiff(y)/1.908)^2
@@ -9,7 +12,7 @@ Varcor.gauss<-function(h,interv = 1){
 #  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
 #  discretisation into voxel) 
 #
-  h<-h/2.3548*interv
+  h<-fwhm2bw(h)*interv
   ih<-trunc(4*h)+1
   dx<-2*ih+1
   d<-length(h)
@@ -36,7 +39,7 @@ Spatialvar.gauss<-function(h,h0,d,interv=1){
 #
   h0 <- pmax(h0,1e-5)
   h <- pmax(h,1e-5)
-  h<-h/2.3548*interv
+  h<-fwhm2bw(h)*interv
   if(length(h)==1) h<-rep(h,d)
   ih<-trunc(4*h)
   ih<-pmax(1,ih)
@@ -45,7 +48,7 @@ Spatialvar.gauss<-function(h,h0,d,interv=1){
   if(d==2) penl<-outer(dnorm(((-ih[1]):ih[1])/h[1]),dnorm(((-ih[2]):ih[2])/h[2]),"*")
   if(d==3) penl<-outer(dnorm(((-ih[1]):ih[1])/h[1]),outer(dnorm(((-ih[2]):ih[2])/h[2]),dnorm(((-ih[3]):ih[3])/h[3]),"*"),"*")
   dim(penl)<-dx
-  h0<-h0/2.3548*interv
+  h0<-fwhm2bw(h0)*interv
   if(length(h0)==1) h0<-rep(h0,d)
   ih<-trunc(4*h0)
   ih<-pmax(1,ih)
@@ -158,7 +161,7 @@ get.corr.gauss <- function(h,interv=1) {
     #   Calculates the correlation of 
     #   colored noise that was produced by smoothing with "gaussian" kernel and bandwidth h
     #   Result does not depend on d for "Gaussian" kernel !!
-    h <- h/2.3548*interv
+    h <- fwhm2bw(h)*interv
     ih <- trunc(4*h+ 2*interv-1)
     dx <- 2*ih+1
     penl <- dnorm(((-ih):ih)/h)

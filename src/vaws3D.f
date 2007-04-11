@@ -4,10 +4,9 @@ C
 C          Compute Location Kernel (Compact support only, based on x^2
 C                                   ignores scaling)
 C
-C          Kern=1     Uniform
+C          Kern=1     Plateau
 C          Kern=2     Epanechnicov
-C          Kern=3     Biweight
-C          Kern=4     Triweight
+C          Kern=3     Gaussian
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       real*8 function lkern(kern,xsq)
