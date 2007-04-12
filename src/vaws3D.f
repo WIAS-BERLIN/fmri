@@ -72,8 +72,8 @@ C
 C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine chaws2(y,si2,n1,n2,n3,dv,dv0,hakt,lambda,theta,bi,
-     1    ai,kern,skern,spmin,spmax,lwght,wght,vwghts,swjy,thi,narm)
+      subroutine chaws2(y,si2,wlse,n1,n2,n3,dv,dv0,hakt,lambda,theta,
+     1 bi,thn,kern,skern,spmin,spmax,lwght,wght,vwghts,swjy,thi,narm)
 C   
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
@@ -89,13 +89,13 @@ C   wght     scaling factor for second and third dimension (larger values shrink
 C   
       implicit logical (a-z)
       integer n1,n2,n3,kern,skern,dv,dv0
-      logical aws,narm
+      logical aws,narm,wlse
       real*8 y(n1,n2,n3,dv),theta(n1,n2,n3,dv0),bi(n1,n2,n3),
-     1       ai(n1,n2,n3,dv),lambda,spmax,wght(2),si2(n1,n2,n3),
+     1       thn(n1,n2,n3,dv),lambda,spmax,wght(2),si2(n1,n2,n3),
      1       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
-      real*8 bii,swj,swjy(dv),wj,hakt2,spf,si2j,si2i
+      real*8 bii,swj,swjy(dv),wj,hakt2,spf,si2j,si2i,swjv
       hakt2=hakt*hakt
       spf=spmax/(spmax-spmin)
       ih1=hakt
@@ -127,6 +127,7 @@ C    si2j.lt.1d-18   indicates that we have an NA in (j1,j2,j3)
                bii=bi(i1,i2,i3)/lambda
 C   scaling of sij outside the loop
                swj=0.d0
+               swjv=0.d0
 	       DO k=1,dv
                   swjy(k)=0.d0
 	       END DO
@@ -154,17 +155,26 @@ C    si2j.lt.1d-18   indicates that we have an NA in (j1,j2,j3)
                            call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
      1                     theta,vwghts,skern,spf,spmin,spmax,bii,wj)
                         END IF
-                        swj=swj+wj*si2j
-			DO k=1,dv
-                           swjy(k)=swjy(k)+wj*y(j1,j2,j3,k)*si2j
+                        if(wlse) THEN 
+                           wj=wj*si2j
+                        ELSE
+                           swjv=swj+wj/si2j
+                        END IF
+                        swj=swj+wj
+       			DO k=1,dv
+                           swjy(k)=swjy(k)+wj*y(j1,j2,j3,k)
 			END DO
                      END DO
                   END DO
                END DO
 	       DO k=1,dv
-                  ai(i1,i2,i3,k)=swjy(k)
+                  thn(i1,i2,i3,k)=swjy(k)/swj
 	       END DO
-               bi(i1,i2,i3)=swj
+               IF(wlse) THEN
+                  bi(i1,i2,i3)=swj
+               ELSE
+                  bi(i1,i2,i3)=swj*swj/swjv
+               END IF
                call rchkusr()
             END DO
          END DO
@@ -176,7 +186,7 @@ C
 C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine chawsvr(si2,n1,n2,n3,dv0,hakt,lambda,theta,bi,
+      subroutine chawsvr(si2,wlse,n1,n2,n3,dv0,hakt,lambda,theta,bi,
      1   var,vred,kern,skern,spmin,spmax,lwght,gwght,swght,dgw,wght,
      2   vwghts,thi,narm)
 C   
@@ -194,7 +204,7 @@ C   wght     scaling factor for second and third dimension (larger values shrink
 C   
       implicit logical (a-z)
       integer n1,n2,n3,kern,skern,dv0,dgw(3)
-      logical aws,narm
+      logical aws,narm,wlse
       real*8 theta(n1,n2,n3,dv0),bi(n1,n2,n3),lambda,var(n1,n2,n3),
      1     swght(n1,n2,n3),hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),
      2     si2(n1,n2,n3),spmax,wght(2),gwght(1),vred(n1,n2,n3)
@@ -279,7 +289,8 @@ C    si2j.lt.1d-18   indicates that we have an NA in (j1,j2,j3)
                            call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
      1                     theta,vwghts,skern,spf,spmin,spmax,bii,wj)
                         END IF
-                        swght(j1,j2,j3)=wj*si2j
+                        IF(wlse) wj=wj*si2j
+                        swght(j1,j2,j3)=wj
                      END DO
                   END DO
                END DO
@@ -303,8 +314,9 @@ C                Q_{h,aws} = \sum_j \tilde{w}_ij^2                  in vi2
 C                Q_{h,loc} = \sum_j K_h(i,j)^2                      in vi20
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine chawsvr1(si2,n1,n2,n3,dv0,hakt,lambda,theta,bi2,bi0,
-     1    vi2,vi20,kern,skern,spmin,spmax,lwght,wght,vwghts,thi,narm)
+      subroutine chawsvr1(si2,wlse,n1,n2,n3,dv0,hakt,lambda,theta,
+     1                    bi2,bi0,vi2,vi20,kern,skern,spmin,spmax,
+     2                    lwght,wght,vwghts,thi,narm)
 C   
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
@@ -320,7 +332,7 @@ C   wght     scaling factor for second and third dimension (larger values shrink
 C   
       implicit logical (a-z)
       integer n1,n2,n3,kern,skern,dv0
-      logical aws,narm
+      logical aws,narm,wlse
       real*8 theta(n1,n2,n3,dv0),bi2(n1,n2,n3),vi2(n1,n2,n3),
      1       vi20(n1,n2,n3),lambda,spmax,wght(2),si2(n1,n2,n3),
      2       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),bi0(n1,n2,n3)
@@ -347,9 +359,9 @@ C
       call rchkusr()
       DO i3=1,n3
          DO i2=1,n2
-             DO i1=1,n1
-	        si2i=si2(i1,i2,i3)
-                if(narm.and.si2i.lt.1d-18) CYCLE
+            DO i1=1,n1
+	       si2i=si2(i1,i2,i3)
+               if(narm.and.si2i.lt.1d-18) CYCLE
                bii=bi2(i1,i2,i3)/lambda
 C   scaling of sij outside the loop
                swj=0.d0
@@ -377,14 +389,14 @@ C  first stochastic term
                         if(narm.and.si2j.lt.1d-18) CYCLE
 C    si2j.lt.1d-18   indicates that we have an NA in (j1,j2,j3)
  			swj00=swj00+wj*wj
-			wj=wj*si2(j1,j2,j3)
+			if(wlse) wj=wj*si2j
 			slwj0=slwj0+wj
                         IF (aws) THEN
                            call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
      1                     theta,vwghts,skern,spf,spmin,spmax,bii,wj)
                         END IF
 			wj=wj*wj
-                        swj=swj+wj/si2j  
+                        swj=swj+wj/si2j
 			swj0=swj0+wj
                      END DO
                   END DO

@@ -7,7 +7,7 @@
 }
 \usage{
 fmri.smooth(spm, hmax = 4, adaptive=TRUE,
-            lkern="Gaussian", skern="Plateau", na.rm=FALSE)
+            lkern="Gaussian", skern="Plateau", weighted=TRUE, na.rm=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -26,6 +26,10 @@ fmri.smooth(spm, hmax = 4, adaptive=TRUE,
     decays linearly in (.3,1) and is 0 for arguments larger than 1.
     \code{lkern="Plateau"} and \code{lkern="Triangle"} allow for much faster computation (saves up
     to 50\% CPU-time). \code{lkern="Plateau"} produces a less random weighting scheme.}
+  \item{weighted}{ \code{weighted} (logical) determines if weights contain the inverse of local 
+   variances as a factor (Weighted Least Squares). \code{weighted=FALSE} does not employ the
+   heteroscedasticity of variances for the weighting scheme and is preferable if variance estimates
+   are highly variable, e.g. for short time series.} 
   \item{na.rm}{\code{na.rm} specifies how NA's in the SPM are handled. NA's may occur
    in voxel where the time series information did not allow for estimating parameters and their variances
    or where the time series information where constant over time. A high (1e19) value of the variance 

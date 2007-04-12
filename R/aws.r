@@ -27,7 +27,7 @@
 #  USA.
 #
 
-vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
+vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE,
                    sigma2=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
                    u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,na.rm=FALSE,
                    spmin=.3,scorr=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE) {
@@ -126,6 +126,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
   if (length(sigma2)==1) sigma2<-array(sigma2,dy[1:3]) 
   # deal with homoskedastic Gaussian case by extending sigma2
   if (length(sigma2)!=n) stop("sigma2 does not have length 1 or same length as y")
+  dim(sigma2) <- dy[1:3]
   lambda <- lambda*2 
   sigma2 <- 1/sigma2 #  taking the invers yields simpler formulaes 
 
@@ -180,6 +181,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
     #
     tobj <- .Fortran("chaws2",as.double(y),
                      as.double(sigma2),
+                     as.logical(weighted),
                      as.integer(n1),
                      as.integer(n2),
                      as.integer(n3),
@@ -189,7 +191,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
                      as.double(lambda0),
                      as.double(theta0),
                      bi=as.double(bi0),
-                     ai=as.double(tobj$ai),
+                     thnew=as.double(tobj$ai),
                      as.integer(lkern),
                      as.integer(skern),
                      as.double(spmin),
@@ -200,15 +202,14 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
                      double(dv),#swjy
                      double(dv0),#thi
 		     as.logical(na.rm),#narm
-                     PACKAGE="fmri",DUP=TRUE)[c("bi","ai","hakt")]
+                     PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","hakt")]
     gc()
-    dim(tobj$ai) <- dy
-    gc()
-    theta <- array(tobj$ai/tobj$bi,dy) 
+    theta <- array(tobj$thnew,dy) 
     dim(tobj$bi) <- dy[-4]
     if(testprop) {
       pobj <- .Fortran("chaws2",as.double(y),
                        as.double(sigma2),
+                       as.logical(weighted),
                        as.integer(n1),
                        as.integer(n2),
                        as.integer(n3),
@@ -218,7 +219,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
                        as.double(1e50),
                        as.double(theta0),
                        bi=as.double(bi0),
-                       ai=double(n1*n2*n3*dv),
+                       thnew=double(n1*n2*n3*dv),
                        as.integer(lkern),
 		       as.integer(skern),
 	               as.double(spmin),
@@ -229,8 +230,8 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
 		       double(dv),#swjy
 		       double(dv0),#thi
                        as.logical(na.rm),#narm
-		       PACKAGE="fmri",DUP=TRUE)[c("bi","ai")]
-      ptheta <- array(pobj$ai/pobj$bi,dy) 
+		       PACKAGE="fmri",DUP=TRUE)[c("bi","thnew")]
+      ptheta <- array(pobj$thnew,dy) 
       rm(pobj) 
       gc()
       propagation <- c(propagation,sum(abs(theta-ptheta))/sum(abs(ptheta-u)))
@@ -282,6 +283,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
   if(vred=="Full"){
     z <- .Fortran("chawsvr",
                   as.double(sigma2),
+                  as.logical(weighted),
                   as.integer(n1),
                   as.integer(n2),
                   as.integer(n3),
@@ -309,6 +311,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
   } else {
     z1 <- .Fortran("chawsvr1",
                    as.double(sigma2),
+                   as.logical(weighted),
                    as.integer(n1),
                    as.integer(n2),
                    as.integer(n3),
@@ -366,15 +369,15 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",
   if(vred=="Full"){
     vartheta <- z$var/tobj$bi^2/qg
     vred <- z$vred/tobj$bi^2/ng^2
-    vred0 <- vred
   } else {
-    vartheta <- Qhg/Qh0/qg*bi2/tobj$bi^2
-    vred <- Qhg/Qh0/ng^2*Qh/tobj$bi^2
-    vred0 <- Qhg/Qh0/ng^2*Qh/bi0^2
+#    vartheta <- Qhg/Qh0/qg*bi2/tobj$bi^2
+    vartheta <- Qhg/Qh0/qg*bi2/bi0^2
+#    vred <- Qhg/Qh0/ng^2*Qh/tobj$bi^2
+    vred <- Qhg/Qh0/ng^2*Qh/bi0^2
   }
  
   #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
-  z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,vred0=vred0,y=y,
+  z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,y=y,
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg,alpha=propagation)
 # Bandwidth in FWHM in case of lkern="Gaussian"
   class(z) <- "aws.gaussian"
