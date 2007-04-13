@@ -270,7 +270,21 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
                     DUP=FALSE,
                     PACKAGE="fmri")$scorr
   gc()
-
+  corr2 <- .Fortran("corr2",
+                    as.double(residuals),
+                    as.logical(data$mask),
+                    as.integer(dy[1]),
+                    as.integer(dy[2]),
+                    as.integer(dy[3]),
+                    as.integer(dy[4]),
+                    scorr=double(prod(dy[1:3])*3),
+                    DUP=FALSE,
+                    PACKAGE="fmri")$scorr
+  gc()
+  dim(corr2) <- c(dy[1:3],3)
+  corr[1] <- median(corr2[,,,1][corr2[,,,1]!=0])
+  corr[2] <- median(corr2[,,,2][corr2[,,,2]!=0])
+  corr[3] <- median(corr2[,,,3][corr2[,,,3]!=0])
   bwx <- get.bw.gauss(corr[1])
   bwy <- get.bw.gauss(corr[2])
   bwz <- get.bw.gauss(corr[3])
@@ -295,13 +309,13 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
     result <- list(beta = beta, cbeta = cbeta, var = variance, res =
               residuals, arfactor = arfactor, rxyz = rxyz, scorr = corr, weights =
               data$weights, vwghts = vwghts, dim =
-              data$dim, hrf = z %*% contrast)
+              data$dim, hrf = z %*% contrast, scorr2=corr2)
   } else if (keep == "diagnostic") {
     result <- list(cbeta = cbeta, var = variance, res = residuals, rxyz = rxyz, scorr =
-              corr, weights = data$weights, vwghts = vwghts, dim = data$dim, hrf = z %*% contrast)
+              corr, weights = data$weights, vwghts = vwghts, dim = data$dim, hrf = z %*% contrast, scorr2=corr2)
   } else {
     result <- list(cbeta = cbeta, var = variance, rxyz = rxyz, scorr = corr, weights =
-              data$weights, vwghts = vwghts, dim = data$dim, hrf = z %*% contrast)
+              data$weights, vwghts = vwghts, dim = data$dim, hrf = z %*% contrast, scorr2=corr2)
   }
 
   if (length(vvector) > 1) {

@@ -1,4 +1,4 @@
-fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau",weighted=TRUE,na.rm=FALSE) {
+fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau",weighted=TRUE) {
   cat("fmri.smooth: entering function\n")
   
   if (!("fmrispm" %in% class(spm))) {
@@ -26,13 +26,13 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau
 
   cat("fmri.smooth: smoothing the Statistical Paramteric Map\n")
   if (adaptive) {
-    ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax,
+    ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
                      wghts=weights, scorr=scorr, vwghts = spm$vwghts,
-                     lkern=lkern,skern=skern,weighted=Weighted,na.rm=na.rm)
+                     lkern=lkern,skern=skern,weighted=weighted)
   } else {
-    ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax,
+    ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
                      qlambda = 1, wghts=weights, scorr=scorr,
-                     vwghts = spm$vwghts,lkern=lkern,skern=skern,weighted=Weighted,na.rm=na.rm)
+                     vwghts = spm$vwghts,lkern=lkern,skern=skern,weighted=weighted)
   }
   cat("\n")
   
@@ -177,8 +177,8 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE ) {
 
   }
   cat("fmri.pvalue: thresholding\n")
-  mask <- rep(1,length=prod(spm$dim[1:3]))
-  mask[stat < thresh] <- 0
+  mask <- rep(TRUE,length=prod(spm$dim[1:3]))
+  mask[stat < thresh] <- FALSE
   pv[!mask] <- 1
   dim(pv) <- spm$dim[1:3]
 

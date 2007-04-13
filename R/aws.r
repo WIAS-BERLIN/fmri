@@ -28,8 +28,8 @@
 #
 
 vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE,
-                   sigma2=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
-                   u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,na.rm=FALSE,
+                   sigma2=NULL,mask=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
+                   u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
                    spmin=.3,scorr=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE) {
 
   #  Auxilary functions
@@ -53,7 +53,6 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
     stop("y has to be 3 or 4 dimensional")
   }
   dv <- dim(y)[d+1]
-
   # define vwghts
   if (length(vwghts)>dv) vwghts <- vwghts[1:dv]
   dv0 <- sum(vwghts>0)
@@ -124,6 +123,9 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
     if (demo) cat("Estimated variance: ", signif(sigma2,4),"\n")
   }
   if (length(sigma2)==1) sigma2<-array(sigma2,dy[1:3]) 
+  if(is.null(mask)) mask <- array(TRUE,dy[1:3])
+  mask[sigma2>=1e16] <- FALSE
+#  in these points sigma2 probably contains NA's
   # deal with homoskedastic Gaussian case by extending sigma2
   if (length(sigma2)!=n) stop("sigma2 does not have length 1 or same length as y")
   dim(sigma2) <- dy[1:3]
@@ -181,6 +183,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
     #
     tobj <- .Fortran("chaws2",as.double(y),
                      as.double(sigma2),
+                     as.logical(!mask),
                      as.logical(weighted),
                      as.integer(n1),
                      as.integer(n2),
@@ -201,7 +204,6 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
                      as.double(vwghts),
                      double(dv),#swjy
                      double(dv0),#thi
-		     as.logical(na.rm),#narm
                      PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","hakt")]
     gc()
     theta <- array(tobj$thnew,dy) 
@@ -209,6 +211,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
     if(testprop) {
       pobj <- .Fortran("chaws2",as.double(y),
                        as.double(sigma2),
+                       as.logical(!mask),
                        as.logical(weighted),
                        as.integer(n1),
                        as.integer(n2),
@@ -229,7 +232,6 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
 		       as.double(vwghts),
 		       double(dv),#swjy
 		       double(dv0),#thi
-                       as.logical(na.rm),#narm
 		       PACKAGE="fmri",DUP=TRUE)[c("bi","thnew")]
       ptheta <- array(pobj$thnew,dy) 
       rm(pobj) 
@@ -283,6 +285,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
   if(vred=="Full"){
     z <- .Fortran("chawsvr",
                   as.double(sigma2),
+                  as.logical(!mask),
                   as.logical(weighted),
                   as.integer(n1),
                   as.integer(n2),
@@ -305,12 +308,12 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
                   as.double(wghts),
                   as.double(vwghts),
                   double(dv0),#thi
-                  as.logical(na.rm),#narm
                   PACKAGE="fmri",DUP=FALSE)[c("vred","var")]
     dim(z$vred) <- dim(z$var) <- dim(sigma2)
   } else {
     z1 <- .Fortran("chawsvr1",
                    as.double(sigma2),
+                   as.logical(!mask),
                    as.logical(weighted),
                    as.integer(n1),
                    as.integer(n2),
@@ -331,7 +334,6 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
                    as.double(wghts),
                    as.double(vwghts),
                    double(dv0),#thi
-                   as.logical(na.rm),#narm
                    PACKAGE="fmri",DUP=FALSE)[c("bi0","bi2","Qh","Qh0")]
     bi2 <- array(z1$bi2,dim(sigma2))
     bi0 <- array(z1$bi0,dim(sigma2))
