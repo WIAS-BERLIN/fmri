@@ -185,6 +185,120 @@ C
 C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine ihaws2(y,si2,mask,wlse,n1,n2,n3,dv,dv0,hakt,lambda,
+     1                  theta,bi,thn,kern,skern,spmin,spmax,lwght,
+     2                  wght,vwghts,swjy,thi)
+C   
+C   y        observed values of regression function
+C   n1,n2,n3    design dimensions
+C   hakt     actual bandwidth
+C   lambda   lambda or lambda*sigma2 for Gaussian models
+C   theta    estimates from last step   (input)
+C   bi       \sum  Wi   (output)
+C   ai       \sum  Wi Y     (output)
+C   model    specifies the probablilistic model for the KL-Distance
+C   kern     specifies the location kernel
+C   spmax    specifies the truncation point of the stochastic kernel
+C   wght     scaling factor for second and third dimension (larger values shrink)
+C   
+      implicit logical (a-z)
+      integer y(n1,n2,n3,dv),thn(n1,n2,n3,dv),n1,n2,n3,kern,skern,
+     1        dv,dv0
+      logical aws,wlse,mask(n1,n2,n3)
+      real*8 theta(n1,n2,n3,dv0),bi(n1,n2,n3),
+     1       lambda,spmax,wght(2),si2(n1,n2,n3),
+     1       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0)
+      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
+     1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
+      real*8 bii,swj,swjy(dv),wj,hakt2,spf,si2j,si2i,swjv
+      hakt2=hakt*hakt
+      spf=spmax/(spmax-spmin)
+      ih1=hakt
+      aws=lambda.lt.1d40
+C
+C   first calculate location weights
+C
+      ih3=hakt/wght(2)
+      ih2=hakt/wght(1)
+      ih1=hakt
+      n=n1*n2*n3
+      dlw1=min0(2*n1-1,2*ih1+1)
+      dlw2=min0(2*n2-1,2*ih2+1)
+      dlw3=min0(2*n3-1,2*ih3+1)
+      clw1=(dlw1+1)/2
+      clw2=(dlw2+1)/2
+      clw3=(dlw3+1)/2
+C
+C    get location weights
+C
+      call locwghts(dlw1,dlw2,dlw3,wght,hakt2,kern,lwght)
+      call rchkusr()
+      DO i3=1,n3
+         DO i2=1,n2
+            DO i1=1,n1
+               if(mask(i1,i2,i3)) CYCLE
+	       si2i=si2(i1,i2,i3)
+               bii=bi(i1,i2,i3)/lambda
+C   scaling of sij outside the loop
+               swj=0.d0
+               swjv=0.d0
+	       DO k=1,dv
+                  swjy(k)=0.d0
+	       END DO
+	       DO k=1,dv0
+	          thi(k)=theta(i1,i2,i3,k)
+	       END DO
+               DO jw3=1,dlw3
+	          j3=jw3-clw3+i3
+	          if(j3.lt.1.or.j3.gt.n3) CYCLE
+		  jwind3=(jw3-1)*dlw1*dlw2
+                  DO jw2=1,dlw2
+	             j2=jw2-clw2+i2
+	             if(j2.lt.1.or.j2.gt.n2) CYCLE
+		     jwind2=jwind3+(jw2-1)*dlw1
+                     DO jw1=1,dlw1
+C  first stochastic term
+	                j1=jw1-clw1+i1
+                        IF(mask(j1,j2,j3)) CYCLE
+                        wj=lwght(jw1+jwind2)
+			if(wj.le.0.d0) CYCLE
+	                if(j1.lt.1.or.j1.gt.n1) CYCLE
+			si2j=si2(j1,j2,j3)
+                        IF (aws) THEN
+                           call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
+     1                     theta,vwghts,skern,spf,spmin,spmax,bii,wj)
+                        END IF
+                        if(wlse) THEN 
+                           wj=wj*si2j
+                        ELSE
+                           swjv=swj+wj/si2j
+                        END IF
+                        swj=swj+wj
+       			DO k=1,dv
+                           swjy(k)=swjy(k)+wj*y(j1,j2,j3,k)
+			END DO
+                     END DO
+                  END DO
+               END DO
+	       DO k=1,dv
+                  thn(i1,i2,i3,k)=swjy(k)/swj
+	       END DO
+               IF(wlse) THEN
+                  bi(i1,i2,i3)=swj
+               ELSE
+                  bi(i1,i2,i3)=swj*swj/swjv
+               END IF
+               call rchkusr()
+            END DO
+         END DO
+      END DO
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C   Perform one iteration in local constant three-variate aws (gridded)
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine chawsvr(si2,mask,wlse,n1,n2,n3,dv0,hakt,lambda,theta,
      1       bi,var,vred,kern,skern,spmin,spmax,lwght,gwght,swght,dgw,
      2       wght,vwghts,thi)

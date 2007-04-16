@@ -30,7 +30,8 @@
 vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE,
                    sigma2=NULL,mask=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
                    u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
-                   spmin=.3,scorr=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE) {
+                   spmin=.3,scorr=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE,
+                   res=NULL, resscale=NULL, dim=NULL) {
 
   #  Auxilary functions
   IQRdiff <- function(y) IQR(diff(y))/1.908
@@ -135,12 +136,12 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
   # demo mode should deliver graphics!
   if (demo && !graph) graph <- TRUE
   
-  # Initialize  list for ai, bi and theta
+  # Initialize  list for bi and theta
   if (is.null(wghts)) wghts <- c(1,1,1)
   hinit <- hinit/wghts[1]
   hmax <- hmax/wghts[1]
   wghts <- (wghts[2:3]/wghts[1])
-  tobj <- list(ai=y, bi= rep(1,n))
+  tobj <- list(bi= rep(1,n))
   theta <- y
   steps <- as.integer(log(hmax/hinit)/log(hincr)+1)
 
@@ -194,7 +195,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
                      as.double(lambda0),
                      as.double(theta0),
                      bi=as.double(bi0),
-                     thnew=as.double(tobj$ai),
+                     thnew=as.double(y),
                      as.integer(lkern),
                      as.integer(skern),
                      as.double(spmin),
@@ -269,6 +270,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
   }
 
   #   Now compute variance of theta and variance reduction factor (with respect to the spatially uncorrelated situation   
+if(is.null(res)){
   g <- trunc(fwhm2bw(h0/c(1,wghts))*4)
 
   #  use g <- trunc(fwhm2bw(h0/c(1,wghts))*3)+1 if it takes to long
@@ -377,11 +379,76 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
 #    vred <- Qhg/Qh0/ng^2*Qh/tobj$bi^2
     vred <- Qhg/Qh0/ng^2*Qh/bi0^2
   }
- 
-  #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
   z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,y=y,
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg,alpha=propagation)
 # Bandwidth in FWHM in case of lkern="Gaussian"
+} else {
+  cat("dim",dim,"\n")
+  residuals <- readBin(res,"integer",prod(dim),2)
+  cat("first variance estimation","\n")
+  vartheta0 <- .Fortran("ivar",as.integer(residuals),
+                           as.double(resscale),
+                           as.logical(mask),
+                           as.integer(n1),
+                           as.integer(n2),
+                           as.integer(n3),
+                           as.integer(dim[4]),
+                           var = double(n1*n2*n3))$var
+  cat(quantile(vartheta0,seq(0,1,.1)),"\n")
+  cat("smooth the residuals","\n")
+  residuals <- .Fortran("ihaws2",as.integer(residuals),
+                     as.double(sigma2),
+                     as.logical(!mask),
+                     as.logical(weighted),
+                     as.integer(n1),
+                     as.integer(n2),
+                     as.integer(n3),
+                     as.integer(dim[4]),
+                     as.integer(dv0),
+                     hakt=as.double(tobj$hakt),
+                     as.double(lambda0),
+                     as.double(theta0),
+                     bi=as.double(bi0),
+                     resnew=as.integer(residuals),
+                     as.integer(lkern),
+                     as.integer(skern),
+                     as.double(spmin),
+                     as.double(spmax),
+                     double(prod(dlw)),
+                     as.double(wghts),
+                     as.double(vwghts),
+                     double(dim[4]),#swjy
+                     double(dv0),#thi
+                     PACKAGE="fmri",DUP=TRUE)$resnew
+  dim(residuals) <- dim
+  gc()
+#   get variances and correlations
+  cat("estimate correlations","\n")
+  scorr <-.Fortran("icorr",as.integer(residuals),
+                           as.logical(mask),
+                           as.integer(n1),
+                           as.integer(n2),
+                           as.integer(n3),
+                           as.integer(dim[4]),
+                           scorr = double(3))$scorr
+  cat("second variance estimation","\n")
+  vartheta <- .Fortran("ivar",as.integer(residuals),
+                           as.double(resscale),
+                           as.logical(mask),
+                           as.integer(n1),
+                           as.integer(n2),
+                           as.integer(n3),
+                           as.integer(dim[4]),
+                           var = double(n1*n2*n3))$var
+  cat(quantile(vartheta,seq(0,1,.1)),"\n")
+  cat("calculate statistics","\n")
+  vred <- array(vartheta/vartheta0,c(n1,n2,n3))
+  vartheta <- vred/sigma2  #  sigma2 contains inverse variances
+  z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,y=y,
+            hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,
+            lseq=c(0,lseq[-steps]),call=args,alpha=propagation,scorr=scorr)
+}
+  #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
   class(z) <- "aws.gaussian"
   invisible(z)
 }
