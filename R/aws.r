@@ -379,7 +379,7 @@ if(is.null(res)){
 #    vred <- Qhg/Qh0/ng^2*Qh/tobj$bi^2
     vred <- Qhg/Qh0/ng^2*Qh/bi0^2
   }
-  z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,y=y,
+  z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,vred0=median(vred[mask]),y=y,
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg,alpha=propagation)
 # Bandwidth in FWHM in case of lkern="Gaussian"
 } else {
@@ -444,7 +444,7 @@ if(is.null(res)){
   cat("calculate statistics","\n")
   vred <- array(vartheta/vartheta0,c(n1,n2,n3))
   vartheta <- vred/sigma2  #  sigma2 contains inverse variances
-  z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,y=y,
+  z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,vred0=median(vred[mask]),y=y,
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,
             lseq=c(0,lseq[-steps]),call=args,alpha=propagation,scorr=scorr)
 }
