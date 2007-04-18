@@ -810,3 +810,14 @@ read.NIFTI <- function(filename) {
 
   invisible(z)
 }
+
+extract.data <- function(z) {
+  if (!class(z) == "fmridata") {
+    warning("fmri.lm: data not of class <fmridata>. Try to proceed but strange things may happen")
+  }
+
+  ttt <- readBin(z$ttt,"numeric",prod(z$dim),4)
+  dim(ttt) <- z$dim
+
+  invisible(ttt)
+}
