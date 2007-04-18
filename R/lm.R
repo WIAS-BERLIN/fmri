@@ -93,8 +93,7 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
     warning("fmri.lm: data not of class <fmridata>. Try to proceed but strange things may happen")
   }
 
-  ttt <- readBin(data$ttt,"numeric",prod(data$dim),4)
-  dim(ttt) <- data$dim
+  ttt <- extract.data(data)
 
   if (length(dim(ttt)) != 4) {
     stop("Hmmmm, this does not seem to be a fMRI time series. I better stop executing! Sorry!\n")

@@ -8,7 +8,7 @@
 \usage{
   fmri.lm(data, z, actype = "accalc", hmax = 3.52, vtype = "var",
           step = 0.01, contrast = c(1), vvector = c(1),
-          keep = "essential")
+          keep = "all")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -87,14 +87,14 @@
 \seealso{ \code{\link{fmri.design}}, \code{\link{fmri.stimulus}} }
 \examples{
   # Example 1
-  data <- list(ttt=array(rnorm(32*32*32*107),c(32,32,32,107)),
-               mask=array(1,c(32,32,32)),dim=c(32,32,32))
+  data <- list(ttt=writeBin(rnorm(32*32*32*107),raw(),4),
+               mask=array(1,c(32,32,32)),dim=c(32,32,32,107))
   class(data) <- "fmridata"
   hrf <- fmri.stimulus(107, c(18, 48, 78), 15, 2)
   z <- fmri.design(hrf,2)
   model <- fmri.lm(data,z,keep="all")
-  plot(data$ttt[16,16,16,])
-  lines(data$ttt[16,16,16,] - model$res[16,16,16,],col=2)
+  plot(extract.data(data)[16,16,16,])
+  lines(extract.data(data)[16,16,16,] - extract.data(model,"residuals")[16,16,16,],col=2)
 }
 \keyword{ regression }% at least one, from doc/KEYWORDS
 

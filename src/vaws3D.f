@@ -1,3 +1,14 @@
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C   extract element of 3D array
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      real*8 function getlwght(lwght,dw1,dw2,dw3,j1,j2,j3)
+      integer dw1,dw2,dw3,j1,j2,j3
+      real*8 lwght(dw1,dw2,dw3)
+      getlwght=lwght(j1,j2,j3)
+      RETURN 
+      END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
 C
@@ -95,10 +106,11 @@ C
       logical aws,wlse,mask(n1,n2,n3)
       real*8 y(n1,n2,n3,dv),theta(n1,n2,n3,dv0),bi(n1,n2,n3),
      1       thn(n1,n2,n3,dv),lambda,spmax,wght(2),si2(n1,n2,n3),
-     1       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0)
-      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
+     1       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),getlwght
+      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
       real*8 bii,swj,swjy(dv),wj,hakt2,spf,si2j,si2i,swjv
+      external getlwght
       hakt2=hakt*hakt
       spf=spmax/(spmax-spmin)
       ih1=hakt
@@ -139,16 +151,14 @@ C   scaling of sij outside the loop
                DO jw3=1,dlw3
 	          j3=jw3-clw3+i3
 	          if(j3.lt.1.or.j3.gt.n3) CYCLE
-		  jwind3=(jw3-1)*dlw1*dlw2
                   DO jw2=1,dlw2
 	             j2=jw2-clw2+i2
 	             if(j2.lt.1.or.j2.gt.n2) CYCLE
-		     jwind2=jwind3+(jw2-1)*dlw1
                      DO jw1=1,dlw1
 C  first stochastic term
 	                j1=jw1-clw1+i1
                         IF(mask(j1,j2,j3)) CYCLE
-                        wj=lwght(jw1+jwind2)
+                        wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
 			if(wj.le.0.d0) CYCLE
 	                if(j1.lt.1.or.j1.gt.n1) CYCLE
 			si2j=si2(j1,j2,j3)
@@ -209,10 +219,11 @@ C
       logical aws,wlse,mask(n1,n2,n3)
       real*8 theta(n1,n2,n3,dv0),bi(n1,n2,n3),
      1       lambda,spmax,wght(2),si2(n1,n2,n3),
-     1       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0)
-      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
+     1       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),getlwght
+      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
       real*8 bii,swj,swjy(dv),wj,hakt2,spf,si2j,si2i,swjv
+      external getlwght
       hakt2=hakt*hakt
       spf=spmax/(spmax-spmin)
       ih1=hakt
@@ -253,16 +264,14 @@ C   scaling of sij outside the loop
                DO jw3=1,dlw3
 	          j3=jw3-clw3+i3
 	          if(j3.lt.1.or.j3.gt.n3) CYCLE
-		  jwind3=(jw3-1)*dlw1*dlw2
                   DO jw2=1,dlw2
 	             j2=jw2-clw2+i2
 	             if(j2.lt.1.or.j2.gt.n2) CYCLE
-		     jwind2=jwind3+(jw2-1)*dlw1
                      DO jw1=1,dlw1
 C  first stochastic term
 	                j1=jw1-clw1+i1
                         IF(mask(j1,j2,j3)) CYCLE
-                        wj=lwght(jw1+jwind2)
+                        wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
 			if(wj.le.0.d0) CYCLE
 	                if(j1.lt.1.or.j1.gt.n1) CYCLE
 			si2j=si2(j1,j2,j3)
@@ -320,10 +329,11 @@ C
       integer n1,n2,n3,kern,dv
       logical wlse,mask(n1,n2,n3)
       real*8 y(n1,n2,n3,dv),thn(n1,n2,n3,dv),wght(2),
-     1       si2(n1,n2,n3),hakt,lwght(1)
-      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
+     1       si2(n1,n2,n3),hakt,lwght(1),getlwght
+      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
       real*8 swj,swjy(dv),wj,hakt2
+      external getlwght
       hakt2=hakt*hakt
       ih1=hakt
 C
@@ -356,18 +366,16 @@ C   scaling of sij outside the loop
                DO jw3=1,dlw3
 	          j3=jw3-clw3+i3
 	          if(j3.lt.1.or.j3.gt.n3) CYCLE
-		  jwind3=(jw3-1)*dlw1*dlw2
                   DO jw2=1,dlw2
 	             j2=jw2-clw2+i2
 	             if(j2.lt.1.or.j2.gt.n2) CYCLE
-		     jwind2=jwind3+(jw2-1)*dlw1
                      DO jw1=1,dlw1
 C  first stochastic term
 	                j1=jw1-clw1+i1
                         IF(mask(j1,j2,j3)) CYCLE
-                        wj=lwght(jw1+jwind2)
-			if(wj.le.0.d0) CYCLE
 	                if(j1.lt.1.or.j1.gt.n1) CYCLE
+                        wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
+			if(wj.le.0.d0) CYCLE
                         if(wlse) THEN 
                            wj=wj*si2(j1,j2,j3)
                         END IF
@@ -413,13 +421,14 @@ C
       logical aws,wlse,mask(n1,n2,n3)
       real*8 theta(n1,n2,n3,dv0),bi(n1,n2,n3),lambda,var(n1,n2,n3),
      1     swght(n1,n2,n3),hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),
-     2     si2(n1,n2,n3),spmax,wght(2),gwght(1),vred(n1,n2,n3)
-      integer i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
+     2     si2(n1,n2,n3),spmax,wght(2),gwght(1),vred(n1,n2,n3),getlwght
+      integer i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n,
      2        dgw1,dgw2,dgw3,j1a,j1e,j2a,j2e,j3a,j3e,
      3        clw10,clw20,clw30
       real*8 bii,swj,swj2,wj,hakt2,swj2vr,spf,si2i,si2j
       integer ngw
+      external getlwght
       hakt2=hakt*hakt
       spf=spmax/(spmax-spmin)
       aws=lambda.lt.1d40
@@ -477,15 +486,13 @@ C   fill swght with zeros where needed
                DO jw3=1,dlw3
 	          j3=jw3-clw3+i3
 	          if(j3.lt.1.or.j3.gt.n3) CYCLE
-		  jwind3=(jw3-1)*dlw1*dlw2
                   DO jw2=1,dlw2
 	             j2=jw2-clw2+i2
 	             if(j2.lt.1.or.j2.gt.n2) CYCLE
-		     jwind2=jwind3+(jw2-1)*dlw1
                      DO jw1=1,dlw1
 	                j1=jw1-clw1+i1
                         if(mask(j1,j2,j3)) CYCLE
-                        wj=lwght(jw1+jwind2)
+                        wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
 			if(wj.le.0.d0) CYCLE
 	                if(j1.lt.1.or.j1.gt.n1) CYCLE
 	                si2j=si2(j1,j2,j3)
@@ -539,10 +546,12 @@ C
       logical aws,wlse,mask(n1,n2,n3)
       real*8 theta(n1,n2,n3,dv0),bi2(n1,n2,n3),vi2(n1,n2,n3),
      1       vi20(n1,n2,n3),lambda,spmax,wght(2),si2(n1,n2,n3),
-     2       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),bi0(n1,n2,n3)
-      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
+     2       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),bi0(n1,n2,n3),
+     3       getlwght
+      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
       real*8 bii,swj,swj0,swj00,slwj0,wj,hakt2,spf,si2i,si2j
+      external getlwght
       hakt2=hakt*hakt
       spf=spmax/(spmax-spmin)
       aws=lambda.lt.1d40
@@ -578,16 +587,14 @@ C   scaling of sij outside the loop
                DO jw3=1,dlw3
 	          j3=jw3-clw3+i3
 	          if(j3.lt.1.or.j3.gt.n3) CYCLE
-		  jwind3=(jw3-1)*dlw1*dlw2
                   DO jw2=1,dlw2
 	             j2=jw2-clw2+i2
 	             if(j2.lt.1.or.j2.gt.n2) CYCLE
-		     jwind2=jwind3+(jw2-1)*dlw1
                      DO jw1=1,dlw1
 C  first stochastic term
 	                j1=jw1-clw1+i1
                         if(mask(j1,j2,j3)) CYCLE
-                        wj=lwght(jw1+jwind2)
+                        wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
 			if(wj.le.0.d0) CYCLE
 	                if(j1.lt.1.or.j1.gt.n1) CYCLE
 	                si2j=si2(j1,j2,j3)

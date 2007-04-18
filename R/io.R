@@ -811,13 +811,22 @@ read.NIFTI <- function(filename) {
   invisible(z)
 }
 
-extract.data <- function(z) {
+extract.data <- function(z,what="data") {
   if (!class(z) == "fmridata") {
-    warning("fmri.lm: data not of class <fmridata>. Try to proceed but strange things may happen")
+    warning("extract.data: data not of class <fmridata>. Try to proceed but strange things may happen")
   }
-
-  ttt <- readBin(z$ttt,"numeric",prod(z$dim),4)
-  dim(ttt) <- z$dim
-
+  if (what=="residuals") {  
+      if(!is.null(z$resscale)){
+          ttt <- readBin(z$res,"integer",prod(z$dim),2)*z$resscale 
+          dim(ttt) <- z$dim
+          } else {
+          warning("extract.data: No residuals available, returning NULL")
+          ttt <- NULL
+      }
+      } else { 
+      ttt <- readBin(z$ttt,"numeric",prod(z$dim),4)
+      dim(ttt) <- z$dim
+      }
+ 
   invisible(ttt)
 }
