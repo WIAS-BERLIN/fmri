@@ -204,7 +204,7 @@ C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
 C   
       implicit logical (a-z)
-      integer dv,dv0,y(n1,n2,n3,dv),thn(n1,n2,n3,dv),n1,n2,n3,kern,
+      integer dv,dv0,n1,n2,n3,y(n1,n2,n3,dv),thn(n1,n2,n3,dv),kern,
      1        skern
       logical aws,wlse,mask(n1,n2,n3)
       real*8 theta(n1,n2,n3,dv0),bi(n1,n2,n3),
