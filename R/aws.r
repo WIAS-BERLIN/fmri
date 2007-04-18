@@ -384,7 +384,7 @@ if(is.null(res)){
 # Bandwidth in FWHM in case of lkern="Gaussian"
 } else {
   residuals <- readBin(res,"integer",prod(dim),2)
-  cat("Vaws3D: first variance estimation","\n")
+  cat("\nVaws3D: first variance estimation","\n")
   vartheta0 <- .Fortran("ivar",as.integer(residuals),
                            as.double(resscale),
                            as.logical(mask),
@@ -429,7 +429,7 @@ if(is.null(res)){
                            as.integer(n3),
                            as.integer(dim[4]),
                            scorr = double(3))$scorr
-  cat("Vaws3D: second variance estimation","\n")
+  cat("Vaws3D: final variance estimation","\n")
   vartheta <- .Fortran("ivar",as.integer(residuals),
                            as.double(resscale),
                            as.logical(mask),
@@ -482,15 +482,10 @@ smooth3D <- function(y,lkern="Gaussian",weighted=FALSE,sigma2=NULL,mask=NULL,hma
                   Triangle=2,
                   Plateau=1,
                   Gaussian=3,
-                  Gaussian2=4,
                   1)
   if (lkern==3) {
     # assume  hmax was given in  FWHM  units (Gaussian kernel will be truncated at 4)
     hmax <- fwhm2bw(hmax)*4
-  }
-  if (lkern==4) {
-    # assume  hmax was given in  FWHM  units (Gaussian kernel will be truncated at 4)
-    hmax <- fwhm2bw(hmax)*6
   }
   if (is.null(wghts)) wghts <- c(1,1,1)
   if(is.null(mask)) mask <- array(TRUE,dy[1:3])

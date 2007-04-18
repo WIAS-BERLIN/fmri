@@ -8,6 +8,21 @@
       integer i1,i2,i3,i4
       zk=nv
 C  correlation in x
+      do i2=1,n2
+         do i3=1,n3
+            scorr(n1,i2,i3,1)=0.d0
+         end do
+      end do
+      do i1=1,n1
+         do i3=1,n3
+            scorr(i1,n2,i3,2)=0.d0
+         end do
+      end do
+      do i1=1,n1
+         do i2=1,n2
+            scorr(i1,i2,n3,3)=0.d0
+         end do
+      end do
       do i1=1,n1-1
          do i2=1,n2
             do i3=1,n3
@@ -65,6 +80,107 @@ C  correlation in z
                do i4=1,nv
                   resi=res(i1,i2,i3,i4)
                   resip1=res(i1,i2,i3+1,i4)
+                  z2=z2+resi*resi
+                  y2=y2+resip1*resip1
+                  zcorr=zcorr+resi*resip1
+               enddo
+               vrm=z2/(zk-1.d0)
+               vrmp1=y2/(zk-1.d0)
+               vrm=vrm*vrmp1
+               if(vrm.gt.1e-10) scorr(i1,i2,i3,3)=zcorr/zk/dsqrt(vrm)
+            enddo
+         enddo
+      enddo
+      return
+      end
+      subroutine corrlag(res,mask,n1,n2,n3,nv,scorr,lag)
+
+      implicit logical(a-z)
+      integer n1,n2,n3,nv,lag
+      real*8 scorr(n1,n2,n3,3),res(n1,n2,n3,nv)
+      logical mask(n1,n2,n3)
+      real*8 z2,y2,resi,resip1,vrm,vrmp1,zk,zcorr
+      integer i1,i2,i3,i4
+      zk=nv
+C  correlation in x
+      do i1=n1-lag+1,n1
+         do i2=1,n2
+            do i3=1,n3
+               scorr(i1,i2,i3,1)=0.d0
+            enddo
+         enddo
+      enddo
+      do i1=n1
+         do i2=1,n2-lag+1,n2
+            do i3=1,n3
+               scorr(i1,i2,i3,2)=0.d0
+            enddo
+         enddo
+      enddo
+      do i1=n1
+         do i2=1,n2
+            do i3=1,n3-lag+1,n3
+               scorr(i1,i2,i3,3)=0.d0
+            enddo
+         enddo
+      enddo
+      do i1=1,n1-lag
+         do i2=1,n2
+            do i3=1,n3
+               scorr(i1,i2,i3,1)=0.d0
+               if (.not.(mask(i1,i2,i3).and.mask(i1+lag,i2,i3))) CYCLE
+               z2=0.d0
+               y2=0.d0
+               zcorr=0.d0
+               do i4=1,nv
+                  resi=res(i1,i2,i3,i4)
+                  resip1=res(i1+lag,i2,i3,i4)
+                  z2=z2+resi*resi
+                  y2=y2+resip1*resip1
+                  zcorr=zcorr+resi*resip1
+               enddo
+               vrm=z2/(zk-1.d0)
+               vrmp1=y2/(zk-1.d0)
+               vrm=vrm*vrmp1
+               if(vrm.gt.1e-10) scorr(i1,i2,i3,1)=zcorr/zk/dsqrt(vrm)
+            enddo
+         enddo
+      enddo
+C  correlation in y
+      do i1=1,n1
+         do i2=1,n2-lag
+            do i3=1,n3
+               scorr(i1,i2,i3,2)=0.d0
+               if (.not.(mask(i1,i2,i3).and.mask(i1,i2+lag,i3))) CYCLE
+               z2=0.d0
+               y2=0.d0
+               zcorr=0.d0
+               do i4=1,nv
+                  resi=res(i1,i2,i3,i4)
+                  resip1=res(i1,i2+lag,i3,i4)
+                  z2=z2+resi*resi
+                  y2=y2+resip1*resip1
+                  zcorr=zcorr+resi*resip1
+               enddo
+               vrm=z2/(zk-1.d0)
+               vrmp1=y2/(zk-1.d0)
+               vrm=vrm*vrmp1
+               if(vrm.gt.1e-10) scorr(i1,i2,i3,2)=zcorr/zk/dsqrt(vrm)
+            enddo
+         enddo
+      enddo
+C  correlation in z
+      do i1=1,n1
+         do i2=1,n2
+            do i3=1,n3-lag
+               scorr(i1,i2,i3,3)=0.d0
+               if (.not.(mask(i1,i2,i3).and.mask(i1,i2,i3+lag))) CYCLE
+               z2=0.d0
+               y2=0.d0
+               zcorr=0.d0
+               do i4=1,nv
+                  resi=res(i1,i2,i3,i4)
+                  resip1=res(i1,i2,i3+lag,i4)
                   z2=z2+resi*resi
                   y2=y2+resip1*resip1
                   zcorr=zcorr+resi*resip1
