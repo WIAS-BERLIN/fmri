@@ -204,8 +204,8 @@ C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
 C   
       implicit logical (a-z)
-      integer y(n1,n2,n3,dv),thn(n1,n2,n3,dv),n1,n2,n3,kern,skern,
-     1        dv,dv0
+      integer dv,dv0,y(n1,n2,n3,dv),thn(n1,n2,n3,dv),n1,n2,n3,kern,
+     1        skern
       logical aws,wlse,mask(n1,n2,n3)
       real*8 theta(n1,n2,n3,dv0),bi(n1,n2,n3),
      1       lambda,spmax,wght(2),si2(n1,n2,n3),
@@ -387,6 +387,56 @@ C  first stochastic term
       END DO
       RETURN
       END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C   nonadaptive smoothing in i1,i2,i3
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine smoothi(y,n1,n2,n3,dv,mask,lwght,
+     1                   dlw1,dlw2,dlw3,swjy,wlse,s2i,yhat)
+      integer n1,n2,n3,dv,dlw1,dlw2,dlw3
+      real*8 y(n1,n2,n3,dv),swjy(dv),s2i(n1,n2,n3),
+     1       lwght(dlw1,dlw2,dlw3),yhat(n1,n2,n3,dv)
+      logical mask(n1,n2,n3)
+      real*8 swj,wj
+      integer j1,j2,j3,jw1,jw2,jw3,clw1,clw2,clw3
+      clw1=(dlw1-1)/2
+      clw2=(dlw2-1)/2
+      clw3=(dlw3-1)/2
+               swj=0.d0
+	       DO k=1,dv
+                  swjy(k)=0.d0
+	       END DO
+               DO jw3=1,dlw3
+	          j3=jw3-clw3+i3
+	          if(j3.lt.1.or.j3.gt.n3) CYCLE
+		  jwind3=(jw3-1)*dlw1*dlw2
+                  DO jw2=1,dlw2
+	             j2=jw2-clw2+i2
+	             if(j2.lt.1.or.j2.gt.n2) CYCLE
+		     jwind2=jwind3+(jw2-1)*dlw1
+                     DO jw1=1,dlw1
+C  first stochastic term
+	                j1=jw1-clw1+i1
+                        IF(mask(j1,j2,j3)) CYCLE
+                        wj=lwght(jw1+jwind2)
+			if(wj.le.0.d0) CYCLE
+	                if(j1.lt.1.or.j1.gt.n1) CYCLE
+                        if(wlse) THEN 
+                           wj=wj*si2(j1,j2,j3)
+                        END IF
+                        swj=swj+wj
+       			DO k=1,dv
+                           swjy(k)=swjy(k)+wj*y(j1,j2,j3,k)
+			END DO
+                     END DO
+                  END DO
+               END DO
+	       DO k=1,dv
+                  thn(i1,i2,i3,k)=swjy(k)/swj
+	       END DO      
+      return
+      end
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
 C   Perform one iteration in local constant three-variate aws (gridded)
