@@ -25,6 +25,8 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
          lkern=1.d0-xsq
       ELSE IF (kern.eq.3) THEN
          lkern=dexp(-xsq*8.d0)
+      ELSE IF (kern.eq.4) THEN
+         lkern=dexp(-xsq*18.d0)
       ELSE
 C        use Epanechnikov
          lkern=1.d0-xsq
@@ -288,6 +290,97 @@ C  first stochastic term
                ELSE
                   bi(i1,i2,i3)=swj*swj/swjv
                END IF
+               call rchkusr()
+            END DO
+         END DO
+      END DO
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C   Perform one iteration in local constant three-variate aws (gridded)
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine smooth3d(y,si2,mask,wlse,n1,n2,n3,dv,hakt,
+     1                    thn,kern,lwght,wght,swjy)
+C   
+C   y        observed values of regression function
+C   n1,n2,n3    design dimensions
+C   hakt     actual bandwidth
+C   lambda   lambda or lambda*sigma2 for Gaussian models
+C   theta    estimates from last step   (input)
+C   bi       \sum  Wi   (output)
+C   ai       \sum  Wi Y     (output)
+C   model    specifies the probablilistic model for the KL-Distance
+C   kern     specifies the location kernel
+C   spmax    specifies the truncation point of the stochastic kernel
+C   wght     scaling factor for second and third dimension (larger values shrink)
+C   
+      implicit logical (a-z)
+      integer n1,n2,n3,kern,dv
+      logical wlse,mask(n1,n2,n3)
+      real*8 y(n1,n2,n3,dv),thn(n1,n2,n3,dv),wght(2),
+     1       si2(n1,n2,n3),hakt,lwght(1)
+      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
+     1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
+      real*8 swj,swjy(dv),wj,hakt2
+      hakt2=hakt*hakt
+      ih1=hakt
+C
+C   first calculate location weights
+C
+      ih3=hakt/wght(2)
+      ih2=hakt/wght(1)
+      ih1=hakt
+      n=n1*n2*n3
+      dlw1=min0(2*n1-1,2*ih1+1)
+      dlw2=min0(2*n2-1,2*ih2+1)
+      dlw3=min0(2*n3-1,2*ih3+1)
+      clw1=(dlw1+1)/2
+      clw2=(dlw2+1)/2
+      clw3=(dlw3+1)/2
+C
+C    get location weights
+C
+      call locwghts(dlw1,dlw2,dlw3,wght,hakt2,kern,lwght)
+      call rchkusr()
+      DO i3=1,n3
+         DO i2=1,n2
+            DO i1=1,n1
+               if(mask(i1,i2,i3)) CYCLE
+C   scaling of sij outside the loop
+               swj=0.d0
+	       DO k=1,dv
+                  swjy(k)=0.d0
+	       END DO
+               DO jw3=1,dlw3
+	          j3=jw3-clw3+i3
+	          if(j3.lt.1.or.j3.gt.n3) CYCLE
+		  jwind3=(jw3-1)*dlw1*dlw2
+                  DO jw2=1,dlw2
+	             j2=jw2-clw2+i2
+	             if(j2.lt.1.or.j2.gt.n2) CYCLE
+		     jwind2=jwind3+(jw2-1)*dlw1
+                     DO jw1=1,dlw1
+C  first stochastic term
+	                j1=jw1-clw1+i1
+                        IF(mask(j1,j2,j3)) CYCLE
+                        wj=lwght(jw1+jwind2)
+			if(wj.le.0.d0) CYCLE
+	                if(j1.lt.1.or.j1.gt.n1) CYCLE
+                        if(wlse) THEN 
+                           wj=wj*si2(j1,j2,j3)
+                        END IF
+                        swj=swj+wj
+       			DO k=1,dv
+                           swjy(k)=swjy(k)+wj*y(j1,j2,j3,k)
+			END DO
+                     END DO
+                  END DO
+               END DO
+	       DO k=1,dv
+                  thn(i1,i2,i3,k)=swjy(k)/swj
+	       END DO
                call rchkusr()
             END DO
          END DO

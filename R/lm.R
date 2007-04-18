@@ -193,7 +193,8 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
       dim(arfactor) <- dy[1:3]
       # now smooth (if actype is such) with AWS
       hinit <- 1
-      arfactor <- gkernsm(arfactor,rep(hmax,3)*0.42445)$gkernsm
+#      arfactor <- gkernsm(arfactor,rep(hmax,3)*0.42445)$gkernsm
+      arfactor <- smooth3D(arfactor,lkern="Gaussian",hmax=hmax,wghts=data$weights,mask=data$mask)
       dim(arfactor) <- voxelcount
       cat("fmri.lm: finished\n")
     }

@@ -383,9 +383,8 @@ if(is.null(res)){
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg,alpha=propagation)
 # Bandwidth in FWHM in case of lkern="Gaussian"
 } else {
-  cat("dim",dim,"\n")
   residuals <- readBin(res,"integer",prod(dim),2)
-  cat("first variance estimation","\n")
+  cat("Vaws3D: first variance estimation","\n")
   vartheta0 <- .Fortran("ivar",as.integer(residuals),
                            as.double(resscale),
                            as.logical(mask),
@@ -394,8 +393,7 @@ if(is.null(res)){
                            as.integer(n3),
                            as.integer(dim[4]),
                            var = double(n1*n2*n3))$var
-  cat(quantile(vartheta0,seq(0,1,.1)),"\n")
-  cat("smooth the residuals","\n")
+  cat("Vaws3D: smooth the residuals","\n")
   residuals <- .Fortran("ihaws2",as.integer(residuals),
                      as.double(sigma2),
                      as.logical(!mask),
@@ -423,7 +421,7 @@ if(is.null(res)){
   dim(residuals) <- dim
   gc()
 #   get variances and correlations
-  cat("estimate correlations","\n")
+  cat("Vaws3D: estimate correlations","\n")
   scorr <-.Fortran("icorr",as.integer(residuals),
                            as.logical(mask),
                            as.integer(n1),
@@ -431,7 +429,7 @@ if(is.null(res)){
                            as.integer(n3),
                            as.integer(dim[4]),
                            scorr = double(3))$scorr
-  cat("second variance estimation","\n")
+  cat("Vaws3D: second variance estimation","\n")
   vartheta <- .Fortran("ivar",as.integer(residuals),
                            as.double(resscale),
                            as.logical(mask),
@@ -440,8 +438,6 @@ if(is.null(res)){
                            as.integer(n3),
                            as.integer(dim[4]),
                            var = double(n1*n2*n3))$var
-  cat(quantile(vartheta,seq(0,1,.1)),"\n")
-  cat("calculate statistics","\n")
   vred <- array(vartheta/vartheta0,c(n1,n2,n3))
   vartheta <- vred/sigma2  #  sigma2 contains inverse variances
   z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,vred0=median(vred[mask]),y=y,
@@ -451,4 +447,71 @@ if(is.null(res)){
   #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
   class(z) <- "aws.gaussian"
   invisible(z)
+}
+
+smooth3D <- function(y,lkern="Gaussian",weighted=FALSE,sigma2=NULL,mask=NULL,hmax=NULL,
+                     wghts=NULL) {
+  #
+  # first check arguments and initialize
+  #
+  args <- match.call()
+
+  # test dimension of data (vector of 3D) and define dimension related stuff
+  d <- 3
+  dy <- dim(y)
+  n1 <- dy[1]
+  n2 <- dy[2]
+  n3 <- dy[3]
+  n <- n1*n2*n3
+  if (length(dy)==d) {
+    dim(y) <- dy <- c(dy,1)
+  } else if (length(dy)!=d+1) {
+    stop("y has to be 3 or 4 dimensional")
+  }
+  dv <- dim(y)[d+1]
+    if(is.null(sigma2)) {
+       weighted <- FALSE
+    } else {
+      if(length(sigma2)!=n) weighted <- FALSE
+      sigma2 <- 1/sigma2
+    }
+  if (is.null(hmax)) hmax <- 5    # uses a maximum of about 520 points
+
+  # re-define bandwidth for Gaussian lkern!!!!
+  lkern <- switch(lkern,
+                  Triangle=2,
+                  Plateau=1,
+                  Gaussian=3,
+                  Gaussian2=4,
+                  1)
+  if (lkern==3) {
+    # assume  hmax was given in  FWHM  units (Gaussian kernel will be truncated at 4)
+    hmax <- fwhm2bw(hmax)*4
+  }
+  if (lkern==4) {
+    # assume  hmax was given in  FWHM  units (Gaussian kernel will be truncated at 4)
+    hmax <- fwhm2bw(hmax)*6
+  }
+  if (is.null(wghts)) wghts <- c(1,1,1)
+  if(is.null(mask)) mask <- array(TRUE,dy[1:3])
+  hmax <- hmax/wghts[1]
+  wghts <- (wghts[2:3]/wghts[1])
+    dlw <- (2*trunc(hmax/c(1,wghts))+1)[1:d]
+    ysmooth <- .Fortran("smooth3d",
+                     as.double(y),
+                     as.double(sigma2),
+                     as.logical(!mask),
+                     as.logical(weighted),
+                     as.integer(n1),
+                     as.integer(n2),
+                     as.integer(n3),
+                     as.integer(dv),
+                     hakt=as.double(hmax),
+                     thnew=as.double(y),
+                     as.integer(lkern),
+                     double(prod(dlw)),
+                     as.double(wghts),
+                     double(dv),#swjy
+                     PACKAGE="fmri",DUP=TRUE)$thnew
+array(ysmooth,dy)
 }
