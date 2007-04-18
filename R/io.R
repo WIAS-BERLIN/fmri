@@ -214,7 +214,7 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
      mask <- array(TRUE,dt[1:3])
      mask[ttt[,,,1] < quantile(ttt[,,,1],0.75)] <- FALSE
 
-    z <- list(ttt=writeBin(as.vector(ttt),raw(),4),format="ANALYZE",delta=header$pixdim[2:4],origin=NULL,
+    z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),format="ANALYZE",delta=header$pixdim[2:4],origin=NULL,
               orient=NULL,dim=dim(ttt),weights=weights,header=header, mask=mask)
   } else {
     warning(paste("Error: file",filename[1],"does not exist!"))
@@ -407,7 +407,7 @@ read.AFNI <- function(filename) {
   mask <- array(TRUE,c(dx,dy,dz))
   mask[myttt[,,,1] < quantile(myttt[,,,1],0.75)] <- FALSE
     z <-
-      list(ttt=writeBin(as.vector(myttt),raw(),4),format="HEAD/BRIK",delta=values$DELTA,origin=values$ORIGIN,orient=values$ORIENT_SPECIFIC,dim=c(dx,dy,dz,dt),weights=weights, header=values,mask=mask)
+      list(ttt=writeBin(as.numeric(myttt),raw(),4),format="HEAD/BRIK",delta=values$DELTA,origin=values$ORIGIN,orient=values$ORIENT_SPECIFIC,dim=c(dx,dy,dz,dt),weights=weights, header=values,mask=mask)
   } else {
     warning("Error reading file: Could not detect size per voxel\n")
     z <- list(ttt=NULL,format="HEAD/BRIK",delta=NULL,origin=NULL,orient=NULL,dim=NULL,weights=NULL,header=values,mask=NULL)    
@@ -647,7 +647,7 @@ read.DICOM <- function(filename,includedata=TRUE) {
       ttt <- array(readBin(con,"integer",length/depth,depth,signed=FALSE,endian=endian),c(xdim,ydim))
     }
     
-    z <- list(header=header,ttt=writeBin(as.vector(ttt),raw(),4),format="DICOM",delta=delta,series=series,image=image,dim=c(xdim,ydim))
+    z <- list(header=header,ttt=writeBin(as.numeric(ttt),raw(),4),format="DICOM",delta=delta,series=series,image=image,dim=c(xdim,ydim))
   } else {
     z <- list(header=header,format="DICOM",delta=delta,series=series,image=image,dim=c(xdim,ydim))
   }
@@ -803,7 +803,7 @@ read.NIFTI <- function(filename) {
   mask <- array(TRUE,c(dx,dy,dz))
   mask[ttt[,,,1] < quantile(ttt[,,,1],0.75)] <- FALSE
 
-  z <- list(ttt=writeBin(as.vector(ttt),raw(),4),format="NIFTI",delta=header$pixdim[2:4],
+  z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),format="NIFTI",delta=header$pixdim[2:4],
                 origin=NULL,orient=NULL,dim=header$dimension[2:5],weights=weights,header=header,mask=mask)
 
   class(z) <- "fmridata"

@@ -270,9 +270,9 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   gc()
   dim(corr2) <- c(dy[1:3],3)
   corr <- numeric(3)
-  corr[1] <- median(corr2[,,,1][corr2[,,,1]!=0])
-  corr[2] <- median(corr2[,,,2][corr2[,,,2]!=0])
-  corr[3] <- median(corr2[,,,3][corr2[,,,3]!=0])
+  corr[1] <- median(corr2[,,,1][corr2[,,,1]!=0], na.rm = TRUE)
+  corr[2] <- median(corr2[,,,2][corr2[,,,2]!=0], na.rm = TRUE)
+  corr[3] <- median(corr2[,,,3][corr2[,,,3]!=0], na.rm = TRUE)
   if(keep=="essential") {
      rm(corr2)
      gc()
