@@ -394,10 +394,11 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine smoothi(y,n1,n2,n3,dv,mask,lwght,
      1                   dlw1,dlw2,dlw3,swjy,wlse,s2i,yhat)
+      implicit logical(a-z)
       integer n1,n2,n3,dv,dlw1,dlw2,dlw3
       real*8 y(n1,n2,n3,dv),swjy(dv),s2i(n1,n2,n3),
      1       lwght(dlw1,dlw2,dlw3),yhat(n1,n2,n3,dv)
-      logical mask(n1,n2,n3)
+      logical mask(n1,n2,n3),wlse
       real*8 swj,wj
       integer j1,j2,j3,jw1,jw2,jw3,clw1,clw2,clw3
       clw1=(dlw1-1)/2
@@ -419,7 +420,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C  first stochastic term
 	                j1=jw1-clw1+i1
                         IF(mask(j1,j2,j3)) CYCLE
-                        wj=lwght(jw1+jwind2)
+                        wj=lwght(jw1,jw2,jw3)
 			if(wj.le.0.d0) CYCLE
 	                if(j1.lt.1.or.j1.gt.n1) CYCLE
                         if(wlse) THEN 
@@ -433,7 +434,7 @@ C  first stochastic term
                   END DO
                END DO
 	       DO k=1,dv
-                  thn(i1,i2,i3,k)=swjy(k)/swj
+                  yhat(i1,i2,i3,k)=swjy(k)/swj
 	       END DO      
       return
       end
