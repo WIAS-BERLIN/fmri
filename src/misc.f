@@ -110,14 +110,14 @@ C  correlation in x
             enddo
          enddo
       enddo
-      do i1=n1
+      do i1=1,n1
          do i2=1,n2-lag+1,n2
             do i3=1,n3
                scorr(i1,i2,i3,2)=0.d0
             enddo
          enddo
       enddo
-      do i1=n1
+      do i1=1,n1
          do i2=1,n2
             do i3=1,n3-lag+1,n3
                scorr(i1,i2,i3,3)=0.d0

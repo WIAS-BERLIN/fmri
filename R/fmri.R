@@ -87,7 +87,7 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau
   z
 }
 
-fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE ) {
+fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE, minimum.signal=0 ) {
   cat("fmri.pvalue: entering function\n")
 
   if (!("fmrispm" %in% class(spm)) ) {
@@ -96,7 +96,7 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE ) {
 
   if (length(dim(spm$cbeta)) < 4) {
 
-    stat <- spm$cbeta/sqrt(spm$var)
+    stat <- (spm$cbeta-minimum.signal)/sqrt(spm$var)
     dim(stat) <- prod(spm$dim[1:3])
     cat("fmri.pvalue: calculate treshold and p-value method:",mode,"\n")
     if (mode == "local") {
