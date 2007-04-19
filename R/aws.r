@@ -30,7 +30,7 @@
 vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE,
                    sigma2=NULL,mask=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
                    u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
-                   spmin=.3,scorr=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE,
+                   spmin=.3,h0=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE,
                    res=NULL, resscale=NULL, dim=NULL) {
 
   #  Auxilary functions
@@ -109,18 +109,12 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
   hincr <- hincr^(1/d)
 
   # determine corresponding bandwidth for specified correlation
-  h0 <- rep(0,length(scorr))
-  if (max(scorr)>0) {
-    h0 <- numeric(length(scorr))
-    for (i in 1:length(h0)) h0[i] <- get.bw.gauss(scorr[i],interv=2)
-    if (length(h0)<d) h0 <- rep(h0[1],d)
-    if (demo) cat("Corresponding bandwiths for specified correlation:",h0,"\n")
-  }
+  if(is.null(h0)) h0 <- rep(0,3)
 
   # estimate variance in the gaussian case if necessary  
   if (is.null(sigma2)) {
     sigma2 <- IQRdiff(as.vector(y))^2
-    if (scorr[1]>0) sigma2<-sigma2*Varcor.gauss(h0)*Spatialvar.gauss(h0*c(1,wghts),1e-5,d)
+    if (any(h0>0)) sigma2<-sigma2*Varcor.gauss(h0)*Spatialvar.gauss(h0*c(1,wghts),1e-5,d)
     if (demo) cat("Estimated variance: ", signif(sigma2,4),"\n")
   }
   if (length(sigma2)==1) sigma2<-array(sigma2,dy[1:3]) 
@@ -172,7 +166,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
   # run single steps to display intermediate results
   while (hakt<=hmax) {
     dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
-    if (scorr[1]>=0.1) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0)/4*c(1,wghts),h0*c(1,wghts),d) /
+    if (any(h0>0)) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0)/4*c(1,wghts),h0*c(1,wghts),d) /
       Spatialvar.gauss(h0*c(1,wghts),1e-5,d) /
         Spatialvar.gauss(bw2fwhm(hakt0)/4*c(1,wghts),1e-5,d)
         # Correction C(h0,hakt) for spatial correlation depends on h^{(k-1)}  all bandwidth-arguments in FWHM 
@@ -263,8 +257,9 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
     if (demo) readline("Press return")
     hakt <- hakt*hincr
     x <- 1.25^(k-1)
-    scorrfactor <- x/(3^d*prod(scorr)*prod(h0)+x)
-    lambda0 <- lambda*lseq[k]*scorrfactor
+#    scorrfactor <- x/(3^d*prod(scorr)*prod(h0)+x)
+#    lambda0 <- lambda*lseq[k]*scorrfactor
+    lambda0 <- lambda*lseq[k]
     k <- k+1
     gc()
   }
@@ -281,7 +276,7 @@ if(is.null(res)){
   gwght <- outer(gw1,outer(gw2,gw3,"*"),"*")
   gwght <- gwght/sum(gwght)
   dgw <- dim(gwght)
-  if (scorr[1]>=0.1) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0/hincr)/4*c(1,wghts),h0*c(1,wghts),d) /
+  if (any(h0)>0) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0/hincr)/4*c(1,wghts),h0*c(1,wghts),d) /
     Spatialvar.gauss(h0*c(1,wghts),1e-5,d) /
       Spatialvar.gauss(bw2fwhm(hakt0/hincr)/4*c(1,wghts),1e-5,d)
   if(vred=="Full"){

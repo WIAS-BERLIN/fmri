@@ -812,7 +812,7 @@ read.NIFTI <- function(filename) {
 }
 
 extract.data <- function(z,what="data") {
-  if (!class(z) == "fmridata") {
+  if (!("fmridata"%in%class(z))) {
     warning("extract.data: data not of class <fmridata>. Try to proceed but strange things may happen")
   }
   if (what=="residuals") {  

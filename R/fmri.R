@@ -18,20 +18,20 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau
   } else {
     weights <- spm$weights
   }
-  if (is.null(spm$scorr)) {
-    scorr <- 0
+  if (is.null(spm$bw)) {
+    bw <- rep(0,3)
   } else {
-    scorr <- spm$scorr
+    bw <- spm$bw
   }
 
   cat("fmri.smooth: smoothing the Statistical Paramteric Map\n")
   if (adaptive) {
     ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
-                     wghts=weights, scorr=scorr, vwghts = spm$vwghts,
+                     wghts=weights, h0=bw, vwghts = spm$vwghts,
                      lkern=lkern,skern=skern,weighted=weighted,res=spm$res,resscale=spm$resscale, dim=spm$dim)
   } else {
     ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
-                     qlambda = 1, wghts=weights, scorr=scorr,
+                     qlambda = 1, wghts=weights, h0=bw,
                      vwghts = spm$vwghts,lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
                      resscale=spm$resscale, dim=spm$dim)
   }
