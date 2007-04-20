@@ -209,7 +209,7 @@ corrrisk <- function(bw,lag,data){
 }
 
 thcorr3D <- function(bw,lag=rep(5,3)){
-  g <- trunc(fwhm2bw(bw/wghts)*4)
+  g <- trunc(fwhm2bw(bw)*4)
   gw1 <- dnorm(-(g[1]):g[1],0,fwhm2bw(bw[1])) 
   gw2 <- dnorm(-(g[2]):g[2],0,fwhm2bw(bw[2]))
   gw3 <- dnorm(-(g[3]):g[3],0,fwhm2bw(bw[3]))
