@@ -174,7 +174,7 @@ C  first stochastic term
                         if(wlse) THEN 
                            wj=wj*si2j
                         ELSE
-                           swjv=swj+wj/si2j
+                           swjv=swjv+wj/si2j
                         END IF
                         swj=swj+wj
        			DO k=1,dv
