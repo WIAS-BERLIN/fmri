@@ -269,19 +269,18 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
 
   #   Now compute variance of theta and variance reduction factor (with respect to the spatially uncorrelated situation   
 if(is.null(res)){
-  g <- trunc(fwhm2bw(h0/c(1,wghts))*4)
+  g <- trunc(fwhm2bw(h0)*4)
 
-  #  use g <- trunc(fwhm2bw(h0/c(1,wghts))*3)+1 if it takes to long
   cat("estimate variances .")
   if(h0[1]>0) gw1 <- dnorm(-(g[1]):g[1],0,fwhm2bw(h0[1]))/dnorm(0,0,fwhm2bw(h0[1])) else gw1 <- 1
-  if(h0[2]>0) gw2 <- dnorm(-(g[2]):g[2],0,fwhm2bw(h0[2])/wghts[1])/dnorm(0,0,fwhm2bw(h0[2])/wghts[1]) else gw2 <- 1
-  if(h0[3]>0) gw3 <- dnorm(-(g[3]):g[3],0,fwhm2bw(h0[3])/wghts[2])/dnorm(0,0,fwhm2bw(h0[3])/wghts[2]) else gw3 <- 1
+  if(h0[2]>0) gw2 <- dnorm(-(g[2]):g[2],0,fwhm2bw(h0[2]))/dnorm(0,0,fwhm2bw(h0[2])) else gw2 <- 1
+  if(h0[3]>0) gw3 <- dnorm(-(g[3]):g[3],0,fwhm2bw(h0[3]))/dnorm(0,0,fwhm2bw(h0[3])) else gw3 <- 1
   gwght <- outer(gw1,outer(gw2,gw3,"*"),"*")
   gwght <- gwght/sum(gwght)
   dgw <- dim(gwght)
-  if (any(h0)>0) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0/hincr)/4*c(1,wghts),h0*c(1,wghts),d) /
-    Spatialvar.gauss(h0*c(1,wghts),1e-5,d) /
-      Spatialvar.gauss(bw2fwhm(hakt0/hincr)/4*c(1,wghts),1e-5,d)
+  if (any(h0)>0) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0/hincr)/4/c(1,wghts),h0,d) /
+    Spatialvar.gauss(h0,1e-5,d) /
+      Spatialvar.gauss(bw2fwhm(hakt0/hincr)/4/c(1,wghts),1e-5,d)
   if(vred=="Full"){
     z <- .Fortran("chawsvr",
                   as.double(sigma2),

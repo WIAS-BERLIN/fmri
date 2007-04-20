@@ -205,14 +205,14 @@ correlation <- function(res,mask = array(1,dim=dim(res)[1:3])) {
 }
 
 corrrisk <- function(bw,lag,data){
-mean((data-thcorr3D(bw,lag))^2)
+  mean((data-thcorr3D(bw,lag))^2)
 }
 
-thcorr3D <- function(bw,lag=rep(5,3),wghts=c(1,1,1)){
+thcorr3D <- function(bw,lag=rep(5,3)){
   g <- trunc(fwhm2bw(bw/wghts)*4)
   gw1 <- dnorm(-(g[1]):g[1],0,fwhm2bw(bw[1])) 
-  gw2 <- dnorm(-(g[2]):g[2],0,fwhm2bw(bw[2])/wghts[1])
-  gw3 <- dnorm(-(g[3]):g[3],0,fwhm2bw(bw[3])/wghts[2])
+  gw2 <- dnorm(-(g[2]):g[2],0,fwhm2bw(bw[2]))
+  gw3 <- dnorm(-(g[3]):g[3],0,fwhm2bw(bw[3]))
   gwght <- outer(gw1,outer(gw2,gw3,"*"),"*")
   gwght <- gwght/sum(gwght)
   dgw <- dim(gwght)
@@ -225,6 +225,7 @@ thcorr3D <- function(bw,lag=rep(5,3),wghts=c(1,1,1)){
                     as.integer(lag[2]),
                     as.integer(lag[3]),
                     PACKAGE="fmri",DUP=TRUE)$scorr
-dim(scorr) <- lag
-scorr
+  # bandwidth in FWHM in voxel units
+  dim(scorr) <- lag
+  scorr
 }
