@@ -114,7 +114,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
   # estimate variance in the gaussian case if necessary  
   if (is.null(sigma2)) {
     sigma2 <- IQRdiff(as.vector(y))^2
-    if (any(h0>0)) sigma2<-sigma2*Varcor.gauss(h0)*Spatialvar.gauss(h0*c(1,wghts),1e-5,d)
+    if (any(h0>0)) sigma2<-sigma2*Varcor.gauss(h0)*Spatialvar.gauss(h0,1e-5,d)
     if (demo) cat("Estimated variance: ", signif(sigma2,4),"\n")
   }
   if (length(sigma2)==1) sigma2<-array(sigma2,dy[1:3]) 
@@ -155,7 +155,10 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
   hakt0 <- hinit
   lambda0 <- lambda*lseq[k]
   if (hinit>1) lambda0 <- 1e50 # that removes the stochstic term for the first step
-  
+  scorr <- numeric(3)
+  if(h0[1]>0) scorr[1] <-  get.corr.gauss(h0[1],2)
+  if(h0[2]>0) scorr[2] <-  get.corr.gauss(h0[2],2)
+  if(h0[3]>0) scorr[3] <-  get.corr.gauss(h0[3],2)
   progress <- 0
   step <- 0
   total <- (hincr^(d*ceiling(log(hmax/hinit)/log(hincr)))-1)/(hincr^d-1)
@@ -166,9 +169,9 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
   # run single steps to display intermediate results
   while (hakt<=hmax) {
     dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
-    if (any(h0>0)) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0)/4*c(1,wghts),h0*c(1,wghts),d) /
-      Spatialvar.gauss(h0*c(1,wghts),1e-5,d) /
-        Spatialvar.gauss(bw2fwhm(hakt0)/4*c(1,wghts),1e-5,d)
+#  need bandwidth in voxel for Spaialvar.gauss, h0 is in voxel
+    if (any(h0>0)) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0)/4/c(1,wghts),h0,d)/
+      Spatialvar.gauss(h0,1e-5,d)/Spatialvar.gauss(bw2fwhm(hakt0)/4/c(1,wghts),1e-5,d)
         # Correction C(h0,hakt) for spatial correlation depends on h^{(k-1)}  all bandwidth-arguments in FWHM 
     hakt0 <- hakt
     theta0 <- theta
@@ -256,10 +259,10 @@ vaws3D <- function(y,qlambda=NULL,lkern="Triangle",skern="Plateau",weighted=TRUE
     }
     if (demo) readline("Press return")
     hakt <- hakt*hincr
-    x <- 1.25^(k-1)
-#    scorrfactor <- x/(3^d*prod(scorr)*prod(h0)+x)
-#    lambda0 <- lambda*lseq[k]*scorrfactor
-    lambda0 <- lambda*lseq[k]
+#  adjust lambda for the high intrinsic correlation between  neighboring estimates 
+    x <- prod(1.25^(k-1)/c(1,wghts))
+    scorrfactor <- x/(3^d*prod(scorr)*prod(h0)+x)
+    lambda0 <- lambda*lseq[k]*scorrfactor
     k <- k+1
     gc()
   }
