@@ -419,13 +419,19 @@ if(is.null(res)){
   gc()
 #   get variances and correlations
   cat("Vaws3D: estimate correlations","\n")
-  scorr <-.Fortran("icorr",as.integer(residuals),
-                           as.logical(mask),
-                           as.integer(n1),
-                           as.integer(n2),
-                           as.integer(n3),
-                           as.integer(dim[4]),
-                           scorr = double(3))$scorr
+  lags <- c(5,5,3)
+  scorr <- .Fortran("imcorr",as.integer(residuals),
+                     as.logical(data$mask),
+                     as.integer(dy[1]),
+                     as.integer(dy[2]),
+                     as.integer(dy[3]),
+                     as.integer(dy[4]),
+                     scorr=double(prod(lags)),
+                     as.integer(lags[1]),
+                     as.integer(lags[2]),
+                     as.integer(lags[3]),
+                     PACKAGE="fmri",DUP=TRUE)$scorr
+  dim(scorr) <- lags                     
   cat("Vaws3D: final variance estimation","\n")
   vartheta <- .Fortran("ivar",as.integer(residuals),
                            as.double(resscale),

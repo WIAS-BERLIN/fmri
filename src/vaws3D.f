@@ -136,7 +136,12 @@ C
       DO i3=1,n3
          DO i2=1,n2
             DO i1=1,n1
-               if(mask(i1,i2,i3)) CYCLE
+               if(mask(i1,i2,i3)) THEN
+                  DO k=1,dv
+                     thn(i1,i2,i3,k)=0.d0
+                  END DO
+                  CYCLE
+               END IF
 	       si2i=si2(i1,i2,i3)
                bii=bi(i1,i2,i3)/lambda
 C   scaling of sij outside the loop
@@ -249,7 +254,12 @@ C
       DO i3=1,n3
          DO i2=1,n2
             DO i1=1,n1
-               if(mask(i1,i2,i3)) CYCLE
+               if(mask(i1,i2,i3)) THEN
+                  DO k=1,dv
+                     thn(i1,i2,i3,k)=0.d0
+                  END DO
+                  CYCLE
+               END IF
 	       si2i=si2(i1,i2,i3)
                bii=bi(i1,i2,i3)/lambda
 C   scaling of sij outside the loop
@@ -357,7 +367,12 @@ C
       DO i3=1,n3
          DO i2=1,n2
             DO i1=1,n1
-               if(mask(i1,i2,i3)) CYCLE
+               if(mask(i1,i2,i3)) THEN
+                  DO k=1,dv
+                     thn(i1,i2,i3,k)=0.d0
+                  END DO
+                  CYCLE
+               END IF
 C   scaling of sij outside the loop
                swj=0.d0
 	       DO k=1,dv

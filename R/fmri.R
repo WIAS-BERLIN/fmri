@@ -41,10 +41,8 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau
   if(is.null(ttthat$scorr)){
      bw <- get3Dh.gauss(ttthat$vred,weights)
   } else {
-     bw <- matrix(0,1,3)
-     bw[,1]<-get.bw.gauss(ttthat$scorr[1])
-     bw[,2]<-get.bw.gauss(ttthat$scorr[2])
-     bw[,3]<-get.bw.gauss(ttthat$scorr[3])
+     bw <- optim(c(2,2,2),corrrisk,method="L-BFGS-B",lower=c(.25,.25,.25),lag=lags,data=corr)$par  
+     bw[bw<=.25] <- 0
   } 
   rxyz <- c(resel(1,bw[,1]), resel(1,bw[,2]), resel(1,bw[,3]))
   dim(rxyz) <- c(dim(bw)[1],3)
