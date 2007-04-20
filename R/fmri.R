@@ -41,8 +41,9 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau
   if(is.null(ttthat$scorr)){
      bw <- get3Dh.gauss(ttthat$vred,weights)
   } else {
-     bw <- optim(c(2,2,2),corrrisk,method="L-BFGS-B",lower=c(.25,.25,.25),lag=lags,data=corr)$par  
+     bw <- optim(c(2,2,2),corrrisk,method="L-BFGS-B",lower=c(.25,.25,.25),lag=c(5,5,3),data=ttthat$scorr)$par  
      bw[bw<=.25] <- 0
+     dim(bw) <- c(1,3)
   } 
   rxyz <- c(resel(1,bw[,1]), resel(1,bw[,2]), resel(1,bw[,3]))
   dim(rxyz) <- c(dim(bw)[1],3)
@@ -54,11 +55,11 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau
   if (dim(ttthat$theta)[4] == 1) {
     z <- list(cbeta = ttthat$theta[,,,1], var = ttthat$var, rxyz =
               rxyz, rxyz0 = rxyz0, scorr = spm$scorr, weights =
-              spm$weights, vwghts = spm$vwghts,
+              spm$weights, vwghts = spm$vwghts, bw=bw, 
               hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf)
   } else {
     z <- list(cbeta = ttthat$theta, var = ttthat$var, rxyz = rxyz, rxyz0 = rxyz0, 
-              scorr = spm$scorr, weights = spm$weights, vwghts = spm$vwghts,
+              scorr = spm$scorr, weights = spm$weights, vwghts = spm$vwghts, bw=bw,
               hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf)
   }    
 
