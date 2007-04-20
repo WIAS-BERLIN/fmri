@@ -425,7 +425,7 @@ if(is.null(res)){
   cat("Vaws3D: estimate correlations","\n")
   lags <- c(5,5,3)
   scorr <- .Fortran("imcorr",as.integer(residuals),
-                     as.logical(data$mask),
+                     as.logical(mask),
                      as.integer(dy[1]),
                      as.integer(dy[2]),
                      as.integer(dy[3]),

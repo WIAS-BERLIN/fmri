@@ -72,6 +72,7 @@ fmri.design <- function(hrf, order=2) {
   if (order != 0) {
     for (i in (stimuli+2):(stimuli+order+1)) {
       z[,i] <- (1:scans)^(i-stimuli-1)
+      z[,i] <- z[,i]/mean(z[,i])
       hz <- numeric(stimuli)
       for (j in 1:stimuli) {
         hz[j] <- z[,j]%*%z[,i]
@@ -273,7 +274,6 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   if(keep=="all"){
      qscale <- range(residuals)
      scale <- max(abs(qscale))/32767
-     residuals <- as.integer(residuals/scale)
      residuals <- writeBin(as.integer(residuals/scale),raw(),2)
   }
   bw <- optim(c(2,2,2),corrrisk,method="L-BFGS-B",lower=c(.25,.25,.25),lag=lags,data=corr)$par  
