@@ -279,6 +279,7 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
                      as.integer(lags[3]),
                      PACKAGE="fmri",DUP=FALSE)$scorr
   dim(corr) <- lags                     
+  scale <- NULL
   if(keep=="all"){
      qscale <- range(residuals)
      scale <- max(abs(qscale))/32767
@@ -299,22 +300,35 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   } else {
     vwghts <- 1
   }
-  
+
+  cat("fmri.lm: determining df: ")
+  if (actype == "smooth") {
+    white <- 1
+  } else if (actype == "accalc") {
+    white <- 2
+  } else {
+    white <- 3
+  }
+  df <- switch(white,abs(diff(dim(z))) / (1 + 2*(1 + 2 * prod(hmax/bw)^0.667)^(-1.5) * mean(arfactor)^2) ,
+                     abs(diff(dim(z))) / (1 + 2*mean(arfactor)^2)  ,
+                     abs(diff(dim(z))) )
+  cat(df,"\n")
+
   cat("fmri.lm: exiting function\n")
   
   if (keep == "all") {
     result <- list(beta = beta, cbeta = cbeta, var = variance, res =
               residuals, arfactor = arfactor, rxyz = rxyz, scorr = corr, weights =
               data$weights, vwghts = vwghts, mask=data$mask, dim =
-              data$dim, hrf = z %*% contrast, resscale=scale, bw=bw)
+              data$dim, hrf = z %*% contrast, resscale=scale, bw=bw, df=df)
   } else if (keep == "diagnostic") {
     result <- list(cbeta = cbeta, var = variance, res = residuals, rxyz = rxyz, scorr =
               corr, weights = data$weights, vwghts = vwghts, mask=data$mask, dim = data$dim, 
-              hrf = z %*% contrast, res=NULL, resscale=NULL, bw=bw)
+              hrf = z %*% contrast, res=NULL, resscale=NULL, bw=bw, df=df)
   } else {
     result <- list(cbeta = cbeta, var = variance, rxyz = rxyz, scorr = corr, weights =
               data$weights, vwghts = vwghts, mask=data$mask, dim = data$dim, 
-              hrf = z %*% contrast, res=NULL, resscale=NULL, bw=bw)
+              hrf = z %*% contrast, res=NULL, resscale=NULL, bw=bw, df=df)
   }
 
   if (length(vvector) > 1) {
@@ -324,17 +338,9 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   class(result) <- c("fmridata","fmrispm")
 
   attr(result, "file") <- attr(data, "file")
-  if (actype == "smooth") {
-    attr(result, "white") <-
-      paste("Prewhitening performed with smoothed (bandwidth",hmax,") map\nof autocorrelation parameter in AR(1) model for time series!\n")
-  } else if (actype == "accalc") {
-    attr(result, "white") <-
-      paste("Prewhitening performed with map of autocorrelation parameter in AR(1) model for time series\n")
-  } else {
-    attr(result, "white") <-
-      paste("No prewhitening performed!\n")
-  }
   attr(result, "design") <- z
+  attr(result, "white") <- white
+  attr(result, "residuals") <- !is.null(scale)
     
   invisible(result)
 }
