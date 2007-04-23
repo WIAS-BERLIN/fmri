@@ -716,7 +716,7 @@ print.fmridata <- function(x,...) {
     cat("Data Range    :", values[1], "...", values[2], "\n")
     cat("File(s)", attr(x, "file"),"\n\n")
     cat("Design Dimension:", dim(attr(x, "design")), "\n")
-    switch(attr(object, "white"),cat("Prewhitening performed with smoothed map\nof autocorrelation parameter in AR(1) model for time series!\n"),
+    switch(attr(x, "white"),cat("Prewhitening performed with smoothed map\nof autocorrelation parameter in AR(1) model for time series!\n"),
                                  cat("Prewhitening performed with map of autocorrelation parameter in AR(1) model for time series\n"),
                                  cat("No prewhitening performed!\n"))
     if (!is.null(attr(x, "smooth"))) cat(attr(x, "smooth"),"\n")
@@ -727,7 +727,7 @@ print.fmridata <- function(x,...) {
     cat("Data Range    :", values[1], "...", values[2], "\n")
     cat("File(s)", attr(x, "file"),"\n\n")
     cat("Design Dimension:", dim(attr(x, "design")), "\n")
-    switch(attr(object, "white"),cat("Prewhitening performed with smoothed map\nof autocorrelation parameter in AR(1) model for time series!\n"),
+    switch(attr(x, "white"),cat("Prewhitening performed with smoothed map\nof autocorrelation parameter in AR(1) model for time series!\n"),
                                  cat("Prewhitening performed with map of autocorrelation parameter in AR(1) model for time series\n"),
                                  cat("No prewhitening performed!\n"))
     if (!is.null(attr(x, "smooth"))) cat(attr(x, "smooth"))
