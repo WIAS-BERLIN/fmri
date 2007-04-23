@@ -323,10 +323,6 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
               residuals, arfactor = arfactor, rxyz = rxyz, scorr = corr, weights =
               data$weights, vwghts = vwghts, mask=data$mask, dim =
               data$dim, hrf = z %*% contrast, resscale=scale, bw=bw, df=df)
-  } else if (keep == "diagnostic") {
-    result <- list(cbeta = cbeta, var = variance, res = residuals, rxyz = rxyz, scorr =
-              corr, weights = data$weights, vwghts = vwghts, mask=data$mask, dim = data$dim, 
-              hrf = z %*% contrast, res=NULL, resscale=NULL, bw=bw, df=df)
   } else {
     result <- list(cbeta = cbeta, var = variance, rxyz = rxyz, scorr = corr, weights =
               data$weights, vwghts = vwghts, mask=data$mask, dim = data$dim, 

@@ -49,7 +49,7 @@ fmri.smooth(spm, hmax = 4, adaptive=TRUE,
   due to a less random weighting scheme.
 
   The function handles zero variances by assigning a large value (1e20)
-  to these variances. Smoothing is restricted to voxel with \code{spm$mask&spm$var<1e16}.
+  to these variances. Smoothing is restricted to voxel with \code{spm$mask}.
 }
 \value{
   object with class attributes "fmrispm" and "fmridata"

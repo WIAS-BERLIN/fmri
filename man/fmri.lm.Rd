@@ -27,8 +27,12 @@
   \item{vvector}{ vector defining the parameters for which the
     covariance matrix is returned as well as the corresponding length of
     the vector \code{cbeta} in each voxel}
-  \item{keep}{ string describing the amount of data returned:
-    "essential", "diagnostic", "all" }
+  \item{keep}{ string describing the amount of data returned. If \code{keep=="all"} residuals 
+    are included in the returned object. This triggers variance estimation 
+    in \code{fmri.smooth} to based on adaptively smoothed residuals.
+    Otherwise variance estimation is based on the estimated smootheness of the measured
+    data. This is less memory and time consuming, but expected to be
+    less accurate. }
 }
 \details{
   This function performs parameter estimation in the linear model.
