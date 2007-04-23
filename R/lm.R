@@ -309,8 +309,10 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   } else {
     white <- 3
   }
-  df <- switch(white,abs(diff(dim(z))) / (1 + 2*(1 + 2 * prod(hmax/bw)^0.667)^(-1.5) * mean(arfactor)^2) ,
-                     abs(diff(dim(z))) / (1 + 2*mean(arfactor)^2)  ,
+  cx <- u %*% lambda1 %*% vt %*% contrast
+  tau1 <- sum(cx[-1] * cx[-length(cx)]) / sum(cx * cx)
+  df <- switch(white,abs(diff(dim(z))) / (1 + 2*(1 + 2 * prod(hmax/bw)^0.667)^(-1.5) * tau1^2) ,
+                     abs(diff(dim(z))) / (1 + 2* tau1^2)  ,
                      abs(diff(dim(z))) )
   cat(df,"\n")
 
