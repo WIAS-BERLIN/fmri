@@ -59,17 +59,19 @@ fmri.smooth(spm, hmax = 4, adaptive=TRUE,
   \item{rxyz}{ smoothness in resel space. all directions }
   \item{rxyz0}{ smoothness in resel space as would be achieved by
     a Gaussian filter with the same bandwidth. all directions }
-  \item{scorr}{ spatial correlation of original data }
+  \item{scorr}{array of spatial correlations with maximal lags 5, 5, 3 in x,y and z-direction. }
+  \item{bw}{vector of bandwidths (in FWHM) corresponding to the spatial correlation within the data.}
+  \item{dim}{dimension of the data cube and residuals}
   \item{weights}{ ratio of voxel dimensions }
   \item{vwghts}{ ratio of estimated variances for the stimuli given by
   \code{vvector}}
   \item{hrf}{ Expected BOLD response for the specified effect }
 }
 \references{
-  Tabelow, K., Polzehl, J., Voss, H.U., and Spokoiny, V. (2005). 
-  \emph{Analysing {fMRI}
+  Tabelow, K., Polzehl, J., Voss, H.U., and Spokoiny, V.. 
+\emph{Analysing {fMRI}
     experiments with structure adaptive smoothing procedures},
-  NeuroImage, accepted (2006). 
+  NeuroImage, 33:55-62 (2006). 
 
   Polzehl, J. and Spokoiny, V. (2006). \emph{Propagation-Separation
     Approach for Local Likelihood Estimation}, Probab. Theory

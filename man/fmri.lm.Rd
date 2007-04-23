@@ -61,14 +61,20 @@
   \item{cbeta}{estimated contrast of parameters}
   \item{var}{estimated variance of the contrast of parameters.}
   \item{varm}{covariance matrix of the parameters given by \code{vvector}}
-  \item{res}{residuals of the estimated linear model}
+  \item{res}{raw (integer size 2) vector containing residuals of the estimated linear model
+             up to scale factor resscale.}
+  \item{resscale}{\code{resscale*extract.data(object,"residuals")} are the residuals. }
+  \item{dim}{dimension of the data cube and residuals}
   \item{arfactor}{estimated autocorrelation parameter}
-  \item{scorr}{spatial correlation of data }
+  \item{rxyz}{array of smoothness from estimated correlation for each
+    voxel in resel space (for analysis without smoothing)}
+  \item{scorr}{array of spatial correlations with maximal lags 5, 5, 3 in x,y and z-direction. }
+  \item{bw}{vector of bandwidths (in FWHM) corresponding to the spatial correlation within the data.}
   \item{weights}{ratio of voxel dimensions }
   \item{vwghts}{ratio of estimated variances for the stimululi given by
   \code{vvector}}
-  \item{rxyz}{array of smoothness from estimated correlation for each
-    voxel in resel space (for analysis without smoothing)}
+  \item{mask}{head mask.}
+  \item{df}{Degrees of freedom for t-statistics.}
   \item{hrf}{expected BOLD response for contrast }
 }
 \references{ Worsley, K.J. (2005). Spatial smoothing of autocorrelations

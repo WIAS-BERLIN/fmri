@@ -53,10 +53,10 @@ fmri.pvalue(spm, mode="basic", delta=NULL, na.rm=FALSE, minimum.signal = 0)
   \item{hrf}{ expected BOLD response for contrast (single stimulus only)}
 }
 \references{
-  Tabelow, K., Polzehl, J., Voss, H.U., and Spokoiny, V. (2005). 
+  Tabelow, K., Polzehl, J., Voss, H.U., and Spokoiny, V.. 
 \emph{Analysing {fMRI}
     experiments with structure adaptive smoothing procedures},
-  NeuroImage, accepted (2006). 
+  NeuroImage, 33:55-62 (2006). 
   
   Worsley, K.J., and Taylor, J.E., \emph{Detecting fMRI activation
     allowing for unknown latency of the hemodynamic response},
