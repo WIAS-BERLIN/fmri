@@ -230,6 +230,14 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
         }
         gc()
       }
+#  prewhitened residuals don't have zero mean, therefore sweep mean over time from them
+      residuals <- .Fortran("sweepm",residuals=as.double(residuals),
+                                     as.integer(dy[1]),
+                                     as.integer(dy[2]),
+                                     as.integer(dy[3]),
+                                     as.integer(dy[4]),
+                                     PACKAGE="fmri",DUP=FALSE)$residuals
+      dim(residuals) <- c(prod(dy[1:3]),dy[4])
       b <- rep(1/dy[4],length=dy[4])
       variance <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * variancepart
       if (length(vvector) > 1) variancem <- as.vector((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * t(variancepartm)
@@ -269,7 +277,7 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
                      as.integer(lags[1]),
                      as.integer(lags[2]),
                      as.integer(lags[3]),
-                     PACKAGE="fmri",DUP=TRUE)$scorr
+                     PACKAGE="fmri",DUP=FALSE)$scorr
   dim(corr) <- lags                     
   if(keep=="all"){
      qscale <- range(residuals)

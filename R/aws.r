@@ -393,7 +393,8 @@ if(is.null(res)){
                            as.integer(n2),
                            as.integer(n3),
                            as.integer(dim[4]),
-                           var = double(n1*n2*n3))$var
+                           var = double(n1*n2*n3),
+                           PACKAGE="fmri",DUP=FALSE)$var
   cat("Vaws3D: smooth the residuals","\n")
   residuals <- .Fortran("ihaws2",as.integer(residuals),
                      as.double(sigma2),
@@ -418,7 +419,7 @@ if(is.null(res)){
                      as.double(vwghts),
                      double(dim[4]),#swjy
                      double(dv0),#thi
-                     PACKAGE="fmri",DUP=TRUE)$resnew
+                     PACKAGE="fmri",DUP=FALSE)$resnew
   dim(residuals) <- dim
   gc()
 #   get variances and correlations
@@ -434,7 +435,7 @@ if(is.null(res)){
                      as.integer(lags[1]),
                      as.integer(lags[2]),
                      as.integer(lags[3]),
-                     PACKAGE="fmri",DUP=TRUE)$scorr
+                     PACKAGE="fmri",DUP=FALSE)$scorr
   dim(scorr) <- lags                     
   cat("Vaws3D: final variance estimation","\n")
   vartheta <- .Fortran("ivar",as.integer(residuals),
@@ -444,7 +445,8 @@ if(is.null(res)){
                            as.integer(n2),
                            as.integer(n3),
                            as.integer(dim[4]),
-                           var = double(n1*n2*n3))$var
+                           var = double(n1*n2*n3),
+                           PACKAGE="fmri",DUP=FALSE)$var
   vred <- array(vartheta/vartheta0,c(n1,n2,n3))
   vartheta <- vred/sigma2  #  sigma2 contains inverse variances
   z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,vred0=median(vred[mask]),y=y,

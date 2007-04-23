@@ -236,6 +236,29 @@ C  correlation in x
       scorr=z/k
       return
       end
+      subroutine sweepm(res,n1,n2,n3,nv)
+
+      implicit logical(a-z)
+      integer n1,n2,n3,nv
+      real*8 res(n1,n2,n3,nv)
+      integer i1,i2,i3,k
+      real*8 z
+      Do i1=1,n1
+         Do i2=1,n2
+            Do i3=1,n3
+               z=0.d0
+               DO k=1,nv
+                  z=z+res(i1,i2,i3,k)
+               END DO
+               z=z/nv
+               DO k=1,nv
+                  res(i1,i2,i3,k)=res(i1,i2,i3,k)-z
+               END DO
+            END DO
+         END DO
+      END DO
+      return
+      end
       subroutine mcorr(res,mask,n1,n2,n3,nv,scorr,l1,l2,l3)
 
       implicit logical(a-z)
