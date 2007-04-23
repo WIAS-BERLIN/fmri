@@ -28,7 +28,7 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau
   if (adaptive) {
     ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
                      wghts=weights, h0=bw, vwghts = spm$vwghts,
-                     lkern=lkern,skern=skern,weighted=weighted,res=spm$res
+                     lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
                      resscale=spm$resscale, dim=spm$dim)
   } else {
     ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
