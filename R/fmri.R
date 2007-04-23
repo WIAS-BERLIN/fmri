@@ -98,10 +98,10 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE, minimum.sign
   if (!is.null(attr(spm, "smooth"))) {
     if (!is.null(attr(spm, "residuals"))) {
       type <- "t"
-      df <- abs(diff(dim(attr(z, "design"))))
+      df <- abs(diff(dim(attr(spm, "design"))))
     } else {
       type <- "norm"
-      df <- abs(diff(dim(attr(z, "design")))) # this is actually not needed, placeholder
+      df <- abs(diff(dim(attr(spm, "design")))) # this is actually not needed, placeholder
     }
   } else {
     type <- "t"
