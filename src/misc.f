@@ -31,7 +31,7 @@ C  correlation in x
                vrmp1=y2/zk
                vrm=vrm*vrmp1
                if(vrm.gt.1e-10) THEN
-                  z=z+zcorr/zk/dsqrt(vrm)
+                  z=z+zcorr/zk/sqrt(vrm)
                   k=k+1
                end if
             enddo
@@ -116,7 +116,7 @@ C  correlation in x
                vrmp1=y2/zk
                vrm=vrm*vrmp1
                if(vrm.gt.1e-10) THEN
-                  z=z+zcorr/zk/dsqrt(vrm)
+                  z=z+zcorr/zk/sqrt(vrm)
                   k=k+1
                end if
             enddo
