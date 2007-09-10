@@ -435,9 +435,9 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
   if (pos[1] == -1) {
     pos <- c(round(dt[1:3])/2, 1, scale[1])
   } else {
-    pos <- c(pos,1,scal[1])
+    pos <- c(pos,1,scale[1])
   }
-  posv <- lapply(pos, tclVar)
+  posv <- lapply(pos, tclVar())
 
 
   fmri.image <- function(which, factor) {
