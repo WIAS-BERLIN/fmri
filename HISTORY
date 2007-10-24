@@ -1,3 +1,9 @@
+2007-09-11 version 1.2-3
+
+  - bugfix in read.NIFTI which contained a misinterpretation of the header entries 
+    (bitpix, dim)
+  - new function write.NIFTI()
+
 2007-09-05 version 1.2-2
 
   - write.AFNI() completely re-written, it has new arguments header (AFNI-header 
