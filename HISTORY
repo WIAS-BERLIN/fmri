@@ -1,5 +1,7 @@
-2007-09-11 version 1.2-3
+2007-11-11 version 1.2-3
 
+  - if in fmri.pvalue() the df is larger than 171, a Gaussian Random Field instead of t-field is used.
+    gamma() is not defined otherwise. On the other df is large enough!
   - bugfix in read.NIFTI which contained a misinterpretation of the header entries 
     (bitpix, dim)
   - new function write.NIFTI()
