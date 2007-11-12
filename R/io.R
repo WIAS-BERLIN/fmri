@@ -324,7 +324,7 @@ write.ANALYZE <- function(ttt, header=NULL, filename) {
 
 
 
-read.AFNI <- function(filename) {
+read.AFNI <- function(filename,vol=NULL) {
   fileparts <- strsplit(filename,"\\.")[[1]]
   ext <- tolower(fileparts[length(fileparts)])
 
@@ -393,28 +393,40 @@ read.AFNI <- function(filename) {
     weights <- NULL
   }
   
-  if (as.integer(size) == size) {
+  if (is.null(vol)) vol <- 1:dt
+  
+  if ((as.integer(size) == size) && (length(vol) > 0)) {
+    myttt <- array(0,dim=c(dx,dy,dz,length(vol)))
+    kk <- 1
     conbrik <- file(filename.brik,"rb")
-    myttt<- readBin(conbrik, "int", n=dx*dy*dz*dt*size, size=size, signed=TRUE, endian=endian)
-    close(conbrik)
-    dim(myttt) <- c(dx,dy,dz,dt)
     for (k in 1:dt) {
-      if (scale[k] != 0) {
-        cat("scale",k,"with",scale[k],"\n")
-        cat(range(myttt[,,,k]),"\n")
-        myttt[,,,k] <- scale[k] * myttt[,,,k]
-        cat(range(myttt[,,,k]),"\n")
+      if (k %in% vol) {
+        temp <- readBin(conbrik, "int", n=dx*dy*dz, size=size,
+                        signed=TRUE, endian=endian)
+        dim(temp) <- c(dx,dy,dz)
+        myttt[,,,kk] <- temp
+        rm(temp)
+        if (scale[k] != 0) {
+          cat("scale",k,"with",scale[k],"\n")
+          cat(range(myttt[,,,kk]),"\n")
+          myttt[,,,kk] <- scale[k] * myttt[,,,kk]
+          cat(range(myttt[,,,kk]),"\n")
+        }
+        kk <- kk + 1
+      } else {
+        readBin(conbrik, "int", n=dx*dy*dz, size=size, signed=TRUE, endian=endian)
       }
     }
-  mask <- array(TRUE,c(dx,dy,dz))
-  mask[myttt[,,,1] < quantile(myttt[,,,1],0.75)] <- FALSE
+    close(conbrik)
+    mask <- array(TRUE,c(dx,dy,dz))
+    mask[myttt[,,,1] < quantile(myttt[,,,1],0.75)] <- FALSE
     z <-
-      list(ttt=writeBin(as.numeric(myttt),raw(),4),format="HEAD/BRIK",delta=values$DELTA,origin=values$ORIGIN,orient=values$ORIENT_SPECIFIC,dim=c(dx,dy,dz,dt),weights=weights, header=values,mask=mask)
+      list(ttt=writeBin(as.numeric(myttt),raw(),4),format="HEAD/BRIK",delta=values$DELTA,origin=values$ORIGIN,orient=values$ORIENT_SPECIFIC,dim=c(dx,dy,dz,length(vol)),weights=weights, header=values,mask=mask)
   } else {
     warning("Error reading file: Could not detect size per voxel\n")
     z <- list(ttt=NULL,format="HEAD/BRIK",delta=NULL,origin=NULL,orient=NULL,dim=NULL,weights=NULL,header=values,mask=NULL)    
   }
-
+  
   class(z) <- "fmridata"
   attr(z,"file") <- paste(filename,".HEAD/BRIK",sep="")
   invisible(z)
