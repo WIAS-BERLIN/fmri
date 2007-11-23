@@ -1,3 +1,5 @@
+2007-11-24 version 1.2-4
+
 2007-11-12 version 1.2-3
 
   - read.AFNI() has a new argument 'vol' which contains a vector of 
