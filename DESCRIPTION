@@ -12,7 +12,7 @@ Description: The library contains R-functions to perform an fmri analysis
              Analysing fMRI experiments with structure adaptive smoothing procedures,
              NeuroImage, 33:55-62 (2006).
 License: GPL (>= 2)
-         This library is Copyright (C) 2007 Weierstrass Institute for 
+Copyright: This package is Copyright (C) 2007 Weierstrass Institute for 
                                        Applied Analysis and Stochastics.
 URL: http://www.wias-berlin.de/project-areas/stat/a3/
 Note: This software comes with NO warranty! It is NOT intended to be used 
