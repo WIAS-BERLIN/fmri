@@ -212,7 +212,7 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
     }
     
      mask <- array(TRUE,dt[1:3])
-     mask[ttt[,,,1] < quantile(ttt[,,,1],0.75)] <- FALSE
+     mask[ttt[,,,1] < quantile(ttt[,,,1],0.75),na.rm = TRUE] <- FALSE
 
     z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),format="ANALYZE",delta=header$pixdim[2:4],origin=NULL,
               orient=NULL,dim=dim(ttt),weights=weights,header=header, mask=mask)
@@ -419,7 +419,7 @@ read.AFNI <- function(filename,vol=NULL) {
     }
     close(conbrik)
     mask <- array(TRUE,c(dx,dy,dz))
-    mask[myttt[,,,1] < quantile(myttt[,,,1],0.75)] <- FALSE
+    mask[myttt[,,,1] < quantile(myttt[,,,1],0.75),na.rm = TRUE] <- FALSE
     z <-
       list(ttt=writeBin(as.numeric(myttt),raw(),4),format="HEAD/BRIK",delta=values$DELTA,origin=values$ORIGIN,orient=values$ORIENT_SPECIFIC,dim=c(dx,dy,dz,length(vol)),weights=weights, header=values,mask=mask)
   } else {
@@ -1011,7 +1011,7 @@ read.NIFTI <- function(filename) {
 
   if (dd == 1) {
     mask <- array(TRUE,c(dx,dy,dz))
-    mask[ttt[,,,1] < quantile(ttt[,,,1],0.75)] <- FALSE
+    mask[ttt[,,,1] < quantile(ttt[,,,1],0.75),na.rm = TRUE] <- FALSE
 
     z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),format="NIFTI",delta=header$pixdim[2:4],
               origin=NULL,orient=NULL,dim=header$dimension[2:5],weights=weights,header=header,mask=mask)
