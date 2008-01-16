@@ -1,4 +1,4 @@
-ngca <- function(x,L=1000,T=10,m=3,eps=1.5,npca=dim(x)[2],keepv=FALSE){
+ngca <- function(x,L=1000,T=10,m=3,eps=1.5,npca=min(dim(x)[2],dim(x)[1]-1),keepv=FALSE){
 #
 #  NGCA algorithm 
 #
@@ -9,6 +9,7 @@ set.seed(1)
 xdim <- dim(x)
 d <- xdim[2]
 n <- xdim[1]
+if(is.null(npca)||npca< min(d,n-1)) npca <- min(d,n-1)
 xmean <- apply(x,2,mean)
 xvar <- var(x)
 y <- sweep(x,2,xmean)
@@ -46,7 +47,7 @@ normv <- fz$normv
 dim(v) <- c(npca,4*L)
 v <- t(v[,normv>eps])
 jhat <- prcomp(v)
-ihat <- z$u[,1:npca]%*%jhat$rotation[,1:m]
+ihat <- (z$u%*%diag(z$d^(.5)))[,1:npca]%*%jhat$rotation[,1:m]
 xhat <- x%*%ihat
 z <- list(ihat=ihat,sdev=jhat$sdev[1:m],xhat=xhat)
 if(keepv) {
