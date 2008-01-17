@@ -34,6 +34,8 @@ x <- switch(sweepmean,"none"=x,"global"=x - mean(x),"spatial"=sweep(x,2,apply(x,
             "temporal"=sweep(x,2,apply(x,2,mean)))
 if(method=="spatial"){
 x <- t(x)
+d <- dim(x)[2]
+n <- dim(x)[1]
 }
 svdx <- svd(x,nu=0,nv=npca)
 #xvar <- var(x)
