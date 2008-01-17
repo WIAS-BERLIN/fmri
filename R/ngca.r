@@ -10,6 +10,7 @@ if(all(class(data)=="fmridata")) {
 } else if (class(data)%in%c("matrix","array")){
    x <- data
    mask <- TRUE
+   fmriobj <- FALSE
 } else {
    warning("data has incompatible class argument")
    return(data)
@@ -34,10 +35,11 @@ x <- switch(sweepmean,"none"=x,"global"=x - mean(x),"spatial"=sweep(x,2,apply(x,
 if(method=="spatial"){
 x <- t(x)
 }
-xvar <- var(x)
-z <- svd(xvar)
+svdx <- svd(x,nu=0,nv=npca)
+#xvar <- var(x)
+#z <- svd(xvar)
 cat("Dimension reduced to:",npca,"\n")
-y <- t(x%*%z$u%*%diag(z$d^(-.5))[,1:npca])
+y <- t(x%*%svdx$v%*%diag(1/svdx$d[1:npca]))
 #
 #  thats the standardized version of x
 #
@@ -69,7 +71,7 @@ normv <- fz$normv
 dim(v) <- c(npca,4*L)
 v <- t(v[,normv>eps])
 jhat <- prcomp(v)
-ihat <- (z$u%*%diag(z$d^(.5)))[,1:npca]%*%jhat$rotation[,1:m]
+ihat <- svdx$v%*%diag(svdx$d[1:npca])%*%jhat$rotation[,1:m]
 xhat <- x%*%ihat
 if(fmriobj){
 if(method=="spatial"){
