@@ -1,21 +1,43 @@
-ngca <- function(x,L=1000,T=10,m=3,eps=1.5,npca=min(dim(x)[2],dim(x)[1]-1),keepv=FALSE){
+ngca <- function(data,L=1000,T=10,m=3,eps=1.5,npca=min(dim(x)[2],dim(x)[1])-1,method="spatial",sweepmean=NULL,keepv=FALSE){
 #
-#  NGCA algorithm 
+#  NGCA algorithm  for fMRI
+#  x should be either a fMRI object or a matrix 
 #
+if(all(class(data)=="fmridata")) {
+   x <- extract.data(data)
+   mask <- data$mask
+   fmriobj <- TRUE
+} else if (class(data)%in%c("matrix","array")){
+   x <- data
+   mask <- TRUE
+} else {
+   warning("data has incompatible class argument")
+   return(data)
+}
 #  
 #  x - data matrix  (Nxd)
 #
 set.seed(1)
 xdim <- dim(x)
-d <- xdim[2]
-n <- xdim[1]
-if(is.null(npca)||npca< min(d,n-1)) npca <- min(d,n-1)
-xmean <- apply(x,2,mean)
+lxdim <- length(xdim)
+d <- xdim[lxdim]
+n <- nn <- prod(xdim[1:(lxdim-1)])
+dim(x) <- c(n,d)
+mask <- as.vector(mask)
+if(length(mask)==1) mask <- rep(mask,n)
+x <- x[mask,]
+n <- sum(mask)
+if(is.null(sweepmean)) sweepmean <- switch(method,"spatial"="temporal","temporal"="spatial")
+if(is.null(npca)||npca >= min(d,n)) npca <- min(d,n)-1
+x <- switch(sweepmean,"none"=x,"global"=x - mean(x),"spatial"=sweep(x,2,apply(x,1,mean)),
+            "temporal"=sweep(x,2,apply(x,2,mean)))
+if(method=="spatial"){
+x <- t(x)
+}
 xvar <- var(x)
-y <- sweep(x,2,xmean)
 z <- svd(xvar)
 cat("Dimension reduced to:",npca,"\n")
-y <- t(y%*%z$u%*%diag(z$d^(-.5))[,1:npca])
+y <- t(x%*%z$u%*%diag(z$d^(-.5))[,1:npca])
 #
 #  thats the standardized version of x
 #
@@ -49,11 +71,29 @@ v <- t(v[,normv>eps])
 jhat <- prcomp(v)
 ihat <- (z$u%*%diag(z$d^(.5)))[,1:npca]%*%jhat$rotation[,1:m]
 xhat <- x%*%ihat
+if(fmriobj){
+if(method=="spatial"){
+z <- matrix(0,nn,m)
+z[mask,]<-ihat
+ihat <- array(z,c(xdim[1:3],m))
+} else {
+z <- matrix(0,nn,m)
+z[mask,]<-xhat
+xhat <- array(z,c(xdim[1:3],m))
+}
+z <- list(ihat=ihat,sdev=jhat$sdev[1:m],xhat=xhat)
+if(keepv) {
+z$v <- v
+z$normv <- normv
+}
+class(z) <- "fmringca"
+} else {
 z <- list(ihat=ihat,sdev=jhat$sdev[1:m],xhat=xhat)
 if(keepv) {
 z$v <- v
 z$normv <- normv
 }
 class(z) <- "ngca"
+}
 z
 }

@@ -6,7 +6,7 @@
   The function performs Non-Gaussian Component Analysis as described in Blanchard et.al. (2005).
 }
 \usage{
-ngca(x, L = 1000, T = 10, m = 3, eps = 1.5, npca=dim(x)[2] , keepv=FALSE)
+ngca(x, L = 1000, T = 10, m = 3, eps = 1.5, npca=min(dim(x)[2],dim(x)[1]-1),mean="global" , keepv=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,6 +20,7 @@ ngca(x, L = 1000, T = 10, m = 3, eps = 1.5, npca=dim(x)[2] , keepv=FALSE)
                In fMRI this allows to reduce the dimensionality assuming that
                the interesting non-Gaussian directions are also characterized by
                larger variances.}
+  \item{mean}{remove local  \code{mean="local"} or global \code{mean="global"} empirical mean}
   \item{keepv}{if \code{TRUE} intermediate results from fast ICA step are kept.}
 }
 \details{
