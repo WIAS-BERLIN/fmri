@@ -1,5 +1,6 @@
-2007-12-06 version 1.2-4
+2007-12-07 version 1.2-4
 
+  - if dataset contains NA, set mask at these voxels to FALSE, set data to zero.
   - to determine the (head) mask the quantile function in all read functions 
     has na.rm = TRUE now. This avoids error for datasets with NaN in datacube.
 
