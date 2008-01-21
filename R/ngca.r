@@ -104,7 +104,7 @@ class(z) <- "ngca"
 z
 }
 
-fmriica <- function(data,m=3,method="spatial",...){
+fmriica <- function(data,m=3,method="spatial",xind=NULL,yind=NULL,zind=NULL,tind=NULL,...){
 #
 #  NGCA algorithm  for fMRI
 #  x should be either a fMRI object or a matrix 
@@ -117,18 +117,22 @@ if(all(class(data)=="fmridata")) {
    warning("data has incompatible class argument")
    return(data)
 }
+if(!is.null(xind)) mask[-xind,,] <- FALSE
+if(!is.null(yind)) mask[,-yind,] <- FALSE
+if(!is.null(zind)) mask[,,-zind] <- FALSE
 #
 #  x - data matrix  (Nxd)
 #
 set.seed(1)
 xdim <- dim(x)
 lxdim <- length(xdim)
-d <- xdim[lxdim]
+d <- dd <- xdim[lxdim]
 n <- nn <- prod(xdim[1:(lxdim-1)])
+if(is.null(tind)) tind <- (1:d)
 dim(x) <- c(n,d)
 mask <- as.vector(mask)
 if(length(mask)==1) mask <- rep(mask,n)
-x <- x[mask,]
+x <- x[mask,tind]
 n <- sum(mask)
 if(method=="spatial"){
 x <- t(x)
@@ -138,17 +142,19 @@ n <- dim(x)[1]
 #
 #   now fast ICA
 #
-z <- fastICA(z,m,method="C",...)
+ttt <- fastICA(x,m,method="C",...)
 if(method=="spatial"){
 z <- matrix(0,nn,m)
-z[mask,]<-z$S
+z[mask,]<-ttt$A
 ihat <- array(z,c(xdim[1:3],m))
-xhat <- z$A
+xhat <- matrix(0,m,dd)
+xhat[,tind]<-ttt$S
 } else {
 z <- matrix(0,nn,m)
-z[mask,]<-z$A
+z[mask,]<-ttt$S
 xhat <- array(z,c(xdim[1:3],m))
-ihat <- z$S
+ihat <- matrix(0,m,dd)
+ihat[,tind] <- ttt$A
 }
 z <- list(ihat=ihat,xhat=xhat)
 class(z) <- "fmringca"
