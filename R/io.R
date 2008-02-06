@@ -166,7 +166,7 @@ write.ANALYZE.volume <- function(ttt,filename,size) {
   close(con)
 }
 
-read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstart = 1, numbpic = 1) {
+read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstart = 1, numbpic = 1,level=0.75) {
   counter <- c(paste("00", 1:9, sep=""), paste("0", 10:99, sep=""),paste(100:999,sep=""));
 
   prefix <- strsplit(prefix,".img")
@@ -212,16 +212,15 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
     }
     
     mask <- array(TRUE,dt[1:3])
-    mask[ttt[,,,1] < quantile(ttt[,,,1],0.75,na.rm = TRUE)] <- FALSE
+    mask[ttt[,,,1] < quantile(ttt[,,,1],level,na.rm = TRUE)] <- FALSE
     dim(ttt) <- c(prod(dim(ttt)[1:3]),dim(ttt)[4])
     na <- ttt %*% rep(1,dim(ttt)[2])
     mask[is.na(na)] <- FALSE
-    ttt[!mask,] <- 0
+    ttt[is.na(na),] <- 0
     dim(mask) <- dt[1:3]
-    dim(ttt) <- dt
 
     z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),format="ANALYZE",delta=header$pixdim[2:4],origin=NULL,
-              orient=NULL,dim=dim(ttt),weights=weights,header=header, mask=mask)
+              orient=NULL,dim=dt,weights=weights,header=header, mask=mask)
   } else {
     warning(paste("Error: file",filename[1],"does not exist!"))
     z <- list(ttt=NULL,format="ANALYZE",delta=NULL,origin=NULL,orient=NULL,dim=NULL,weights=NULL,header=NULL,mask=NULL)
@@ -429,7 +428,7 @@ read.AFNI <- function(filename,vol=NULL,level=0.75) {
     dim(myttt) <- c(prod(dim(myttt)[1:3]),dim(myttt)[4])
     na <- myttt %*% rep(1,dim(myttt)[2])
     mask[is.na(na)] <- FALSE
-    myttt[!mask,] <- 0
+    myttt[is.na(na),] <- 0
     dim(mask) <- c(dx,dy,dz)
     z <-
       list(ttt=writeBin(as.numeric(myttt),raw(),4),format="HEAD/BRIK",delta=values$DELTA,origin=values$ORIGIN,orient=values$ORIENT_SPECIFIC,dim=c(dx,dy,dz,length(vol)),weights=weights, header=values,mask=mask)
@@ -950,7 +949,7 @@ read.NIFTI.header <- function(con) {
   header
 }
 
-read.NIFTI <- function(filename) {
+read.NIFTI <- function(filename,level=0.75) {
   fileparts <- strsplit(filename,"\\.")[[1]]
   ext <- tolower(fileparts[length(fileparts)])
 
@@ -1042,11 +1041,11 @@ read.NIFTI <- function(filename) {
 
   if (dd == 1) {
     mask <- array(TRUE,c(dx,dy,dz))
-    mask[ttt[,,,1] < quantile(ttt[,,,1],0.75,na.rm = TRUE)] <- FALSE
+    mask[ttt[,,,1] < quantile(ttt[,,,1],level,na.rm = TRUE)] <- FALSE
     dim(ttt) <- c(prod(dim(ttt)[1:3]),dim(ttt)[4])
     na <- ttt %*% rep(1,dim(ttt)[2])
     mask[is.na(na)] <- FALSE
-    ttt[!mask,] <- 0
+    ttt[is.na(na),] <- 0
     dim(mask) <- c(dx,dy,dz)
 
     z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),format="NIFTI",delta=header$pixdim[2:4],

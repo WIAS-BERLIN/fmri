@@ -1,5 +1,7 @@
 2008-01-21 version 1.2-5
 
+  - set level for mask in all read functions as argument. reset data to zero only 
+    for NA values not for !mask
   - bugfix for SQ in read.DICOM which caused incorrect reading of data sequences
     of unknown length
   - dimension setting bugfix in read.ANALYZE()
