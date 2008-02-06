@@ -211,13 +211,14 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
       weights <- NULL
     }
     
-     mask <- array(TRUE,dt[1:3])
-     mask[ttt[,,,1] < quantile(ttt[,,,1],0.75,na.rm = TRUE)] <- FALSE
-     dim(ttt) <- c(prod(dim(ttt)[1:3]),dim(ttt)[4])
-     na <- ttt %*% rep(1,dim(ttt)[2])
-     mask[is.na(na)] <- FALSE
-     ttt[!mask,] <- 0
-     dim(mask) <- dt[1:3]
+    mask <- array(TRUE,dt[1:3])
+    mask[ttt[,,,1] < quantile(ttt[,,,1],0.75,na.rm = TRUE)] <- FALSE
+    dim(ttt) <- c(prod(dim(ttt)[1:3]),dim(ttt)[4])
+    na <- ttt %*% rep(1,dim(ttt)[2])
+    mask[is.na(na)] <- FALSE
+    ttt[!mask,] <- 0
+    dim(mask) <- dt[1:3]
+    dim(ttt) <- dt
 
     z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),format="ANALYZE",delta=header$pixdim[2:4],origin=NULL,
               orient=NULL,dim=dim(ttt),weights=weights,header=header, mask=mask)
@@ -745,8 +746,28 @@ read.DICOM <- function(filename,includedata=TRUE) {
           if (groupelement == "fffe,e0dd") break
           length <- readBin(con,"integer",1,4,signed=FALSE,endian=endian)
           bytes <- bytes + 4
-          value <- readBin(con,"raw",length,1)
-          bytes <- bytes + length
+          if (length == -1) {
+            sqv <- readBin(con,"raw",4,1)
+            bytes <- bytes + 4
+            while (TRUE) {
+              if (endian == "little") {
+                testelement <- paste(paste(rev(sqv[(length(sqv)-3):(length(sqv)-2)]),collapse=""),paste(rev(sqv[(length(sqv)-1):length(sqv)]),collapse=""),sep=",")
+              } else {
+                testelement <- paste(paste(sqv[(length(sqv)-3):(length(sqv)-2)],collapse=""),paste(sqv[(length(sqv)-1):length(sqv)],collapse=""),sep=",")
+              }    
+              if (testelement == "fffe,e00d") {
+                length <- readBin(con,"integer",1,4,signed=FALSE,endian=endian)
+                bytes <- bytes + 4
+                if (length != 0) warning("no valid delimiter in data sequence")
+                break
+              }
+              sqv <- c(sqv,readBin(con,"raw",1,1))
+              bytes <- bytes + 1
+            }
+          } else {
+            value <- readBin(con,"raw",length,1)
+            bytes <- bytes + length
+          }
         }
         length <- readBin(con,"integer",1,4,signed=FALSE,endian=endian)
         bytes <- bytes + 4

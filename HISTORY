@@ -1,5 +1,8 @@
 2008-01-21 version 1.2-5
 
+  - bugfix for SQ in read.DICOM which caused incorrect reading of data sequences
+    of unknown length
+  - dimension setting bugfix in read.ANALYZE()
   - several corrections for ngca, 
   - function ngca now works for matrix- and fmridata-objects
   - new fastICA function for fmri (fmriica)
