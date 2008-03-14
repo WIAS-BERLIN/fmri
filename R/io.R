@@ -190,7 +190,7 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
     cat(".")
     header <- analyze$header;
     
-    if ((numbpic > 1) && !numbered) { 
+    if ((numbpic > 1) && numbered) { 
       for (i in 2:numbpic) {
         a <- read.ANALYZE.volume(filename[i])$ttt
         if (sum() != 0)
