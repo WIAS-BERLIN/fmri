@@ -106,7 +106,7 @@ z
 
 fmriica <- function(data,m=3,method="spatial",xind=NULL,yind=NULL,zind=NULL,tind=NULL,...){
 #
-#  NGCA algorithm  for fMRI
+#  ICA algorithm  for fMRI
 #  x should be either a fMRI object or a matrix 
 #
 if(!require(fastICA)) stop("Please install package fastICA from CRAN")

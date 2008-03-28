@@ -6,11 +6,11 @@
   The function performs Non-Gaussian Component Analysis as described in Blanchard et.al. (2005).
 }
 \usage{
-ngca(x, L = 1000, T = 10, m = 3, eps = 1.5, npca=min(dim(x)[2],dim(x)[1]-1),mean="global" , keepv=FALSE)
+ngca(data, L = 1000, T = 10, m = 3, eps = 1.5, npca=min(dim(x)[2],dim(x)[1]),method="spatial",sweepmean=NULL,keepv=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{x}{ Observation matrix (dimension Nxd) }
+  \item{data}{ Observation matrix (dimension Nxd) }
   \item{L}{ Number basis functions in each of four classes. }
   \item{T}{ Number of Fast ICA iterations  }
   \item{m}{ Number of non-Gaussian components. }
@@ -20,7 +20,8 @@ ngca(x, L = 1000, T = 10, m = 3, eps = 1.5, npca=min(dim(x)[2],dim(x)[1]-1),mean
                In fMRI this allows to reduce the dimensionality assuming that
                the interesting non-Gaussian directions are also characterized by
                larger variances.}
-  \item{mean}{remove local  \code{mean="local"} or global \code{mean="global"} empirical mean}
+  \item{method}{ }
+  \item{sweepmean}{ }
   \item{keepv}{if \code{TRUE} intermediate results from fast ICA step are kept.}
 }
 \details{
@@ -42,8 +43,5 @@ ngca(x, L = 1000, T = 10, m = 3, eps = 1.5, npca=min(dim(x)[2],dim(x)[1]-1),mean
 K.-R. (2005). In Search of Non-Gaussian Components of a High-Dimensional Distribution.
 Journal of Machine Learning Research. pp. 1-48. }
 \author{ J\"org Polzehl polzehl@wias-berlin.de }
-\seealso{  }
-\examples{
-}
 \keyword{ multivariate }% at least one, from doc/KEYWORDS
 \keyword{ nonparametric }% __ONLY ONE__ keyword per line

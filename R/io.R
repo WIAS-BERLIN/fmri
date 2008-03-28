@@ -384,6 +384,19 @@ read.AFNI <- function(filename,vol=NULL,level=0.75) {
   dt <- values$DATASET_RANK[2]
   scale <- values$BRICK_FLOAT_FACS
   size <- file.info(filename.brik)$size/(dx*dy*dz*dt)
+  bricktypes <- values$BRICK_TYPES[1]
+
+  if (is.null(bricktypes)) {
+    if (size == 2) { what <- "int" }
+    else if (size == 4) { what <- "double" }
+    else if (size == 16) { what <- "complex" }
+    else { what <- "int" }
+  } else {
+    if (bricktypes == 1) { what <- "int" }
+    else if (bricktypes == 3) { what <- "double" }
+    else if (bricktypes == 5) { what <- "complex" }
+    else { what <- "int" }
+  }
 
   if (regexpr("MSB",values$BYTEORDER_STRING[1]) != -1) {
     endian <- "big"
@@ -406,7 +419,7 @@ read.AFNI <- function(filename,vol=NULL,level=0.75) {
     conbrik <- file(filename.brik,"rb")
     for (k in 1:dt) {
       if (k %in% vol) {
-        temp <- readBin(conbrik, "int", n=dx*dy*dz, size=size,
+        temp <- readBin(conbrik, what, n=dx*dy*dz, size=size,
                         signed=TRUE, endian=endian)
         dim(temp) <- c(dx,dy,dz)
         myttt[,,,kk] <- temp
@@ -419,7 +432,7 @@ read.AFNI <- function(filename,vol=NULL,level=0.75) {
         }
         kk <- kk + 1
       } else {
-        readBin(conbrik, "int", n=dx*dy*dz, size=size, signed=TRUE, endian=endian)
+        readBin(conbrik, what, n=dx*dy*dz, size=size, signed=TRUE, endian=endian)
       }
     }
     close(conbrik)
@@ -691,9 +704,9 @@ write.AFNI <- function(filename, ttt, label=NULL, note=NULL, origin=NULL, delta=
   if (!(bricktypes %in% c(1,3,5))) stop("Sorry, cannot write this BRICK_TYPES.", call.=FALSE)
   conbrik <- file(paste(filename, ".BRIK", sep=""), "wb")
   dim(ttt) <- NULL
-  switch(bricktypes, "1" = writeBin(as.integer(ttt), conbrik, size=2, endian=endian),
-                     "3" = writeBin(as.numeric(ttt), conbrik, size=4, endian=endian),
-                     "5" = writeBin(as.complex(ttt), conbrik, size=16, endian=endian))
+  switch(as.character(bricktypes), "1" = writeBin(as.integer(ttt), conbrik, size=2, endian=endian),
+                                   "3" = writeBin(as.numeric(ttt), conbrik, size=4, endian=endian),
+                                   "5" = writeBin(as.complex(ttt), conbrik, size=16, endian=endian))
   close(conbrik)
 }
 

@@ -1,5 +1,8 @@
 2008-01-21 version 1.2-5
 
+  - read.AFNI() can read BRICK_TYPES 3 and 5 now. Beware: all sub-bricks are assumed to have 
+    the same BRICK_TYPE
+  - bugfix in write.AFNI() for writing BRICKTYPES 3 (float) and 5 (complex)
   - bugfix for numbered ANALYZE files in read.ANALYZE() which lead to reading only one file.
   - set level for mask in all read functions as argument. reset data to zero only 
     for NA values not for !mask
