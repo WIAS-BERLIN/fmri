@@ -1,3 +1,10 @@
+2008-04-04 version 1.2-6
+
+  - read.AFNI() now swaps the orientation of the data to radiological convention, and 
+    recognizes the ORIENT_SPECIFIC Attribute
+  - read.AFNI() should be able to interpret filenames more flexible: with, without 
+    extensions, with dots in name.
+
 2008-01-21 version 1.2-5
 
   - read.AFNI() can read BRICK_TYPES 3 and 5 now. Beware: all sub-bricks are assumed to have 
