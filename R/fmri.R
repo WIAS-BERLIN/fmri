@@ -755,12 +755,9 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "xy", co
   ind2pos.func <- conv.ip(x, what="i2p")
   pos2ind.func <- conv.ip(x, what="p2i")
 
-  pixdim.ana <- ind2pos.ana(c(2,2,2)) - ind2pos.ana(c(1,1,1))
-  pixdim.func <- ind2pos.func(c(2,2,2)) - ind2pos.func(c(1,1,1))
+  pixdim.ana <- pixdim(anatomic$header,anatomic$format)
+  pixdim.func <- pixdim(x$header,x$format)
 
-# now select the interpolated slice from anatomical data 
-# sollten wir hier alles nehmen? Unter welchen Bedingungen
-# kann man die ganze slice statt ROI zeigen?
   ttt.ana <- extract.data(anatomic)
   ddim.ana <- dim(ttt.ana) <- dim(ttt.ana)[1:3]
 
@@ -768,17 +765,17 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "xy", co
     dfunc <- dim(pvalue)[1:2]
     imgdata.o <- pvalue[,,slice]
     mask <- mask[,,slice]
-    scale <- ceiling(abs((pixdim.func/pixdim.ana)[1:2]))
+    scale <- ceiling(max(abs(pixdim.func[1:2]))/min(abs(pixdim.ana)))
   } else if (view == "xz") {
     dfunc <- dim(pvalue)[c(1,3)]
     imgdata.o <- pvalue[,slice,]
     mask <- mask[,slice,]
-    scale <- ceiling(abs((pixdim.func/pixdim.ana)[c(1,3)]))
+    scale <- ceiling(max(abs(pixdim.func[c(1,3)]))/min(abs(pixdim.ana)))
   } else if (view == "yz") {
     dfunc <- dim(pvalue)[c(2,3)]
     imgdata.o <- pvalue[slice,,]
     mask <- mask[slice,,]
-    scale <- ceiling(abs((pixdim.func/pixdim.ana)[2:3]))
+    scale <- ceiling(max(abs(pixdim.func[2:3]))/min(abs(pixdim.ana)))
   } else {
     stop("unknown view",view)
   }
@@ -787,22 +784,22 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "xy", co
   mask.n <- array(FALSE,dim=c(scale*dim(imgdata.o)))
   for (i in 1:dim(imgdata.o)[1]) {
     for (j in 1:dim(imgdata.o)[2]) {
-      imgdata.n[(i-1)*scale[1]+c(1:scale[1]),(j-1)*scale[2]+c(1:scale[2])] <- imgdata.o[i,j]
-      mask.n[(i-1)*scale[1]+c(1:scale[1]),(j-1)*scale[2]+c(1:scale[2])] <- imgdata.o[i,j]
+      imgdata.n[(i-1)*scale+c(1:scale),(j-1)*scale+c(1:scale)] <- imgdata.o[i,j]
+      mask.n[(i-1)*scale+c(1:scale),(j-1)*scale+c(1:scale)] <- imgdata.o[i,j]
     }
   }
   imgdata.o <- imgdata.n
   mask <- mask.n
 
   imgdata.u <- array(0, dim=dfunc*scale)
-  for (i in 1:(dfunc[1]*scale[1])) {
-    for (j in 1:(dfunc[2]*scale[2])) {
+  for (i in 1:(dfunc[1]*scale)) {
+    for (j in 1:(dfunc[2]*scale)) {
       if (view == "xy") {
-        pos <- ind2pos.func( c(x$roixa+i/scale[1], x$roiya+j/scale[2], slice) )
+        pos <- ind2pos.func( c(x$roixa+(2*i-1)/(2*scale)-0.5, x$roiya+(2*j-1)/(2*scale)-0.5, x$roiza + slice - 1) )
       } else if (view == "xz") {
-        pos <- ind2pos.func( c(x$roixa+i/scale[1], slice, x$roiza+j/scale[2]) )
+        pos <- ind2pos.func( c(x$roixa+(2*i-1)/(2*scale)-0.5, x$roiya + slice - 1, x$roiza+(2*j-1)/(2*scale)-0.5) )
       } else if (view == "yz") {
-        pos <- ind2pos.func( c(slice, x$roiya+i/scale[1], x$roiza+j/scale[2]) )
+        pos <- ind2pos.func( c(x$roixa + slice -1, x$roiya+(2*i-1)/(2*scale)-0.5, x$roiza+(2*j-1)/(2*scale)-0.5) )
       }
       ind.ana <- pos2ind.ana(pos) # this is real(!) index for anatomic image
       ii <- ind.ana[1]
@@ -814,7 +811,7 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "xy", co
       kint <- ceiling(ind.ana[3])
 
       if ((iint-1 >= 1) & (jint -1 >= 1) & (kint -1 >= 1) &
-          (iint <= ddim.ana[1]) & (jint <= ddim.ana[2]) & (kint <= ddim.ana[2])) {
+          (iint <= ddim.ana[1]) & (jint <= ddim.ana[2]) & (kint <= ddim.ana[3])) {
         imgdata.u[i,j] <-
           ttt.ana[iint-1,jint-1,kint-1] * (iint - ii) * (jint - jj) * (kint - kk) +
             ttt.ana[iint-1,jint,kint-1] * (iint - ii) * (jj - jint + 1) * (kint - kk) +
@@ -866,6 +863,18 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "xy", co
   }
 
   invisible(img)
+}
+
+pixdim <- function(header,format) {
+  if (format == "NIFTI") {
+    return(header$pixdim[2:4])
+  } else if (format == "ANALYZE") {
+    return(header$pixdim[2:4])
+  } else if (format == "HEAD/BRIK") {
+    return(header$DELTA)
+  } else {
+    stop("Not implemented for this data format:", format)
+  }
 }
 
 conv.ip <- function(data, what="i2p") {

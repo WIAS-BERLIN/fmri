@@ -1,5 +1,6 @@
 2008-05-06 version 1.2-6
 
+  - new function cut.roi()
   - plot.fmridata() is now able to produce anatomical overlay for pvalue data
   - read.AFNI() should be able to interpret filenames more flexible: with, without 
     extensions, with dots in name.
