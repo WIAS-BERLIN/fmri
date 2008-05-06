@@ -186,7 +186,7 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
   if (!is.na(file.info(filename[1])$size)) {
     analyze <- read.ANALYZE.volume(filename[1]);
     ttt <- analyze$ttt
-    dt <- dim(ttt)
+    ddim <- dim(ttt)
     cat(".")
     header <- analyze$header;
     
@@ -196,13 +196,13 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
         if (sum() != 0)
           cat("Error: wrong spatial dimension in picture",i)
         ttt <- c(ttt,a);
-        dt[4] <- dt[4] + dim(a)[4]
+        ddim[4] <- ddim[4] + dim(a)[4]
         cat(".")
       }
     }
     
     cat("\n")
-    dim(ttt) <- dt
+    dim(ttt) <- ddim
     
     if (min(abs(header$pixdim[2:4])) != 0) {
       weights <-
@@ -210,20 +210,87 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
     } else {
       weights <- NULL
     }
-    
-    mask <- array(TRUE,dt[1:3])
+#    orientation <- switch(header$orient, "0", c(),
+#                                         "1", c(),
+#                                         "2", c(),
+#                                         "3", c(),
+#                                         "4", c(),
+#                                         "5", c(),
+#                                         "6", c(),
+#                                         c(0,2,5))
+#   if (any(sort((orientation)%/%2) != 0:2)) stop("invalid orientation",orientation,"found! \n")
+    delta <- header$pixdim[2:4]
+#
+#   set correct orientation
+#   DO IT IN plot.fmridata()
+#
+#    xyz <- (orientation)%/%2+1
+#    swap <- orientation-2*(orientation%/%2)
+#    if(any(xyz!=1:3)) {
+#      abc <- 1:3
+#      abc[xyz] <- abc
+#      ttt <- aperm(ttt,c(abc,4))
+#      swap[xyz] <- swap
+#      delta[xyz] <- delta
+#      weights[xyz] <- weights
+#      ddim[xyz]<- ddim[1:3]
+#    }
+#    if(swap[1]==1) {
+#      ttt <- ttt[ddim[1]:1,,,,drop=FALSE]
+#    }
+#    if(swap[2]==1) {
+#      ttt <- ttt[,ddim[2]:1,,,drop=FALSE]
+#    }
+#    if(swap[3]==0) {
+#      ttt <- ttt[,,ddim[3]:1,,drop=FALSE]
+#    }
+
+
+
+    mask <- array(TRUE,ddim[1:3])
     mask[ttt[,,,1] < quantile(ttt[,,,1],level,na.rm = TRUE)] <- FALSE
     dim(ttt) <- c(prod(dim(ttt)[1:3]),dim(ttt)[4])
     na <- ttt %*% rep(1,dim(ttt)[2])
     mask[is.na(na)] <- FALSE
     ttt[is.na(na),] <- 0
-    dim(mask) <- dt[1:3]
+    dim(mask) <- ddim[1:3]
 
-    z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),format="ANALYZE",delta=header$pixdim[2:4],origin=NULL,
-              orient=NULL,dim=dt,weights=weights,header=header, mask=mask)
+    z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),
+              format="ANALYZE",
+              delta=delta,
+              origin=NULL,
+              orient=NULL,
+              dim=dim(ttt),
+              dim0=dim(ttt),
+              roixa=1,
+              roixe=dim(ttt)[1],
+              roiya=1,
+              roiye=dim(ttt)[2],
+              roiza=1,
+              roize=dim(ttt)[3],
+              roit=1:dim(ttt)[4],
+              weights=weights,
+              header=header, 
+              mask=mask)
   } else {
     warning(paste("Error: file",filename[1],"does not exist!"))
-    z <- list(ttt=NULL,format="ANALYZE",delta=NULL,origin=NULL,orient=NULL,dim=NULL,weights=NULL,header=NULL,mask=NULL)
+    z <- list(ttt=NULL,
+              format="ANALYZE",
+              delta=NULL,
+              origin=NULL,
+              orient=NULL,
+              dim=NULL,
+              dim0=NULL,
+              roixa=NULL,
+              roixe=NULL,
+              roiya=NULL,
+              roiye=NULL,
+              roiza=NULL,
+              roize=NULL,
+              roit=NULL,
+              weights=NULL,
+              header=NULL,
+              mask=NULL)
   }
 
   class(z) <- "fmridata"
@@ -448,27 +515,28 @@ read.AFNI <- function(filename,vol=NULL,level=0.75) {
 
 #
 #   set correct orientation
+#   DO IT IN plot.fmridata()
 #
-    xyz <- (orientation)%/%2+1
-    swap <- orientation-2*(orientation%/%2)
-    if(any(xyz!=1:3)) {
-      abc <- 1:3
-      abc[xyz] <- abc
-      myttt <- aperm(myttt,c(abc,4))
-      swap[xyz] <- swap
-      delta[xyz] <- delta
-      weights[xyz] <- weights
-      ddim[xyz]<- ddim
-    }
-    if(swap[1]==1) {
-      myttt <- myttt[ddim[1]:1,,,,drop=FALSE]
-    }
-    if(swap[2]==1) {
-      myttt <- myttt[,ddim[2]:1,,,drop=FALSE]
-    }
-    if(swap[3]==0) {
-      myttt <- myttt[,,ddim[3]:1,,drop=FALSE]
-    }
+#    xyz <- (orientation)%/%2+1
+#    swap <- orientation-2*(orientation%/%2)
+#    if(any(xyz!=1:3)) {
+#      abc <- 1:3
+#      abc[xyz] <- abc
+#      myttt <- aperm(myttt,c(abc,4))
+#      swap[xyz] <- swap
+#      delta[xyz] <- delta
+#      weights[xyz] <- weights
+#      ddim[xyz]<- ddim
+#    }
+#    if(swap[1]==1) {
+#      myttt <- myttt[ddim[1]:1,,,,drop=FALSE]
+#    }
+#    if(swap[2]==1) {
+#      myttt <- myttt[,ddim[2]:1,,,drop=FALSE]
+#    }
+#    if(swap[3]==0) {
+#      myttt <- myttt[,,ddim[3]:1,,drop=FALSE]
+#    }
 
     mask <- array(TRUE,ddim)
     mask[myttt[,,,1] < quantile(myttt[,,,1],level,na.rm = TRUE)] <- FALSE
@@ -478,10 +546,42 @@ read.AFNI <- function(filename,vol=NULL,level=0.75) {
     myttt[is.na(na),] <- 0
     dim(mask) <- ddim
     z <-
-      list(ttt=writeBin(as.numeric(myttt),raw(),4),format="HEAD/BRIK",delta=delta,origin=values$ORIGIN,orient=c(0,2,5),dim=c(ddim,length(vol)),weights=weights, header=values,mask=mask)
+      list(ttt=writeBin(as.numeric(myttt),raw(),4),
+           format="HEAD/BRIK",
+           delta=delta,
+           origin=values$ORIGIN,
+           orient=c(0,2,5),
+           dim=c(ddim,length(vol)),
+           dim0=c(ddim,length(vol)),
+           roixa=1,
+           roixe=ddim[1],
+           roiya=1,
+           roiye=ddim[2],
+           roiza=1,
+           roize=ddim[3],
+           roit=vol,
+           weights=weights, 
+           header=values,
+           mask=mask)
   } else {
     warning("Error reading file: Could not detect size per voxel\n")
-    z <- list(ttt=NULL,format="HEAD/BRIK",delta=NULL,origin=NULL,orient=NULL,dim=NULL,weights=NULL,header=values,mask=NULL)    
+    z <- list(ttt=NULL,
+              format="HEAD/BRIK",
+              delta=NULL,
+              origin=NULL,
+              orient=NULL,
+              dim=NULL,
+              dim0=NULL,
+              roixa=NULL,
+              roixe=NULL,
+              roiya=NULL,
+              roiye=NULL,
+              roiza=NULL,
+              roize=NULL,
+              roit=NULL,
+              weights=NULL,
+              header=values,
+              mask=NULL)
   }
   
   class(z) <- "fmridata"
@@ -1095,13 +1195,42 @@ read.NIFTI <- function(filename,level=0.75) {
     ttt[is.na(na),] <- 0
     dim(mask) <- c(dx,dy,dz)
 
-    z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),format="NIFTI",delta=header$pixdim[2:4],
-              origin=NULL,orient=NULL,dim=header$dimension[2:5],weights=weights,header=header,mask=mask)
+    z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),
+              format="NIFTI",
+              delta=header$pixdim[2:4],
+              origin=NULL,
+              orient=NULL,
+              dim=header$dimension[2:5],
+              dim0=header$dimension[2:5],
+              roixa=1,
+              roixe=dx,
+              roiya=1,
+              roiye=dy,
+              roiza=1,
+              roize=dz,
+              roit=1:dt,
+              weights=weights,
+              header=header,
+              mask=mask)
 
     class(z) <- "fmridata"
   } else {
-    z <- list(ttt=ttt,format="NIFTI",delta=header$pixdim[2:4],
-              origin=NULL,orient=NULL,dim=c(dx,dy,dz,dd),weights=weights,header=header)
+    z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),
+              format="NIFTI",
+              delta=header$pixdim[2:4],
+              origin=NULL,
+              orient=NULL,
+              dim=c(dx,dy,dz,dd),
+              dim0=c(dx,dy,dz,dd),
+              roixa=1,
+              roixe=dx,
+              roiya=1,
+              roiye=dy,
+              roiza=1,
+              roize=dz,
+              roit=1:dd,
+              weights=weights,
+              header=header)
   }
 
 
