@@ -70,10 +70,10 @@ read.ANALYZE.volume <- function(filename) {
     what <- "raw"
     signed <- TRUE
     size <- 1
-  } else if (header$datatype == 2) { # unsigned char????
+  } else if (header$datatype == 2) { # unsigned int 1-byte
     what <- "int"
     signed <- FALSE
-    size <- if (header$bitpix) header$bitpix/8 else 2
+    size <- if (header$bitpix) header$bitpix/8 else 1
   } else if (header$datatype == 4) { # signed short
     what <- "int"
     signed <- TRUE
@@ -101,11 +101,7 @@ read.ANALYZE.volume <- function(filename) {
   }
   
   con <- file(filename,"rb")
-  if (header$datatype == 2) {
-    ttt <- readChar(con,file.info(filename)$size)
-  } else {
-    ttt <- readBin(con, what, n=dx*dy*dz*dt*size, size=size, signed=signed, endian=endian)
-  }
+  ttt <- readBin(con, what, n=dx*dy*dz*dt*size, size=size, signed=signed, endian=endian)
   close(con)
 
   dim(ttt) <- c(dx,dy,dz,dt)
@@ -260,15 +256,15 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
               delta=delta,
               origin=NULL,
               orient=NULL,
-              dim=dim(ttt),
-              dim0=dim(ttt),
+              dim=ddim,
+              dim0=ddim,
               roixa=1,
-              roixe=dim(ttt)[1],
+              roixe=ddim[1],
               roiya=1,
-              roiye=dim(ttt)[2],
+              roiye=ddim[2],
               roiza=1,
-              roize=dim(ttt)[3],
-              roit=1:dim(ttt)[4],
+              roize=ddim[3],
+              roit=1:ddim[4],
               weights=weights,
               header=header, 
               mask=mask)
@@ -458,8 +454,8 @@ read.AFNI <- function(filename,vol=NULL,level=0.75) {
   scale <- values$BRICK_FLOAT_FACS
   size <- file.info(filename.brik)$size/(dx*dy*dz*dt)
   bricktypes <- values$BRICK_TYPES[1]
-  orientation <- values$ORIENT_SPECIFIC
-  if (any(sort((orientation)%/%2) != 0:2)) stop("invalid orientation",orientation,"found! \n")
+#  orientation <- values$ORIENT_SPECIFIC
+#  if (any(sort((orientation)%/%2) != 0:2)) stop("invalid orientation",orientation,"found! \n")
   delta <- values$DELTA
 
   if (is.null(bricktypes)) {

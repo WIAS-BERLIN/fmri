@@ -75,6 +75,7 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau
   z$roit <- spm$roit
   z$header <- spm$header
   z$format <- spm$format
+  z$dim0 <- spm$dim0
 
   attr(z, "file") <- attr(spm, "file")
   attr(z, "white") <- attr(spm, "white")
@@ -234,6 +235,7 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE, minimum.sign
   z$roit <- spm$roit
   z$header <- spm$header
   z$format <- spm$format
+  z$dim0 <- spm$dim0
 
   attr(z, "file") <- attr(spm, "file")
   attr(z, "white") <- attr(spm, "white")
@@ -253,7 +255,7 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE, minimum.sign
 
 plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
                             pos = c(-1,-1,-1), type="slice",
-                            device="X11", file="plot.png", slice =  slice, view = view ,zlim.u =
+                            device="X11", file="plot.png", slice =  1, view = "axial" ,zlim.u =
                             NULL, zlim.o = NULL, ...) {
   mri.colors <- function (n1, n2, factor=n1/(n1+n2), from=0, to=.2) {
     colors1 <- gray((0:n1)/(n1+n2))
@@ -709,39 +711,40 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 }
 
 # select ROI from fmri dataset
-cut.roi <- function(data,
+cutroi <- function(data,
                     xind=1:data$dim[1],
                     yind=1:data$dim[2],
                     zind=1:data$dim[3],
                     tind=1:data$dim[4]) {
 
-  ttt <- extract.data(data)[xind,yind,zind,tind]
-  data$ttt <- writeBin(as.numeric(ttt),raw(),4)
-  data$dim <- c(length(xind),length(yind),length(zind),length(tind))
-  data$mask <- data$mask[xind,yind,zind]
+  if (("fmridata" %in% class(data)) & (!any(c("fmrispm","fmripvalue") %in% class(data)))) {
+    ttt <- extract.data(data)[xind,yind,zind,tind]
+    data$ttt <- writeBin(as.numeric(ttt),raw(),4)
+    data$dim <- c(length(xind),length(yind),length(zind),length(tind))
+    data$mask <- data$mask[xind,yind,zind]
 
-  roixa <- (data$roixa:data$roixe)[xind[1]];
-  roixe <- (data$roixa:data$roixe)[xind[length(xind)]];
-  roiya <- (data$roiya:data$roiye)[yind[1]];
-  roiye <- (data$roiya:data$roiye)[yind[length(yind)]];
-  roiza <- (data$roiza:data$roize)[zind[1]];
-  roize <- (data$roiza:data$roize)[zind[length(zind)]];
-  roit <- data$roit[tind];
+    roixa <- (data$roixa:data$roixe)[xind[1]];
+    roixe <- (data$roixa:data$roixe)[xind[length(xind)]];
+    roiya <- (data$roiya:data$roiye)[yind[1]];
+    roiye <- (data$roiya:data$roiye)[yind[length(yind)]];
+    roiza <- (data$roiza:data$roize)[zind[1]];
+    roize <- (data$roiza:data$roize)[zind[length(zind)]];
+    roit <- data$roit[tind];
 
-  data$roixa <- roixa
-  data$roixe <- roixe
-  data$roiya <- roiya
-  data$roiye <- roiye
-  data$roiza <- roiza
-  data$roize <- roize
-  data$roit <- roit
-
+    data$roixa <- roixa
+    data$roixe <- roixe
+    data$roiya <- roiya
+    data$roiye <- roiye
+    data$roiza <- roiza
+    data$roize <- roize
+    data$roit <- roit
+  }
   invisible(data)
 }
 
 # show a slice of pvalues with anatomical overlay!
 # should this really use adimpro???
-show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "xy", col.u, col.o, zlim.u =
+show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "axial", col.u, col.o, zlim.u =
                     NULL, zlim.o = NULL) {
 
   pvalue <- x$pvalue
@@ -761,17 +764,17 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "xy", co
   ttt.ana <- extract.data(anatomic)
   ddim.ana <- dim(ttt.ana) <- dim(ttt.ana)[1:3]
 
-  if (view == "xy") {
+  if (view == "axial") {
     dfunc <- dim(pvalue)[1:2]
     imgdata.o <- pvalue[,,slice]
     mask <- mask[,,slice]
     scale <- ceiling(max(abs(pixdim.func[1:2]))/min(abs(pixdim.ana)))
-  } else if (view == "xz") {
+  } else if (view == "coronal") {
     dfunc <- dim(pvalue)[c(1,3)]
     imgdata.o <- pvalue[,slice,]
     mask <- mask[,slice,]
     scale <- ceiling(max(abs(pixdim.func[c(1,3)]))/min(abs(pixdim.ana)))
-  } else if (view == "yz") {
+  } else if (view == "sagittal") {
     dfunc <- dim(pvalue)[c(2,3)]
     imgdata.o <- pvalue[slice,,]
     mask <- mask[slice,,]
@@ -794,11 +797,11 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "xy", co
   imgdata.u <- array(0, dim=dfunc*scale)
   for (i in 1:(dfunc[1]*scale)) {
     for (j in 1:(dfunc[2]*scale)) {
-      if (view == "xy") {
+      if (view == "axial") {
         pos <- ind2pos.func( c(x$roixa+(2*i-1)/(2*scale)-0.5, x$roiya+(2*j-1)/(2*scale)-0.5, x$roiza + slice - 1) )
-      } else if (view == "xz") {
+      } else if (view == "coronal") {
         pos <- ind2pos.func( c(x$roixa+(2*i-1)/(2*scale)-0.5, x$roiya + slice - 1, x$roiza+(2*j-1)/(2*scale)-0.5) )
-      } else if (view == "yz") {
+      } else if (view == "sagittal") {
         pos <- ind2pos.func( c(x$roixa + slice -1, x$roiya+(2*i-1)/(2*scale)-0.5, x$roiza+(2*j-1)/(2*scale)-0.5) )
       }
       ind.ana <- pos2ind.ana(pos) # this is real(!) index for anatomic image
@@ -918,12 +921,17 @@ conv.ip <- function(data, what="i2p") {
 
   } else if (data$format == "HEAD/BRIK") {
 
-    pixdim <- data$header$DELTA
-    origin <- data$header$ORIGIN
+    orientation <- data$header$ORIENT_SPECIFIC
+    if (any(sort((orientation)%/%2) != 0:2)) stop("invalid orientation",orientation,"found! \n")
+
+    rxyz <- (orientation)%/%2+1
+    xyz <- rxyz[rxyz]
+    pixdim <- data$header$DELTA[xyz]
+    origin <- data$header$ORIGIN[xyz]
     if (what == "i2p") {
-      return(function(ind) pixdim * (ind-1) + origin)
+      return(function(ind) pixdim * (ind[xyz]-1) + origin)
     } else {
-      return(function(pos) (pos-origin)/pixdim + 1)
+      return(function(pos) ((pos-origin)/pixdim + 1)[rxyz])
     }
 
   } else if (data$format == "DICOM") {

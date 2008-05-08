@@ -344,6 +344,7 @@ fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contr
   result$roit <- data$roit
   result$header <- data$header
   result$format <- data$format
+  result$dim0 <- data$dim0
   
   class(result) <- c("fmridata","fmrispm")
 
