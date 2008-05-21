@@ -1032,7 +1032,7 @@ read.DICOM <- function(filename,includedata=TRUE) {
     z <- list(header=header,format="DICOM",delta=delta,series=series,image=image,dim=c(xdim,ydim))
   }
   close(con)
-  class(z) <- "fmridata"
+#  class(z) <- "fmridata"
 
   attr(z,"file") <- filename
   invisible(z)
@@ -1372,9 +1372,6 @@ write.NIFTI <- function(ttt, header=NULL, filename) {
 }
 
 extract.data <- function(z,what="data") {
-  if (!("fmridata"%in%class(z))) {
-    warning("extract.data: data not of class <fmridata>. Try to proceed but strange things may happen")
-  }
   if (what=="residuals") {  
       if(!is.null(z$resscale)){
           ttt <- readBin(z$res,"integer",prod(z$dim),2)*z$resscale 
