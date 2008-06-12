@@ -29,7 +29,7 @@
 
 vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                    sigma2=NULL,mask=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
-                   u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
+                   ladjust=1,u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
                    spmin=.3,h0=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE,
                    res=NULL, resscale=NULL, dim=NULL) {
 #
@@ -42,7 +42,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
   # first check arguments and initialize
   #
   args <- match.call()
-
+  volseq <- TRUE
   # test dimension of data (vector of 3D) and define dimension related stuff
   d <- 3
   dy <- dim(y)
@@ -76,10 +76,10 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                   2)
 
   # define qlambda, lambda
-  if (is.null(qlambda)) qlambda <- switch(skern,.95,.992,.996)
+  if (is.null(qlambda)) qlambda <- switch(skern,.9945,.9988,.9995)
   if (qlambda<.9) warning("Inappropriate value of qlambda")
   if (qlambda<1) {
-    lambda <- qchisq(qlambda,dv0) 
+    lambda <- ladjust*qchisq(qlambda,dv0) 
   } else {
     lambda <- 1e50
   }
@@ -139,8 +139,10 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
   wghts <- (wghts[2:3]/wghts[1])
   tobj <- list(bi= rep(1,n))
   theta <- y
-  steps <- as.integer(log(hmax/hinit)/log(hincr)+1)
-
+  maxvol <- getvofh(hmax,lkern,wghts)
+  if(volseq) kstar <- as.integer(log(maxvol)/log(1.25)) else kstar <- as.integer(log(hmax)/log(hincr))
+  steps <- kstar+1
+  
   # define lseq
   if (is.null(lseq)) {
 # this is optimized for lkern="Gaussian" such that alpha approx 0.04 -- 0.1 and probability of separated points is approx. 1e-4
@@ -152,10 +154,10 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
   if (length(lseq)<steps) lseq <- c(lseq,rep(1,steps-length(lseq)))
   lseq <- lseq[1:steps]
 
-  k <- 1
+  if(qlambda < 1) k <- 1 else k <- kstar
   hakt <- hinit
   hakt0 <- hinit
-  lambda0 <- lambda*lseq[k]
+  if(volseq) lambda0 <- lambda else lambda0 <- lambda*lseq[k]
   if (hinit>1) lambda0 <- 1e50 # that removes the stochstic term for the first step
   scorr <- numeric(3)
   if(h0[1]>0) scorr[1] <-  get.corr.gauss(h0[1],2)
@@ -163,13 +165,21 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
   if(h0[3]>0) scorr[3] <-  get.corr.gauss(h0[3],2)
   progress <- 0
   step <- 0
-  total <- (hincr^(d*ceiling(log(hmax/hinit)/log(hincr)))-1)/(hincr^d-1)
+  total <- cumsum(1.25^(1:k))/sum(1.25^(1:kstar))
   if(testprop) {
     if(is.null(u)) u <- 0
   } 
   propagation <- NULL
   # run single steps to display intermediate results
-  while (hakt<=hmax) {
+  while (k<=kstar) {
+    if(volseq) {
+      hakt0 <- gethani(1,10,lkern,1.25^(k-1),wghts,1e-4)
+      hakt <- gethani(1,10,lkern,1.25^k,wghts,1e-4)
+      cat("step",k,"hakt",hakt,"\n")
+    } else {
+      hakt0 <- hinit*hincr^(k-1)
+      hakt <- hinit*hincr^k
+    }
     dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
 #  need bandwidth in voxel for Spaialvar.gauss, h0 is in voxel
     if (any(h0>0)) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0)/4/c(1,wghts),h0,d)/
@@ -260,14 +270,13 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
       cat(signif(progress/total,2)*100,"% . ",sep="")
     }
     if (demo) readline("Press return")
-    hakt <- hakt*hincr
+    k <- k+1
 #  adjust lambda for the high intrinsic correlation between  neighboring estimates 
     c1 <- (prod(h0+1))^(1/3)
     c1 <- 2.7214286 - 3.9476190*c1 + 1.6928571*c1*c1 - 0.1666667*c1*c1*c1
     x <- (prod(1.25^(k-1)/c(1,wghts)))^(1/3)
     scorrfactor <- (c1+x)/(c1*prod(h0+1)+x)
-    lambda0 <- lambda*lseq[k]*scorrfactor
-    k <- k+1
+    if(volseq) lambda0 <- lambda*scorrfactor else lambda*lseq[k]*scorrfactor    
     gc()
   }
 

@@ -1,6 +1,26 @@
 fwhm2bw <- function(hfwhm) hfwhm/sqrt(8*log(2))
 bw2fwhm <- function(h) h*sqrt(8*log(2))
 
+getvofh <- function(bw,lkern,wght){
+.Fortran("getvofh",
+         as.double(bw),
+         as.integer(lkern),
+         as.double(wght),
+         vol=double(1),
+         PACKAGE="fmri")$vol
+}
+gethani <- function(x,y,lkern,value,wght,eps=1e-2){
+.Fortran("gethani",
+         as.double(x),
+         as.double(y),
+         as.integer(lkern),
+         as.double(value),
+         as.double(wght),
+         as.double(eps),
+         bw=double(1),
+         PACKAGE="fmri")$bw
+}
+
 Varcor.gauss<-function(h,interv = 1){
 #
 #   Calculates a correction for the variance estimate obtained by (IQRdiff(y)/1.908)^2

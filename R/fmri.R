@@ -1,4 +1,4 @@
-fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau",weighted=TRUE) {
+fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau",weighted=TRUE,ladjust=1) {
   cat("fmri.smooth: entering function\n")
   
   if (!("fmrispm" %in% class(spm))) {
@@ -29,12 +29,12 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau
     ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
                      wghts=weights, h0=bw, vwghts = spm$vwghts,
                      lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
-                     resscale=spm$resscale, dim=spm$dim)
+                     resscale=spm$resscale, dim=spm$dim,ladjust=ladjust)
   } else {
     ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
                      qlambda = 1, wghts=weights, h0=bw,
                      vwghts = spm$vwghts,lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
-                     resscale=spm$resscale, dim=spm$dim)
+                     resscale=spm$resscale, dim=spm$dim,ladjust=ladjust)
   }
   cat("\n")
   
@@ -76,6 +76,7 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau
   z$header <- spm$header
   z$format <- spm$format
   z$dim0 <- spm$dim0
+  z$scorr <- ttthat$scorr
 
   attr(z, "file") <- attr(spm, "file")
   attr(z, "white") <- attr(spm, "white")
