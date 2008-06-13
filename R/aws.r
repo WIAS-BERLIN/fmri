@@ -267,7 +267,11 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
     } else if (total !=0) {
       progress <- progress + hincr^(d*step)
       step <- step + 1
+      if(volseq){
+      cat(signif(total[k],2)*100,"% . ",sep="")
+          } else {
       cat(signif(progress/total,2)*100,"% . ",sep="")
+         }
     }
     if (demo) readline("Press return")
     k <- k+1
