@@ -87,9 +87,10 @@ fmri.design <- function(hrf, order=2) {
 
 
 
-fmri.lm <- function(data,z,actype="accalc",hmax=3.52,vtype="var",step=0.01,contrast=c(1),vvector=c(1),keep="all") {
+fmri.lm <- function(data,z,actype="smooth",vtype="var",step=0.01,contrast=c(1),vvector=c(1),keep="all") {
   cat("fmri.lm: entering function\n")
 
+  hmax <- 3.52
   if (!class(data) == "fmridata") {
     warning("fmri.lm: data not of class <fmridata>. Try to proceed but strange things may happen")
   }

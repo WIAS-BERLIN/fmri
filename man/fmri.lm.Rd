@@ -6,7 +6,7 @@
   Estimate the parameters and variances in a linear model. 
 }
 \usage{
-  fmri.lm(data, z, actype = "accalc", hmax = 3.52, vtype = "var",
+  fmri.lm(data, z, actype = "smooth", vtype = "var",
           step = 0.01, contrast = c(1), vvector = c(1),
           keep = "all")
 }
@@ -17,8 +17,6 @@
   and additional components for trend and other effects. }
   \item{actype}{ string describing the type of handling autocorrelation
     of time series. "nonac", "ac", "accalc", "smooth"}
-  \item{hmax}{ bandwidth for smoothing autocorrelation parameter if
-    actype = "smooth" }
   \item{vtype}{ method of estimating residual variance (only
   "var" implemented) }
   \item{step}{ step size for binning autocorrelations (see

@@ -1,3 +1,14 @@
+2008-06-17 version 1.3
+  - region growing for bandwidth iteration in adaptive smoothing is 25% more variance reduction 
+    at each step now. Thus, the bandwidth sequence is no longer geometric, and it leads to more
+    balanced adaptation.
+  - fmri.lm() has default actype="smooth" to stabilize the estimate for temporal autocorrelation.
+    the bandwidth for this smoothing operation can no longer be set in order to provide general 
+    setting for the adaptation parameter in fmri.smooth()
+  - The adaptation parameters have been re-tuned for most of the statistical kernels in fmri.smooth().
+    This was missing in former version. It could have lead to adaptation to noise and thus signal detection 
+    with many false positives.
+
 2008-05-06 version 1.2-6
 
   - new function cut.roi()
