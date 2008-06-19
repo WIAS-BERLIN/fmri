@@ -194,14 +194,14 @@ C  Use Epanechnikov kernel
                sw=0.d0
                ja1=max(1,j1-clw1)
                je1=min(n1,j1+clw1)
+               ja2=max(1,j2-clw2)
+               je2=min(n2,j2+clw2)
+               ja3=max(1,j3-clw3)
+               je3=min(n3,j3+clw3)
                DO jn1=ja1,je1
                   jj1=jn1-j1+clw11
-                  ja2=max(1,j2-clw2)
-                  je2=min(n2,j2+clw2)
                   DO jn2=ja2,je2
                      jj2=jn2-j2+clw21
-                     ja3=max(1,j3-clw3)
-                     je3=min(n3,j3+clw3)
                      DO jn3=ja3,je3
                         if(.not.mask(jn1,jn2,jn3)) CYCLE
                         sw=sw+w(jj1,jj2,jn3-j3+clw31)
