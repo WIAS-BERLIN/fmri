@@ -163,8 +163,6 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
   if(h0[1]>0) scorr[1] <-  get.corr.gauss(h0[1],2)
   if(h0[2]>0) scorr[2] <-  get.corr.gauss(h0[2],2)
   if(h0[3]>0) scorr[3] <-  get.corr.gauss(h0[3],2)
-  progress <- 0
-  step <- 0
   total <- cumsum(1.25^(1:k))/sum(1.25^(1:kstar))
   if(testprop) {
     if(is.null(u)) u <- 0
@@ -264,15 +262,9 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
       cat("bandwidth: ",signif(hakt*switch(lkern,hakt,hakt,bw2fwhm(hakt)/4),3),"eta==1",sum(tobj$eta==1),"   MSE: ",
           signif(mean((theta-u)^2),3),"   MAE: ",signif(mean(abs(theta-u)),3)," mean(bi)=",signif(mean(tobj$bi),3),"\n")
       mae <- c(mae,signif(mean(abs(theta-u)),3))
-    } else if (total !=0) {
-      progress <- progress + hincr^(d*step)
-      step <- step + 1
-      if(volseq){
+    } else if (max(total) >1) {
       cat(signif(total[k],2)*100,"% . ",sep="")
-          } else {
-      cat(signif(progress/total,2)*100,"% . ",sep="")
-         }
-    }
+     }
     if (demo) readline("Press return")
     k <- k+1
 #  adjust lambda for the high intrinsic correlation between  neighboring estimates 
