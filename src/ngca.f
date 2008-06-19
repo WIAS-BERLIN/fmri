@@ -114,7 +114,7 @@ C   keep omega
       subroutine smtime(x,n1,n2,n3,nt,mask,h,xnew,w,lw)
       implicit logical (a-z)
       integer n1,n2,n3,nt,lw
-      logical mask(n1,n2,n3,n4)
+      logical mask(n1,n2,n3)
       real*8 x(n1,n2,n3,nt),xnew(n1,n2,n3,nt),w(lw),h
       integer i1,i2,i3,j,jn,ja,je,clw,clw1
       real*8 z,sw
@@ -154,7 +154,7 @@ C  Use Epanechnikov kernel
       subroutine smspace(x,n1,n2,n3,nt,mask,h,xnew,vext,w,lw1,lw2,lw3)
       implicit logical (a-z)
       integer n1,n2,n3,nt,lw1,lw2,lw3
-      logical mask(n1,n2,n3,n4)
+      logical mask(n1,n2,n3)
       real*8 x(n1,n2,n3,nt),xnew(n1,n2,n3,nt),vext(3),w(lw1,lw2,lw3),h
       integer j1,j2,j3,jt,jn1,jn2,jn3,ja1,je1,ja2,je2,ja3,je3,
      1        clw1,clw2,clw3,clw11,clw21,clw31,jj1,jj2
