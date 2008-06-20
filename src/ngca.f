@@ -31,16 +31,15 @@
       dv=-s*sin(sz)
       RETURN 
       END
-      subroutine fastica(y,omega,d,n,l,t,beta,v,normv,s)
+      subroutine fastica(y,omega,d,n,l,ifun,t,beta,v,normv,s)
       implicit logical (a-z)
-      integer d,n,l,t
-      real*8 y(d,n),omega(d,l,4),v(d,l,4),beta(d),s(l,4),normv(l,4)
-      integer i,j,k,o,ifunct
+      integer d,n,l,t,ifun(l)
+      real*8 y(d,n),omega(d,l),v(d,l),beta(d),s(l),normv(l)
+      integer i,j,k,o
       real*8 nk,z,fw,fwd1,nbeta,srnbeta,zv,zdelta
       nk=0.d0
       nbeta=0.d0
 C this is just to avoid some warnings 
-      DO ifunct=1,4
       DO k=1,l
          DO j=1,t
             nk=0.d0
@@ -50,23 +49,23 @@ C this is just to avoid some warnings
             DO i=1,n
                z=0.d0
                DO o=1,d
-                  z=z+omega(o,k,ifunct)*y(o,i)
+                  z=z+omega(o,k)*y(o,i)
                END DO
-               select case (ifunct)
+               select case (ifun(k))
                case(1) 
-                  call fd1(z,s(k,ifunct),fw,fwd1)
+                  call fd1(z,s(k),fw,fwd1)
                case(2) 
-                  call fd2(z,s(k,ifunct),fw,fwd1)
+                  call fd2(z,s(k),fw,fwd1)
                case(3) 
-                  call fd3(z,s(k,ifunct),fw,fwd1)
+                  call fd3(z,s(k),fw,fwd1)
                case(4) 
-                  call fd4(z,s(k,ifunct),fw,fwd1)
+                  call fd4(z,s(k),fw,fwd1)
                case default
                   fw=0.d0
                   fwd1=1.d0
                end select
                DO o=1,d
-                  z=y(o,i)*fw-omega(o,k,ifunct)*fwd1
+                  z=y(o,i)*fw-omega(o,k)*fwd1
                   beta(o)=beta(o)+z
                   nk=nk+z*z
                END DO
@@ -84,8 +83,8 @@ C this is just to avoid some warnings
                zdelta = 0.d0
                DO o=1,d
                   z=beta(o)/srnbeta
-                  zdelta =zdelta+abs(omega(o,k,ifunct)-z)
-                  omega(o,k,ifunct)=z
+                  zdelta =zdelta+abs(omega(o,k)-z)
+                  omega(o,k)=z
                END DO
             ELSE
                EXIT
@@ -98,17 +97,16 @@ C   keep omega
          zv=0.d0
          DO o=1,d
             z=beta(o)*nk
-            v(o,k,ifunct)=z
+            v(o,k)=z
             zv=zv+z*z
          END DO
          IF(zv.gt.1d-8) THEN
-            normv(k,ifunct)=sqrt(zv)
+            normv(k)=sqrt(zv)
          ELSE
-            normv(k,ifunct)=0.d0
+            normv(k)=0.d0
          END IF
          call rchkusr()
       END DO
-      END DO      
       RETURN
       END
       subroutine smtime(x,n1,n2,n3,nt,mask,h,xnew,w,lw)

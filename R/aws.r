@@ -262,7 +262,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
       cat("bandwidth: ",signif(hakt*switch(lkern,hakt,hakt,bw2fwhm(hakt)/4),3),"eta==1",sum(tobj$eta==1),"   MSE: ",
           signif(mean((theta-u)^2),3),"   MAE: ",signif(mean(abs(theta-u)),3)," mean(bi)=",signif(mean(tobj$bi),3),"\n")
       mae <- c(mae,signif(mean(abs(theta-u)),3))
-    } else if (max(total) >1) {
+    } else if (max(total) >0) {
       cat(signif(total[k],2)*100,"% . ",sep="")
      }
     if (demo) readline("Press return")

@@ -1,4 +1,4 @@
-ngca <- function(data,L=1000,T=10,m=3,eps=1.5,npca=min(dim(x)[2],dim(x)[1]),filter.time="None",filter.space=FALSE,method="spatial",h.space=3,h.time=3,keepv=FALSE){
+ngca <- function(data,L=c(1000,1000,1000),T=10,m=3,eps=1.5,npca=min(dim(x)[2],dim(x)[1]),filter.time="None",filter.space=FALSE,method="temporal",h.space=3,h.time=3,keepv=FALSE){
 #
 #  NGCA algorithm  for fMRI
 #  x should be either a fMRI object or a matrix 
@@ -97,32 +97,35 @@ y <- svdx$v%*%t(svdx$u)*sqrt(n-1)
 }
 #
 #
-s <- matrix(0,L,4)
-s[,1] <- seq(.5,5,length=L)
-s[,2] <- seq(5/L,5,length=L) 
-s[,3] <- seq(4/L,4,length=L) 
-s[,4] <- seq(0,4,length=L) 
+Lsum <- L[1]+L[2]+2*L[3]
+s <- c(if(L[1]>0) seq(.5,5,length=L[1]), 
+       if(L[2]>0) seq(5/L[2],5,length=L[2]), 
+       if(L[3]>0) seq(1/L[3],4,length=L[3]),
+       if(L[3]>0) seq(0,4,length=L[3]))
+Lsum <- L[1]+L[2]+2*L[3]
+ifun <- c(rep(1,L[1]),rep(2,L[2]),rep(3,L[3]),rep(4,L[3]))
 #
 #   now fast ICA
 #
-omega <- matrix(rnorm(4*L*npca),npca,L*4)
+omega <- matrix(rnorm(Lsum*npca),npca,Lsum)
 omega <- sweep(omega,2,sqrt(apply(omega^2,2,sum)),"/")
 fz <- .Fortran("fastica",
               as.double(y),
               as.double(omega),
               as.integer(npca),
               as.integer(n),
-              as.integer(L),
+              as.integer(Lsum),
+              as.integer(ifun),
               as.integer(T),
               double(npca),
-              v=double(npca*L*4),
-              normv=double(L*4),
+              v=double(npca*Lsum),
+              normv=double(Lsum),
               as.double(s),
               DUP=FALSE,
               PACKAGE="fmri")[c("v","normv")]
 v <- fz$v
 normv <- fz$normv
-dim(v) <- c(npca,4*L)
+dim(v) <- c(npca,Lsum)
 v <- t(v[,normv>eps])
 jhat <- prcomp(v)
 if(d>n){
