@@ -250,6 +250,7 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
     mask[is.na(na)] <- FALSE
     ttt[is.na(na),] <- 0
     dim(mask) <- ddim[1:3]
+    mask <- connect.mask(mask)
 
     z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),
               format="ANALYZE",
@@ -541,6 +542,7 @@ read.AFNI <- function(filename,vol=NULL,level=0.75) {
     mask[is.na(na)] <- FALSE
     myttt[is.na(na),] <- 0
     dim(mask) <- ddim
+    mask <- connect.mask(mask)
     z <-
       list(ttt=writeBin(as.numeric(myttt),raw(),4),
            format="HEAD/BRIK",
@@ -1190,6 +1192,7 @@ read.NIFTI <- function(filename,level=0.75) {
     mask[is.na(na)] <- FALSE
     ttt[is.na(na),] <- 0
     dim(mask) <- c(dx,dy,dz)
+    mask <- connect.mask(mask)
 
     z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),
               format="NIFTI",

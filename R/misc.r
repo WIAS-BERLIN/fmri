@@ -249,3 +249,28 @@ thcorr3D <- function(bw,lag=rep(5,3)){
   dim(scorr) <- lag
   scorr
 }
+
+connect.mask <- function(mask){
+dm <- dim(mask)
+n1 <- dm[1]
+n2 <- dm[2]
+n3 <- dm[3]
+n <- n1*n2*n3
+mask1 <- .Fortran("lconnect",
+                 as.logical(mask),
+                 as.integer(n1),
+                 as.integer(n2),
+                 as.integer(n3),
+                 as.integer((n1+1)/2),
+                 as.integer((n2+1)/2),
+                 as.integer((n3+1)/2),
+                 integer(n),
+                 integer(n),
+                 integer(n),
+                 logical(n),
+                 mask=logical(n),
+                 DUP=FALSE,
+                 PACKAGE="fmri")$mask
+dim(mask1) <- dm
+mask1
+}
