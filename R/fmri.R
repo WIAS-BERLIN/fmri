@@ -257,7 +257,7 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE, minimum.sign
 plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
                             pos = c(-1,-1,-1), type="slice",
                             device="X11", file="plot.png", slice =  1, view = "axial" ,zlim.u =
-                            NULL, zlim.o = NULL, ...) {
+                            NULL, zlim.o = NULL, col.o = heat.colors(256), col.u = grey(0:255/255), ...) {
   mri.colors <- function (n1, n2, factor=n1/(n1+n2), from=0, to=.2) {
     colors1 <- gray((0:n1)/(n1+n2))
     colors2 <- hsv(h = seq(from,to,length=n2),
@@ -272,7 +272,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
 
     if ("fmridata" %in% class(anatomic)) {
 
-      img <- show.slice(x, anatomic, maxpvalue = maxpvalue, slice =  slice, view = view, grey(0:255/255), heat.colors(256), zlim.u, zlim.o)
+      img <- show.slice(x, anatomic, maxpvalue = maxpvalue, slice =  slice, view = view, col.u, col.o, zlim.u, zlim.o)
       hex <- c(0:9, LETTERS[1:6])
       hex <- paste(hex[(0:255)%/%16+1],hex[(0:255)%%16+1],sep="")
       color <- paste("#",hex[img[,,1]%/%256+1],hex[img[,,2]%/%256+1],hex[img[,,3]%/%256+1],sep="")
@@ -767,18 +767,30 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "axial",
 
   if (view == "axial") {
     dfunc <- dim(pvalue)[1:2]
-    imgdata.o <- pvalue[,,slice]
-    mask <- mask[,,slice]
+    if ((slice >= 1) & (slice <= dim(pvalue)[3])) {
+      imgdata.o <- pvalue[,,slice]
+      mask <- mask[,,slice]
+    } else {
+      mask <- imgdata.o <- array(0,dim=dfunc)
+    }
     scale <- ceiling(max(abs(pixdim.func[1:2]))/min(abs(pixdim.ana)))
   } else if (view == "coronal") {
     dfunc <- dim(pvalue)[c(1,3)]
-    imgdata.o <- pvalue[,slice,]
-    mask <- mask[,slice,]
+    if ((slice >= 1) & (slice <= dim(pvalue)[2])) {
+      imgdata.o <- pvalue[,slice,]
+      mask <- mask[,slice,]
+    } else {
+      mask <- imgdata.o <- array(0,dim=dfunc)
+    }
     scale <- ceiling(max(abs(pixdim.func[c(1,3)]))/min(abs(pixdim.ana)))
   } else if (view == "sagittal") {
     dfunc <- dim(pvalue)[c(2,3)]
-    imgdata.o <- pvalue[slice,,]
-    mask <- mask[slice,,]
+    if ((slice >= 1) & (slice <= dim(pvalue)[1])) {
+      imgdata.o <- pvalue[slice,,]
+      mask <- mask[slice,,]
+    } else {
+      mask <- imgdata.o <- array(0,dim=dfunc)
+    }
     scale <- ceiling(max(abs(pixdim.func[2:3]))/min(abs(pixdim.ana)))
   } else {
     stop("unknown view",view)
@@ -814,17 +826,28 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "axial",
       jint <- ceiling(ind.ana[2])
       kint <- ceiling(ind.ana[3])
 
-      if ((iint-1 >= 1) & (jint -1 >= 1) & (kint -1 >= 1) &
+#       if ((iint-1 >= 1) & (jint -1 >= 1) & (kint -1 >= 1) &
+#           (iint <= ddim.ana[1]) & (jint <= ddim.ana[2]) & (kint <= ddim.ana[3])) {
+#         imgdata.u[i,j] <-
+#           ttt.ana[iint-1,jint-1,kint-1] * (iint - ii) * (jint - jj) * (kint - kk) +
+#             ttt.ana[iint-1,jint,kint-1] * (iint - ii) * (jj - jint + 1) * (kint - kk) +
+#               ttt.ana[iint,jint-1,kint-1] * (ii - iint + 1) * (jint - jj) * (kint - kk) +
+#                 ttt.ana[iint,jint,kint-1] * (ii - iint + 1) * (jj - jint + 1) * (kint - kk) +
+#                   ttt.ana[iint-1,jint-1,kint] * (iint - ii) * (jint - jj) * (kk - kint + 1) +
+#                     ttt.ana[iint-1,jint,kint] * (iint - ii) * (jj - jint + 1) * (kk - kint + 1) +
+#                       ttt.ana[iint,jint-1,kint] * (ii - iint + 1) * (jint - jj) * (kk - kint + 1) +
+#                         ttt.ana[iint,jint,kint] * (ii - iint + 1) * (jj - jint + 1) * (kk - kint + 1) 
+#       }
+      if ((iint >= 1) & (jint >= 1) & (kint >= 1) &
           (iint <= ddim.ana[1]) & (jint <= ddim.ana[2]) & (kint <= ddim.ana[3])) {
-        imgdata.u[i,j] <-
-          ttt.ana[iint-1,jint-1,kint-1] * (iint - ii) * (jint - jj) * (kint - kk) +
-            ttt.ana[iint-1,jint,kint-1] * (iint - ii) * (jj - jint + 1) * (kint - kk) +
-              ttt.ana[iint,jint-1,kint-1] * (ii - iint + 1) * (jint - jj) * (kint - kk) +
-                ttt.ana[iint,jint,kint-1] * (ii - iint + 1) * (jj - jint + 1) * (kint - kk) +
-                  ttt.ana[iint-1,jint-1,kint] * (iint - ii) * (jint - jj) * (kk - kint + 1) +
-                    ttt.ana[iint-1,jint,kint] * (iint - ii) * (jj - jint + 1) * (kk - kint + 1) +
-                      ttt.ana[iint,jint-1,kint] * (ii - iint + 1) * (jint - jj) * (kk - kint + 1) +
-                        ttt.ana[iint,jint,kint] * (ii - iint + 1) * (jj - jint + 1) * (kk - kint + 1) 
+        imgdata.u[i,j] <- ttt.ana[iint,jint,kint] * (ii - iint + 1) * (jj - jint + 1) * (kk - kint + 1)
+        if (kint > 1) imgdata.u[i,j] <- imgdata.u[i,j] + ttt.ana[iint,jint,kint-1] * (ii - iint + 1) * (jj - jint + 1) * (kint - kk)
+        if (jint > 1) imgdata.u[i,j] <- imgdata.u[i,j] + ttt.ana[iint,jint-1,kint] * (ii - iint + 1) * (jint - jj) * (kk - kint + 1)
+        if (iint > 1) imgdata.u[i,j] <- imgdata.u[i,j] + ttt.ana[iint-1,jint,kint] * (iint - ii) * (jj - jint + 1) * (kk - kint + 1)
+        if ((iint > 1) & (jint > 1)) imgdata.u[i,j] <- imgdata.u[i,j] + ttt.ana[iint-1,jint-1,kint] * (iint - ii) * (jint - jj) * (kk - kint + 1)
+        if ((iint > 1) & (kint > 1)) imgdata.u[i,j] <- imgdata.u[i,j] + ttt.ana[iint-1,jint,kint-1] * (iint - ii) * (jj - jint + 1) * (kint - kk)
+        if ((jint > 1) & (kint > 1)) imgdata.u[i,j] <- imgdata.u[i,j] + ttt.ana[iint,jint-1,kint-1] * (ii - iint + 1) * (jint - jj) * (kint - kk)
+        if ((iint > 1) & (jint > 1) & (kint > 1)) imgdata.u[i,j] <- imgdata.u[i,j] + ttt.ana[iint-1,jint-1,kint-1] * (iint - ii) * (jint - jj) * (kint - kk)
       }
     }
   }
@@ -892,9 +915,9 @@ conv.ip <- function(data, what="i2p") {
       c <- data$header$quaternc
       d <- data$header$quaternd
       a <- sqrt(pmax(0,1-b*b-c*c-d*d))
-      R <- matrix(c(a*a+b*b-c*c-d*d, 2*b*c-2*a*d, 2*b*d+2*a*c,
-                  2*b*c+2*a*d, a*a+c*c-b*b-d*d, 2*c*d -2*a*b,
-                  2*b*d-2*a*c, 2*c*d+2*a*b, a*a+d*d-c*c-b*b),3,3)
+      R <- t(matrix(c(a*a+b*b-c*c-d*d, 2*b*c-2*a*d, 2*b*d+2*a*c,
+                    2*b*c+2*a*d, a*a+c*c-b*b-d*d, 2*c*d -2*a*b,
+                    2*b*d-2*a*c, 2*c*d+2*a*b, a*a+d*d-c*c-b*b),3,3))
       pixdim <- data$header$pixdim[2:4]
       qfac <- data$header$pixdim[1]
 
@@ -902,6 +925,16 @@ conv.ip <- function(data, what="i2p") {
         return(function(ind) R %*% (c(1,1,qfac) * pixdim * (ind-1)) + origin)
       } else {
         return(function(pos) (solve(R) %*% (pos - origin))/(c(1,1,qfac) * pixdim) + 1)
+      }
+    } else if (data$header$sform > 0) {
+      origin <- c(data$header$srowx[4],data$header$srowy[4],data$header$srowz[4])
+      SR <- matrix(c(data$header$srowx[1],data$header$srowy[1],data$header$srowz[1],
+                     data$header$srowx[2],data$header$srowy[2],data$header$srowz[2],
+                     data$header$srowx[3],data$header$srowy[3],data$header$srowz[3]),3,3)
+      if (what == "i2p") {
+        return(function(ind) SR %*% (ind-1) + origin)
+      } else {
+        return(function(pos) solve(SR) %*% (pos - origin) + 1)
       }
     } else if (data$header$qform == 0) {
       warning("This method is specified only for compatibility reasons to ANALYZE 7.5. May not deliver useful results")
@@ -913,7 +946,7 @@ conv.ip <- function(data, what="i2p") {
         return(function(pos) pos/pixdim + 1)
       }
     } else {
-      stop("Neither Method 1 nor 2 for real-space position applicable. Method 3 not yet implemented. See NIFTI specification!")
+      stop("Neither Method 1, 2, nor 3 for real-space position applicable. See NIFTI specification!")
     }
 
   } else if (data$format == "ANALYZE") {

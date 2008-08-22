@@ -12,6 +12,8 @@
   - The adaptation parameters have been re-tuned for most of the statistical kernels in fmri.smooth().
     This was missing in former version. It could have lead to adaptation to noise and thus signal detection 
     with many false positives.
+  - bugfix in plot.fmridata() with (real) anatomical underlay for no symmetric rotation matrices!
+  - implemtented method 3 from NIFTI spec. in plot.fmridata() with (real) anatomical underlay
 
 2008-05-06 version 1.2-6
 
