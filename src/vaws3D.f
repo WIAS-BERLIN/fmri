@@ -43,7 +43,7 @@ C        use Epanechnikov
          lkern=1.d0-xsq
       ENDIF
       RETURN 
-      END   
+      END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
 C
@@ -63,7 +63,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C  compute distance in sij
       DO k=1,dv0
          z=thi(k)-theta(j1,j2,j3,k)
-	 sij=sij+z*z*vwghts(k)
+         sij=sij+z*z*vwghts(k)
       END DO
       sij=bii*sij
       IF (sij.gt.spmax) THEN
@@ -88,7 +88,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine chaws2(y,si2,mask,wlse,n1,n2,n3,dv,dv0,hakt,lambda,
      1                  theta,bi,thn,kern,skern,spmin,spmax,lwght,
      2                  wght,vwghts,swjy,thi)
-C   
+C
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
 C   hakt     actual bandwidth
@@ -100,7 +100,7 @@ C   model    specifies the probablilistic model for the KL-Distance
 C   kern     specifies the location kernel
 C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
-C   
+C
       implicit logical (a-z)
       integer n1,n2,n3,kern,skern,dv,dv0
       logical aws,wlse,mask(n1,n2,n3)
@@ -142,31 +142,31 @@ C
                   END DO
                   CYCLE
                END IF
-	       si2i=si2(i1,i2,i3)
+               si2i=si2(i1,i2,i3)
                bii=bi(i1,i2,i3)/lambda
 C   scaling of sij outside the loop
                swj=0.d0
                swjv=0.d0
-	       DO k=1,dv
+               DO k=1,dv
                   swjy(k)=0.d0
-	       END DO
-	       DO k=1,dv0
-	          thi(k)=theta(i1,i2,i3,k)
-	       END DO
+               END DO
+               DO k=1,dv0
+                  thi(k)=theta(i1,i2,i3,k)
+               END DO
                DO jw3=1,dlw3
-	          j3=jw3-clw3+i3
-	          if(j3.lt.1.or.j3.gt.n3) CYCLE
+                  j3=jw3-clw3+i3
+                  if(j3.lt.1.or.j3.gt.n3) CYCLE
                   DO jw2=1,dlw2
-	             j2=jw2-clw2+i2
-	             if(j2.lt.1.or.j2.gt.n2) CYCLE
+                     j2=jw2-clw2+i2
+                     if(j2.lt.1.or.j2.gt.n2) CYCLE
                      DO jw1=1,dlw1
 C  first stochastic term
-	                j1=jw1-clw1+i1
+                        j1=jw1-clw1+i1
                         IF(mask(j1,j2,j3)) CYCLE
                         wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
-			if(wj.le.0.d0) CYCLE
-	                if(j1.lt.1.or.j1.gt.n1) CYCLE
-			si2j=si2(j1,j2,j3)
+                        if(wj.le.0.d0) CYCLE
+                        if(j1.lt.1.or.j1.gt.n1) CYCLE
+                        si2j=si2(j1,j2,j3)
                         IF (aws) THEN
                            call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
      1                     theta,vwghts,skern,spf,spmin,spmax,bii,wj)
@@ -177,15 +177,15 @@ C  first stochastic term
                            swjv=swjv+wj/si2j
                         END IF
                         swj=swj+wj
-       			DO k=1,dv
+                        DO k=1,dv
                            swjy(k)=swjy(k)+wj*y(j1,j2,j3,k)
-			END DO
+                        END DO
                      END DO
                   END DO
                END DO
-	       DO k=1,dv
+               DO k=1,dv
                   thn(i1,i2,i3,k)=swjy(k)/swj
-	       END DO
+               END DO
                IF(wlse) THEN
                   bi(i1,i2,i3)=swj
                ELSE
@@ -205,7 +205,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine ihaws2(y,si2,mask,wlse,n1,n2,n3,dv,dv0,hakt,lambda,
      1                  theta,bi,thn,kern,skern,spmin,spmax,lwght,
      2                  wght,vwghts,swjy,thi)
-C   
+C
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
 C   hakt     actual bandwidth
@@ -217,7 +217,7 @@ C   model    specifies the probablilistic model for the KL-Distance
 C   kern     specifies the location kernel
 C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
-C   
+C
       implicit logical (a-z)
       integer dv,dv0,n1,n2,n3,y(n1,n2,n3,dv),thn(n1,n2,n3,dv),kern,
      1        skern
@@ -260,31 +260,31 @@ C
                   END DO
                   CYCLE
                END IF
-	       si2i=si2(i1,i2,i3)
+               si2i=si2(i1,i2,i3)
                bii=bi(i1,i2,i3)/lambda
 C   scaling of sij outside the loop
                swj=0.d0
                swjv=0.d0
-	       DO k=1,dv
+               DO k=1,dv
                   swjy(k)=0.d0
-	       END DO
-	       DO k=1,dv0
-	          thi(k)=theta(i1,i2,i3,k)
-	       END DO
+               END DO
+               DO k=1,dv0
+                  thi(k)=theta(i1,i2,i3,k)
+               END DO
                DO jw3=1,dlw3
-	          j3=jw3-clw3+i3
-	          if(j3.lt.1.or.j3.gt.n3) CYCLE
+                  j3=jw3-clw3+i3
+                  if(j3.lt.1.or.j3.gt.n3) CYCLE
                   DO jw2=1,dlw2
-	             j2=jw2-clw2+i2
-	             if(j2.lt.1.or.j2.gt.n2) CYCLE
+                     j2=jw2-clw2+i2
+                     if(j2.lt.1.or.j2.gt.n2) CYCLE
                      DO jw1=1,dlw1
 C  first stochastic term
-	                j1=jw1-clw1+i1
+                        j1=jw1-clw1+i1
                         IF(mask(j1,j2,j3)) CYCLE
                         wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
-			if(wj.le.0.d0) CYCLE
-	                if(j1.lt.1.or.j1.gt.n1) CYCLE
-			si2j=si2(j1,j2,j3)
+                        if(wj.le.0.d0) CYCLE
+                        if(j1.lt.1.or.j1.gt.n1) CYCLE
+                        si2j=si2(j1,j2,j3)
                         IF (aws) THEN
                            call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
      1                     theta,vwghts,skern,spf,spmin,spmax,bii,wj)
@@ -295,15 +295,15 @@ C  first stochastic term
                            swjv=swjv+wj/si2j
                         END IF
                         swj=swj+wj
-       			DO k=1,dv
+                        DO k=1,dv
                            swjy(k)=swjy(k)+wj*y(j1,j2,j3,k)
-			END DO
+                        END DO
                      END DO
                   END DO
                END DO
-	       DO k=1,dv
+               DO k=1,dv
                   thn(i1,i2,i3,k)=swjy(k)/swj
-	       END DO
+               END DO
                IF(wlse) THEN
                   bi(i1,i2,i3)=swj
                ELSE
@@ -322,7 +322,7 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine smooth3d(y,si2,mask,wlse,n1,n2,n3,dv,hakt,
      1                    thn,kern,lwght,wght,swjy)
-C   
+C
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
 C   hakt     actual bandwidth
@@ -334,7 +334,7 @@ C   model    specifies the probablilistic model for the KL-Distance
 C   kern     specifies the location kernel
 C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
-C   
+C
       implicit logical (a-z)
       integer n1,n2,n3,kern,dv
       logical wlse,mask(n1,n2,n3)
@@ -375,35 +375,35 @@ C
                END IF
 C   scaling of sij outside the loop
                swj=0.d0
-	       DO k=1,dv
+               DO k=1,dv
                   swjy(k)=0.d0
-	       END DO
+               END DO
                DO jw3=1,dlw3
-	          j3=jw3-clw3+i3
-	          if(j3.lt.1.or.j3.gt.n3) CYCLE
+                  j3=jw3-clw3+i3
+                  if(j3.lt.1.or.j3.gt.n3) CYCLE
                   DO jw2=1,dlw2
-	             j2=jw2-clw2+i2
-	             if(j2.lt.1.or.j2.gt.n2) CYCLE
+                     j2=jw2-clw2+i2
+                     if(j2.lt.1.or.j2.gt.n2) CYCLE
                      DO jw1=1,dlw1
 C  first stochastic term
-	                j1=jw1-clw1+i1
+                        j1=jw1-clw1+i1
                         IF(mask(j1,j2,j3)) CYCLE
-	                if(j1.lt.1.or.j1.gt.n1) CYCLE
+                        if(j1.lt.1.or.j1.gt.n1) CYCLE
                         wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
-			if(wj.le.0.d0) CYCLE
+                        if(wj.le.0.d0) CYCLE
                         if(wlse) THEN 
                            wj=wj*si2(j1,j2,j3)
                         END IF
                         swj=swj+wj
-       			DO k=1,dv
+                        DO k=1,dv
                            swjy(k)=swjy(k)+wj*y(j1,j2,j3,k)
-			END DO
+                        END DO
                      END DO
                   END DO
                END DO
-	       DO k=1,dv
+               DO k=1,dv
                   thn(i1,i2,i3,k)=swjy(k)/swj
-	       END DO
+               END DO
                call rchkusr()
             END DO
          END DO
@@ -418,7 +418,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine chawsvr(si2,mask,wlse,n1,n2,n3,dv0,hakt,lambda,theta,
      1       bi,var,vred,kern,skern,spmin,spmax,lwght,gwght,swght,dgw,
      2       wght,vwghts,thi)
-C   
+C
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
 C   hakt     actual bandwidth
@@ -430,7 +430,7 @@ C   model    specifies the probablilistic model for the KL-Distance
 C   kern     specifies the location kernel
 C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
-C   
+C
       implicit logical (a-z)
       integer n1,n2,n3,kern,skern,dv0,dgw(3)
       logical aws,wlse,mask(n1,n2,n3)
@@ -476,14 +476,14 @@ C
          DO i2=1,n2
             DO i1=1,n1
                if(mask(i1,i2,i3)) CYCLE
-	       si2i=si2(i1,i2,i3)
+               si2i=si2(i1,i2,i3)
                bii=bi(i1,i2,i3)/lambda
 C   scaling of sij outside the loop
                swj=0.d0
-	       swj2=0.d0
-	       DO k=1,dv0
-	          thi(k)=theta(i1,i2,i3,k)
-	       END DO
+               swj2=0.d0
+               DO k=1,dv0
+                  thi(k)=theta(i1,i2,i3,k)
+               END DO
 C   fill swght with zeros where needed
                j3a=max(i3-clw30,1)
                j3e=min(clw30+i3,n3)
@@ -494,23 +494,23 @@ C   fill swght with zeros where needed
                DO j1=j1a,j1e
                   DO j2=j2a,j2e
                      DO j3=j3a,j3e
-		        swght(j1,j2,j3)=0.d0
+                        swght(j1,j2,j3)=0.d0
                      END DO
                   END DO
-	       END DO
+               END DO
                DO jw3=1,dlw3
-	          j3=jw3-clw3+i3
-	          if(j3.lt.1.or.j3.gt.n3) CYCLE
+                  j3=jw3-clw3+i3
+                  if(j3.lt.1.or.j3.gt.n3) CYCLE
                   DO jw2=1,dlw2
-	             j2=jw2-clw2+i2
-	             if(j2.lt.1.or.j2.gt.n2) CYCLE
+                     j2=jw2-clw2+i2
+                     if(j2.lt.1.or.j2.gt.n2) CYCLE
                      DO jw1=1,dlw1
-	                j1=jw1-clw1+i1
+                        j1=jw1-clw1+i1
                         if(mask(j1,j2,j3)) CYCLE
                         wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
-			if(wj.le.0.d0) CYCLE
-	                if(j1.lt.1.or.j1.gt.n1) CYCLE
-	                si2j=si2(j1,j2,j3)
+                        if(wj.le.0.d0) CYCLE
+                        if(j1.lt.1.or.j1.gt.n1) CYCLE
+                        si2j=si2(j1,j2,j3)
                         IF (aws) THEN
                            call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
      1                     theta,vwghts,skern,spf,spmin,spmax,bii,wj)
@@ -525,8 +525,8 @@ C     now the convolution
 C
                call conv3D1(n1,n2,n3,dgw1,dgw2,dgw3,
      1            j1a,j1e,j2a,j2e,j3a,j3e,gwght,swght,si2,swj2,swj2vr)
-	       var(i1,i2,i3)=swj2
-	       vred(i1,i2,i3)=swj2vr
+               var(i1,i2,i3)=swj2
+               vred(i1,i2,i3)=swj2vr
                call rchkusr()
             END DO
          END DO
@@ -543,7 +543,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine chawsvr1(si2,mask,wlse,n1,n2,n3,dv0,hakt,lambda,theta,
      1                    bi2,bi0,vi2,vi20,kern,skern,spmin,spmax,
      2                    lwght,wght,vwghts,thi)
-C   
+C
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
 C   hakt     actual bandwidth
@@ -555,7 +555,7 @@ C   model    specifies the probablilistic model for the KL-Distance
 C   kern     specifies the location kernel
 C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
-C   
+C
       implicit logical (a-z)
       integer n1,n2,n3,kern,skern,dv0
       logical aws,wlse,mask(n1,n2,n3)
@@ -589,40 +589,40 @@ C
          DO i2=1,n2
             DO i1=1,n1
                if(mask(i1,i2,i3)) CYCLE
-	       si2i=si2(i1,i2,i3)
+               si2i=si2(i1,i2,i3)
                bii=bi2(i1,i2,i3)/lambda
 C   scaling of sij outside the loop
                swj=0.d0
                swj0=0.d0
                swj00=0.d0
-	       slwj0=0.d0
-	       DO k=1,dv0
-	          thi(k)=theta(i1,i2,i3,k)
-	       END DO
+               slwj0=0.d0
+               DO k=1,dv0
+                  thi(k)=theta(i1,i2,i3,k)
+               END DO
                DO jw3=1,dlw3
-	          j3=jw3-clw3+i3
-	          if(j3.lt.1.or.j3.gt.n3) CYCLE
+                  j3=jw3-clw3+i3
+                  if(j3.lt.1.or.j3.gt.n3) CYCLE
                   DO jw2=1,dlw2
-	             j2=jw2-clw2+i2
-	             if(j2.lt.1.or.j2.gt.n2) CYCLE
+                     j2=jw2-clw2+i2
+                     if(j2.lt.1.or.j2.gt.n2) CYCLE
                      DO jw1=1,dlw1
 C  first stochastic term
-	                j1=jw1-clw1+i1
+                        j1=jw1-clw1+i1
                         if(mask(j1,j2,j3)) CYCLE
                         wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
-			if(wj.le.0.d0) CYCLE
-	                if(j1.lt.1.or.j1.gt.n1) CYCLE
-	                si2j=si2(j1,j2,j3)
- 			swj00=swj00+wj*wj
-			if(wlse) wj=wj*si2j
-			slwj0=slwj0+wj
+                        if(wj.le.0.d0) CYCLE
+                        if(j1.lt.1.or.j1.gt.n1) CYCLE
+                        si2j=si2(j1,j2,j3)
+                        swj00=swj00+wj*wj
+                        if(wlse) wj=wj*si2j
+                        slwj0=slwj0+wj
                         IF (aws) THEN
                            call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
      1                     theta,vwghts,skern,spf,spmin,spmax,bii,wj)
                         END IF
-			wj=wj*wj
+                        wj=wj*wj
                         swj=swj+wj/si2j
-			swj0=swj0+wj
+                        swj0=swj0+wj
                      END DO
                   END DO
                END DO
@@ -643,7 +643,7 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine chawsvr2(n1,n2,n3,hakt,vred,kern,lwght,gwght,
      1                    swght,dgw,wght)
-C   
+C
 C   n1,n2,n3    design dimensions
 C   hakt     actual bandwidth
 C   lambda   lambda or lambda*sigma2 for Gaussian models
@@ -653,7 +653,7 @@ C   model    specifies the probablilistic model for the KL-Distance
 C   kern     specifies the location kernel
 C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
-C   
+C
       implicit logical (a-z)
       integer n1,n2,n3,kern,dgw(3)
       real*8 wght(2),gwght(1),swght(n1,n2,n3),
@@ -684,7 +684,7 @@ C
       cn1=(n1+1)/2
       cn2=(n2+1)/2
       cn3=(n3+1)/2
-C   
+C
 C    location weights
 C
       call locwghts(dlw1,dlw2,dlw3,wght,hakt2,kern,lwght)
@@ -716,14 +716,14 @@ C
 C
 C     calculate everything up to symmetry
 C
-C      
+C
       DO i3=1,cn3
          DO i2=1,cn2
             DO i1=1,cn1
                if(i1.gt.cr1.and.i2.gt.cr2.and.i3.gt.cr3) THEN
 C   we are in the center and can use vred
-	          vred(i1,i2,i3)=vredc
-	       ELSE
+                  vred(i1,i2,i3)=vredc
+               ELSE
                   call fillwgh0(n1,n2,n3,i1,i2,i3,dlw1,dlw2,dlw3,
      1                          lwght,swght)      
 C
@@ -737,9 +737,9 @@ C
                   j1e=min(clw10+i1,n1)
                   call conv3D0(n1,n2,n3,dgw1,dgw2,dgw3,j1a,j1e,
      1                   j2a,j2e,j3a,j3e,gwght,swght,swj2)
-	          vred(i1,i2,i3)=swj2
+                  vred(i1,i2,i3)=swj2
                   call rchkusr()
-	       END IF
+                END IF
             END DO
          END DO
       END DO
@@ -752,19 +752,19 @@ C
          i1c=n1+1-i1
          DO i2=1,cn2
             i2c=n2+1-i2
-	    DO i3=1,cn3
-               i3c=n3+1-i3	       
-	       swj2=vred(i1,i2,i3)
-	       vred(i1c,i2,i3)=swj2
-	       vred(i1c,i2c,i3)=swj2
-	       vred(i1c,i2,i3c)=swj2
-	       vred(i1c,i2c,i3c)=swj2
-	       vred(i1,i2c,i3)=swj2
-	       vred(i1,i2c,i3c)=swj2
-	       vred(i1,i2,i3c)=swj2
-	    END DO
-	 END DO
-      END DO	 
+            DO i3=1,cn3
+               i3c=n3+1-i3
+               swj2=vred(i1,i2,i3)
+               vred(i1c,i2,i3)=swj2
+               vred(i1c,i2c,i3)=swj2
+               vred(i1c,i2,i3c)=swj2
+               vred(i1c,i2c,i3c)=swj2
+               vred(i1,i2c,i3)=swj2
+               vred(i1,i2c,i3c)=swj2
+               vred(i1,i2,i3c)=swj2
+            END DO
+         END DO
+      END DO
       RETURN
       END
 C
@@ -793,22 +793,22 @@ C
       DO j1=j1a,j1e
          DO j2=j2a,j2e
             DO j3=j3a,j3e
-	       swght(j1,j2,j3)=0.d0
+               swght(j1,j2,j3)=0.d0
             END DO
          END DO
       END DO
       DO jw3=1,dlw3
-	 j3=jw3-clw3+i3
-	 if(j3.lt.1.or.j3.gt.n3) CYCLE
+         j3=jw3-clw3+i3
+         if(j3.lt.1.or.j3.gt.n3) CYCLE
          DO jw2=1,dlw2
-	    j2=jw2-clw2+i2
-	    if(j2.lt.1.or.j2.gt.n2) CYCLE
+            j2=jw2-clw2+i2
+            if(j2.lt.1.or.j2.gt.n2) CYCLE
             DO jw1=1,dlw1
-	       wj=lwght(jw1,jw2,jw3)
-	       if(wj.le.0.d0) CYCLE
+               wj=lwght(jw1,jw2,jw3)
+               if(wj.le.0.d0) CYCLE
 C  first stochastic term
-	       j1=jw1-clw1+i1
-	       if(j1.lt.1.or.j1.gt.n1) CYCLE
+               j1=jw1-clw1+i1
+               if(j1.lt.1.or.j1.gt.n1) CYCLE
                swght(j1,j2,j3)=wj
             END DO
          END DO
@@ -836,31 +836,31 @@ C
       sw2=0.d0
       sw2v=0.d0
       DO l3=j3a-cgw30,j3e+cgw30
-	 if(l3.lt.1.or.l3.gt.n3) CYCLE
-	 DO l2=j2a-cgw20,j2e+cgw20
-	    if(l2.lt.1.or.l2.gt.n2) CYCLE
-	    DO l1=j1a-cgw10,j1e+cgw10
-	       if(l1.lt.1.or.l1.gt.n1) CYCLE
-	       sw=0.d0
-	       DO m10=-cgw10,cgw10
-		  k1=m10+l1
-	          if(k1.lt.j1a.or.k1.gt.j1e) CYCLE
+         if(l3.lt.1.or.l3.gt.n3) CYCLE
+         DO l2=j2a-cgw20,j2e+cgw20
+            if(l2.lt.1.or.l2.gt.n2) CYCLE
+            DO l1=j1a-cgw10,j1e+cgw10
+               if(l1.lt.1.or.l1.gt.n1) CYCLE
+               sw=0.d0
+               DO m10=-cgw10,cgw10
+                  k1=m10+l1
+                  if(k1.lt.j1a.or.k1.gt.j1e) CYCLE
                   m1=m10+cgw1
-	          DO m20=-cgw20,cgw20
-		     k2=m20+l2
-	             if(k2.lt.j2a.or.k2.gt.j2e) CYCLE
+                  DO m20=-cgw20,cgw20
+                     k2=m20+l2
+                     if(k2.lt.j2a.or.k2.gt.j2e) CYCLE
                      m2=m20+cgw2
-		     DO m30=-cgw30,cgw30
-			k3=m30+l3
-			if(k3.lt.j3a.or.k3.gt.j3e) CYCLE
+                     DO m30=-cgw30,cgw30
+                        k3=m30+l3
+                        if(k3.lt.j3a.or.k3.gt.j3e) CYCLE
                         m3=m30+cgw3
-			sw=sw+swght(k1,k2,k3)*gwght(m1,m2,m3)
-		     END DO
-		  END DO
-	       END DO
-	       sw2=sw2+sw*sw/si2(l1,l2,l3)
-	       sw2v=sw2v+sw*sw
-	    END DO
+                        sw=sw+swght(k1,k2,k3)*gwght(m1,m2,m3)
+                     END DO
+                  END DO
+               END DO
+               sw2=sw2+sw*sw/si2(l1,l2,l3)
+               sw2v=sw2v+sw*sw
+             END DO
          END DO
       END DO
 C
@@ -886,30 +886,30 @@ C
       cgw3=cgw30+1
       sw2=0.d0
       DO l3=j3a-cgw30,j3e+cgw30
-	 if(l3.lt.1.or.l3.gt.n3) CYCLE
-	 DO l2=j2a-cgw20,j2e+cgw20
-	    if(l2.lt.1.or.l2.gt.n2) CYCLE
-	    DO l1=j1a-cgw10,j1e+cgw10
-	       if(l1.lt.1.or.l1.gt.n1) CYCLE
-	       sw=0.d0
-	       DO m10=-cgw10,cgw10
-		  k1=m10+l1
-	          if(k1.lt.j1a.or.k1.gt.j1e) CYCLE
+         if(l3.lt.1.or.l3.gt.n3) CYCLE
+         DO l2=j2a-cgw20,j2e+cgw20
+            if(l2.lt.1.or.l2.gt.n2) CYCLE
+            DO l1=j1a-cgw10,j1e+cgw10
+               if(l1.lt.1.or.l1.gt.n1) CYCLE
+               sw=0.d0
+               DO m10=-cgw10,cgw10
+                  k1=m10+l1
+                  if(k1.lt.j1a.or.k1.gt.j1e) CYCLE
                   m1=m10+cgw1
-	          DO m20=-cgw20,cgw20
-		     k2=m20+l2
-	             if(k2.lt.j2a.or.k2.gt.j2e) CYCLE
+                  DO m20=-cgw20,cgw20
+                     k2=m20+l2
+                     if(k2.lt.j2a.or.k2.gt.j2e) CYCLE
                      m2=m20+cgw2
-		     DO m30=-cgw30,cgw30
-			k3=m30+l3
-			if(k3.lt.j3a.or.k3.gt.j3e) CYCLE
+                     DO m30=-cgw30,cgw30
+                        k3=m30+l3
+                        if(k3.lt.j3a.or.k3.gt.j3e) CYCLE
                         m3=m30+cgw3
-			sw=sw+swght(k1,k2,k3)*gwght(m1,m2,m3)
-		     END DO
-		  END DO
-	       END DO
-	       sw2=sw2+sw*sw
-	    END DO
+                        sw=sw+swght(k1,k2,k3)*gwght(m1,m2,m3)
+                     END DO
+                  END DO
+               END DO
+            sw2=sw2+sw*sw
+            END DO
          END DO
       END DO
 C
@@ -933,10 +933,10 @@ C
       clw3=(dlw3+1)/2
       DO j3=1,dlw3
          Do j2=1,dlw2
-	    DO j1=1,dlw1
-	       lwght(j1,j2,j3)=0.d0
-	    END DO
-	 END DO
+            DO j1=1,dlw1
+               lwght(j1,j2,j3)=0.d0
+            END DO
+         END DO
          z3=(clw3-j3)*wght(2)
          z3=z3*z3
          ih2=sqrt(hakt2-z3)/wght(1)
@@ -969,22 +969,22 @@ C
       zq=0.d0
       DO i1=1,dg1
          DO i2=1,dg2
-	    DO i3=1,dg3
-	       zn=zn+gwght(i1,i2,i3)
-	       zq=zq+gwght2(i1,i2,i3)
-	    END DO
-	 END DO
+            DO i3=1,dg3
+               zn=zn+gwght(i1,i2,i3)
+               zq=zq+gwght2(i1,i2,i3)
+            END DO
+         END DO
       END DO
       cn1=(n1+1)/2
       cn2=(n2+1)/2
       cn3=(n3+1)/2
       DO i1=1,cn1
          DO i2=1,cn2
-	    DO i3=1,cn3
-	    ng(i1,i2,i3)=zn
-	    qg(i1,i2,i3)=zq
-	    END DO
-	 END DO
+            DO i3=1,cn3
+            ng(i1,i2,i3)=zn
+            qg(i1,i2,i3)=zq
+            END DO
+         END DO
       END DO
 C   now handle boundary surfaces
 C      call intpr("boundary",8,cg1,1)
@@ -992,66 +992,66 @@ C      call intpr("boundary",8,cg1,1)
       ll=cg1
       DO WHILE(ll.gt.0) 
          zrown=0.d0
-	 zrowq=0.d0
-	 DO i2=1,dg2
-	    DO i3=1,dg3
-	       zrown=zrown+gwght(cg1+1-ll,i2,i3)
-	       zrowq=zrowq+gwght2(cg1+1-ll,i2,i3)
-	    END DO
-	 END DO
+         zrowq=0.d0
+         DO i2=1,dg2
+            DO i3=1,dg3
+               zrown=zrown+gwght(cg1+1-ll,i2,i3)
+               zrowq=zrowq+gwght2(cg1+1-ll,i2,i3)
+            END DO
+         END DO
          DO i1=1,ll
             DO i2=1,cn2
                DO i3=1,cn3
-	          ng(i1,i2,i3)=ng(i1,i2,i3)-zrown 
-	          qg(i1,i2,i3)=qg(i1,i2,i3)-zrowq 
-	       END DO
-	    END DO
-	 END DO
-	 ll=ll-1
+                  ng(i1,i2,i3)=ng(i1,i2,i3)-zrown 
+                  qg(i1,i2,i3)=qg(i1,i2,i3)-zrowq 
+               END DO
+            END DO
+         END DO
+         ll=ll-1
       END DO
 C      call intpr("boundary",8,cg2,1)
       call rchkusr()
       ll=cg2
       DO WHILE(ll.gt.0) 
          zrown=0.d0
-	 zrowq=0.d0
-	 DO i1=1,dg1
-	    DO i3=1,dg3
-	       zrown=zrown+gwght(i1,cg2+1-ll,i3)
-	       zrowq=zrowq+gwght2(i1,cg2+1-ll,i3)
-	    END DO
-	 END DO
+         zrowq=0.d0
+         DO i1=1,dg1
+            DO i3=1,dg3
+               zrown=zrown+gwght(i1,cg2+1-ll,i3)
+               zrowq=zrowq+gwght2(i1,cg2+1-ll,i3)
+            END DO
+         END DO
          DO i2=1,ll
             DO i1=1,cn1
                DO i3=1,cn3
-	          ng(i1,i2,i3)=ng(i1,i2,i3)-zrown 
-	          qg(i1,i2,i3)=qg(i1,i2,i3)-zrowq 
-	       END DO
-	    END DO
-	 END DO
-	 ll=ll-1
+                  ng(i1,i2,i3)=ng(i1,i2,i3)-zrown 
+                  qg(i1,i2,i3)=qg(i1,i2,i3)-zrowq 
+               END DO
+            END DO
+         END DO
+         ll=ll-1
       END DO
 C      call intpr("boundary",8,cg3,1)
       call rchkusr()
       ll=cg3
       DO WHILE(ll.gt.0) 
          zrown=0.d0
-	 zrowq=0.d0
-	 DO i1=1,dg1
-	    DO i2=1,dg2
-	       zrown=zrown+gwght(i1,i2,cg3+1-ll)
-	       zrowq=zrowq+gwght2(i1,i2,cg3+1-ll)
-	    END DO
-	 END DO
+         zrowq=0.d0
+         DO i1=1,dg1
+            DO i2=1,dg2
+               zrown=zrown+gwght(i1,i2,cg3+1-ll)
+               zrowq=zrowq+gwght2(i1,i2,cg3+1-ll)
+            END DO
+         END DO
          DO i3=1,ll
             DO i1=1,cn1
                DO i2=1,cn2
-	          ng(i1,i2,i3)=ng(i1,i2,i3)-zrown 
-	          qg(i1,i2,i3)=qg(i1,i2,i3)-zrowq 
-	       END DO
-	    END DO
-	 END DO
-	 ll=ll-1
+                  ng(i1,i2,i3)=ng(i1,i2,i3)-zrown 
+                  qg(i1,i2,i3)=qg(i1,i2,i3)-zrowq 
+               END DO
+            END DO
+         END DO
+         ll=ll-1
       END DO
 C  now edges  
 C      call intpr("edges",5,cg3,1)
@@ -1062,21 +1062,21 @@ C      call intpr("edges",5,cg3,1)
          DO WHILE(mm.gt.0)
             zrown=0.d0
             zrowq=0.d0
-	    DO i3=1,dg3
-	       zrown=zrown+gwght(cg1+1-ll,cg2+1-mm,i3)
-	       zrowq=zrowq+gwght2(cg1+1-ll,cg2+1-mm,i3)
-	    END DO
+            DO i3=1,dg3
+               zrown=zrown+gwght(cg1+1-ll,cg2+1-mm,i3)
+               zrowq=zrowq+gwght2(cg1+1-ll,cg2+1-mm,i3)
+            END DO
             DO i1=1,ll
                DO i2=1,mm
                   DO i3=1,cn3
-	             ng(i1,i2,i3)=ng(i1,i2,i3)+zrown 
-	             qg(i1,i2,i3)=qg(i1,i2,i3)+zrowq 
-	          END DO
-	       END DO
-	    END DO
-	    mm=mm-1
-	 END DO
-	 ll=ll-1
+                     ng(i1,i2,i3)=ng(i1,i2,i3)+zrown 
+                     qg(i1,i2,i3)=qg(i1,i2,i3)+zrowq 
+                  END DO
+               END DO
+            END DO
+            mm=mm-1
+         END DO
+         ll=ll-1
       END DO
 C      call intpr("edges",5,cg2,1)
       ll=cg1
@@ -1086,21 +1086,21 @@ C      call intpr("edges",5,cg2,1)
          DO WHILE(mm.gt.0)
             zrown=0.d0
             zrowq=0.d0
-	    DO i2=1,dg2
-	       zrown=zrown+gwght(cg1+1-ll,i2,cg3+1-mm)
-	       zrowq=zrowq+gwght2(cg1+1-ll,i2,cg3+1-mm)
-	    END DO
+            DO i2=1,dg2
+               zrown=zrown+gwght(cg1+1-ll,i2,cg3+1-mm)
+               zrowq=zrowq+gwght2(cg1+1-ll,i2,cg3+1-mm)
+            END DO
             DO i1=1,ll
                DO i3=1,mm
                   DO i2=1,cn2
-	             ng(i1,i2,i3)=ng(i1,i2,i3)+zrown 
-	             qg(i1,i2,i3)=qg(i1,i2,i3)+zrowq 
-	          END DO
-	       END DO
-	    END DO
-	    mm=mm-1
-	 END DO
-	 ll=ll-1
+                     ng(i1,i2,i3)=ng(i1,i2,i3)+zrown 
+                     qg(i1,i2,i3)=qg(i1,i2,i3)+zrowq 
+                  END DO
+               END DO
+            END DO
+            mm=mm-1
+         END DO
+         ll=ll-1
       END DO
 C      call intpr("edges",5,cg3,1)
       call rchkusr()
@@ -1110,21 +1110,21 @@ C      call intpr("edges",5,cg3,1)
          DO WHILE(mm.gt.0)
             zrown=0.d0
             zrowq=0.d0
-	    DO i1=1,dg1
-	       zrown=zrown+gwght(i1,cg2+1-ll,cg3+1-mm)
-	       zrowq=zrowq+gwght2(i1,cg2+1-ll,cg3+1-mm)
-	    END DO
+            DO i1=1,dg1
+               zrown=zrown+gwght(i1,cg2+1-ll,cg3+1-mm)
+               zrowq=zrowq+gwght2(i1,cg2+1-ll,cg3+1-mm)
+            END DO
             DO i2=1,ll
                DO i3=1,mm
                   DO i1=1,cn1
-	             ng(i1,i2,i3)=ng(i1,i2,i3)+zrown 
-	             qg(i1,i2,i3)=qg(i1,i2,i3)+zrowq 
-	          END DO
-	       END DO
-	    END DO
-	    mm=mm-1
-	 END DO
-	 ll=ll-1
+                     ng(i1,i2,i3)=ng(i1,i2,i3)+zrown 
+                     qg(i1,i2,i3)=qg(i1,i2,i3)+zrowq 
+                  END DO
+               END DO
+            END DO
+            mm=mm-1
+         END DO
+         ll=ll-1
       END DO
       call rchkusr()
 C  now the corner
@@ -1138,42 +1138,42 @@ C      call intpr("corner",6,cg3,1)
                DO i2=1,ll
                   DO i3=1,mm
                      DO i1=1,kk
-	                ng(i1,i2,i3)=ng(i1,i2,i3)-
+                        ng(i1,i2,i3)=ng(i1,i2,i3)-
      1                               gwght(cg1+1-kk,cg2+1-ll,cg3+1-mm)
-	                qg(i1,i2,i3)=qg(i1,i2,i3)-
+                        qg(i1,i2,i3)=qg(i1,i2,i3)-
      1                              gwght2(cg1+1-kk,cg2+1-ll,cg3+1-mm)
-	             END DO
-	          END DO
-	       END DO
-	       mm=mm-1
-	    END DO
-	    ll=ll-1
-	 END DO
-	 kk=kk-1
+                     END DO
+                  END DO
+               END DO
+               mm=mm-1
+            END DO
+            ll=ll-1
+         END DO
+         kk=kk-1
       END DO
       call rchkusr()      
 C  now symmetries
       DO i1=1,cn1
          DO i2=1,cn2
-	    DO i3=1,cn3
-	       z=ng(i1,i2,i3)
-	       ng(n1+1-i1,i2,i3)=z
-	       ng(n1+1-i1,n2+1-i2,i3)=z
-	       ng(n1+1-i1,n2+1-i2,n3+1-i3)=z
-	       ng(n1+1-i1,i2,n3+1-i3)=z
-	       ng(i1,n2+1-i2,i3)=z
-	       ng(i1,n2+1-i2,n3+1-i3)=z
-	       ng(i1,i2,n3+1-i3)=z
-	       z=qg(i1,i2,i3)
-	       qg(n1+1-i1,i2,i3)=z
-	       qg(n1+1-i1,n2+1-i2,i3)=z
-	       qg(n1+1-i1,n2+1-i2,n3+1-i3)=z
-	       qg(n1+1-i1,i2,n3+1-i3)=z
-	       qg(i1,n2+1-i2,i3)=z
-	       qg(i1,n2+1-i2,n3+1-i3)=z
-	       qg(i1,i2,n3+1-i3)=z
-	    END DO
-	 END DO
+            DO i3=1,cn3
+               z=ng(i1,i2,i3)
+               ng(n1+1-i1,i2,i3)=z
+               ng(n1+1-i1,n2+1-i2,i3)=z
+               ng(n1+1-i1,n2+1-i2,n3+1-i3)=z
+               ng(n1+1-i1,i2,n3+1-i3)=z
+               ng(i1,n2+1-i2,i3)=z
+               ng(i1,n2+1-i2,n3+1-i3)=z
+               ng(i1,i2,n3+1-i3)=z
+               z=qg(i1,i2,i3)
+               qg(n1+1-i1,i2,i3)=z
+               qg(n1+1-i1,n2+1-i2,i3)=z
+               qg(n1+1-i1,n2+1-i2,n3+1-i3)=z
+               qg(n1+1-i1,i2,n3+1-i3)=z
+               qg(i1,n2+1-i2,i3)=z
+               qg(i1,n2+1-i2,n3+1-i3)=z
+               qg(i1,i2,n3+1-i3)=z
+            END DO
+         END DO
       END DO
       RETURN
       END
