@@ -162,7 +162,7 @@ write.ANALYZE.volume <- function(ttt,filename,size) {
   close(con)
 }
 
-read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstart = 1, numbpic = 1,level=0.75) {
+read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstart = 1, numbpic = 1,level=0.75,setmask=TRUE) {
   counter <- c(paste("00", 1:9, sep=""), paste("0", 10:99, sep=""),paste(100:999,sep=""));
 
   prefix <- strsplit(prefix,".img")
@@ -244,14 +244,15 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
 
 
     mask <- array(TRUE,ddim[1:3])
-    mask[ttt[,,,1] < quantile(ttt[,,,1],level,na.rm = TRUE)] <- FALSE
-    dim(ttt) <- c(prod(dim(ttt)[1:3]),dim(ttt)[4])
-    na <- ttt %*% rep(1,dim(ttt)[2])
-    mask[is.na(na)] <- FALSE
-    ttt[is.na(na),] <- 0
-    dim(mask) <- ddim[1:3]
-    mask <- connect.mask(mask)
-
+    if (setmask) {
+      mask[ttt[,,,1] < quantile(ttt[,,,1],level,na.rm = TRUE)] <- FALSE
+      dim(ttt) <- c(prod(dim(ttt)[1:3]),dim(ttt)[4])
+      na <- ttt %*% rep(1,dim(ttt)[2])
+      mask[is.na(na)] <- FALSE
+      ttt[is.na(na),] <- 0
+      dim(mask) <- ddim[1:3]
+      mask <- connect.mask(mask)
+    }
     z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),
               format="ANALYZE",
               delta=delta,
@@ -393,7 +394,7 @@ write.ANALYZE <- function(ttt, header=NULL, filename) {
 
 
 
-read.AFNI <- function(filename,vol=NULL,level=0.75) {
+read.AFNI <- function(filename,vol=NULL,level=0.75,setmask=TRUE) {
   fileparts <- strsplit(filename,"\\.")[[1]]
 
   if (length(fileparts) == 1) {
@@ -536,13 +537,15 @@ read.AFNI <- function(filename,vol=NULL,level=0.75) {
 #    }
 
     mask <- array(TRUE,ddim)
-    mask[myttt[,,,1] < quantile(myttt[,,,1],level,na.rm = TRUE)] <- FALSE
-    dim(myttt) <- c(prod(ddim),dim(myttt)[4])
-    na <- myttt %*% rep(1,dim(myttt)[2])
-    mask[is.na(na)] <- FALSE
-    myttt[is.na(na),] <- 0
-    dim(mask) <- ddim
-    mask <- connect.mask(mask)
+    if (setmask) {
+      mask[myttt[,,,1] < quantile(myttt[,,,1],level,na.rm = TRUE)] <- FALSE
+      dim(myttt) <- c(prod(ddim),dim(myttt)[4])
+      na <- myttt %*% rep(1,dim(myttt)[2])
+      mask[is.na(na)] <- FALSE
+      myttt[is.na(na),] <- 0
+      dim(mask) <- ddim
+      mask <- connect.mask(mask)
+    }
     z <-
       list(ttt=writeBin(as.numeric(myttt),raw(),4),
            format="HEAD/BRIK",
@@ -1029,9 +1032,9 @@ read.DICOM <- function(filename,includedata=TRUE) {
       ttt <- array(readBin(con,"integer",length/depth,depth,signed=FALSE,endian=endian),c(xdim,ydim))
     }
     
-    z <- list(header=header,ttt=writeBin(as.numeric(ttt),raw(),4),format="DICOM",delta=delta,series=series,image=image,dim=c(xdim,ydim))
+    z <- list(header=headerdetails,ttt=writeBin(as.numeric(ttt),raw(),4),format="DICOM",delta=delta,series=series,image=image,dim=c(xdim,ydim))
   } else {
-    z <- list(header=header,format="DICOM",delta=delta,series=series,image=image,dim=c(xdim,ydim))
+    z <- list(header=headerdetails,format="DICOM",delta=delta,series=series,image=image,dim=c(xdim,ydim))
   }
   close(con)
 #  class(z) <- "fmridata"
@@ -1094,7 +1097,7 @@ read.NIFTI.header <- function(con) {
   header
 }
 
-read.NIFTI <- function(filename,level=0.75) {
+read.NIFTI <- function(filename,level=0.75,setmask=TRUE) {
   fileparts <- strsplit(filename,"\\.")[[1]]
   ext <- tolower(fileparts[length(fileparts)])
 
@@ -1186,18 +1189,19 @@ read.NIFTI <- function(filename,level=0.75) {
 
   if (dd == 1) {
     mask <- array(TRUE,c(dx,dy,dz))
-    mask[ttt[,,,1] < quantile(ttt[,,,1],level,na.rm = TRUE)] <- FALSE
-    dim(ttt) <- c(prod(dim(ttt)[1:3]),dim(ttt)[4])
-    na <- ttt %*% rep(1,dim(ttt)[2])
-    mask[is.na(na)] <- FALSE
-    ttt[is.na(na),] <- 0
-    dim(mask) <- c(dx,dy,dz)
-    mask <- connect.mask(mask)
-
+    if (setmask) {
+      mask[ttt[,,,1] < quantile(ttt[,,,1],level,na.rm = TRUE)] <- FALSE
+      dim(ttt) <- c(prod(dim(ttt)[1:3]),dim(ttt)[4])
+      na <- ttt %*% rep(1,dim(ttt)[2])
+      mask[is.na(na)] <- FALSE
+      ttt[is.na(na),] <- 0
+      dim(mask) <- c(dx,dy,dz)
+      mask <- connect.mask(mask)
+    }
     z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),
               format="NIFTI",
               delta=header$pixdim[2:4],
-              origin=NULL,
+              origin=c(header$qoffsetx,header$qoffsety,header$qoffsetz),
               orient=NULL,
               dim=header$dimension[2:5],
               dim0=header$dimension[2:5],
@@ -1217,7 +1221,7 @@ read.NIFTI <- function(filename,level=0.75) {
     z <- list(ttt=writeBin(as.numeric(ttt),raw(),4),
               format="NIFTI",
               delta=header$pixdim[2:4],
-              origin=NULL,
+              origin=c(header$qoffsetx,header$qoffsety,header$qoffsetz),
               orient=NULL,
               dim=c(dx,dy,dz,dd),
               dim0=c(dx,dy,dz,dd),
