@@ -7,7 +7,7 @@
 }
 \usage{
 fmri.smooth(spm, hmax = 4, adaptive=TRUE,
-            lkern="Gaussian", skern="Plateau", weighted=TRUE)
+            lkern="Gaussian", skern="Plateau", weighted=TRUE,...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -29,7 +29,8 @@ fmri.smooth(spm, hmax = 4, adaptive=TRUE,
   \item{weighted}{ \code{weighted} (logical) determines if weights contain the inverse of local 
    variances as a factor (Weighted Least Squares). \code{weighted=FALSE} does not employ the
    heteroscedasticity of variances for the weighting scheme and is preferable if variance estimates
-   are highly variable, e.g. for short time series.} 
+   are highly variable, e.g. for short time series.}
+  \item{...}{further internal arguments for the smoothing algorithm not to be set by the user}
 }
 \details{
   This function performs the smoothing on the Statistical Parametric Map

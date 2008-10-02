@@ -7,7 +7,7 @@
 }
 \usage{
 read.ANALYZE(prefix = "", numbered = FALSE, postfix = "",
-             picstart = 1, numbpic = 1, level = 0.75)
+             picstart = 1, numbpic = 1, level = 0.75,setmask=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -19,6 +19,7 @@ read.ANALYZE(prefix = "", numbered = FALSE, postfix = "",
   \item{picstart}{ number of the first image to be read. }
   \item{numbpic}{ number of images to be read }
   \item{level}{Quantile level defining the mask}
+  \item{setmask}{Logical (default \code{TRUE}), whether to define a suitable mask based on \code{level}}
 }
 \details{
   This function reads fMRI data files in ANALYZE format.

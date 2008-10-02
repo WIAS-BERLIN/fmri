@@ -1,6 +1,6 @@
-fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau",weighted=TRUE,ladjust=1) {
+fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau",weighted=TRUE,...) {
   cat("fmri.smooth: entering function\n")
-  
+  if (!exists("ladjust")) ladjust=1  
   if (!("fmrispm" %in% class(spm))) {
     warning("fmri.smooth: data not of class <fmrispm>. Try to proceed but strange things may happen")
   }

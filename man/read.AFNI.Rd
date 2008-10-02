@@ -6,13 +6,14 @@
   Read HEAD/BRIK file.
 }
 \usage{
-read.AFNI(filename,vol=NULL,level=0.75)
+read.AFNI(filename,vol=NULL,level=0.75,setmask=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{filename}{ name of the file (without extension) }
   \item{vol}{vector of volumes of the dataset to be read}
   \item{level}{Quantile level defining the mask}
+  \item{setmask}{Logical (default \code{TRUE}), whether to define a suitable mask based on \code{level}}
 }
 \details{
   The function reads a HEAD/BRIK file. If \code{vol} is given (defaults to
