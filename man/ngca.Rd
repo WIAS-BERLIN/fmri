@@ -20,11 +20,11 @@ ngca(data,L=c(1000,1000,1000),T=10,m=3,eps=1.5,npca=min(dim(x)[2],dim(x)[1]),fil
                In fMRI this allows to reduce the dimensionality assuming that
                the interesting non-Gaussian directions are also characterized by
                larger variances.}
-  \item{filter.time}{"None"}
-  \item{filter.space}{FALSE}
+  \item{filter.time}{ Choice of temporal filtering before analysis: \code{"None"}, \code{"Low"}, \code{"Both"}, \code{"High"} (default \code{"None"})}
+  \item{filter.space}{Choice of spatial filtering before analysis: logical, default \code{FALSE}}
   \item{method}{ Either \code{"spatial"} or \code{"temporal"}. Specifies the type of NGCA to perform. }
-  \item{h.space}{3}
-  \item{h.time}{3}
+  \item{h.space}{ bandwidth for spatial filtering. default 3}
+  \item{h.time}{ bandwidth for temporal filtering. default 3}
   \item{keepv}{if \code{TRUE} intermediate results from fast ICA step are kept.}
 }
 \details{
