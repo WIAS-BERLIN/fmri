@@ -197,7 +197,6 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
       }
     }
     
-    cat("\n")
     dim(ttt) <- ddim
     
     if (min(abs(header$pixdim[2:4])) != 0) {
