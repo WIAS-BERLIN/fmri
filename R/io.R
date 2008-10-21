@@ -1285,7 +1285,7 @@ write.NIFTI <- function(ttt, header=NULL, filename) {
   if (!("srowy" %in% names(header))) header$srowy <- c(0,0,0,0)
   if (!("srowz" %in% names(header))) header$srowz <- c(0,0,0,0)
   if (!("intentname" %in% names(header))) header$intentname <- paste(rep(" ",16),collapse="")
-  if (!("magic" %in% names(header))) header$magic <- "n+1"
+  header$magic <- "n+1"
   if (!("extension" %in% names(header))) header$extension <- as.raw(rep(0,header$voxoffset-348))
 
   dd <- if (header$dimension[1] == 5) header$dimension[6] else 1
@@ -1323,7 +1323,15 @@ write.NIFTI <- function(ttt, header=NULL, filename) {
     size <- 1
   }
 
-  con <- file(paste(filename, ".nii", sep=""), "wb")
+  fileparts <- strsplit(filename,"\\.")[[1]]
+
+  if (length(fileparts) == 1) {
+    filename <- paste(fileparts[1],"nii",sep=".")
+  } else {
+    ext <- tolower(fileparts[length(fileparts)])
+    if (ext != "nii") filename <- paste(c(fileparts,"nii"),collapse=".")
+  }
+  con <- file(filename, "wb")
 
   writeBin(as.integer(348), con, 4)
   writeChar(header$datatype1, con, 10, NULL)
@@ -1367,7 +1375,7 @@ write.NIFTI <- function(ttt, header=NULL, filename) {
   writeBin(header$srowy, con, 4)
   writeBin(header$srowz, con, 4)
   writeChar(header$intentname, con, 16, NULL)
-  writeChar(header$magic, con, 4, NULL)
+  writeChar(header$magic, con, 3)
   bytes <- header$voxoffset - 348
   if (bytes != length(header$extension)) warning("header$extension is not of expected size ",bytes," as given by header$voxoffset. cutting!")
   writeBin(header$extension[1:bytes], con)
