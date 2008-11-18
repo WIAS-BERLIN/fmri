@@ -163,7 +163,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
   if(h0[1]>0) scorr[1] <-  get.corr.gauss(h0[1],2)
   if(h0[2]>0) scorr[2] <-  get.corr.gauss(h0[2],2)
   if(h0[3]>0) scorr[3] <-  get.corr.gauss(h0[3],2)
-  total <- cumsum(1.25^(1:k))/sum(1.25^(1:kstar))
+  total <- cumsum(1.25^(1:kstar))/sum(1.25^(1:kstar))
   if(testprop) {
     if(is.null(u)) u <- 0
   } 
@@ -173,7 +173,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
     if(volseq) {
       hakt0 <- gethani(1,10,lkern,1.25^(k-1),wghts,1e-4)
       hakt <- gethani(1,10,lkern,1.25^k,wghts,1e-4)
-      cat("step",k,"hakt",hakt,"\n")
+      cat("step",k,"bandwidth",signif(hakt,3)," ")
     } else {
       hakt0 <- hinit*hincr^(k-1)
       hakt <- hinit*hincr^k
@@ -263,7 +263,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
           signif(mean((theta-u)^2),3),"   MAE: ",signif(mean(abs(theta-u)),3)," mean(bi)=",signif(mean(tobj$bi),3),"\n")
       mae <- c(mae,signif(mean(abs(theta-u)),3))
     } else if (max(total) >0) {
-      cat(signif(total[k],2)*100,"% . ",sep="")
+      cat(signif(total[k],2)*100,"%                 \r",sep="")
      }
     if (demo) readline("Press return")
     k <- k+1

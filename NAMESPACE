@@ -4,5 +4,6 @@ export(fmri.stimulus,fmri.design,fmri.lm)
 export(fmri.smooth,fmri.pvalue)
 export(plot.fmridata,summary.fmridata,print.fmridata,ngca,fmriica)
 export(fmri.detrend)
+export(fmri.gui)
 useDynLib(fmri)
 
