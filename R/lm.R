@@ -232,7 +232,7 @@ fmri.lm <- function(data,z,actype="smooth",vtype="var",step=0.01,contrast=c(1),v
         gc()
       }
 #  prewhitened residuals don't have zero mean, therefore sweep mean over time from them
-      residuals <- .Fortran("sweepm",residuals=as.double(residuals),
+      residuals <- .Fortran("sweepm",residuals=as.double(t(residuals)),
                                      as.logical(data$mask),
                                      as.integer(dy[1]),
                                      as.integer(dy[2]),
@@ -264,7 +264,8 @@ fmri.lm <- function(data,z,actype="smooth",vtype="var",step=0.01,contrast=c(1),v
   dim(variance) <- dy[1:3]
   if (length(vvector) > 1) dim(variancem) <- c(dy[1:3],sum(as.logical(vvector)),sum(as.logical(vvector)))
   dim(arfactor) <- dy[1:3]
-  dim(residuals) <- dy
+  residuals <- t(residuals)
+  dim(residuals) <- dy[c(4,1:3)]
 
   cat("fmri.lm: calculating spatial correlation\n")
 

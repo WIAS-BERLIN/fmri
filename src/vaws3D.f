@@ -162,10 +162,10 @@ C   scaling of sij outside the loop
                      DO jw1=1,dlw1
 C  first stochastic term
                         j1=jw1-clw1+i1
+                        if(j1.lt.1.or.j1.gt.n1) CYCLE
                         IF(mask(j1,j2,j3)) CYCLE
                         wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
                         if(wj.le.0.d0) CYCLE
-                        if(j1.lt.1.or.j1.gt.n1) CYCLE
                         si2j=si2(j1,j2,j3)
                         IF (aws) THEN
                            call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
@@ -211,23 +211,21 @@ C   n1,n2,n3    design dimensions
 C   hakt     actual bandwidth
 C   lambda   lambda or lambda*sigma2 for Gaussian models
 C   theta    estimates from last step   (input)
-C   bi       \sum  Wi   (output)
-C   ai       \sum  Wi Y     (output)
+C   bi       \sum  Wi       (input)
 C   model    specifies the probablilistic model for the KL-Distance
 C   kern     specifies the location kernel
 C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
 C
       implicit logical (a-z)
-      integer dv,dv0,n1,n2,n3,y(n1,n2,n3,dv),thn(n1,n2,n3,dv),kern,
-     1        skern
+      integer dv,dv0,n1,n2,n3,kern,skern
       logical aws,wlse,mask(n1,n2,n3)
-      real*8 theta(n1,n2,n3,dv0),bi(n1,n2,n3),
-     1       lambda,spmax,wght(2),si2(n1,n2,n3),
+      real*8 theta(n1,n2,n3,dv0),bi(n1,n2,n3),y(dv,n1,n2,n3),
+     1       lambda,spmax,wght(2),si2(n1,n2,n3),thn(dv,n1,n2,n3),
      1       hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),getlwght
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
-      real*8 bii,swj,swjy(dv),wj,hakt2,spf,si2j,si2i,swjv
+      real*8 bii,swj,swjy(dv),wj,hakt2,spf,si2j,si2i
       external getlwght
       hakt2=hakt*hakt
       spf=spmax/(spmax-spmin)
@@ -256,7 +254,7 @@ C
             DO i1=1,n1
                if(mask(i1,i2,i3)) THEN
                   DO k=1,dv
-                     thn(i1,i2,i3,k)=0.d0
+                     thn(k,i1,i2,i3)=0.d0
                   END DO
                   CYCLE
                END IF
@@ -264,7 +262,6 @@ C
                bii=bi(i1,i2,i3)/lambda
 C   scaling of sij outside the loop
                swj=0.d0
-               swjv=0.d0
                DO k=1,dv
                   swjy(k)=0.d0
                END DO
@@ -280,10 +277,10 @@ C   scaling of sij outside the loop
                      DO jw1=1,dlw1
 C  first stochastic term
                         j1=jw1-clw1+i1
+                        if(j1.lt.1.or.j1.gt.n1) CYCLE
                         IF(mask(j1,j2,j3)) CYCLE
                         wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
                         if(wj.le.0.d0) CYCLE
-                        if(j1.lt.1.or.j1.gt.n1) CYCLE
                         si2j=si2(j1,j2,j3)
                         IF (aws) THEN
                            call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
@@ -291,24 +288,15 @@ C  first stochastic term
                         END IF
                         if(wlse) THEN 
                            wj=wj*si2j
-                        ELSE
-                           swjv=swjv+wj/si2j
                         END IF
                         swj=swj+wj
-                        DO k=1,dv
-                           swjy(k)=swjy(k)+wj*y(j1,j2,j3,k)
-                        END DO
+                        call daxpy(dv,wj,y(1,j1,j2,j3),1,swjy,1)
                      END DO
                   END DO
                END DO
                DO k=1,dv
-                  thn(i1,i2,i3,k)=swjy(k)/swj
+                  thn(k,i1,i2,i3)=swjy(k)/swj
                END DO
-               IF(wlse) THEN
-                  bi(i1,i2,i3)=swj
-               ELSE
-                  bi(i1,i2,i3)=swj*swj/swjv
-               END IF
                call rchkusr()
             END DO
          END DO
@@ -506,10 +494,10 @@ C   fill swght with zeros where needed
                      if(j2.lt.1.or.j2.gt.n2) CYCLE
                      DO jw1=1,dlw1
                         j1=jw1-clw1+i1
+                        if(j1.lt.1.or.j1.gt.n1) CYCLE
                         if(mask(j1,j2,j3)) CYCLE
                         wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
                         if(wj.le.0.d0) CYCLE
-                        if(j1.lt.1.or.j1.gt.n1) CYCLE
                         si2j=si2(j1,j2,j3)
                         IF (aws) THEN
                            call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
@@ -608,10 +596,10 @@ C   scaling of sij outside the loop
                      DO jw1=1,dlw1
 C  first stochastic term
                         j1=jw1-clw1+i1
+                        if(j1.lt.1.or.j1.gt.n1) CYCLE
                         if(mask(j1,j2,j3)) CYCLE
                         wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
                         if(wj.le.0.d0) CYCLE
-                        if(j1.lt.1.or.j1.gt.n1) CYCLE
                         si2j=si2(j1,j2,j3)
                         swj00=swj00+wj*wj
                         if(wlse) wj=wj*si2j

@@ -31,7 +31,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                    sigma2=NULL,mask=NULL,hinit=NULL,hincr=NULL,hmax=NULL,lseq=NULL,
                    ladjust=1,u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
                    spmin=.3,h0=c(0,0,0),vwghts=1,vred="Partial",testprop=FALSE,
-                   res=NULL, resscale=NULL, dim=NULL) {
+                   res=NULL, resscale=NULL, ddim=NULL) {
 #
 #  lseq, qlambda, corrfactor adjusted for case lkern="Gaussian",skern="Plateau" only
 #
@@ -173,6 +173,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
     if(volseq) {
       hakt0 <- gethani(1,10,lkern,1.25^(k-1),wghts,1e-4)
       hakt <- gethani(1,10,lkern,1.25^k,wghts,1e-4)
+      hakt.oscale <- if(lkern==3) bw2fwhm(hakt/4) else hakt
       cat("step",k,"bandwidth",signif(hakt,3)," ")
     } else {
       hakt0 <- hinit*hincr^(k-1)
@@ -202,7 +203,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                      as.double(lambda0),
                      as.double(theta0),
                      bi=as.double(bi0),
-                     thnew=as.double(y),
+                     thnew=double(n1*n2*n3*dv),
                      as.integer(lkern),
                      as.integer(skern),
                      as.double(spmin),
@@ -212,7 +213,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                      as.double(vwghts),
                      double(dv),#swjy
                      double(dv0),#thi
-                     PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","hakt")]
+                     PACKAGE="fmri",DUP=FALSE)[c("bi","thnew","hakt")]
     gc()
     theta <- array(tobj$thnew,dy) 
     dim(tobj$bi) <- dy[-4]
@@ -240,7 +241,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
 		       as.double(vwghts),
 		       double(dv),#swjy
 		       double(dv0),#thi
-		       PACKAGE="fmri",DUP=TRUE)[c("bi","thnew")]
+		       PACKAGE="fmri",DUP=FALSE)[c("bi","thnew")]
       ptheta <- array(pobj$thnew,dy) 
       rm(pobj) 
       gc()
@@ -389,32 +390,32 @@ if(is.null(res)){
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,lseq=c(0,lseq[-steps]),call=args,ng=ng,qg=qg,alpha=propagation)
 # Bandwidth in FWHM in case of lkern="Gaussian"
 } else {
-  residuals <- readBin(res,"integer",prod(dim),2)
-  cat("\nVaws3D: first variance estimation","\n")
-  vartheta0 <- .Fortran("ivar",as.integer(residuals),
+  residuals <- readBin(res,"integer",prod(ddim),2)
+  cat("\nfmri.smooth: first variance estimate","\n")
+  vartheta0 <- .Fortran("ivar",as.double(residuals),
                            as.double(resscale),
                            as.logical(mask),
-                           as.integer(n1),
-                           as.integer(n2),
-                           as.integer(n3),
-                           as.integer(dim[4]),
+                           as.integer(ddim[1]),
+                           as.integer(ddim[2]),
+                           as.integer(ddim[3]),
+                           as.integer(ddim[4]),
                            var = double(n1*n2*n3),
                            PACKAGE="fmri",DUP=FALSE)$var
-  cat("Vaws3D: smooth the residuals","\n")
-  residuals <- .Fortran("ihaws2",as.integer(residuals),
+  cat("fmri.smooth: smooth the residuals","\n")
+  residuals <- .Fortran("ihaws2",as.double(residuals),
                      as.double(sigma2),
                      as.logical(!mask),
                      as.logical(weighted),
-                     as.integer(n1),
-                     as.integer(n2),
-                     as.integer(n3),
-                     as.integer(dim[4]),
+                     as.integer(ddim[1]),
+                     as.integer(ddim[2]),
+                     as.integer(ddim[3]),
+                     as.integer(ddim[4]),
                      as.integer(dv0),
                      hakt=as.double(tobj$hakt),
                      as.double(lambda0),
                      as.double(theta0),
-                     bi=as.double(bi0),
-                     resnew=as.integer(residuals),
+                     as.double(bi0),
+                     resnew=double(prod(ddim)),
                      as.integer(lkern),
                      as.integer(skern),
                      as.double(spmin),
@@ -422,34 +423,34 @@ if(is.null(res)){
                      double(prod(dlw)),
                      as.double(wghts),
                      as.double(vwghts),
-                     double(dim[4]),#swjy
+                     double(ddim[4]),#swjy
                      double(dv0),#thi
                      PACKAGE="fmri",DUP=FALSE)$resnew
-  dim(residuals) <- dim
+  dim(residuals) <- c(ddim[4],n1,n2,n3)
   gc()
 #   get variances and correlations
-  cat("Vaws3D: estimate correlations","\n")
+  cat("fmri.smooth: estimate correlations","\n")
   lags <- c(5,5,3)
-  scorr <- .Fortran("imcorr",as.integer(residuals),
+  scorr <- .Fortran("imcorr",as.double(residuals),
                      as.logical(mask),
-                     as.integer(dy[1]),
-                     as.integer(dy[2]),
-                     as.integer(dy[3]),
-                     as.integer(dy[4]),
+                     as.integer(n3),
+                     as.integer(n2),
+                     as.integer(n1),
+                     as.integer(ddim[4]),
                      scorr=double(prod(lags)),
                      as.integer(lags[1]),
                      as.integer(lags[2]),
                      as.integer(lags[3]),
                      PACKAGE="fmri",DUP=FALSE)$scorr
   dim(scorr) <- lags                     
-  cat("Vaws3D: final variance estimation","\n")
-  vartheta <- .Fortran("ivar",as.integer(residuals),
+  cat("fmri.smooth: final variance estimate","\n")
+  vartheta <- .Fortran("ivar",as.double(residuals),
                            as.double(resscale),
                            as.logical(mask),
                            as.integer(n1),
                            as.integer(n2),
                            as.integer(n3),
-                           as.integer(dim[4]),
+                           as.integer(ddim[4]),
                            var = double(n1*n2*n3),
                            PACKAGE="fmri",DUP=FALSE)$var
   vred <- array(vartheta/vartheta0,c(n1,n2,n3))
@@ -516,11 +517,11 @@ smooth3D <- function(y,lkern="Gaussian",weighted=FALSE,sigma2=NULL,mask=NULL,hma
                      as.integer(n3),
                      as.integer(dv),
                      hakt=as.double(hmax),
-                     thnew=as.double(y),
+                     thnew=double(n1*n2*n3*dv),
                      as.integer(lkern),
                      double(prod(dlw)),
                      as.double(wghts),
                      double(dv),#swjy
-                     PACKAGE="fmri",DUP=TRUE)$thnew
+                     PACKAGE="fmri",DUP=FALSE)$thnew
 array(ysmooth,dy)
 }

@@ -97,7 +97,7 @@ C  Algorithmus zur Nullstellenbestimmung einer monotonen Funktion auf(0,\infty)
 
       implicit logical(a-z)
       integer n1,n2,n3,nv,lag(3)
-      real*8 scorr,res(n1,n2,n3,nv)
+      real*8 scorr,res(nv,n1,n2,n3)
       logical mask(n1,n2,n3)
       real*8 z2,y2,resi,resip1,vrm,vrmp1,zk,zcorr,z
       integer i1,i2,i3,i4,l1,l2,l3,k
@@ -116,8 +116,8 @@ C  correlation in x
                y2=0.d0
                zcorr=0.d0
                do i4=1,nv
-                  resi=res(i1,i2,i3,i4)
-                  resip1=res(i1+l1,i2+l2,i3+l3,i4)
+                  resi=res(i4,i1,i2,i3)
+                  resip1=res(i4,i1+l1,i2+l2,i3+l3)
                   z2=z2+resi*resi
                   y2=y2+resip1*resip1
                   zcorr=zcorr+resi*resip1
@@ -139,7 +139,7 @@ C  correlation in x
 
       implicit logical(a-z)
       integer n1,n2,n3,nv
-      real*8 res(n1,n2,n3,nv)
+      real*8 res(nv,n1,n2,n3)
       logical mask(n1,n2,n3)
       integer i1,i2,i3,k
       real*8 z
@@ -149,11 +149,11 @@ C  correlation in x
                if (.not.mask(i1,i2,i3)) CYCLE
                z=0.d0
                DO k=1,nv
-                  z=z+res(i1,i2,i3,k)
+                  z=z+res(k,i1,i2,i3)
                END DO
                z=z/nv
                DO k=1,nv
-                  res(i1,i2,i3,k)=res(i1,i2,i3,k)-z
+                  res(k,i1,i2,i3)=res(k,i1,i2,i3)-z
                END DO
             END DO
          END DO
@@ -164,7 +164,7 @@ C  correlation in x
 
       implicit logical(a-z)
       integer n1,n2,n3,nv,l1,l2,l3,lag(3)
-      real*8 scorr(l1,l2,l3),res(n1,n2,n3,nv)
+      real*8 scorr(l1,l2,l3),res(nv,n1,n2,n3)
       logical mask(n1,n2,n3)
       integer i1,i2,i3
       Do i1=1,l1
@@ -183,8 +183,8 @@ C  correlation in x
       subroutine imcorrl(res,mask,n1,n2,n3,nv,scorr,lag)
 
       implicit logical(a-z)
-      integer n1,n2,n3,nv,lag(3),res(n1,n2,n3,nv)
-      real*8 scorr
+      integer n1,n2,n3,nv,lag(3)
+      real*8 scorr,res(nv,n1,n2,n3)
       logical mask(n1,n2,n3)
       real*8 z2,y2,resi,resip1,vrm,vrmp1,zk,zcorr,z
       integer i1,i2,i3,i4,l1,l2,l3,k
@@ -203,8 +203,8 @@ C  correlation in x
                y2=0.d0
                zcorr=0.d0
                do i4=1,nv
-                  resi=res(i1,i2,i3,i4)
-                  resip1=res(i1+l1,i2+l2,i3+l3,i4)
+                  resi=res(i4,i1,i2,i3)
+                  resip1=res(i4,i1+l1,i2+l2,i3+l3)
                   z2=z2+resi*resi
                   y2=y2+resip1*resip1
                   zcorr=zcorr+resi*resip1
@@ -225,8 +225,8 @@ C  correlation in x
       subroutine imcorr(res,mask,n1,n2,n3,nv,scorr,l1,l2,l3)
 
       implicit logical(a-z)
-      integer n1,n2,n3,nv,l1,l2,l3,lag(3),res(n1,n2,n3,nv)
-      real*8 scorr(l1,l2,l3)
+      integer n1,n2,n3,nv,l1,l2,l3,lag(3)
+      real*8 scorr(l1,l2,l3),res(nv,n1,n2,n3)
       logical mask(n1,n2,n3)
       integer i1,i2,i3
       Do i1=1,l1
@@ -305,8 +305,8 @@ C  correlation in x
       subroutine ivar(res,resscale,mask,n1,n2,n3,nv,var)
 
       implicit logical(a-z)
-      integer n1,n2,n3,nv,res(n1,n2,n3,nv)
-      real*8 resscale,var(n1,n2,n3)
+      integer n1,n2,n3,nv
+      real*8 resscale,var(n1,n2,n3),res(nv,n1,n2,n3)
       logical mask(n1,n2,n3)
       real*8 z2,zk,resi,ressc2
       integer i1,i2,i3,i4
@@ -319,7 +319,7 @@ C  correlation in x
                if (.not.mask(i1,i2,i3)) CYCLE
                z2=0.d0
                do i4=1,nv
-                  resi=res(i1,i2,i3,i4)
+                  resi=res(i4,i1,i2,i3)
                   z2=z2+resi*resi
                enddo
                var(i1,i2,i3)=z2/(zk-1.d0)*ressc2
@@ -346,7 +346,7 @@ C     first find pixel close to (i1,i2) with segm(j1,j2)=0
             END DO
          END DO
       END DO
-      if(segm(i1,i2,i3)) THEN
+      if(.not.segm(i1,i2,i3)) THEN
          final=.FALSE.
          DO k=1,n1
             DO l1=-k,k
