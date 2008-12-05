@@ -480,7 +480,12 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
   } else {
     pos <- c(pos,1,scale[1])
   }
-  posv <- lapply(pos, tclVar())
+   	
+  helpFunc <- function(a){
+  	a <- tclVar()	
+  }	
+
+  posv <- lapply(pos, helpFunc) 
 
 
   fmri.image <- function(which, factor) {
