@@ -5,13 +5,13 @@ fmri.gui <- function() {
 
 	# select file, name saved in tclVar dataFile
 	selectFirstDataFile <- function(){
-        	tclvalue(dataFileFirst) <- tcl("tk_getOpenFile")  
+		tclvalue(dataFileFirst) <- tkgetOpenFile(filetypes ="{{AFNI} {.BRIK .Brik .brik .HEAD .Head .head}} {{ANALYZE} {.IMG .Img .img .HDR .Hdr .hdr}} {{NIFTI} {.NII .Nii .nii .HDR .Hdr .hdr}} {{All files} *}",title="Select Data")  
 	}	
 	selectDesignFileSave <- function(){
-        	tclvalue(designFile) <- tcl("tk_getSaveFile")  
+        	tclvalue(designFile) <- tkgetSaveFile(filetypes ="{{Text} {.TXT .Txt .txt}} {{All files} *}",title="Save Design")  
 	}
 	selectDesignFileLoad <- function(){
-        	tclvalue(designFile) <- tcl("tk_getOpenFile")
+        	tclvalue(designFile) <- tkgetOpenFile(filetypes ="{{Text} {.TXT .Txt .txt}} {{All files} *}",title="Load Design") 
 	}
 
 	# view p values in 3D
@@ -65,9 +65,35 @@ fmri.gui <- function() {
 		selectDesignFileSave()
 		if (tclvalue(designFile) != ""){
 			designFileText <- as.character(tclvalue(designFile))
+			help <- tolower(unlist(strsplit(designFileText,"")))
+			if (length(help)>3){
+				if (help[length(help)-3]!="."|| help[length(help)-2]!="t" || help[length(help)-1]!="x" || help[length(help)]!="t"){
+					designFileText = paste(designFileText,".txt",sep="")
+				}
+			}	
+			else {
+				designFileText = paste(designFileText,".txt",sep="")
+			}		
+			print(designFileText)
 			write(textVar,designFileText) # design written	
 			print("Saving completed")
 		}
+		else {
+			print("Saving aborted")
+			onOk <- function(){
+					tkdestroy(ttWarning)
+			}	
+			ttWarning = tktoplevel(bg=wiasblue)
+			tkwm.title(ttWarning, "Information")
+			warningFrame1 = tkframe(ttWarning,bg=wiasblue)
+			warningLabel = tklabel(warningFrame1,text="Please select a file, to be saved in",font="Arial 13",bg=wiasblue)
+			warningFrame2 = tkframe(ttWarning,bg=wiasblue)	
+			warningB1 = tkbutton(warningFrame2,text="Ok",command=onOk)	
+			tkgrid(warningLabel)
+			tkgrid(warningB1,padx=10,pady=10)
+			tkgrid(warningFrame1)	
+			tkgrid(warningFrame2)	
+		}	
 	}
 
 	loadDesignHelp <- function(){
@@ -238,8 +264,11 @@ fmri.gui <- function() {
 			n.comp = as.numeric(tclvalue(nrCondTc))
 			globali = 0			
 		
+			frame5 <- tkframe(base.design,relief="groove",borderwidth=2,bg=wiasblue)
+
 			# functions
 				
+
 			# creates new line with entries for condition's name, onsets and durations			
 			nextCondition <- function(){
 				#assign, newenv
@@ -251,14 +280,32 @@ fmri.gui <- function() {
 					namesTc[globali] <<- tclvalue(currName)			
 					nextCondition()
 				}
+				
 				# called for the last condition
 				# data read in and button for start smoothing added to condition window (calls function smoothing())
+
+				
+				startDataHelp2 <- function(){
+					condition.next()
+					startDataHelp()
+				}			
+			
+				saveDesign2 <- function(){
+					condition.next()
+					saveDesign()
+				}
+
+				# frame for the option to save the design
+				OkButton <- tkbutton(frame5,text="Ok",font="Arial 12",command=startDataHelp2,bg = wiaslightblue)
+				QuitButton <- tkbutton(frame5, text = "Quit",font="Arial 12", command = design.quit, bg = wiaslightblue)
+				SaveButton <-tkbutton(frame5, text = "Save",font="Arial 12", bg = wiaslightblue, command = saveDesign2)
+				
 				condition.next <- function(){
+					print("here i am")
 					durationsTc[globali] <<- tclvalue(currDur)
 					onsetsTc[globali] <<- tclvalue(currOnset)
 					namesTc[globali] <<- tclvalue(currName)	
-					tkgrid(OkButton,QuitButton,SaveButton,padx=10,pady=10)	
-					# umformungen !!!!	
+					
 					#Interscan intervals, number of scans and number of conditions saved as numerics		
 					interscanInt <<- as.numeric(tclvalue(interscanIntTc))
 					scanspS <<- as.numeric(tclvalue(scanspSTc))
@@ -277,7 +324,7 @@ fmri.gui <- function() {
 					durVecCurr <- c(0)
 					onsSpl2 = list()
 					durSpl2  = list()
-					# writing onsets and durations in respectively a vector (as numerics), using the following format
+					# writing onsets and durations respectively in a vector (as numerics), using the following format
 					# (condition1 number of onsets (n), first onset, second onset, ..., n-th onset, condition2 number of onsets, ...)
 					# the same with durations
 			
@@ -287,8 +334,6 @@ fmri.gui <- function() {
 						# for each vector of onsets and durations separator determined (" ","," or ";")
 						sepO = " "
 						allCharsO = unlist(strsplit(onsetsHelp[[i]],""))
-						print(onsetsHelp)							
-						print(allCharsO)
 						for (j in 1:length(allCharsO)){
 							if (allCharsO[j]==","){
 								sepO = ","
@@ -322,8 +367,7 @@ fmri.gui <- function() {
 						
 						currIndO <<- 1	
 						for (j in 1:length(onsVecCurr2)){
-							if (onsVecCurr2[j]!=""){ 	
-								print(currIndO)	
+							if (onsVecCurr2[j]!=""){ 
 								onsVecCurr[currIndO] <- onsVecCurr2[j] 
 								currIndO <<- currIndO + 1
 							}	
@@ -331,15 +375,11 @@ fmri.gui <- function() {
 						
 						currIndD <<- 1	
 						for (j in 1:length(durVecCurr2)){
-							if (durVecCurr2[j]!=""){ 	
-								print(currIndD)	
+							if (durVecCurr2[j]!=""){ 
 								durVecCurr[currIndD] <- durVecCurr2[j] 
 								currIndD <<- currIndD + 1
 							}	
 						}
-							
-						print(onsSpl[i])
-						print(onsVecCurr)
 						onsets[globali] <<- length(onsVecCurr)
 						durations[globalj] <<- length(durVecCurr)
 						for (j in 1:length(onsVecCurr)){
@@ -350,7 +390,9 @@ fmri.gui <- function() {
 						} 	
 						globali <- globali + 1 + length(onsVecCurr)	
 						globalj <- globalj + 1 + length(durVecCurr)
-					}			
+					}
+					print(onsets)
+					print(durations)			
 				}	
 				currOnset <- tclVar()
 				currDur <- tclVar()
@@ -364,7 +406,7 @@ fmri.gui <- function() {
 				onsetsEntry = tkentry(tkCurr,textvariable=currOnset,width=25,bg="#ffffff")
 				durationsEntry = tkentry(tkCurr,textvariable=currDur,width=25,bg="#ffffff")
 				cOkB <- tkbutton(tkCurr,text="Next Condition",width=15,command=readCond,bg=wiaslightblue)
-				cReadyB <- tkbutton(tkCurr,text="Ready",width=15,command=condition.next,bg=wiaslightblue)		
+				tkgrid(tkCurr,sticky="ew")		
 				if (globali < n.comp){
 					tkgrid(condLabel,nameLabel,nameEntry,padx=10,pady=10)
 					tkgrid(onsetsLabel,onsetsEntry,padx=10,pady=10)	
@@ -378,12 +420,13 @@ fmri.gui <- function() {
 				if (globali == n.comp){
 					tkgrid(condLabel,nameLabel,nameEntry,padx=10,pady=10)
 					tkgrid(onsetsLabel,onsetsEntry,padx=10,pady=10)	
-					tkgrid(durationsLabel,durationsEntry,cReadyB,padx=10,pady=10)
+					tkgrid(durationsLabel,durationsEntry,padx=10,pady=10)
 					tkgrid.configure(onsetsLabel,column=1)
 					tkgrid.configure(onsetsEntry,column=2)
 					tkgrid.configure(durationsLabel,column=1)
 					tkgrid.configure(durationsEntry,column=2)
-					tkgrid.configure(cReadyB,column=3)	
+					tkgrid(OkButton,QuitButton,SaveButton,padx=10,pady=10)
+					tkgrid(frame5)	
 				}				
 			}
 	
@@ -391,9 +434,6 @@ fmri.gui <- function() {
 			tkCurr = tkframe(base.design,relief="groove",borderwidth=2,bg=wiasblue)		
 				
 			nextCondition()	# next condition started -> first line for condition attributes created 
-			
-			tkgrid(tkCurr,sticky="ew")
-			tkgrid(frame5)	
 		}		
 
 		# frames in the design window (base.design)
@@ -433,13 +473,7 @@ fmri.gui <- function() {
     		q.but <- tkbutton(frame4, text = "Quit", command = design.quit, bg = wiaslightblue)
     		tkgrid(ok.but, q.but, padx = 30, pady = 20)
     		tkgrid(frame4)
-	
-		# frame for the option to save the design
-		frame5 <- tkframe(base.design,relief="groove",borderwidth=2,bg=wiasblue)
-		OkButton <- tkbutton(frame5,text="Ok",font="Arial 12",command=startDataHelp,bg = wiaslightblue)
-		QuitButton <- tkbutton(frame5, text = "Quit",font="Arial 12", command = design.quit, bg = wiaslightblue)
-		SaveButton <-tkbutton(frame5, text = "Save",font="Arial 12", bg = wiaslightblue, command = saveDesign)
-			
+
 	}
 
 	startDataLayout <- function(loadPlan=-1){
@@ -583,9 +617,6 @@ fmri.gui <- function() {
 				durCurrCond[j] = as.numeric(durations[[globalpos2+j]])
 			}
 
-			print(durCurrCond)
-			print(onsCurrCond)
-
 			if (i==1){
 				if (as.character(tclvalue(rbDesign))=="scans"){
 					hrf = fmri.stimulus(scanspS,onsCurrCond,durCurrCond,interscanInt)			
@@ -609,7 +640,7 @@ fmri.gui <- function() {
 
 		# create design matrix
 		# report about successful creation 
-		x <- fmri.design(hrf)	
+		x <<- fmri.design(hrf)	
 		print("Stimulus calculated")		
 			
 		# generate parametric map from linear model
@@ -619,7 +650,7 @@ fmri.gui <- function() {
 				
 		
 		delta = data$delta
-		tclvalue(hMax) = round(100*as.numeric(10/min(delta)))/100
+		tclvalue(hMax) = round(as.numeric(10/min(delta)),2)
 
 		tkgrid(smoothChoiceL,padx=10,pady=10)
 		tkgrid(frameSmoothChoice1)
@@ -690,10 +721,9 @@ fmri.gui <- function() {
 
 	startSmoothing <- function(){
 		layoutFunction(4)
-		print(as.numeric(tclvalue(hMax)))
 			
 		# smoothing of the parametric map and reporting about its success
-		spmsmooth <- fmri.smooth(spm,hmax=as.numeric(tclvalue(hMax)))
+		spmsmooth <<- fmri.smooth(spm,hmax=as.numeric(tclvalue(hMax)))
 					
 		print("Parametric map adaptive smoothed")
 	
@@ -749,8 +779,6 @@ fmri.gui <- function() {
 		ttt <- extract.data(data)
 		dim <- data$dim		
 		X11(width=12,height=7)
-		nrrow <<- 0
-		nrcol <<- 0
 		if (round(sqrt(dim[3]))==sqrt(dim[3])){
 			nrrow <<- sqrt(dim[3])
 			nrcol <<- sqrt(dim[3])	
@@ -769,7 +797,6 @@ fmri.gui <- function() {
 		mat = matrix(0,nrrow,nrcol+1)
 		for (i in 1:nrrow){ for (j in 1:(nrcol+1)){ if ((i-1)*(nrcol+1)+j-(i-1) <= dim[3]) { mat[i,j]=(i-1)*(nrcol+1)+j-(i-1) } } }
 		for (i in 1:nrrow){ mat[i,nrcol+1] = dim[3]+1 }
-		print(mat)
 		widthsvec = c(1:nrcol+1)
 		for (i in 1:nrcol){ widthsvec[i]=0.5/nrcol }
 		widthsvec[nrcol+1] = 0.5
@@ -777,60 +804,58 @@ fmri.gui <- function() {
 		par(mar=c(0.5,0.5,0.5,0.5))
 		for (i in 1:dim[3]) image(ttt[,,i,1]>as.numeric(tclvalue(quantileTc)),yaxt="n",xaxt="n")
 		par(mar=c(5,5,3,1))
-		d0 <- density(ttt[,,,1])	
-		d1 <- density(ttt[round((1/8)*dim[1]):round((7/8)*dim[1]),round((1/8)*dim[2]):round((7/8)*dim[2]),round((1/8)*dim[3]):round((7/8)*dim[3]),1])
-		d2 <- density(ttt[round((2/8)*dim[1]):round((6/8)*dim[1]),round((2/8)*dim[2]):round((6/8)*dim[2]),round((2/8)*dim[3]):round((6/8)*dim[3]),1])	
-		d3 <- density(ttt[round((3/8)*dim[1]):round((5/8)*dim[1]),round((3/8)*dim[2]):round((5/8)*dim[2]),round((3/8)*dim[3]):round((5/8)*dim[3]),1])	
-		plot(d0)
+		bwV = diff(range(ttt))/(length(ttt[,,,1])/1200)
+		d0 <- density(ttt[,,,1],bw=bwV)	
+		d1 <- density(ttt[round((1/8)*dim[1]):round((7/8)*dim[1]),round((1/8)*dim[2]):round((7/8)*dim[2]),round((1/8)*dim[3]):round((7/8)*dim[3]),1],bw=bwV)
+		d2 <- density(ttt[round((2/8)*dim[1]):round((6/8)*dim[1]),round((2/8)*dim[2]):round((6/8)*dim[2]),round((2/8)*dim[3]):round((6/8)*dim[3]),1],bw=bwV)	
+		d3 <- density(ttt[round((3/8)*dim[1]):round((5/8)*dim[1]),round((3/8)*dim[2]):round((5/8)*dim[2]),round((3/8)*dim[3]):round((5/8)*dim[3]),1],bw=bwV)	
+		plot(d0,main="")
+		title(main="Density plots",cex.main=1.5)
 		lines(d1,col=2)
 		lines(d2,col=3)
 		lines(d3,col=4)		
 		lines(c(as.numeric(tclvalue(quantileTc)),as.numeric(tclvalue(quantileTc))),range(d0$y),col=6)
-		maxi <<- c(1:4)
-		maxVal = c(1:4)
-		maxVal[4] = max(d0$y)
-		maxVal[1] = max(d1$y)
-		maxVal[2] = max(d2$y)
-		maxVal[3] = max(d3$y)
-		for (i in 1:length(d0$y)){ if (d0$y[i]==maxVal[4]){ maxi[4] <<- i } }
-		for (i in 1:length(d1$y)){ if (d1$y[i]==maxVal[1]){ maxi[1] <<- i } }
-		for (i in 1:length(d2$y)){ if (d2$y[i]==maxVal[2]){ maxi[2] <<- i } }
-		for (i in 1:length(d3$y)){ if (d3$y[i]==maxVal[3]){ maxi[3] <<- i } }
-		text4 = paste("Density of data")			
-		text1 = paste("Density of data[",round((1/8)*dim[1]),":",round((7/8)*dim[1]),",",round((1/8)*dim[2]),":",round((7/8)*dim[2]),",",sep="")
-		text1 = paste(text1,round((1/8)*dim[3]),":",round((7/8)*dim[3]),"]",sep="")		
-		text2 = paste("Density of data[",round((2/8)*dim[1]),":",round((6/8)*dim[1]),",",round((2/8)*dim[2]),":",round((6/8)*dim[2]),",",sep="")
-		text2 = paste(text2,round((2/8)*dim[3]),":",round((6/8)*dim[3]),"]",sep="")
-		text3 = paste("Density of data[",round((3/8)*dim[1]),":",round((5/8)*dim[1]),",",round((3/8)*dim[2]),":",round((5/8)*dim[2]),",",sep="")
-		text3 = paste(text3,round((3/8)*dim[3]),":",round((5/8)*dim[3]),"]",sep="")
-		text(d1$x[maxi[1]],d1$y[maxi[1]],text1,adj=c(0,0),col=2,cex=1.5)
-		text(d2$x[maxi[2]],d2$y[maxi[2]],text2,adj=c(0,0),col=3,cex=1.5)		
-		text(d3$x[maxi[3]],d3$y[maxi[3]],text3,adj=c(0,0),col=4,cex=1.5)
-		text(d0$x[maxi[4]],0.8*d0$y[maxi[4]],text4,adj=c(0,0),col=1,cex=1.5)
-		text(as.numeric(tclvalue(quantileTc)),0.5*d0$y[maxi[4]],"Threshold",adj=c(0,0),col=6,cex=1.5)
+		legend(0.55*max(d0$x),0.98*max(d0$y),c("Data","Centered 75% of data","Centered 50% of data","Centered 25% of data","Threshold line"),text.col=c(1,2,3,4,6),pch=c(1,1,1,1,1),col=c(1,2,3,4,6),title="Density of",cex=1.5)
 	}
 
 	startAdjustHelp <- function(){
-		if (nrStep>=1.5){		
-			onYes <- function(){
-				tkdestroy(ttWarning)
-				startAdjust()
+		if (as.character(tclvalue(dataFileFirst))==""){
+			onOk <- function(){
+					tkdestroy(ttWarning)
 			}	
-			onNo <- function(){
-				tkdestroy(ttWarning)
-			}
 			ttWarning = tktoplevel(bg=wiasblue)
-			tkwm.title(ttWarning, "Affirmation")
+			tkwm.title(ttWarning, "Information")
 			warningFrame1 = tkframe(ttWarning,bg=wiasblue)
-			warningLabel = tklabel(warningFrame1,text="Are you sure you want to reload the data? \n All progresses (out of design definitions) will be lost.",font="Arial 13",bg=wiasblue)
+			warningLabel = tklabel(warningFrame1,text="Please select the file, to be loaded, first.",font="Arial 13",bg=wiasblue)
 			warningFrame2 = tkframe(ttWarning,bg=wiasblue)	
-			warningB1 = tkbutton(warningFrame2,text="Yes",command=onYes)
-			warningB2 = tkbutton(warningFrame2,text="No",command=onNo)	
+			warningB1 = tkbutton(warningFrame2,text="Ok",command=onOk)	
 			tkgrid(warningLabel)
-			tkgrid(warningB1,warningB2,padx=10,pady=10)
+			tkgrid(warningB1,padx=10,pady=10)
 			tkgrid(warningFrame1)	
-			tkgrid(warningFrame2)
-		}  else startAdjust()
+			tkgrid(warningFrame2)				
+		}
+		else {	
+			if (nrStep>=1.5){		
+				onYes <- function(){
+					tkdestroy(ttWarning)
+					startAdjust()
+				}	
+				onNo <- function(){
+					tkdestroy(ttWarning)
+				}
+				ttWarning = tktoplevel(bg=wiasblue)
+				tkwm.title(ttWarning, "Affirmation")
+				warningFrame1 = tkframe(ttWarning,bg=wiasblue)
+				warningLabel = tklabel(warningFrame1,text="Are you sure you want to reload the data? \n All progresses (out of design definitions) will be 					lost.",font="Arial 13",bg=wiasblue)
+				warningFrame2 = tkframe(ttWarning,bg=wiasblue)	
+				warningB1 = tkbutton(warningFrame2,text="Yes",command=onYes)
+				warningB2 = tkbutton(warningFrame2,text="No",command=onNo)	
+				tkgrid(warningLabel)
+				tkgrid(warningB1,warningB2,padx=10,pady=10)
+				tkgrid(warningFrame1)	
+				tkgrid(warningFrame2)
+			}  else startAdjust()
+		}	
 	}
 
 	startAdjust <- function(){
@@ -938,7 +963,7 @@ fmri.gui <- function() {
 				conform <<- 0
 			}		
 			if (conform==1){
-				tclvalue(quantileTc) = round(100*quantile(extract.data(data),0.75))/100
+				tclvalue(quantileTc) = round(quantile(extract.data(data),0.75),2)
 				tkgrid(maskLabel1,padx=10,pady=10,sticky="ew")
 				tkgrid(frameMask1)
 				tkgrid(maskLabel2,maskEntry,maskButton1,padx=10,pady=10)
@@ -974,19 +999,96 @@ fmri.gui <- function() {
 			tkgrid(helpFrame2)	
 	}
 		
+	quitAll <- function(){
+		print("ho ho jetzt wird abgeschlossen")
+		quitWM <- function(){
+			tkdestroy(ttQuit)
+			fmriSpm <<- spm
+			fmriSpmsmooth <<- spmsmooth
+			fmriData <<- data
+			fmriDesignMatrix <<- x
+			fmriPvalue <<- pvalue
+			tkdestroy(base.aws)	
+		}
+	
+		quitWOM <- function(){
+			tkdestroy(ttQuit)
+			tkdestroy(base.aws)			
+		}
+
+		functSave <- function(){
+			text = unlist(strsplit(as.character(tclvalue(dataFileFirst)),""))
+			print(text)
+			if (as.character(tclvalue(dataFileFirst))!=""){
+				index = length(text)
+				print(index)
+				ind = -1 			
+				while (index>-1 && ind==-1){
+					print(index)
+					if (text[index]=="."){
+						ind = index				
+					}
+					index = index - 1
+				}
+				print(ind)
+				name = ""
+				for (i in 1:(ind-1)){
+					name = paste(name,text[i],sep="")
+				}
+				print(name)
+			}	
+				
+			save(spm,spmsmooth,data,x,pvalue,file=paste(name,"Workspace.rsc",sep=""),compress=TRUE)	
+		}
+
+		functCancel <- function(){
+			tkdestroy(ttQuit)
+		}
+
+		functHelp <- function(){
+			onQuit <- function(){
+				tkdestroy(ttHelp)
+			}
+			ttHelp = tktoplevel(bg=wiasblue)
+			tkwm.title(ttHelp, "Help")
+			helpFrame1 = tkframe(ttHelp,bg=wiasblue)
+			helpLabel = tklabel(helpFrame1,text=helptextVec[7],font="Arial 13",bg=wiasblue)
+			helpFrame2 = tkframe(ttHelp,bg=wiasblue)	
+			helpB1 = tkbutton(helpFrame2,text="Quit",command=onQuit)
+			tkgrid(helpLabel)
+			tkgrid(helpB1,padx=10,pady=10)
+			tkgrid(helpFrame1)	
+			tkgrid(helpFrame2)
+		}
+
+		ttQuit = tktoplevel(bg=wiasblue)
+		tkwm.title(ttQuit, "Quit Window")
+		quitFrame1 = tkframe(ttQuit,bg=wiasblue)
+		quitFrame2 = tkframe(ttQuit,bg=wiasblue)	
+		quitB1 = tkbutton(quitFrame1,text="Quit without maintaining local workspace",command=quitWOM,bg=wiaslightblue)
+		quitB2 = tkbutton(quitFrame1,text="Quit with maintaining local workspace",command=quitWM,bg=wiaslightblue)
+		quitB3 = tkbutton(quitFrame2,text="Export local workspace to file",command=functSave,bg=wiaslightblue)
+		quitB4 = tkbutton(quitFrame2,text="Cancel",command=functCancel,bg=wiaslightblue,width=15)
+		quitB5 = tkbutton(quitFrame2,text="Help",command=functHelp,bg=wiaslightblue,width=15)			
+		tkgrid(quitB1,quitB2,padx=10,pady=10)
+		tkgrid(quitB3,quitB4,quitB5,padx=13,pady=10)	
+		tkgrid(quitFrame1)
+		tkgrid(quitFrame2)	
+	}	
+	
 
 	
 	# set variables
-	helptextVec = c("a","b","c","d","e","f")
-	wiasblue = "#AACCDB"
-	wiaslightblue = "#BBDDEC"
-	nrStep <<-0	
+	helptextVec <- c("Define the design of the experiment. You can load a previously saved \n design file here, or define a new design and save it to disk. You can \n define the design in scans or seconds, giving the onset times and \n duration of the stimulus. The expected hemodynamic response will be \n created as convolution of the task indicator function with the common \n difference of two gamma functions. \n \n See fmri.stimulus() for more details.","Load the data file(s). AFNI, ANALYZE, and NIFTI are supported file \n formats and will be automatically detected. Select either the header \n or data file. To work with a series of ANALYZE files, just select the \n first file. \n \n See read.AFNI(), read.ANALYZE(), read.NIFTI() for more details.","Smoothing will only be performed on a mask of voxels with \n sufficiently large T2-values. If you want to change the threshold for \n this cutting, adjust the mask with the help of the given density plots.","Define the contrast vector for a t-contrast, if more than one \n stimulus is defined. Otherwise, the simple t-contrast is used. \n \n See fmri.lm() for more details.","Define the maximum bandwith for structural adaptive smoothing. The \n bandwidth is defined by the largest homogeneous structure in the SPM. \n Continue without smoothing if you like to perform signal detection using \n Random Field Theory on the SPM directly. \n \n See fmri.smooth() and fmri.pvalue() for more details.","You can view the pvalues in 2D and 3D. The 2D view \n presents to you several slices. It is possible to define the\n number of slices displayed, and the direction (axial, sagittal, \n coronal). The 3D view shows you one slice of every direction. \n The slice displayed, can be chosen by a silder. ","You can quit the FMRI analysis here. It is possible to save \n the workspace to disk, to overtake the workspace to the global \n R environment or to quit without overtaking the workspace. \n Overtaking the workspace may overwrite objects in your workspace. \n Ensure, that your important objects aren't called data, x, spm,\n spmsmooth or pvalue. To abort quitting press cancel.")
+
+	wiasblue <- "#AACCDB"
+	wiaslightblue <- "#BBDDEC"
+	nrStep <-0	
 	mycontrastTc <- tclVar()
 	mycontrast <- c()
 	quantileTc <- tclVar()
 	designFile <- tclVar("")
 	dataFileFirst <- tclVar("")
-	pathName <- tclVar("~/data/myproject/")	
 	interscanIntTc <- tclVar()
 	interscanInt <- -1	
 	scanspSTc <- tclVar()
@@ -1005,11 +1107,18 @@ fmri.gui <- function() {
 	pvalue <- list()
 	spm <- list()
 	data <- list()
-	dataTypeGlobal = ""
-	isFigure <<- FALSE
-	index <<- -1
-	indexhelp <<- -1
-	conform = 0
+	spmsmooth <- list()
+	x <- list()		
+	dataTypeGlobal <- ""
+	isFigure <- FALSE
+	index <- -1
+	indexhelp <- -1
+	conform <- 0
+	currIndD <- 0
+	currIndO <- 0
+	maxi <- c()
+	nrcol <- 0
+	nrrow <- 0			
 
 	# base GUI window (base.aws)
 	if(.Platform$OS.type == "windows") flush.console()
@@ -1047,7 +1156,8 @@ fmri.gui <- function() {
 	dataLabel3 <- list()
 								
 	# buttons, labels, entries 	
-	objDesignL  <- tklabel(frameDesign1,text="Experimental Design",width=32,bg=wiasblue,font="Arial 13 bold")
+	objDesignL  <- tklabel(frameDesign1,text="Experimental Design",bg=wiasblue,font="Arial 13 bold")
+	objDesignB0 <- tkbutton(frameDesign1,text="Quit",width=9,command=quitAll,bg=wiaslightblue)	
 	objDesignB1 <- tkbutton(frameDesign2,text="Load",width=15,command=loadDesignHelp,bg=wiaslightblue)
 	objDesignB2 <- tkbutton(frameDesign2,text="Create",width=15,command=createDesignHelp,bg=wiaslightblue)
 	helpButton1 <- tkbutton(frameDesign2,text="Help",width=15,command=helpFunction1,bg=wiaslightblue)	
@@ -1086,10 +1196,10 @@ fmri.gui <- function() {
 		image1 <- tclVar()
 		tkimage.create("photo",image1,file=system.file("img/wias.jpeg",package="fmri"))
 		imgAsLabel <- tklabel(base.aws,image=image1,bg="white")
-		tkgrid(objDesignL,imgAsLabel,padx=20,pady=10)
+		tkgrid(objDesignL,imgAsLabel,objDesignB0,padx=21,pady=10)
 	}
 	else {
-		tkgrid(objDesignL,pady = 10, padx = 10)
+		tkgrid(objDesignL,objDesignB0,pady = 10, padx = 10)
 	}
 	tkgrid(frameDesign1)	
 	tkgrid(objDesignB1,objDesignB2,helpButton1,padx=15,pady=10)
