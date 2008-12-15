@@ -1,6 +1,10 @@
-fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau",weighted=TRUE,...) {
+fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussian",skern="Plateau",weighted=TRUE,...) {
   cat("fmri.smooth: entering function\n")
-  if (!exists("ladjust")) ladjust=1  
+  if(!adaptive) adaptation <- "none"
+  if(!(tolower(adaptation)%in%c("none","aws","segment"))) {
+      adaptation
+  }
+  if("ladjust" %in% names(list(...))) ladjust <- list(...)[["ladjust"]] else ladjust <- 1
   if (!("fmrispm" %in% class(spm))) {
     warning("fmri.smooth: data not of class <fmrispm>. Try to proceed but strange things may happen")
   }
@@ -24,18 +28,20 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau
     bw <- spm$bw
   }
 
-  cat("fmri.smooth: smoothing the Statistical Paramteric Map\n")
-  if (adaptive) {
-    ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
-                     wghts=weights, h0=bw, vwghts = spm$vwghts,
-                     lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
-                     resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust)
-  } else {
-    ttthat <- vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
-                     qlambda = 1, wghts=weights, h0=bw,
-                     vwghts = spm$vwghts,lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
-                     resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust)
-  }
+  cat("fmri.smooth: smoothing the Statistical Parametric Map\n")
+  ttthat <- switch(tolower(adaptation),
+                   "aws"=vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
+                         wghts=weights, h0=bw, vwghts = spm$vwghts,
+                         lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
+                         resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust),
+                   "none"=vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
+                         qlambda = 1, wghts=weights, h0=bw,
+                         vwghts = spm$vwghts,lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
+                         resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust),
+                   "segment"=segm3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
+                         qlambda = 1, wghts=weights, h0=bw,
+                         vwghts = spm$vwghts,lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
+                         resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust,delta=0))
   cat("\n")
   
   cat("fmri.smooth: determine local smoothness\n")
@@ -62,7 +68,7 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,lkern="Gaussian",skern="Plateau
     z <- list(cbeta = ttthat$theta, var = ttthat$var, rxyz = rxyz, rxyz0 = rxyz0, 
               scorr = spm$scorr, weights = spm$weights, vwghts = spm$vwghts, bw=bw,
               hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf)
-  }    
+  }
 
   class(z) <- c("fmridata","fmrispm")
 
