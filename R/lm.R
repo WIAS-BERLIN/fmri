@@ -239,7 +239,8 @@ fmri.lm <- function(data,z,actype="smooth",vtype="var",step=0.01,contrast=c(1),v
                                      as.integer(dy[3]),
                                      as.integer(dy[4]),
                                      PACKAGE="fmri",DUP=FALSE)$residuals
-      dim(residuals) <- c(prod(dy[1:3]),dy[4])
+      dim(residuals) <- c(dy[4],prod(dy[1:3]))
+      residuals <- t(residuals)
       b <- rep(1/dy[4],length=dy[4])
       variance <- ((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * variancepart
       if (length(vvector) > 1) variancem <- as.vector((residuals^2 %*% b) * dim(z)[1] / (dim(z)[1]-dim(z)[2])) * t(variancepartm)

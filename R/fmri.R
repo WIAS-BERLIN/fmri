@@ -4,7 +4,12 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussia
   if(!(tolower(adaptation)%in%c("none","aws","segment"))) {
       adaptation
   }
-  if("ladjust" %in% names(list(...))) ladjust <- list(...)[["ladjust"]] else ladjust <- 1
+  ladjust <- if("ladjust" %in% names(list(...))) list(...)[["ladjust"]] else 1
+  fov <- if("fov" %in% names(list(...))) list(...)[["fov"]] else NULL
+  thresh <- if("thresh" %in% names(list(...))) list(...)[["thresh"]] else 5
+  delta <- if("delta" %in% names(list(...))) list(...)[["delta"]] else 0
+  ext <- if("ext" %in% names(list(...))) list(...)[["ext"]] else 0
+
   if (!("fmrispm" %in% class(spm))) {
     warning("fmri.smooth: data not of class <fmrispm>. Try to proceed but strange things may happen")
   }
@@ -39,9 +44,9 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussia
                          vwghts = spm$vwghts,lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
                          resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust),
                    "segment"=segm3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
-                         qlambda = 1, wghts=weights, h0=bw,
-                         vwghts = spm$vwghts,lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
-                         resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust,delta=0))
+                         wghts=weights, h0=bw,lkern=lkern,weighted=weighted,res=spm$res,
+                         resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust,delta=delta,
+                         ext=ext,thresh=thresh,fov=fov))
   cat("\n")
   
   cat("fmri.smooth: determine local smoothness\n")
@@ -58,12 +63,12 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussia
   rxyz0 <- c(resel(1,bw0[,1]), resel(1,bw0[,2]), resel(1,bw0[,3]))
   dim(rxyz0) <- c(dim(bw0)[1],3)
   cat("fmri.smooth: exiting function\n")
-    
+  if(length(dim(ttthat$theta))==3) dim(ttthat$theta) <- c(dim(ttthat$theta),1)
   if (dim(ttthat$theta)[4] == 1) {
     z <- list(cbeta = ttthat$theta[,,,1], var = ttthat$var, rxyz =
               rxyz, rxyz0 = rxyz0, scorr = spm$scorr, weights =
               spm$weights, vwghts = spm$vwghts, bw=bw, 
-              hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf)
+              hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf, segm = ttthat$segm)
   } else {
     z <- list(cbeta = ttthat$theta, var = ttthat$var, rxyz = rxyz, rxyz0 = rxyz0, 
               scorr = spm$scorr, weights = spm$weights, vwghts = spm$vwghts, bw=bw,

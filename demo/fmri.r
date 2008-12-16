@@ -67,7 +67,7 @@ sig[1:28,38:65,] <- signal * efactor^7
 sig * create.mask()
 }
 # some values describing the data
-signal <- 1.2
+signal <- 1.5
 noise <- 20
 arfactor <- .3
 
