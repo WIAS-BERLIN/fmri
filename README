@@ -1,4 +1,6 @@
 Changes with version 1.3. 
+added multiscale test based segmentation algorithm fro signal detection
+(use adaptation="segment" in fmri.smooth)
 
 bugfix in handling residuals in fmri.lm
 removed unused branches from fmri.smooth/vaws3D

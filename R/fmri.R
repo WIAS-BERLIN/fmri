@@ -6,9 +6,8 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussia
   }
   ladjust <- if("ladjust" %in% names(list(...))) list(...)[["ladjust"]] else 1
   fov <- if("fov" %in% names(list(...))) list(...)[["fov"]] else NULL
-  thresh <- if("thresh" %in% names(list(...))) list(...)[["thresh"]] else 5
+  thresh <- if("thresh" %in% names(list(...))) list(...)[["thresh"]] else 3.5
   delta <- if("delta" %in% names(list(...))) list(...)[["delta"]] else 0
-  ext <- if("ext" %in% names(list(...))) list(...)[["ext"]] else 0
 
   if (!("fmrispm" %in% class(spm))) {
     warning("fmri.smooth: data not of class <fmrispm>. Try to proceed but strange things may happen")
@@ -46,7 +45,7 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussia
                    "segment"=segm3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
                          wghts=weights, h0=bw,lkern=lkern,weighted=weighted,res=spm$res,
                          resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust,delta=delta,
-                         ext=ext,thresh=thresh,fov=fov))
+                         thresh=thresh,fov=fov))
   cat("\n")
   
   cat("fmri.smooth: determine local smoothness\n")
