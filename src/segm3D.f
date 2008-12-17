@@ -83,6 +83,7 @@ C   scaling of sij outside the loop
             DO i1=1,n1
                if(mask(i1,i2,i3)) THEN
                   thn(i1,i2,i3)=0.d0
+                  CYCLE
                END IF
                si2i=si2(i1,i2,i3)
                varesti=varest(i1,i2,i3)
