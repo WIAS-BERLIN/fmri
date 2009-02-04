@@ -50,6 +50,11 @@ read.ANALYZE(prefix = "", numbered = FALSE, postfix = "",
 }
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \references{Biomedical Imaging Resource (2001). Analyze Program. Mayo Foundation.
+
+  Polzehl, J. and Tabelow, K. (2007)
+  \emph{fmri: A Package for Analyzing fmri Data},
+  R News, 7:13-17 .
+
 }
 \note{   Since numbering and naming of ANALYZE files widely vary, this
   function may not meet your personal needs. See Details section above for 

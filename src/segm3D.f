@@ -65,13 +65,7 @@ C
                si2i=si2(i1,i2,i3)
                varesti=varest(i1,i2,i3)
                cofh=sqrt(2.d0*log(2.d0*varesti*si2i*fov))
-C               if((abs(thi)-delta)/sqrt(varesti)-cofh.gt.thresh) THEN
-C                  if(segm(i1,i2,i3).eq.0) segm(i1,i2,i3)=sign(1.d0,thi)
-C               ELSE
-C                  pvalue(i1,i2,i3)=fpchisq(ti*si2i,1.d0,1,0)
-C               END IF
                ti=max(0.d0,abs(thi)-delta)
-C               pvalue(i1,i2,i3)=1.d0-fpchisq(ti*ti/varesti,1.d0,1,0)
             pvalue(i1,i2,i3)=min(1.d0,thresh/(abs(thi)/sqrt(varesti)))
             END DO
          END DO
@@ -112,12 +106,9 @@ C  first stochastic term
                         IF (aws) THEN
                            thij=thi-theta(j1,j2,j3)
                            IF(segm(i1,i2,i3)*segm(j1,j2,j3).gt.0) THEN
-C                              sij=max(pvalue(i1,i2,i3),
-C     1                     pvalue(j1,j2,j3)*thij*thij/varesti/lambda)
-                           sij=max(pvalue(i1,i2,i3),
-     1                     pvalue(j1,j2,j3)*thij*thij*bii)
+                              sij=max(pvalue(i1,i2,i3),
+     1                        pvalue(j1,j2,j3)*thij*thij*bii)
                            ELSE
-C                              sij=thij*thij/varesti/lambda
                               sij=thij*thij*bii
                            END IF
                            IF(sij.gt.1.d0) CYCLE

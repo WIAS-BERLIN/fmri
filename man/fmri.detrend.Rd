@@ -20,6 +20,11 @@ fmri.detrend(data, degree = 1, accoef = 0)
 \value{
   Detrended data object of class ''\code{fmridata}''.
 }
+\references{
+  Polzehl, J. and Tabelow, K. (2007).
+  \emph{fmri: A Package for Analyzing fmri Data},
+  R News, 7:13-17. 
+}
 \author{ Joerg Polzehl \email{polzehl@wias-berlin.de} }
 \seealso{ \code{\link{fmri.lm}} }
 \examples{

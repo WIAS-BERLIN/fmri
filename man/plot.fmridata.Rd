@@ -55,6 +55,11 @@ plot.fmridata(x, anatomic = NULL, maxpvalue = 0.05,
 \value{
   If 'type' is "3d" the Tk-object is returned. (Remove the diplay with \code{tkdestroy(object)})
 }
+\references{
+  Polzehl, J. and Tabelow, K. (2007)
+  \emph{fmri: A Package for Analyzing fmri Data},
+  R News, 7:13-17 .
+}
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \note{ 3 dimensional plotting requires the \code{tkrplot}
   package.

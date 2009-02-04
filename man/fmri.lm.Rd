@@ -93,6 +93,12 @@
   Worsley, K.J., Liao, C., Aston, J., Petre, V., Duncan,
   G.H., Morales, F., Evans, A.C. (2002). A general statistical analysis
   for fMRI data. NeuroImage, 15:1-15.
+
+  Tabelow, K., Polzehl, J., Voss, H.U., and Spokoiny, V. (2006). 
+\emph{Analysing {fMRI}
+    experiments with structure adaptive smoothing procedures},
+  NeuroImage, 33:55-62. 
+
 }
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \note{ \code{vvector} is intended to be used for delay of the HRF using

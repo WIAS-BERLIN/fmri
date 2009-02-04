@@ -1003,11 +1003,17 @@ fmri.gui <- function() {
 		print("ho ho jetzt wird abgeschlossen")
 		quitWM <- function(){
 			tkdestroy(ttQuit)
-			fmriSpm <<- spm
-			fmriSpmsmooth <<- spmsmooth
-			fmriData <<- data
-			fmriDesignMatrix <<- x
-			fmriPvalue <<- pvalue
+                        assign("fmriSpm",spm,inherits=TRUE)
+                        assign("fmriSpmsmooth",spmsmooth,inherits=TRUE)
+                        assign("fmriData",data,inherits=TRUE)
+                        assign("fmriDesignMatrix",x,inherits=TRUE)
+                        assign("fmriPvalue",pvalue,inherits=TRUE)
+#         Changes to resolve warnings by R CMD check
+#			fmriSpm <<- spm
+#			fmriSpmsmooth <<- spmsmooth
+#			fmriData <<- data
+#			fmriDesignMatrix <<- x
+#			fmriPvalue <<- pvalue
 			tkdestroy(base.aws)	
 		}
 	

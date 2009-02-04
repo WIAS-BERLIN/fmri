@@ -202,6 +202,130 @@ C
 C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine chawsv(y,res,si2,mask,wlse,n1,n2,n3,n4,dv,dv0,hakt,
+     1                  lambda,theta,bi,resnew,thn,kern,skern,spmin,
+     2                  spmax,lwght,wght,vwghts,swjy,thi,resi)
+C
+C   y        observed values of regression function
+C   n1,n2,n3    design dimensions
+C   hakt     actual bandwidth
+C   lambda   lambda or lambda*sigma2 for Gaussian models
+C   theta    estimates from last step   (input)
+C   bi       \sum  Wi   (output)
+C   ai       \sum  Wi Y     (output)
+C   model    specifies the probablilistic model for the KL-Distance
+C   kern     specifies the location kernel
+C   spmax    specifies the truncation point of the stochastic kernel
+C   wght     scaling factor for second and third dimension (larger values shrink)
+C
+      implicit logical (a-z)
+      integer n1,n2,n3,n4,kern,skern,dv,dv0
+      logical aws,wlse,mask(n1,n2,n3)
+      real*8 res(n4,n1,n2,n3),y(n1,n2,n3,dv),theta(n1,n2,n3,dv0),
+     1       bi(n1,n2,n3),thn(n1,n2,n3,dv),lambda,spmax,wght(2),
+     1       si2(n1,n2,n3),hakt,lwght(1),spmin,vwghts(dv0),thi(dv0),
+     1       resi(n4),getlwght,resnew(n4,n1,n2,n3)
+      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
+     1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
+      real*8 bii,swj,swjy(dv),wj,hakt2,spf,si2j,si2i,swjv,sresisq
+      external getlwght
+      hakt2=hakt*hakt
+      spf=spmax/(spmax-spmin)
+      ih1=hakt
+      aws=lambda.lt.1d40
+C
+C   first calculate location weights
+C
+      ih3=hakt/wght(2)
+      ih2=hakt/wght(1)
+      ih1=hakt
+      n=n1*n2*n3
+      dlw1=min(2*n1-1,2*ih1+1)
+      dlw2=min(2*n2-1,2*ih2+1)
+      dlw3=min(2*n3-1,2*ih3+1)
+      clw1=(dlw1+1)/2
+      clw2=(dlw2+1)/2
+      clw3=(dlw3+1)/2
+C
+C    get location weights
+C
+      call locwghts(dlw1,dlw2,dlw3,wght,hakt2,kern,lwght)
+      call rchkusr()
+      DO i3=1,n3
+         DO i2=1,n2
+            DO i1=1,n1
+               if(mask(i1,i2,i3)) THEN
+                  DO k=1,dv
+                     thn(i1,i2,i3,k)=0.d0
+                  END DO
+                  CYCLE
+               END IF
+               si2i=si2(i1,i2,i3)
+               bii=bi(i1,i2,i3)/lambda
+C   scaling of sij outside the loop
+               swj=0.d0
+               swjv=0.d0
+               DO k=1,dv
+                  swjy(k)=0.d0
+               END DO
+               DO k=1,n4
+                  resi(k)=0.d0
+               END DO
+               DO k=1,dv0
+                  thi(k)=theta(i1,i2,i3,k)
+               END DO
+               DO jw3=1,dlw3
+                  j3=jw3-clw3+i3
+                  if(j3.lt.1.or.j3.gt.n3) CYCLE
+                  DO jw2=1,dlw2
+                     j2=jw2-clw2+i2
+                     if(j2.lt.1.or.j2.gt.n2) CYCLE
+                     DO jw1=1,dlw1
+C  first stochastic term
+                        j1=jw1-clw1+i1
+                        if(j1.lt.1.or.j1.gt.n1) CYCLE
+                        IF(mask(j1,j2,j3)) CYCLE
+                        wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
+                        if(wj.le.0.d0) CYCLE
+                        si2j=si2(j1,j2,j3)
+                        IF (aws) THEN
+                           call awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,
+     1                     theta,vwghts,skern,spf,spmin,spmax,bii,wj)
+                        END IF
+                        if(wlse) THEN 
+                           wj=wj*si2j
+                        ELSE
+                           swjv=swjv+wj/si2j
+                        END IF
+                        swj=swj+wj
+                        DO k=1,dv
+                           swjy(k)=swjy(k)+wj*y(j1,j2,j3,k)
+                        END DO
+                        call daxpy(n4,wj,res(1,j1,j2,j3),1,resi,1)
+                     END DO
+                  END DO
+               END DO
+               DO k=1,dv
+                  thn(i1,i2,i3,k)=swjy(k)/swj
+               END DO
+               sresisq=0.d0
+               DO k=1,n4
+                  resnew(k,i1,i2,i3)=resi(k)/swj
+                  sresisq=sresisq+resi(k)*resi(k)
+               END DO
+               bi(i1,i2,i3)=swj*swj/sresisq*(n4-1.d0)
+C  thats the inverse variance
+               call rchkusr()
+            END DO
+         END DO
+      END DO
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C   Perform one iteration in local constant three-variate aws (gridded)
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine ihaws2(y,si2,mask,wlse,n1,n2,n3,dv,dv0,hakt,lambda,
      1                  theta,bi,thn,kern,skern,spmin,spmax,lwght,
      2                  wght,vwghts,swjy,thi)

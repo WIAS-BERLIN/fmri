@@ -47,6 +47,54 @@ C
       sofw3D=sw*sw/sw2
       RETURN
       END
+      real*8 function sofw3D0(bw,kern,wght)
+      implicit logical(a-z)
+      integer kern
+      real*8 bw,wght(2)
+      integer j1,j2,j3,dlw1,dlw2,dlw3,clw1,clw2,clw3,ih1,ih2,ih3
+      real*8 sw,h2,lkern,z1,z2,z3,z
+      external lkern
+      h2=bw*bw
+C
+C   first calculate location weights
+C
+      ih3=bw/wght(2)
+      ih2=bw/wght(1)
+      ih1=bw
+      dlw1=2*ih1+1
+      dlw2=2*ih2+1
+      dlw3=2*ih3+1
+      clw1=(dlw1+1)/2
+      clw2=(dlw2+1)/2
+      clw3=(dlw3+1)/2
+      sw=0.d0
+      DO j3=1,dlw3
+         z3=(clw3-j3)*wght(2)
+         z3=z3*z3
+         ih2=sqrt(h2-z3)/wght(1)
+         DO j2=clw2-ih2,clw2+ih2
+            z2=(clw2-j2)*wght(1)
+            z2=z3+z2*z2
+            ih1=sqrt(h2-z2)
+            DO j1=clw1-ih1,clw1+ih1
+               z1=clw1-j1
+               z=lkern(kern,(z1*z1+z2)/h2)
+               sw=sw+z
+            END DO
+         END DO
+      END DO
+      sofw3D0=sw
+      RETURN
+      END
+      subroutine ni2var(bw,kern,wght,quot)
+      implicit logical(a-z)
+      integer kern
+      real*8 bw,wght(2),quot
+      real*8 sofw3D0,sofw3D
+      external sofw3D0,sofw3D
+      quot=sofw3D0(bw,kern,wght)/sofw3D(bw,kern,wght)
+      RETURN
+      END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
 C   determine sum of location weights for a given geometry a(3) and given 

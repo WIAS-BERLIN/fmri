@@ -38,6 +38,10 @@ read.AFNI(filename,vol=NULL,level=0.75,setmask=TRUE)
 \references{R. W. Cox (1996). AFNI: Software for analysis and visualization of
   functional magnetic resonance neuroimages. Computers and Biomed. Res. 
   29:162-173.
+
+ Polzehl, J. and Tabelow, K. (2007)
+  \emph{fmri: A Package for Analyzing fmri Data},
+  R News, 7:13-17 .
 }
 \seealso{ \code{\link{write.AFNI}}, \code{\link{read.ANALYZE}} }
 \examples{

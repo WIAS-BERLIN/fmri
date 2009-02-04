@@ -35,6 +35,11 @@ read.NIFTI(filename, level = 0.75,setmask=TRUE)
     y, z-direction}
   \item{mask}{head mask}
 }
+\references{
+  Polzehl, J. and Tabelow, K. (2007)
+  \emph{fmri: A Package for Analyzing fmri Data},
+  R News, 7:13-17 .
+}
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
 \seealso{ \code{\link{read.ANALYZE}}, \code{\link{read.AFNI}} }
 \examples{ \dontrun{analyze <- read.NIFIT("niftifile.nii")}}

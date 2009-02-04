@@ -8,6 +8,7 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussia
   fov <- if("fov" %in% names(list(...))) list(...)[["fov"]] else NULL
   thresh <- if("thresh" %in% names(list(...))) list(...)[["thresh"]] else 3.5
   delta <- if("delta" %in% names(list(...))) list(...)[["delta"]] else 0
+  propagation <- if("propagation" %in% names(list(...))) list(...)[["propagation"]] else FALSE
 
   if (!("fmrispm" %in% class(spm))) {
     warning("fmri.smooth: data not of class <fmrispm>. Try to proceed but strange things may happen")
@@ -37,7 +38,13 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussia
                    "aws"=vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
                          wghts=weights, h0=bw, vwghts = spm$vwghts,
                          lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
-                         resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust),
+                         resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust,
+                         testprop=propagation),
+                   "fullaws"=vaws3Dfull(y=spm$cbeta, sigma2=variance, hmax=hmax,
+                         mask=spm$mask,wghts=weights, vwghts = spm$vwghts,
+                         lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
+                         resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust,
+                         testprop=propagation),
                    "none"=vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
                          qlambda = 1, wghts=weights, h0=bw,
                          vwghts = spm$vwghts,lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
