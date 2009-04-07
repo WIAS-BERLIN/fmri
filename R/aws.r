@@ -31,7 +31,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                    sigma2=NULL,mask=NULL,hinit=NULL,hincr=NULL,hmax=NULL,
                    ladjust=1,u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
                    spmin=.3,h0=c(0,0,0),vwghts=1,testprop=FALSE,
-                   res=NULL, resscale=NULL, ddim=NULL) {
+                   res=NULL, resscale=NULL, ddim=NULL){
 #
 #  qlambda, corrfactor adjusted for case lkern="Gaussian",skern="Plateau" only
 #
