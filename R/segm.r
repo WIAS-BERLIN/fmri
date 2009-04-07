@@ -180,12 +180,12 @@ segm3D <- function(y,lkern="Gaussian",weighted=TRUE,
       gc()
       theta <- array(tobj$thnew,dy[1:3]) 
       segm <- array(tobj$segm,dy[1:3])
-     par(mfrow=c(1,3))
-      plot(density(tobj$pvalue))
-      if(sum(tobj$segm==1)>10) plot(density(tobj$pvalue[tobj$segm==1]))
-      image(apply(segm>0,1:2,sum),zlim=c(0,26))
+#      par(mfrow=c(1,3))
+#      plot(density(tobj$pvalue))
+#      if(sum(tobj$segm==1)>10) plot(density(tobj$pvalue[tobj$segm==1]))
+#      image(apply(segm>0,1:2,sum),zlim=c(0,26))
 #      cat("\n",sum(signal&(segm==1)),sum(signal&(segm!=1)),sum(!signal&(segm==1)),sum(!signal&(segm!=1)),"\n")
-      readline("Press enter")
+#      readline("Press enter")
       varest <- array(tobj$varest/vartheta0/sigma2,dy[1:3])
       dim(tobj$bi) <- dy[1:3]
       if (graph) {

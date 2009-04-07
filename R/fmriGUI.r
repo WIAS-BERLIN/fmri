@@ -16,7 +16,8 @@ fmri.gui <- function() {
 
 	# view p values in 3D
 	results3D <- function(){
-		tkmessageBox(message="Good Choice! But still under construction ... ")
+#		tkmessageBox(message="Good Choice! But still under construction ... ")
+		plot(pvalue,type="3D")
 	}
 	
 	# view p values as slices
@@ -846,7 +847,7 @@ fmri.gui <- function() {
 				ttWarning = tktoplevel(bg=wiasblue)
 				tkwm.title(ttWarning, "Affirmation")
 				warningFrame1 = tkframe(ttWarning,bg=wiasblue)
-				warningLabel = tklabel(warningFrame1,text="Are you sure you want to reload the data? \n All progresses (out of design definitions) will be 					lost.",font="Arial 13",bg=wiasblue)
+				warningLabel = tklabel(warningFrame1,text="Are you sure you want to reload the data? \n All progresses despite design definition will be lost.",font="Arial 13",bg=wiasblue)
 				warningFrame2 = tkframe(ttWarning,bg=wiasblue)	
 				warningB1 = tkbutton(warningFrame2,text="Yes",command=onYes)
 				warningB2 = tkbutton(warningFrame2,text="No",command=onNo)	

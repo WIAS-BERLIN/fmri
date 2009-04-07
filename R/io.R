@@ -169,7 +169,7 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "", picstar
   filename <- character(length(prefix))
   if (numbered) {
     for (i in picstart:(picstart+numbpic-1)) {
-      filename[i] <- paste(prefix[[1]][1], counter[i], postfix, ".img", sep="")
+      filename[i-picstart+1] <- paste(prefix[[1]][1], counter[i], postfix, ".img", sep="")
     }
   } else {
     for (i in 1:length(prefix)) {
