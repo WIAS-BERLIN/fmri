@@ -269,35 +269,30 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE, minimum.sign
 }
 
 
-# taken from tkrplot
-mytkrplot <- function(parent, fun, hscale=1, vscale=1,slicenr=-1,which="unset",parent2=list(),typeV=2) {
-    #print("in my tkrplot")	
-    if (typeV == 2) parent = parent2  # ACHTUNG aenderung, bisher nur in vied2dNew benutzt!!
+# taken from mytkrplot
+mytkrplot <- function(parent, fun, hscale=1, vscale=1,slicenr=-1,which="unset",parent2=list(),typeV=2,overview=FALSE) {
+    #print(overview)		
+    if (!overview) if (typeV == 2) parent = parent2  # ACHTUNG aenderung, bisher nur in vied2dNew benutzt!!
     image <- paste("Rplot", .make.tkindex(), sep="")
-    #print("asd.")	
     .my.tkdev(hscale, vscale)
     try(fun())
-    .Tcl(paste("image create Rplot", image))
+   .Tcl(paste("image create Rplot", image))
     lab<-tklabel(parent,image=image) #**** use try, delete image on failure
-    tkbind(lab,"<Destroy>", function() .Tcl(paste("image delete", image)))
+   tkbind(lab,"<Destroy>", function() .Tcl(paste("image delete", image)))
     lab$image <- image
     lab$fun <- fun
     lab$hscale <- hscale
     lab$vscale <- vscale
-    #print("inout my tkrplot")	
     lab
 }
 
-# taken from tkrplot
+# taken from mytkrplot
 mytkrreplot <- function(lab, fun = lab$fun,
                       hscale=lab$hscale, vscale=lab$vscale) {
     .my.tkdev(hscale, vscale)
     try(fun())
     .Tcl(paste("image create Rplot", lab$image))
 }
-
-
-globalx <- list()
 
 
 plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
@@ -307,7 +302,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
 	
   library(tcltk)
   if (!require(tkrplot))
-    stop("required package tkrplot not found. Please install from cran.r-project.org")	
+    stop("required package mytkrplot not found. Please install from cran.r-project.org")	
 
   mri.colors <- function (n1, n2, factor=n1/(n1+n2), from=0, to=.2) {
     colors1 <- gray((0:n1)/(n1+n2))
@@ -319,8 +314,8 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
     list(all=c(colors1,colors2),gray=colors1,col=colors2)
   }
 
-  globalx <<- x 	
-
+  localx <- x # ;)
+ 
   if ("fmripvalue" %in% class(x)) {
 
     if ("fmridata" %in% class(anatomic)) {
@@ -366,8 +361,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
       anatomic[is.infinite(anatomic)] <- 0
     
       if (type == "3d") {
-	print(dim(anatomic))
-        tt <- fmri.view3d(anatomic,col=mri.colors(255,255)$all,
+	tt <- fmri.view3d(anatomic,col=mri.colors(255,255)$all,
                           weights=x$weights, scale=scale,scalecol=mri.colors(255,255)$col,
                           type= "pvalue",maxpvalue=maxpvalue,pos=pos)
       } else {
@@ -378,7 +372,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
    	for (counter in 1:dt[3]) posNew[counter+dt[1]+dt[2]] = counter  
         fmri.view2d(anatomic,col=mri.colors(255,255)$all,
                           weights=x$weights, scale=scale,scalecol=mri.colors(255,255)$col,
-                          type= "pvalue",maxpvalue=maxpvalue,posNew=posNew)
+                          type= "pvalue",maxpvalue=maxpvalue,posNew=posNew,localx=x)
       }
     }
 
@@ -418,7 +412,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
    	for (counter in 1:dt[3]) posNew[counter+dt[1]+dt[2]] = counter  
        fmri.view2d(signal,col=mri.colors(255,0)$gray,
                           weights=x$weights, scale=scale,scalecol=mri.colors(255,0)$gray,
-                          type= "spm",maxpvalue=maxpvalue,posNew=posNew)
+                          type= "spm",maxpvalue=maxpvalue,posNew=posNew,localx=x)
     }
   } else if ("fmridata" %in% class(x)) {
     signal <- extract.data(x)
@@ -444,7 +438,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
       for (counter in 1:dt[3]) posNew[counter+dt[1]+dt[2]] = counter  	
       fmri.view2d(signal,col=mri.colors(255,0)$gray,
                           weights=x$weights, scale=scale,scalecol=mri.colors(255,0)$gray,
-                          type= "data",maxpvalue=maxpvalue,posNew=posNew)
+                          type= "data",maxpvalue=maxpvalue,posNew=posNew,localx=x)
     }
 
   } else {
@@ -460,7 +454,7 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
                         hrf=rep(0,100), quant =3, maxpvalue = 0.05,pos=c(-1,-1,-1)) {
   # check wether Tk/Tcl environment is present
   if (!require(tkrplot))
-    stop("required package tkrplot not found. Please install from cran.r-project.org")
+    stop("required package mytkrplot not found. Please install from cran.r-project.org")
 
   # some basic data properties
   dt <- dim(ttt)
@@ -716,16 +710,13 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 
 fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ext = 1, weights =
                         c(1,1,1), scale=c(0,1), scalecol = col,
-                        hrf=rep(0,100), quant =3, maxpvalue = 0.05,posNew=c(-1,-1,-1)) {
+                        hrf=rep(0,100), quant =3, maxpvalue = 0.05,posNew=c(-1,-1,-1), localx) {
 	
-	 if (!require(tkrplot))
-           stop("required package tkrplot not found. Please install from cran.r-project.org")
-		
 	 nrpics = 3
 	 sliceslist <- c()
-	 # check wether Tk/Tcl environment is present
- 	 #if (!require(tkrplot))
- 	 #  stop("required package tkrplot not found. Please install from cran.r-project.org")
+	 # check whether Tk/Tcl environment is present
+ 	 if (!require(tkrplot))
+ 	   stop("required package mytkrplot not found. Please install from cran.r-project.org")
 
  	 # some basic data properties
   	 dt <- dim(ttt)
@@ -759,7 +750,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	 posvThreshold <- lapply(posThreshold,helpFunc) # only needed if type=="spm"
 	 posvTime <- lapply(posTime,helpFunc) # only needed if type=="data"	
 
- 	 fmri.image <- function(which,hscale,vscale, slicenr=-1) {
+ 	 fmri.image <- function(which,hscale,vscale, slicenr=-1,toplevel,overview=FALSE) {
 	   switch(which, x = {
  	     f <- function() {
 	       oldpar <- par(mar=c(0,0,0,0))
@@ -810,7 +801,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
  	     }
  	   })      
  	   # create the Tk-widget
-	   mytkrplot(tt, f, hscale=hscale, vscale=vscale,slicenr,which,frameSlicesList[[1]])				
+	   mytkrplot(toplevel, f, hscale=hscale, vscale=vscale,slicenr,which,frameSlicesList[[1]],2,overview)				
  	 }
 	
  	 fmri.slider <- function(i) {
@@ -954,7 +945,6 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
  	     mytkrplot(tt, f, hscale=0.8, vscale=0.05,typeV=3)
  	   }, "pvalue" = {
  	     f <- function() {
-		print("in f")
 		value <- -log(maxpvalue)
  	       #if (ttt[pos[1],pos[2],pos[3]] <= 0.5) {
  	        # value <- -log(maxpvalue)
@@ -999,7 +989,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
  	       text(-log(0.000000001),scale[1]+0.01*diff(scale),pos=4,"1e-9")
 	     }
  	     # create the Tk-widget
-		 mytkrplot(tt, f, hscale=0.8, vscale=0.05,typeV=3)
+		mytkrplot(tt, f, hscale=0.8, vscale=0.05,typeV=3)
 	      })
  	 }
  	 
@@ -1036,19 +1026,19 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
  	 img <- list()
 	 print("Creating sagittal slices ...")	
  	 for (i in 1:dt[1]){
-		img[[i]] = fmri.image("x",1,2*dt[3]/dt[1]*weights[3],i)
+		img[[i]] = fmri.image("x",1,2*dt[3]/dt[1]*weights[3],i,toplevel=tt)
 		hscaleList[i] = 1
 		vscaleList[i] = 2*dt[3]/dt[1]*weights[3]	
  	 }
 	 print("Creating axial slices ...")		
  	 for (i in 1:dt[2]){
-		img[[i+dt[1]]] = fmri.image("y",1,2*dt[3]/dt[2]*weights[3],i)
+		img[[i+dt[1]]] = fmri.image("y",1,2*dt[3]/dt[2]*weights[3],i,toplevel=tt)
 		hscaleList[i+dt[1]] = 1
 		vscaleList[i+dt[1]] = 2*dt[3]/dt[2]*weights[3]	
  	 }
 	 print("Creating coronal slices ...")	
  	 for (i in 1:dt[3]){
-		img[[i+dt[1]+dt[2]]] = fmri.image("z",hsc,vsc,i)
+		img[[i+dt[1]+dt[2]]] = fmri.image("z",hsc,vsc,i,toplevel=tt)
 		hscaleList[i+dt[1]+dt[2]] = hsc
 		vscaleList[i+dt[1]+dt[2]] = vsc	
  	 }
@@ -1072,8 +1062,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	scaleL <- list(fmri.scale(type,scale,scalecol))
 	tkgrid(scaleL[[1]],pady=5)
 	scaleHeight <- (2*5 + as.numeric(tkwinfo("height",scaleL[[1]])))
-	print(scaleHeight)
- 	
+	
  	rbValue <- tclVar(3)
 	t2 <- list()
 	
@@ -1164,17 +1153,11 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		colsVec[nrpages] <<- colshelp
 		rowsVec[nrpages] <<- rowshelp
 	
-		print("heights")
-		print(sliderheight)
-		print(scaleHeight)
-
 		hscaleNew = (0.9*screenwidth)/(480*colsVec[currPage])
 		vscaleNew = (0.8*screenheight-sliderBottomHeight-scaleHeight-((as.integer(tclvalue(cbVar))+1)%%2)*rowsVec[currPage]*sliderheight)/(480*rows)
 		hscaleNewLast = (0.9*screenwidth)/(480*colshelp)
 		vscaleNewLast = (0.8*screenheight-sliderBottomHeight-scaleHeight-((as.integer(tclvalue(cbVar))+1)%%2)*rowshelp*sliderheight)/(480*rowshelp)
 		
-		print(hscaleNew)
-	
 		if (as.integer(tclvalue(ksVar))==1) {	
 			helpVec = c(-1,-1)		
 			index = 1			
@@ -1184,7 +1167,6 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 					index = index + 1	
 				}
 			}
-			print(helpVec)
 			if (dt[helpVec[1]]>dt[helpVec[2]]){
 				vscaleNew = hscaleNew*(dt[helpVec[2]]/dt[helpVec[1]]) 
 				vscaleNewLast = hscaleNewLast*(dt[helpVec[2]]/dt[helpVec[1]]) 
@@ -1195,8 +1177,6 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			}			
 		}
 		
-		print(hscaleNew)
-
 		curr = 1
 		while (curr!=(nrslices+1)){
 			if ((curr <= (nrslicesVec[1]*(nrpages-1)) && (hscaleNew == hscaleList[sliceslist[curr]]) && (vscaleNew == vscaleList[sliceslist[curr]])) || (curr > (nrslicesVec[1]*(nrpages-1)) && (hscaleNewLast == hscaleList[sliceslist[curr]]) && (vscaleNewLast == vscaleList[sliceslist[curr]]))) {
@@ -1273,6 +1253,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				}
 			}
 		}
+
 
 		# EVTL UNNOETIG VGL MIT PROBLEMEN 17-20, tkconfigure noetig aber auch nahc oben verschiebbar
 		for (i in 1:nrslices){
@@ -1383,11 +1364,298 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	}
 	
 	call3d <- function(){
-		plot.fmridata(globalx,ttt,type="3d")
+		plot.fmridata(localx,ttt,type="3d")
 	}
 
 	extractImages <- function(){
-		print("hello world")
+			if (!require(adimpro))
+   				 stop("required package adimpro not found. Please install from cran.r-project.org")	
+			quitttImgSelect <- function(){
+				tkdestroy(ttImgSelect)
+			}
+			currentFileName = "unspecified"
+			filePathFinal = "unspecified"
+			chosenSlices <- c()
+			slicesCounter <- 0		
+
+			chooseFileNameGeneral <- function(){
+				print("in chooseFileNameGen")
+				imageFile <- tclVar()	
+				if (as.character(tclvalue(rbFF)) == "ppm")  tclvalue(imageFile) <- tkgetSaveFile(filetypes ="{{Image file} {.ppm}}",title="Save Images")  
+				if (as.character(tclvalue(rbFF)) == "jpeg") tclvalue(imageFile) <- tkgetSaveFile(filetypes ="{{Image file} {.jpeg}}",title="Save Images")  
+				if (as.character(tclvalue(rbFF)) == "png")  tclvalue(imageFile) <- tkgetSaveFile(filetypes ="{{Image file} {.png}}",title="Save Images")  
+				if (as.character(tclvalue(rbFF)) == "tif")  tclvalue(imageFile) <- tkgetSaveFile(filetypes ="{{Image file} {.tif}}",title="Save Images")
+				# check file extension				
+				help <- tolower(unlist(strsplit(as.character(tclvalue(imageFile)),"")))
+				nrChars <- length(help)		
+				if (nrChars <=4 || !((help[nrChars-3]=="." && help[nrChars-2]=="p" && help[nrChars-1]=="p" && help[nrChars]=="m") || (help[nrChars-3]=="." && help[nrChars-2]=="p" && help[nrChars-1]=="n" && help[nrChars]=="g") || (help[nrChars-3]=="." && help[nrChars-2]=="t" && help[nrChars-1]=="i" && help[nrChars]=="f") || (help[nrChars-4]=="." && help[nrChars-3]=="j" && help[nrChars-2]=="p" && help[nrChars-1]=="e" && help[nrChars]=="g"))){
+					filePath <- paste(as.character(tclvalue(imageFile)),paste(".",as.character(tclvalue(rbFF)),sep=""),sep="")
+				}
+				else {
+					filePath <- as.character(tclvalue(imageFile))
+				}  
+				help <- unlist(strsplit(filePath,""))
+				nrChars <- length(help)
+				index = -1
+				if (help[nrChars-3]==".") index = (nrChars-3)
+				else index = (nrChars-4)
+				print("index:")
+				print(index)
+				print(tclvalue(rbValue))
+				filePathFinal = ""
+				for (j in 1:index-1) filePathFinal <- paste(filePathFinal,help[j],sep="")
+				if (viewAxis==3) filePathFinal <- paste(filePathFinal,"Axial",sep="")
+				if (viewAxis==2) filePathFinal <- paste(filePathFinal,"Sagittal",sep="")
+				if (viewAxis==1) filePathFinal <- paste(filePathFinal,"Coronal",sep="")	
+				filePathFinal <<- paste(filePathFinal,"Slice",sep="")
+				ending = ""
+				for (j in (index+1):nrChars) ending <- paste(ending,help[j],sep="")
+				tclvalue(rbFF) = ending
+			}
+
+			chooseFileNameExactly <- function(overwrite=FALSE,nrofChosen=1){ #nrofchosen is the position of the current processed slice in chosenSlices
+				if (viewAxis==3) slicenr <- chosenSlices[nrofChosen]-dt[1]-dt[2]	
+				if (viewAxis==2) slicenr <- chosenSlices[nrofChosen]-dt[1]
+				if (viewAxis==1) slicenr <- chosenSlices[nrofChosen]			
+				print("in chooseFileNameEx ... slicenr:")
+				print(slicenr)
+				print(filePathFinal)
+				print(as.character(tclvalue(rbFF)))
+				filePathFinal <- paste(filePathFinal,slicenr,sep="")
+				#for (j in index:nrChars) filePathFinal <- paste(filePathFinal,help[j],sep="")
+				filePathFinal <- paste(filePathFinal,paste(".",as.character(tclvalue(rbFF)),sep=""),sep="") #.fileformat appended
+				if (overwrite == FALSE){
+					pathSplitted <- unlist(strsplit(filePathFinal,""))
+					noSeparator = TRUE
+					indexSep = length(pathSplitted)							
+					while (noSeparator){
+						if (pathSplitted[indexSep]==.Platform$file.sep){
+							noSeparator = FALSE
+						}
+						indexSep = indexSep - 1
+					}
+					pathCutted = ""
+					cuttedPart = ""
+					for (k in 1:indexSep) pathCutted <- paste(pathCutted,pathSplitted[k],sep="")
+					for (k in (indexSep+2):length(pathSplitted)) cuttedPart <- paste(cuttedPart,pathSplitted[k],sep="")
+					print(pathCutted)
+					print(cuttedPart)
+					listFiles <- list.files(pathCutted)
+					conflict = FALSE
+					for (k in 1:length(listFiles)){
+						if (listFiles[k]==cuttedPart) {
+							conflict = TRUE
+							quitttWarn <- function(){
+								tkdestroy(ttWarn)
+								currentFileName <<- filePathFinal
+								writeImage(nrofChosen)
+								overwrite = TRUE										
+							}
+							otherName <- function(){
+								tkdestroy(ttWarn)
+								chooseFileNameGeneral()
+								chooseFileNameExactly(FALSE,nrofChosen)
+							}
+							print("Doppelt!!!!")
+							ttWarn <- tktoplevel(bg=wiasblue)
+							framettWarn1 <- tkframe(ttWarn,bg=wiasblue)
+							framettWarn2 <- tkframe(ttWarn,bg=wiasblue)
+							contButton <- tkbutton(framettWarn2,text="Continue",command=quitttWarn,bg=wiaslightblue)
+							alternButton <- tkbutton(framettWarn2,text="Other filename",command=otherName,bg=wiaslightblue)
+							tkgrid(tklabel(framettWarn1,bg=wiasblue,text= paste("Do you really want to overwrite the file?",cuttedPart))) 
+							tkgrid(framettWarn1,pady=5)
+							tkgrid(contButton,alternButton,padx=10)
+							tkgrid(framettWarn2,padx=10,pady=5)
+						}								
+					}
+					if (conflict == FALSE) {
+						currentFileName <<- filePathFinal	
+						writeImage(nrofChosen)	
+					}
+				}
+				else {
+					currentFileName <<- filePathFinal		
+					writeImage(nrofChosen)				
+				}							
+			}
+
+			writeImage <- function(nrofChosen){
+				print("in write image")
+				print(currentFileName)
+				print(chosenSlices[nrofChosen]-dt[1])
+				if (viewAxis==3) tmp <- make.image(ttt[,,chosenSlices[nrofChosen]-dt[1]-dt[2]],gamma=TRUE)
+				if (viewAxis==2) tmp <- make.image(ttt[,chosenSlices[nrofChosen]-dt[1],],gamma=TRUE)
+				if (viewAxis==1) tmp <- make.image(ttt[chosenSlices[nrofChosen],,],gamma=TRUE)	
+				show.image(tmp)
+				write.image(tmp,currentFileName)
+				if (nrofChosen < slicesCounter) chooseFileNameExactly(FALSE,nrofChosen+1)
+			}
+
+			onNext <- function(){ # TODO: Check that name is not forgiven								
+				for (i in 1:dt[viewAxis]){
+					if (as.integer(tclvalue(cbVars[[i]]))==1) {
+						slicesCounter <<- slicesCounter +1
+						if (viewAxis==1) chosenSlices[slicesCounter] <<- i
+						if (viewAxis==2) chosenSlices[slicesCounter] <<- dt[1] + i
+						if (viewAxis==3) chosenSlices[slicesCounter] <<- dt[1] + dt[2] + i	
+						
+					}
+				}
+				if (slicesCounter>0){
+					chooseFileNameGeneral()
+					chooseFileNameExactly(FALSE,1)
+				}
+				else {
+					quitttError <- function(){ tkdestroy(ttError) }
+					ttError <- tktoplevel(bg=wiasblue)
+					tkgrid(tklabel(ttError,text="No file was selected.",bg=wiasblue),padx=10,pady=10)
+					tkgrid(tkbutton(ttError,text="Ok",command=quitttError,bg=wiaslightblue),padx=10,pady=10)
+				}
+				
+				#writeImage called from chooseFileName
+			}
+
+			toFileFormat <- function(){
+				tkdestroy(ttImgSelect) # Menu1 closed 
+				onNextHelp <- function(){
+					tkdestroy(ttFF)	# Menu2 closed
+					onNext()			
+				}
+	
+				imgmagickInstalled = FALSE
+				if (.Platform$OS.type == "windows") {
+					a <- system(paste(convert.path,"-version"),FALSE)
+						if (a >= 0) {
+							imgmagickInstalled = TRUE	
+					}		
+				}
+				else { # unix
+					if (.Platform$OS.type != "unix") warning("never tested this OS. maybe we cannot proceed here.\n")
+						a <- system("convert -version",TRUE,TRUE)
+									if (length(grep("ImageMagick",a,ignore.case=TRUE)) > 0) {
+							imgmagickInstalled = TRUE
+					}          
+				}
+				print("installed ??")
+				print(imgmagickInstalled)
+			
+				#if (2==1){
+				if (imgmagickInstalled){
+					ttFF = tktoplevel(bg=wiasblue)
+					tkwm.title(ttFF, "Extract Images - File format")
+			
+					frameFF1 <- tkframe(ttFF,relief="groove",borderwidth=0,bg=wiasblue)
+					frameFF2 <- tkframe(ttFF,relief="groove",borderwidth=0,bg=wiasblue)
+					frameFF3 <- tkframe(ttFF,relief="groove",borderwidth=0,bg=wiasblue)
+					rbFF1 <- tkradiobutton(frameFF2,bg=wiasblue)
+					rbFF2 <- tkradiobutton(frameFF2,bg=wiasblue)
+					rbFF3 <- tkradiobutton(frameFF2,bg=wiasblue)
+					rbFF4 <- tkradiobutton(frameFF2,bg=wiasblue)
+					nextButton <- tkbutton(frameFF3,text="next ",command=onNextHelp, bg=wiaslightblue)
+					tkconfigure(rbFF1,variable=rbFF,value="ppm",bg=wiasblue)
+					tkconfigure(rbFF2,variable=rbFF,value="jpeg",bg=wiasblue)
+					tkconfigure(rbFF3,variable=rbFF,value="png",bg=wiasblue)
+					tkconfigure(rbFF4,variable=rbFF,value="tif",bg=wiasblue)	
+					tkgrid(tklabel(frameFF1,text="Choose your preferred file format",bg = wiasblue,font="Arial 12 bold"))
+					tkgrid(frameFF1,sticky="ew")
+					tkgrid(tklabel(frameFF2,text="ppm ",bg = wiaslightblue,font="Arial 12"),rbFF1,tklabel(frameFF2,text="jpeg ",bg = wiaslightblue,font="Arial 12"), rbFF2, padx=30,pady=10)
+					tkgrid(tklabel(frameFF2,text="png ",bg = wiaslightblue,font="Arial 12"),rbFF3,tklabel(frameFF2,text="tif ",bg = wiaslightblue,font="Arial 12"), rbFF4, padx=30,pady=10)
+					tkgrid(frameFF2,sticky="ew")
+					tkgrid(nextButton,padx=30,pady=10)
+					tkgrid(frameFF3)	
+				}
+				else {
+					tclvalue(rbFF) <- "ppm"
+					onNext()
+				}
+			}
+
+			selectAll <- function(){
+				for (i in 1:dt[viewAxis]) tclvalue(cbVars[[i]]) <- 1
+			}
+			
+			deselectAll <- function(){
+				for (i in 1:dt[viewAxis]) tclvalue(cbVars[[i]]) <- 0
+			}
+			
+			ttImgSelect <- tktoplevel(bg=wiasblue)
+			tkwm.title(ttImgSelect, "Extract Images - Slices Choice")			 
+
+			imgSelectFrom <- list()
+	 		viewAxis = as.integer(tclvalue(rbValue))
+
+			cols <- rows <- ceiling(sqrt(dt[viewAxis]+1))
+  			while ((rows-1)*cols >= (dt[viewAxis]+1)) rows <- rows-1
+			if (((cols-1)*rows==dt[viewAxis])) cols <- cols-1
+			help <- 0		
+			if (cols<rows){
+				help = cols
+				cols <- rows
+				rows <- help
+			} 		
+				
+			hsc = (0.9*as.numeric(tkwinfo("screenwidth", ttImgSelect)))/(480*cols)
+			vsc = (0.8*as.numeric(tkwinfo("screenheight", ttImgSelect))-rows*20)/(480*rows)
+
+			if (viewAxis == 1) for (i in 1:dt[1]) imgSelectFrom[[i]] = fmri.image("x",hsc,vsc,i,toplevel=ttImgSelect,overview=TRUE)
+			if (viewAxis == 2) for (i in 1:dt[2]) imgSelectFrom[[i]] = fmri.image("y",hsc,vsc,i,toplevel=ttImgSelect,overview=TRUE)
+			if (viewAxis == 3) for (i in 1:dt[3]) imgSelectFrom[[i]] = fmri.image("z",hsc,vsc,i,toplevel=ttImgSelect,overview=TRUE)
+
+			helpFunc1 <- function(a){
+				a <- tclVar("0")	
+			}	
+			helpFunc2 <- function(a){
+				print(a)
+				a <- tkcheckbutton(ttImgSelect,text="",variable=cbVars[[as.integer(a)]],bg="#BBDDEC")
+			}
+			
+			cbVars <- lapply(1:dt[viewAxis], helpFunc1)
+			cboxSelects <- lapply(1:dt[viewAxis], helpFunc2)
+			
+			# currently viewed slices preselected
+			nrslicesCurr <- as.integer(tclvalue(nrSlices))	
+			sum = 0
+			if (viewAxis==2) sum = dt[1]
+			if (viewAxis==3) sum = dt[1] + dt[2]
+			for (i in 1:dt[viewAxis]){
+				for (j in 1:nrslicesCurr){ # a bit redundant
+					if (sliceslist[j]==(sum+i)){
+						tclvalue(cbVars[[i]]) = 1			
+					}				
+				}
+			}
+			
+			for (j in 1:rows){
+				for (l in 1:cols){
+					if ((j-1)*cols+l-1 < dt[viewAxis]){
+						tkgrid.configure(imgSelectFrom[[(j-1)*cols+l]],column=l,row=2*j-1) 
+						tkgrid.configure(cboxSelects[[(j-1)*cols+l]],column=l,row=2*j)
+					}
+				}
+			}
+
+			next2Button <- tkbutton(ttImgSelect,text="Next",command = toFileFormat,bg=wiaslightblue)
+			selAllButton <- tkbutton(ttImgSelect,text="Select All",command = selectAll,bg=wiaslightblue)
+			deselAllButton <- tkbutton(ttImgSelect,text="Deselect All",command = deselectAll,bg=wiaslightblue)
+			quitttImgButton <- tkbutton(ttImgSelect,text="Quit",command = quitttImgSelect,bg=wiaslightblue)
+			tkgrid.configure(tklabel(ttImgSelect,text="",bg=wiasblue),column=1,row=2*rows+1)
+			if (cols>=4) {
+				middle = ceiling(cols/2)
+				tkgrid.configure(next2Button,column=middle-1,row=2*rows+2)
+				tkgrid.configure(selAllButton,column=middle,row=2*rows+2)
+				tkgrid.configure(deselAllButton,column=middle+1,row=2*rows+2)
+				tkgrid.configure(quitttImgButton,column=middle+2,row=2*rows+2)	
+			}
+			else {
+				if (cols==1) tkgrid.configure(next2Button,column=1,row=2*rows+2)
+				if (cols==2 || cols==3) {
+					tkgrid.configure(next2Button,column=1,row=2*rows+2)
+					tkgrid.configure(quitttImgSelect,column=2,row=2*rows+2)				
+				}			
+			}
+			tkgrid.configure(tklabel(ttImgSelect,text="",bg=wiasblue),column=1,row=2*rows+3)
+
+			rbFF <- tclVar("ppm")	
 	}
 
 	helpFunction <- function(){	
@@ -1396,7 +1664,14 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			}
 			ttHelp = tktoplevel(bg=wiasblue)
 			tkwm.title(ttHelp, "Help")
-			helptext = "You have got many possibilities. Just try it!!"
+			
+			helptextIntr = "By using plot on fmridata, that is the data set, the statistical parametric map and the pvalues, \n you can view and analyze the fmri data.\n \n \n"	
+			helptextViewOpt="Viewing Options \n \n You are able to choose between coronal,sagittal and axial planes. Furthermore you can \n decide how many slices shall be selected and how many of these shown at once. If you \nchoose the number of slices shown at once smaller than the number of selected slices, there \n will appear an arrow on the right side. With the help of this arrow you can go to next \npage, and the next slices will be presented. To confirm your choice on the number of slices \n and the viewing direction press the button 'Change View/Slices'. If you are not on\n page one, you are able to go back to this by using the arrow on the left side. Below each\n slice there is a slider, which you can use to slide between the slices of the current\n viewing direction. To remove the sliders press 'Hide Sliders'. By selecting 'Keep Aspect \n Ratio' the original heigth-to-width ratio is rebuilt. If this is unselected, the slice will\n be plotted nearly quadratic. To view a slice of each viewing direction at the same time press\n 'View 3d'.In the first row below the slices there is printed a scale, which interpolates\n between the colours red(lowest value) and white(highest value) or grey(lowest value) and\n white (highest value). If you have plotted the statistival parametric map, in the \nlast row there will be a slider which can be used to determine the threshold. Instead of the\n threshold the time can be chosen by a slider, if you plotted the data set.\n \n \n"
+			helptextSave="Save Results \n \n If you want to save your results the button 'Extract Images' gives you a comfortable \n possibility to do so. Fist you have to select all desired slices, To select/ deselect all\n slices use the corresponding button. To continue use 'Next'. If Image Magick is installed on\n your system you can choose between the image types ppm, jpeg, png and tif. If not ppm will\n automatically be taken. In the last step you have to choose a filename and filedirectory.\n To ensure not to overwrite existing data, it will be checked that this filedirectory/\nfileadress is not forgiven. If it is forgiven you will be warned, but still got the oppurti-\nnity to continue. The images will now be written in your chosen directory as [chosen \nfilename][viewing direction]Slice[slicenumber].[filetype]."		
+			helptext = paste(paste(helptextIntr,helptextViewOpt,sep=""),helptextSave,sep="")
+			#helptext = paste(helptextIntr,helptextViewOpt,sep="")
+			#print(helptext)
+			#helptext = "You have got many possibilities. Just try it!!"
 			helpFrame1 = tkframe(ttHelp,bg=wiasblue)
 			helpLabel = tklabel(helpFrame1,text=helptext,font="Arial 13",bg=wiasblue)
 			helpFrame2 = tkframe(ttHelp,bg=wiasblue)	
@@ -1489,8 +1764,8 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	tkgrid(frame0)
 	tkgrid(nrSlicesLabel,nrSlicesEntry,nrSlicesppLabel,nrSlicesppEntry,changeButton,viewAllButton,padx=10,pady=5)
 	tkgrid(frame1)	
-	# tkgrid(cboxSlider,keepSides,dButton,extractButton,helpButton,padx=10,pady=5) # for HELP and adimpro
-	tkgrid(cboxSlider,keepSides,dButton,padx=10,pady=5)
+	tkgrid(cboxSlider,keepSides,dButton,extractButton,helpButton,padx=10,pady=5) # for HELP and adimpro
+	#tkgrid(cboxSlider,keepSides,dButton,padx=10,pady=5)
 	tkgrid(frame2)	
 		
 	sliderBottomHeight <- 0
@@ -1500,7 +1775,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		tkgrid(thres[[1]])
 		sliderBottomHeight <- (as.numeric(tkwinfo("height",thres[[1]])) + 5)
 	}
-        if (type=="data") {
+    if (type=="data") {
 		time <- c(fmri.slider(-1.))
 		tkgrid(time[[1]])
 		sliderBottomHeight <- (as.numeric(tkwinfo("height",time[[1]])) + 5)
@@ -1699,6 +1974,7 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "axial",
       }
     }
   }
+  print("hier war ich !!!!")	
 
   invisible(img)
 }
