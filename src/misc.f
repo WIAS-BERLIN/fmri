@@ -351,26 +351,33 @@ C  correlation in x
       end
 
       subroutine ivar(res,resscale,mask,n1,n2,n3,nv,var)
-
+C
+C   compute variance estimates !!! (not the inverse)
+C
       implicit logical(a-z)
       integer n1,n2,n3,nv
       real*8 resscale,var(n1,n2,n3),res(nv,n1,n2,n3)
       logical mask(n1,n2,n3)
-      real*8 z2,zk,resi,ressc2
+      real*8 z2,zk,resi,ressc2,z1,zkf
       integer i1,i2,i3,i4
       zk=nv
       ressc2=resscale*resscale
+      zkf=zk/(zk-1.d0)
       do i1=1,n1
          do i2=1,n2
             do i3=1,n3
                var(i1,i2,i3)=1.d20
                if (.not.mask(i1,i2,i3)) CYCLE
                z2=0.d0
+               z1=0.d0
                do i4=1,nv
                   resi=res(i4,i1,i2,i3)
+                  z1=z1+resi
                   z2=z2+resi*resi
                enddo
-               var(i1,i2,i3)=z2/(zk-1.d0)*ressc2
+               z1 = z1/zk
+               z2 = z2/zk
+               var(i1,i2,i3)=zkf*(z2-z1*z1)*ressc2
             enddo
          enddo
       enddo

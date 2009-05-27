@@ -6,8 +6,8 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussia
   }
   ladjust <- if("ladjust" %in% names(list(...))) list(...)[["ladjust"]] else 1
   fov <- if("fov" %in% names(list(...))) list(...)[["fov"]] else NULL
-  thresh <- if("thresh" %in% names(list(...))) list(...)[["thresh"]] else 3.5
   delta <- if("delta" %in% names(list(...))) list(...)[["delta"]] else 0
+  alpha <- if("alpha" %in% names(list(...))) list(...)[["alpha"]] else 0.05
   propagation <- if("propagation" %in% names(list(...))) list(...)[["propagation"]] else FALSE
 
   if (!("fmrispm" %in% class(spm))) {
@@ -50,9 +50,9 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussia
                          vwghts = spm$vwghts,lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
                          resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust),
                    "segment"=segm3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
-                         wghts=weights, h0=bw,lkern=lkern,weighted=weighted,res=spm$res,
+                         wghts=weights, df=spm$df, h0=bw,weighted=weighted,res=spm$res,
                          resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust,delta=delta,
-                         thresh=thresh,fov=fov))
+                         fov=fov,alpha=alpha))
   cat("\n")
   
   cat("fmri.smooth: determine local smoothness\n")

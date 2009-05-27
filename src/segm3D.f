@@ -3,10 +3,9 @@ C
 C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine segm3d(y,res,si2,mask,wlse,n1,n2,n3,nt,hakt,
-     1                  lambda,theta,bi,thn,kern,spmin,spmax,
-     2                  lwght,wght,swres,delta,pvalue,segm,
-     3                  thresh,fov,varest)
+      subroutine segm3d(y,fix,res,si2,mask,wlse,n1,n2,n3,nt,hakt,
+     1                  lambda,theta,bi,thn,lwght,wght,swres,pval,
+     3                  segm,beta,vq,delta,thresh,step,fov,varest)
 C
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
@@ -21,19 +20,20 @@ C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
 C
       implicit logical (a-z)
-      integer n1,n2,n3,nt,kern,segm(n1,n2,n3)
-      logical aws,wlse,mask(n1,n2,n3)
+      integer n1,n2,n3,nt,kern,segm(n1,n2,n3),step
+      logical aws,wlse,mask(n1,n2,n3),fix(n1,n2,n3)
       real*8 y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),delta,thresh,
-     1       thn(n1,n2,n3),lambda,spmax,wght(2),si2(n1,n2,n3),
-     1       hakt,lwght(1),spmin,thi,getlwght,swres(nt),fov,
-     1       varest(n1,n2,n3),res(nt,n1,n2,n3),pvalue(n1,n2,n3)
+     1      thn(n1,n2,n3),lambda,wght(2),si2(n1,n2,n3),pval(n1,n2,n3),
+     1      hakt,lwght(1),thi,getlwght,swres(nt),fov,beta,
+     1      varest(n1,n2,n3),res(nt,n1,n2,n3),vq
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
       real*8 bii,swj,swjy,wj,hakt2,spf,si2j,si2i,swjv,cofh,
-     1       varesti,fpchisq,ti,thij,sij,z,si
+     1       varesti,fpchisq,ti,thij,sij,z,si,swr,z1
       external getlwght,fpchisq
+      kern=1
       hakt2=hakt*hakt
-      spf=spmax/(spmax-spmin)
+      spf=4.d0/3.d0
       ih1=hakt
       aws=lambda.lt.1d40
 C
@@ -54,6 +54,7 @@ C    get location weights
 C
       call locwghts(dlw1,dlw2,dlw3,wght,hakt2,kern,lwght)
       call rchkusr()
+      IF(hakt.gt.1.25) THEN
       DO i3=1,n3
          DO i2=1,n2
             DO i1=1,n1
@@ -63,14 +64,20 @@ C
                END IF
                thi=theta(i1,i2,i3)
                si2i=si2(i1,i2,i3)
-               varesti=varest(i1,i2,i3)
-               cofh=sqrt(2.d0*log(2.d0*varesti*si2i*fov))
+               varesti=varest(i1,i2,i3)/vq
+               cofh=sqrt(beta*log(varesti*si2i*fov))-0.17d0*(step-1.)
                ti=max(0.d0,abs(thi)-delta)
-            pvalue(i1,i2,i3)=min(1.d0,thresh/(abs(thi)/sqrt(varesti)))
+               IF(ti/sqrt(varesti)-cofh.gt.thresh) THEN
+C                  fix(i1,i2,i3)=.TRUE.
+                   pval(i1,i2,i3)=1.d0
+               ELSE
+C                  fix(i1,i2,i3)=.FALSE.
+                   pval(i1,i2,i3)=fpchisq(ti*si2i,1.d0,1,0)
+               END IF
             END DO
          END DO
       END DO
-               
+      END IF 
 C   scaling of sij outside the loop
       DO i3=1,n3
          DO i2=1,n2
@@ -79,6 +86,7 @@ C   scaling of sij outside the loop
                   thn(i1,i2,i3)=0.d0
                   CYCLE
                END IF
+               IF (fix(i1,i2,i3)) CYCLE
                si2i=si2(i1,i2,i3)
                varesti=varest(i1,i2,i3)
                bii=bi(i1,i2,i3)/lambda
@@ -105,14 +113,15 @@ C  first stochastic term
                         si2j=si2(j1,j2,j3)
                         IF (aws) THEN
                            thij=thi-theta(j1,j2,j3)
-                           IF(segm(i1,i2,i3)*segm(j1,j2,j3).gt.0) THEN
-                              sij=max(pvalue(i1,i2,i3),
-     1                        pvalue(j1,j2,j3)*thij*thij*bii)
-                           ELSE
-                              sij=thij*thij*bii
+                           sij=thij*thij*bii
+                           if(segm(i1,i2,i3)*segm(j1,j2,j3).gt.0) THEN
+C
+C   allow for nonadaptive smoothing if values are in the same segment
+C
+                            sij=max(pval(i1,i2,i3),pval(j1,j2,j3))*sij
                            END IF
                            IF(sij.gt.1.d0) CYCLE
-                        IF(sij.gt.spmin) wj=wj*(1.d0-spf*(sij-spmin))
+                        IF(sij.gt.0.25d0) wj=wj*(1.d0-spf*(sij-0.25d0))
                         END IF
                         if(wlse) THEN 
                            wj=wj*si2j
@@ -127,8 +136,11 @@ C  weighted sum of residuals
                   END DO
                END DO
                z=0.d0
+               z1=0.d0
                DO k=1,nt
-                  z=z+swres(k)*swres(k)/swj/swj
+                  swr=swres(k)/swj
+                  z1=z1+swr
+                  z=z+swr*swr
                END DO
                thi=swjy/swj
                thn(i1,i2,i3)=thi
@@ -137,16 +149,18 @@ C  weighted sum of residuals
                ELSE
                   bi(i1,i2,i3)=swj*swj/swjv
                END IF
-               si = z/nt
+               z1=z1/nt
+               si = (z/nt - z1*z1)
+               si = si/nt
                varest(i1,i2,i3)=si
-               cofh = sqrt(2.d0*log(2.d0*varesti*si2i*fov))
-               si=sqrt(si/(nt-1))
+               cofh = sqrt(beta*log(si/vq*si2i*fov))-0.17d0*step
+               si=sqrt(si/vq)
                if((thi+delta)/si+cofh.lt.-thresh) THEN
                   segm(i1,i2,i3)=-1
                ELSE IF ((thi-delta)/si-cofh.gt.thresh) THEN
                   segm(i1,i2,i3)=1
-               ELSE
-                  segm(i1,i2,i3)=0
+C               ELSE
+C                  segm(i1,i2,i3)=0
                END IF
                call rchkusr()
             END DO
