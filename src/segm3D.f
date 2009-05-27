@@ -25,11 +25,11 @@ C
       real*8 y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),delta,thresh,
      1      thn(n1,n2,n3),lambda,wght(2),si2(n1,n2,n3),pval(n1,n2,n3),
      1      hakt,lwght(1),thi,getlwght,swres(nt),fov,beta,
-     1      varest(n1,n2,n3),res(nt,n1,n2,n3),vq
+     1      varest(n1,n2,n3),res(nt,n1,n2,n3),vq(n1,n2,n3)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
       real*8 bii,swj,swjy,wj,hakt2,spf,si2j,si2i,swjv,cofh,
-     1       varesti,fpchisq,ti,thij,sij,z,si,swr,z1
+     1       varesti,fpchisq,ti,thij,sij,z,si,swr,z1,vqi
       external getlwght,fpchisq
       kern=1
       hakt2=hakt*hakt
@@ -64,7 +64,7 @@ C
                END IF
                thi=theta(i1,i2,i3)
                si2i=si2(i1,i2,i3)
-               varesti=varest(i1,i2,i3)/vq
+               varesti=varest(i1,i2,i3)/vq(i1,i2,i3)
                cofh=sqrt(beta*log(varesti*si2i*fov))-0.17d0*(step-1.)
                ti=max(0.d0,abs(thi)-delta)
                IF(ti/sqrt(varesti)-cofh.gt.thresh) THEN
@@ -86,6 +86,7 @@ C   scaling of sij outside the loop
                   thn(i1,i2,i3)=0.d0
                   CYCLE
                END IF
+               vqi=vq(i1,i2,i3)
                IF (fix(i1,i2,i3)) CYCLE
                si2i=si2(i1,i2,i3)
                varesti=varest(i1,i2,i3)
@@ -153,8 +154,8 @@ C  weighted sum of residuals
                si = (z/nt - z1*z1)
                si = si/nt
                varest(i1,i2,i3)=si
-               cofh = sqrt(beta*log(si/vq*si2i*fov))-0.17d0*step
-               si=sqrt(si/vq)
+               cofh = sqrt(beta*log(si/vqi*si2i*fov))-0.17d0*step
+               si=sqrt(si/vqi)
                if((thi+delta)/si+cofh.lt.-thresh) THEN
                   segm(i1,i2,i3)=-1
                ELSE IF ((thi-delta)/si-cofh.gt.thresh) THEN

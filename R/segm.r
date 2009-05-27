@@ -152,7 +152,7 @@ segm3D <- function(y,weighted=TRUE,
                            as.integer(ddim[4]),
                            var = double(n1*n2*n3),
                            PACKAGE="fmri",DUP=FALSE)$var
-   varquot <- mean(vartheta0/nt*sigma2)
+   varquot <- vartheta0/nt*sigma2
 # Initialize  list for bi and theta
    if (is.null(wghts)) wghts <- c(1,1,1)
    hinit <- hinit/wghts[1]
@@ -230,12 +230,7 @@ segm3D <- function(y,weighted=TRUE,
       theta <- array(tobj$thnew,dy[1:3]) 
       fix <- array(tobj$fix,dy[1:3]) 
       segm <- array(tobj$segm,dy[1:3])
-     par(mfrow=c(1,1))
-      image(apply(segm>0,1:2,sum),zlim=c(0,26))
-#      cat("\n",sum(signal&(segm==1)),sum(signal&(segm!=1)),sum(!signal&(segm==1)),sum(!signal&(segm!=1)),"\n")
-      readline("Press enter")
       varest <- array(tobj$varest,dy[1:3])
-#      varest <- array(tobj$varest/vartheta0/sigma2,dy[1:3])
       dim(tobj$bi) <- dy[1:3]
       if (graph) {
          par(mfrow=c(2,2),mar=c(1,1,3,.25),mgp=c(2,1,0))
