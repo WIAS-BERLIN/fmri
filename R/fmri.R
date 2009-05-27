@@ -1835,7 +1835,7 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "axial",
                     NULL, zlim.o = NULL) {
 
   pvalue <- x$pvalue
-  pvalue[pvalue>0.05] <- 1
+  pvalue[pvalue>maxpvalue] <- 1
   pvalue[pvalue == 0] <- min(pvalue[pvalue>0])
   pvalue <- -log(pvalue)
   mask <- pvalue > 0
