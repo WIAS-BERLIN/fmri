@@ -6,8 +6,8 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussia
   }
   ladjust <- if("ladjust" %in% names(list(...))) list(...)[["ladjust"]] else 1
   fov <- if("fov" %in% names(list(...))) list(...)[["fov"]] else NULL
+  thresh <- if("thresh" %in% names(list(...))) list(...)[["thresh"]] else 3.5
   delta <- if("delta" %in% names(list(...))) list(...)[["delta"]] else 0
-  alpha <- if("alpha" %in% names(list(...))) list(...)[["alpha"]] else 0.05
   propagation <- if("propagation" %in% names(list(...))) list(...)[["propagation"]] else FALSE
 
   if (!("fmrispm" %in% class(spm))) {
@@ -50,9 +50,9 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussia
                          vwghts = spm$vwghts,lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
                          resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust),
                    "segment"=segm3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
-                         wghts=weights, df=spm$df, h0=bw,weighted=weighted,res=spm$res,
+                         wghts=weights, h0=bw,lkern=lkern,weighted=weighted,res=spm$res,
                          resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust,delta=delta,
-                         fov=fov,alpha=alpha))
+                         thresh=thresh,fov=fov))
   cat("\n")
   
   cat("fmri.smooth: determine local smoothness\n")
@@ -269,7 +269,9 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE, minimum.sign
 }
 
 
-# taken from mytkrplot
+# modified tkrplot from file tkrplot
+# the parent of the plot depends on type of the plot (2/3 dimensional) and the situation it is called in (extract images
+# or plot)
 mytkrplot <- function(parent, fun, hscale=1, vscale=1,slicenr=-1,which="unset",parent2=list(),typeV=2,overview=FALSE) {
     #print(overview)		
     if (!overview) if (typeV == 2) parent = parent2  # ACHTUNG aenderung, bisher nur in vied2dNew benutzt!!
@@ -286,15 +288,10 @@ mytkrplot <- function(parent, fun, hscale=1, vscale=1,slicenr=-1,which="unset",p
     lab
 }
 
-# taken from mytkrplot
-mytkrreplot <- function(lab, fun = lab$fun,
-                      hscale=lab$hscale, vscale=lab$vscale) {
-    .my.tkdev(hscale, vscale)
-    try(fun())
-    .Tcl(paste("image create Rplot", lab$image))
-}
 
-
+# replaces the generic function plot
+# can be called from fmri.gui or the command line (by plot)
+# calls fmri.view2d or fmri.view3d with the fitting data
 plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
                             pos = c(-1,-1,-1), type="slice",
                             device="X11", file="plot.png", slice =  1, view = "axial" ,zlim.u =
@@ -360,12 +357,13 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
       anatomic[is.na(anatomic)] <- 0
       anatomic[is.infinite(anatomic)] <- 0
     
-      if (type == "3d") {
+      if (type == "3d" || type == "3D") {
 	tt <- fmri.view3d(anatomic,col=mri.colors(255,255)$all,
                           weights=x$weights, scale=scale,scalecol=mri.colors(255,255)$col,
                           type= "pvalue",maxpvalue=maxpvalue,pos=pos)
       } else {
         dt <- dim(anatomic)
+	print(dt)	
 	posNew <- c()
  	for (counter in 1:dt[1]) posNew[counter] = counter
         for (counter in 1:dt[2]) posNew[counter+dt[1]] = counter
@@ -393,7 +391,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
     ## check !!!!
     quant <- if (!is.null(attr(spm, "smooth"))) qnorm(1-maxpvalue) else qt(1-maxpvalue,length(x$hrf)) 
     
-    if (type == "3d") {
+    if (type == "3d" || type == "3D") {
       if (spm) {
         tt <- fmri.view3d(signal,col=mri.colors(255,0)$gray,
                           weights=x$weights,
@@ -405,7 +403,9 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
                           scale=scale,scalecol=mri.colors(255,0)$gray, type="spm",hrf=x$hrf, quant = quant,pos=pos)
       } 
     } else {
-      dt <- dim(anatomic)
+        dt <- dim(localx)
+	if (is.null(dt)) dt <- localx$dim
+	print(dt)
 	posNew <- c()
  	for (counter in 1:dt[1]) posNew[counter] = counter
         for (counter in 1:dt[2]) posNew[counter+dt[1]] = counter
@@ -427,11 +427,12 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
     signal[is.na(signal)] <- 0
     signal[is.infinite(signal)] <- 0
     
-    if (type == "3d") {
+    if (type == "3d" || type == "3D") {
       tt <- fmri.view3d(signal,col=mri.colors(255,0)$gray,
                         weights=x$weights, scale=scale,scalecol=mri.colors(255,0)$gray, type="data",pos=pos)
     } else {
-       dt <- dim(anatomic)
+      dt <- dim(localx)
+      if (is.null(dt)) dt <- localx$dim
       posNew <- c()
       for (counter in 1:dt[1]) posNew[counter] = counter
       for (counter in 1:dt[2]) posNew[counter+dt[1]] = counter
@@ -449,6 +450,12 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
   if (exists("tt")) invisible(tt)
 }
 
+
+# plots slices of a given data set ttt (spm, pvalue or data)
+# it plots a coronal, a sagittal and an axial slice at the same time
+#
+# is called from plot.fmridata, if type=3d
+# needs tkrplot
 fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ext = 1, weights =
                         c(1,1,1), scale=c(0,1), scalecol = col,
                         hrf=rep(0,100), quant =3, maxpvalue = 0.05,pos=c(-1,-1,-1)) {
@@ -468,15 +475,17 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
     pos <- c(pos,1,scale[1])
   }
    	
+  # needed for posv, creates a tclVar
   helpFunc <- function(a){
   	a <- tclVar()	
   }	
-
+  # vector of tclVars, which contains the slider position of every (of the three) slice
   posv <- lapply(pos, helpFunc) 
 
 
+  # creates a slice and plots it by calling mytkrplot
   fmri.image <- function(which, factor) {
-     switch(which, x = {
+     switch(which, x = { # depending on the viweing direction
       f <- function() {
         oldpar <- par(mar=c(0,0,0,0))
         on.exit(par(oldpar))
@@ -538,19 +547,22 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
      mytkrplot(tt3, f, hscale=ext, vscale=factor*ext,typeV=3)
   }
 
+  # creates a slider (position of the slice in its viewing direction) for a given slice (indicated by the number i)
+  # defines the reaction on a slider move:
+  # each slice gets replotted, position of slice i gets updated 		
   fmri.slider <- function(i) {
-    f <- function(...) {
+    f <- function(...) { # f() gets called, if a slider is moved
       current <- as.numeric(tclvalue(posv[[i]]))
       if (current != pos[i]) {
         pos[i] <<- current
-        mytkrreplot(img[[1]])
-        mytkrreplot(img[[2]])
-        mytkrreplot(img[[3]])
-        mytkrreplot(img[[4]])
-        if (i == 4) mytkrreplot(img[[4]])
+        tkrreplot(img[[1]])
+        tkrreplot(img[[2]])
+        tkrreplot(img[[3]])
+        if (i == 4) tkrreplot(img[[4]])
         tkconfigure(label2, text=pos[i])
       }
     }
+    # slider created and added to toplevel tt3
     fr <- tkframe(tt3,bg="#AACCDB")
     s <- tkscale(fr, command=f, from=1, to=dt[i], resolution=1, 
                  variable=posv[[i]], showvalue=FALSE, orient="horiz",bg="#BBDDEC")
@@ -560,14 +572,16 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
     fr
   }
 
+  # creates a slider for the positioning of the threshold
+  # if the value of the threshold is changed the slices will be replotted
   fmri.threshold <- function(i) {
     f <- function(...) {
       current <- as.numeric(tclvalue(posv[[i]]))
       if (current != pos[i]) {
         pos[i] <<- current
-        mytkrreplot(img[[1]])
-        mytkrreplot(img[[2]])
-        mytkrreplot(img[[3]])
+        tkrreplot(img[[1]])
+        tkrreplot(img[[2]])
+        tkrreplot(img[[3]])
         tkconfigure(label2, text=pos[i])
       }
     }
@@ -580,6 +594,7 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
     fr
   }
 
+  # adds a scale for each type of data (spm, pvalue, data)
   fmri.scale <- function(which,scale=scale, scalecol=scalecol) {
      print("in scale")
 	   print(which)
@@ -708,12 +723,20 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
   tt3
 }
 
+
+# creates a window, in which you can view your results (spm, pvalue or data)
+# it creates an image of every possible slice
+# the choice which slices are shown can be made by the user
+# more on the ths will be described below 
+# 
+# includes a method to save your results via adimpro
+#
+# is called from plot.fmridata, if type=2d
+# needs tkrplot
 fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ext = 1, weights =
                         c(1,1,1), scale=c(0,1), scalecol = col,
                         hrf=rep(0,100), quant =3, maxpvalue = 0.05,posNew=c(-1,-1,-1), localx) {
-	
-	 nrpics = 3
-	 sliceslist <- c()
+
 	 # check whether Tk/Tcl environment is present
  	 if (!require(tkrplot))
  	   stop("required package mytkrplot not found. Please install from cran.r-project.org")
@@ -722,34 +745,30 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
   	 dt <- dim(ttt)
  	 zlim <- range(ttt, na.rm = TRUE)
   	 label <- c("x", "y", "z", "t", "signal cut-off")
+	
 
-  	 # center position with Tcl objects
-         #if (pos[1] == -1) {
- 	 #  pos <- c(round(dt[1:3])/2, 1, scale[1])
- 	 #} else {
- 	 #  pos <- c(pos,1,scale[1])
- 	 #}
-	
-	 label2 <- list()
-	 label1 <- list()
-	 label1Th <- list()
-	 label2Th <- list()
+	 sliceslist <- c() # the vector which later contains all slices
+	 hscaleList <- c() # the vector which later contains the horziontal scale of every slice
+	 vscaleList <- c() # the vector which later contains the vertical scale of every slice
+	 
+	 label1 <- list() # the list which later contains the dimension of every slice
+	 label2 <- list() # the list which later contains the position of every slice in its dimension (changes if the slider is moved)
+	 label1Th <- list() # lists, which all later contain a single element (the position of the threshold/time or the string label[5]/label[4]) 
+	 label2Th <- list() 
 	 label1Ti <- list()
-	 label2Ti <- list()			
-	 hscaleList <- c()
-	 vscaleList <- c()
- 	  	  
+	 label2Ti <- list()			 	  
 	
+	 # tclVars which later contain the postion of every slice resp. the time or threshold	
          posThreshold <- 1
 	 posTime <- 1
  	 helpFunc <- function(a){
  	 	a <- tclVar()	
  	 }	
-	
  	 posvNew <- lapply(posNew, helpFunc) 
 	 posvThreshold <- lapply(posThreshold,helpFunc) # only needed if type=="spm"
 	 posvTime <- lapply(posTime,helpFunc) # only needed if type=="data"	
 
+	 # creates a slice and plots it by calling mytkrplot	
  	 fmri.image <- function(which,hscale,vscale, slicenr=-1,toplevel,overview=FALSE) {
 	   switch(which, x = {
  	     f <- function() {
@@ -804,6 +823,9 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	   mytkrplot(toplevel, f, hscale=hscale, vscale=vscale,slicenr,which,frameSlicesList[[1]],2,overview)				
  	 }
 	
+	 # creates a slider (position of the slice in its viewing direction) for a given slice (indicated by the number i)
+         # defines the reaction on a slider move:
+         # each slice gets replotted, position of slice i gets updated 	
  	 fmri.slider <- function(i) {
 		if (i==-1){
 			f <- function(...) {
@@ -812,7 +834,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	    			if (current != posTime) {
 					posTime <<- current
 					for (j in ((currPage-1)*nrslicesVec[1]+1):((currPage-1)*nrslicesVec[1]+nrslicesVec[currPage])){
-						mytkrreplot(img[[sliceslist[j]]],hscale=hscaleList[sliceslist[j]],vscale=vscaleList[sliceslist[j]])		
+						tkrreplot(img[[sliceslist[j]]],hscale=hscaleList[sliceslist[j]],vscale=vscaleList[sliceslist[j]])		
 						tkconfigure(label2[[sliceslist[j]]], text=posNew[sliceslist[j]])
 	     				 }
  	       				 tkconfigure(label2Ti[[1]], text=posTime)
@@ -836,7 +858,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
  	     			current <- as.numeric(tclvalue(posvNew[[islice]]))
 	    			if (current != posNew[islice]) {
  	     		  		posNew[islice] <<- current
- 	     		  		mytkrreplot(img[[islice]],hscale=hscaleList[islice],vscale=vscaleList[islice])
+ 	     		  		tkrreplot(img[[islice]],hscale=hscaleList[islice],vscale=vscaleList[islice])
 	     		  		tkconfigure(label2[[islice]], text=posNew[islice])
  	     			}
  	   		}		
@@ -850,6 +872,8 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		}
  	 }
 	
+         # creates a slider for the positioning of the threshold
+         # if the value of the threshold is changed the slices will be replotted
  	 fmri.threshold <- function() {
 	   f <- function(...) {
  	     current <- as.numeric(tclvalue(posvThreshold[[1]]))
@@ -857,7 +881,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
  	     if (current != posThreshold) {
 	       posThreshold <<- current
  	       for (i in ((currPage-1)*nrslicesVec[1]+1):((currPage-1)*nrslicesVec[1]+nrslicesVec[currPage])){
-			mytkrreplot(img[[sliceslist[i]]],hscale=hscaleList[sliceslist[i]],vscale=vscaleList[sliceslist[i]])		
+			tkrreplot(img[[sliceslist[i]]],hscale=hscaleList[sliceslist[i]],vscale=vscaleList[sliceslist[i]])		
 			tkconfigure(label2[[sliceslist[i]]], text=posNew[sliceslist[i]])
 	       }
  	       tkconfigure(label2Th[[1]], text=posThreshold)
@@ -872,19 +896,13 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	   fr
  	 }
 	
+         # adds a scale for each type of data (spm, pvalue, data)
  	 fmri.scale <- function(which,scale=scale, scalecol=scalecol) {
 	    switch(which, "data" = {
  	     f <- function() {
  	       oldpar <- par(mar=c(3,3,0.25,0.25), mgp=c(2,1,0))
- 	       #layout(matrix(1:2,2,1,byrow=TRUE),width=c(200),height=c(160,40))
  	       on.exit(par(oldpar))
- 	       # plot timeseries
- 	       #plot(ttt[pos[1],pos[2],pos[3],], xlab="Scan", ylab="BOLD signal")
- 	       # mark scan number position
- 	     #  lines(c(posTime, posTime),range(ttt[,,,]),col=2)
  	       # draw scale
-		print("scales")
-		print(scale)	
 		par(mai=c(0,0,0,0))
  	       image(seq(scale[1],scale[2],length=200),seq(scale[1],scale[2],length=20)/20,
  	             matrix(rep(seq(scale[1],scale[2],length=200),20),200,20),
@@ -901,76 +919,32 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
  	   }, "spm" = {
  	     f <- function() {
  	       oldpar <- par(mar=c(3,3,0.25,0.25), mgp=c(2,1,0))
- 	       #layout(matrix(1:2,2,1,byrow=TRUE),width=c(200),height=c(160,40))
  	       on.exit(par(oldpar))
- 	       # draw something
- 	       #if (!is.null(sigma)) {
- 	        # value <- scale[1]+ttt[pos[1],pos[2],pos[3]]*diff(scale)          
- 	        # plot(c(1,length(hrf)),range(c(value*hrf,(value-3*sigma[pos[1],pos[2],pos[3]])*hrf,(value+3*sigma[pos[1],pos[2],pos[3]])*	hrf)),type="n",xlab="Scan",ylab="Paramter estimate")
- 	        # xx <- c(1:length(hrf),length(hrf):1)
- 	         #yy <- c((value-quant*sigma[pos[1],pos[2],pos[3]])*hrf,rev((value+quant*sigma[pos[1],pos[2],pos[3]])*hrf))
- 	         #polygon(xx,yy,col="gray",lty=1)
- 	         #lines(value*hrf)
- 	         #lines(c(1,length(hrf)),c(0,0))
-#	          text(0.1,0.5,paste("Parameter:",signif(ttt[pos[1],pos[2],pos[3]],3)),pos=4,cex=1.5)
- 	       #} else {
- 	        # value <- scale[1]+ttt[pos[1],pos[2],pos[3]]*diff(scale)          
- 	        # plot(c(0,1),c(0,1),xaxt="n",yaxt="n",xlab="",ylab="",type="n",bty="n")
- 	        # text(0.1,0.5,paste("t-value:",signif(value,3)),pos=4,cex=1.5)
- 	       #}
- 	       # draw scale
-		print("scales")
-		print(scale)
+ 	      # draw scale
 		par(mai=c(0,0,0,0))
  	       image(seq(scale[1],scale[2],length=200),seq(scale[1],scale[2],length=20)/20,
  	             matrix(rep(seq(scale[1],scale[2],length=200),20),200,20),
  	             yaxt="n",xlab="", ylab="", zlim=scale, col=scalecol)
-		#lines(c(15,15),scale,col=2)
- 	        #text(0.25*scale[1]+0.25*scale[2],scale[1]+0.01*diff(scale),pos=4,scale[1]+0.25*scale[2],col=2)
 		lines(c(0,0),scale,col=2)
  	        text(0,0,pos=4,col=2,0)#scale[1]+0.25*scale[2],col=2)
 		lines(c(0.5*scale[2],0.5*scale[2]),scale,col=2)
  	        text(0.5*scale[2],0,pos=4,0.01*round(100*0.5*scale[2]),col=2)
 		lines(c(0.5*scale[1],0.5*scale[1]),scale,col=2)
  	        text(0.5*scale[1],0,pos=4,0.01*round(100*0.5*scale[1]),col=2)
-		#lines(c(scale[1]+0.25*scale[2],scale[1]+0.25*scale[2]),scale,col=2)
- 	        #text(scale[1]+0.25*scale[2],scale[1]+0.01*diff(scale),pos=4,scale[1]+0.25*scale[2],col=2)
-		#lines(c(scale[1]+0.5*scale[2],scale[1]+0.5*scale[2]),scale,col=2)
- 	        #text(scale[1]+0.5*scale[2],scale[1]+0.01*diff(scale),pos=4,scale[1]+0.5*scale[2],col=2)
-		#lines(c(scale[1]+0.75*scale[2],scale[1]+0.75*scale[2]),scale,col=2)
- 	        #text(scale[1]+0.75*scale[2],scale[1]+0.01*diff(scale),pos=4,scale[1]+0.75*scale[2],col=2)
- 	       #lines(c(value,value),scale,col="white")
- 	     }
+	   }
  	     # create the Tk-widget
  	     mytkrplot(tt, f, hscale=0.8, vscale=0.05,typeV=3)
  	   }, "pvalue" = {
  	     f <- function() {
 		value <- -log(maxpvalue)
- 	       #if (ttt[pos[1],pos[2],pos[3]] <= 0.5) {
- 	        # value <- -log(maxpvalue)
- 	       #} else {
- 	        # value <- scale[1]+2*(ttt[pos[1],pos[2],pos[3]]-0.5)*diff(scale)          
- 	       #}
- 	       oldpar <- par(mar=c(3,3,0.25,0.25), mgp=c(2,1,0))
- 	       #layout(matrix(1:2,2,1,byrow=TRUE),width=c(200),height=c(160,40))
+ 	      oldpar <- par(mar=c(3,3,0.25,0.25), mgp=c(2,1,0))
  	       on.exit(par(oldpar))
- 	       # draw something
- 	       #plot(c(0,1),c(0,1),xaxt="n",yaxt="n",xlab="",ylab="",type="n",bty="n")
-		#print("in f2")
- 	       #if (value == -log(maxpvalue)) {
- 	        # text(0.2,0.5,paste("p-value: >",signif(exp(-value),3)),pos=4,cex=1.5)
- 	       #} else if (value == scale[2]) {
- 	        # text(0.2,0.5,paste("p-value: <",signif(exp(-value),3)),pos=4,cex=1.5)
- 	       #} else {
- 	       #  text(0.2,0.5,paste("p-value:",signif(exp(-value),3)),pos=4,cex=1.5)
- 	       #}
- 	       # draw scale
+ 	        # draw scale
 		par(mai=c(0,0,0,0))
  	       image(seq(-log(maxpvalue),scale[2],length=200),seq(scale[1],scale[2],length=20)/20,
  	             matrix(rep(seq(-log(maxpvalue),scale[2],length=200),20),200,20),
  	             yaxt="n",xaxt="n",xlab="", ylab="",zlim=c(-log(maxpvalue),scale[2]), col=scalecol)
-		#par(omi=c(0,0,0,0))
- 	       lines(c(value,value),scale,col=1)
+		lines(c(value,value),scale,col=1)
  	       lines(c(-log(0.01),-log(0.01)),scale,col=2)
  	       text(-log(0.01),scale[1]+0.01*diff(scale),pos=4,"1e-2")
  	       lines(c(-log(0.001),-log(0.001)),scale,col=2)
@@ -988,18 +962,19 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
  	       lines(c(-log(0.000000001),-log(0.000000001)),scale,col=2)
  	       text(-log(0.000000001),scale[1]+0.01*diff(scale),pos=4,"1e-9")
 	     }
- 	     # create the Tk-widget
+ 	        # create the Tk-widget
 		mytkrplot(tt, f, hscale=0.8, vscale=0.05,typeV=3)
 	      })
  	 }
  	 
- 	 # create window
+ 	 # create toplevel window
 	 tt <- tktoplevel(bg="#AACCDB")
 	 
+	 # frame in which all slices will be created
 	 frameSlicesList <- list() 			
-	
 	 frameSlicesList[[1]] <- tkframe(tt,bg="#AACCDB")
  	 
+	 # slices which will be shown at the start	
 	 if (dt[3]>4){
 		 nrslices = 4	
 		 for (i in 1:4){	
@@ -1011,6 +986,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			sliceslist[1] = dt[1] + dt[2] + 1 
 	 }
 
+	# determine scaling factors tor the start slices
 	hsc = (0.9*as.numeric(tkwinfo("screenwidth", tt)))/(480*2)
 	if (type=="pvalue"){
 		vsc = (0.8*as.numeric(tkwinfo("screenheight", tt))-38-2*21)/(480*2)
@@ -1018,8 +994,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	else {
 		vsc = (0.8*as.numeric(tkwinfo("screenheight", tt))-38-36-2*21)/(480*2)
 	}
-	
-	if (hsc>=1.2*vsc) hsc <- 1.2*vsc
+	if (hsc>=1.2*vsc) hsc <- 1.2*vsc # keep nearly quadratic
 	if (vsc>=1.2*hsc) vsc <- 1.2*hsc	
 
 	 # create images and sliders
@@ -1042,10 +1017,10 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		hscaleList[i+dt[1]+dt[2]] = hsc
 		vscaleList[i+dt[1]+dt[2]] = vsc	
  	 }
- 	 s <- lapply(1:(dt[1]+dt[2]+dt[3]), fmri.slider)
+ 	 s <- lapply(1:(dt[1]+dt[2]+dt[3]), fmri.slider) # applying fmri.slider to every element of s
  
 
-	 # place the images and scales
+	 # place the images and scales (of start situation (2x2 slices))
 	for (i in 1:round(nrslices/2)){
 		if (i == round(nrslices/2) && round(nrslices/2) != (nrslices/2)) {
 			tkgrid(img[[sliceslist[2*i-1]]])
@@ -1061,27 +1036,90 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	
 	scaleL <- list(fmri.scale(type,scale,scalecol))
 	tkgrid(scaleL[[1]],pady=5)
-	scaleHeight <- (2*5 + as.numeric(tkwinfo("height",scaleL[[1]])))
+	scaleHeight <- (2*5 + as.numeric(tkwinfo("height",scaleL[[1]]))) # height of the scale
 	
- 	rbValue <- tclVar(3)
+ 	rbValue <- tclVar(3) # current viewing direction
 	t2 <- list()
 	
+	# frames for the buttons and the scale
 	frame0 <- tkframe(tt,bg="#AACCDB")
 	frame1 <- tkframe(tt,bg="#AACCDB")
 	frame2 <- tkframe(tt,bg="#AACCDB")
 	
+	# viewAll is called by the button "View all slices"
+	# it first sets the number of slices to all and the calls the changeFunction
 	viewAll <- function(){
 		tclvalue(nrSlices) <<- dt[as.numeric(tclvalue(rbValue))]
 		changeFunction()
 	}	
 
+	# most important function of view2d
+	# it calculates the scaling factors for the slices of each page
 	changeFunction <- function(){
 		currPage <<- 1
 		oldPage <<- 1
 
+		cbVal <- ((as.integer(tclvalue(cbVar))+1)%%2)
 		screenwidth = as.numeric(tkwinfo("screenwidth", tt))
 		screenheight = as.numeric(tkwinfo("screenheight", tt))
-		
+
+		# calculates the optimal number of rows and colums for a given number of slices (nrSlicesTmp)
+		# this methods is especially senseful, if the aspect ratio is kept !!
+		# returns the optimal number of rows (the optimal number of colums is determined by this)
+		findOptimum <- function(nrSlicesTmp){
+			# determine vector of the non chosen viewing directions			
+			helpVec = c(-1,-1)		
+			index = 1			
+			for (i in 1:3){
+				if (i!=view)  { 
+					helpVec[index] = i
+					index = index + 1	
+				}
+			}
+			
+			# calculate for all possible (senseful) row-col combinations the scaling factor and by this find combination where most
+			# area is covered (not always the most, but nearly)
+			matSize <- ceiling(3*sqrt(nrSlicesTmp))
+			valueMax = 0
+			indexMaxRow = 1	
+			for (colsTmp in 1:matSize){ 
+				for (rowsTmp in 1:matSize){
+					if ((colsTmp-1)*rowsTmp < nrSlicesTmp && colsTmp*rowsTmp >= nrSlicesTmp){
+						hscaleTmp = (0.9*screenwidth)/(480*colsTmp)
+						vscaleTmp = (0.8*screenheight-sliderBottomHeight-scaleHeight-cbVal*rowsTmp*sliderheight)/(480*rowsTmp)
+						if (as.integer(tclvalue(ksVar))==1) {	# keep aspect ratio					
+							if (dt[helpVec[1]]>dt[helpVec[2]]){
+								if (hscaleTmp*(dt[helpVec[2]]/dt[helpVec[1]]) > vscaleTmp){
+									hscaleTmp <- (dt[helpVec[1]]/dt[helpVec[2]])*vscaleTmp
+								}
+								else vscaleTmp = hscaleTmp*(dt[helpVec[2]]/dt[helpVec[1]]) 
+							}
+							else {
+								if (hscaleTmp*(dt[helpVec[1]]/dt[helpVec[2]]) > vscaleTmp){
+									hscaleTmp <- (dt[helpVec[2]]/dt[helpVec[1]])*vscaleTmp
+								}
+								else vscaleTmp = hscaleTmp*(dt[helpVec[1]]/dt[helpVec[2]]) 
+							}						
+						}
+						else {  # nearly quadratic
+							if (hscaleTmp>=1.2*vscaleTmp) hscaleTmp <- 1.2*vscaleTmp
+							if (vscaleTmp>=1.2*hscaleTmp) vscaleTmp <- 1.2*hscaleTmp
+						}	
+						val1 <- 480*hscaleTmp*colsTmp
+						val2 <- 480*vscaleTmp*rowsTmp+sliderBottomHeight+scaleHeight+cbVal*rowsTmp*sliderheight
+						quot1 = val1/(screenwidth*0.9)	
+						quot2 = val2/(screenheight*0.8)	
+						sum <- quot2+quot1
+						if (sum > valueMax && (sliderwidth+20)*colsTmp<screenwidth){
+							valueMax = sum
+							indexMaxRow = rowsTmp
+						}									
+					}				
+				}			
+			}
+			return (indexMaxRow) # returns the optimal number of rows
+		}
+
 		view = as.numeric(tclvalue(rbValue))		
 		for (i in 1:nrslices){
 			tkgrid.forget(img[[sliceslist[i]]])
@@ -1089,23 +1127,25 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		}
 		nrslices <<- as.integer(tclvalue(nrSlices))
 		nrslicespp <- as.integer(tclvalue(nrSlicespp))
-		if (nrslicespp > nrslices) nrslicespp <- nrslices
+		if (nrslicespp > nrslices) nrslicespp <- nrslices # chosen nr of slices per page unnecessary big
 		
-		if (nrslices>dt[view]) {
+		if (nrslices>dt[view]){ # chosen nr of slices unnecessary bi
 				nrslices <<- dt[view]
 				print(append("Maximale Slicesanzahl:",dt[view]),quote=FALSE)		
 		}
-
-		nrpages <<- ceiling(nrslices/nrslicespp)
+		
+		nrpages <<- ceiling(nrslices/nrslicespp) # number of pages
 		for (i in 1:nrpages){
 			if (i!=nrpages) nrslicesVec[i] <<- nrslicespp
 			else nrslicesVec[i] <<- nrslices-(nrpages-1)*nrslicespp 		
 		}
-		
+
+		# read all buttons + arrow-buttons
 		tkgrid.forget(prevPageButton,nrSlicesLabel,nrSlicesEntry,nrSlicesppLabel,nrSlicesppEntry,changeButton,viewAllButton,nextPageButton)
 		if (nrpages>1) tkgrid(nrSlicesLabel,nrSlicesEntry,nrSlicesppLabel,nrSlicesppEntry,changeButton,viewAllButton,nextPageButton,padx=10,pady=5)
 		else tkgrid(nrSlicesLabel,nrSlicesEntry,nrSlicesppLabel,nrSlicesppEntry,changeButton,viewAllButton,padx=10,pady=5)
 	
+		# determine all chosen slices (number of them is nrslices)
 		doubles = 0	
 		for (i in 1:nrslices){	
 			if (view==1) sliceslist[i] <<- round(i*dt[view]/(nrslices+1))
@@ -1126,26 +1166,13 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			}
 		}	
 
-		cols <- rows <- ceiling(sqrt(nrslicesVec[1]+1))
-  		while ((rows-1)*cols >= (nrslicesVec[1]+1)) rows <- rows-1
-		if (((cols-1)*rows==nrslicesVec[1])) cols <- cols-1
-		help <- 0		
-		if (cols<rows){
-			help = cols
-			cols <- rows
-			rows <- help
-		} 		
-		
-		colshelp <- rowshelp <- ceiling(sqrt(nrslicesVec[nrpages]+1))
-  		while ((rowshelp-1)*colshelp >= (nrslicesVec[nrpages]+1)) rowshelp <- rowshelp-1
-		if (((colshelp-1)*rowshelp==nrslicesVec[nrpages])) colshelp <- colshelp-1
-		help <- 0		
-		if (colshelp<rowshelp){
-			help = colshelp
-			colshelp = rowshelp
-			rowshelp = help
-		}	
+		# determine the optimal number of rows and cols for the first (and every further) and the last page
+		rows <- findOptimum(nrslicesVec[1])
+		cols <- ceiling(nrslicesVec[1]/rows)	
+		rowshelp <- findOptimum(nrslicesVec[nrpages])
+		colshelp <- ceiling(nrslicesVec[nrpages]/rowshelp)	
 
+		# save choice of rows and cols for every page
 		for (i in 1:(nrpages-1)){
 			colsVec[i] <<- cols
 			rowsVec[i] <<- rows
@@ -1153,30 +1180,45 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		colsVec[nrpages] <<- colshelp
 		rowsVec[nrpages] <<- rowshelp
 	
+		# calculate standard scaling factors for the first and the last page
 		hscaleNew = (0.9*screenwidth)/(480*colsVec[currPage])
-		vscaleNew = (0.8*screenheight-sliderBottomHeight-scaleHeight-((as.integer(tclvalue(cbVar))+1)%%2)*rowsVec[currPage]*sliderheight)/(480*rows)
+		vscaleNew = (0.8*screenheight-sliderBottomHeight-scaleHeight-((as.integer(tclvalue(cbVar))+1)%%2)*rowsVec[currPage]*sliderheight)/(480*rowsVec[currPage])
 		hscaleNewLast = (0.9*screenwidth)/(480*colshelp)
 		vscaleNewLast = (0.8*screenheight-sliderBottomHeight-scaleHeight-((as.integer(tclvalue(cbVar))+1)%%2)*rowshelp*sliderheight)/(480*rowshelp)
 		
+		# if aspect ratio has to be kept: adjust scaling factors
 		if (as.integer(tclvalue(ksVar))==1) {	
 			helpVec = c(-1,-1)		
 			index = 1			
-			for (i in 1:3){
+			for (i in 1:3){ # determine vector of the non chosen viewing directions
 				if (i!=view)  { 
 					helpVec[index] = i
 					index = index + 1	
 				}
 			}
 			if (dt[helpVec[1]]>dt[helpVec[2]]){
-				vscaleNew = hscaleNew*(dt[helpVec[2]]/dt[helpVec[1]]) 
-				vscaleNewLast = hscaleNewLast*(dt[helpVec[2]]/dt[helpVec[1]]) 
-			}
+				if (hscaleNew*(dt[helpVec[2]]/dt[helpVec[1]]) > vscaleNew){
+					hscaleNew <- (dt[helpVec[1]]/dt[helpVec[2]])*vscaleNew
+					hscaleNewLast <- (dt[helpVec[1]]/dt[helpVec[2]])*vscaleNewLast
+				}
+				else {
+					vscaleNew = hscaleNew*(dt[helpVec[2]]/dt[helpVec[1]]) 
+					vscaleNewLast = hscaleNewLast*(dt[helpVec[2]]/dt[helpVec[1]]) 
+				}
+			}	
 			else {
-				hscaleNew = vscaleNew*(dt[helpVec[1]]/dt[helpVec[2]])
-				hscaleNewLast = vscaleNewLast*(dt[helpVec[1]]/dt[helpVec[2]]) 		
-			}			
+				if (hscaleNew*(dt[helpVec[1]]/dt[helpVec[2]]) > vscaleNew){
+					hscaleNew <- (dt[helpVec[2]]/dt[helpVec[1]])*vscaleNew
+					hscaleNewLast <- (dt[helpVec[2]]/dt[helpVec[1]])*vscaleNewLast
+				}
+				else {
+					vscaleNew = hscaleNew*(dt[helpVec[1]]/dt[helpVec[2]]) 
+					hscaleNewLast = vscaleNewLast*(dt[helpVec[1]]/dt[helpVec[2]])				
+				}
+			}	
 		}
 		
+		# minimal rescale of the slices, if the scaling factors are unchanged (compared to the last run) (otherwise: little error)	
 		curr = 1
 		while (curr!=(nrslices+1)){
 			if ((curr <= (nrslicesVec[1]*(nrpages-1)) && (hscaleNew == hscaleList[sliceslist[curr]]) && (vscaleNew == vscaleList[sliceslist[curr]])) || (curr > (nrslicesVec[1]*(nrpages-1)) && (hscaleNewLast == hscaleList[sliceslist[curr]]) && (vscaleNewLast == vscaleList[sliceslist[curr]]))) {
@@ -1187,8 +1229,8 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			}
 			else curr = curr + 1
 		}
-			
-		# abweichung vom quadrat nicht zu gross	
+	
+		# deviance from quadrat not too big
 		if (as.integer(tclvalue(ksVar))==0) {
 			if (hscaleNew>=1.2*vscaleNew) hscaleNew <- 1.2*vscaleNew
 			if (vscaleNew>=1.2*hscaleNew) vscaleNew <- 1.2*hscaleNew
@@ -1196,17 +1238,17 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			if (vscaleNewLast>=1.2*hscaleNewLast) vscaleNewLast <- 1.2*hscaleNewLast
 		}				
 
-		if (type=="spm") {
+		if (type=="spm") { # reset threshold value
 			posThreshold <<- as.numeric(tclvalue(posvThreshold[[1]]))
 			for (i in 1:nrpages) posThresHelp[i] <<- posThreshold
 		}
-		if (type=="data") {
+		if (type=="data") { # reset time value
 			posTime <<- as.numeric(tclvalue(posvTime[[1]]))
 			for (i in 1:nrpages) posTimeHelp[i] <<- posTime
 		}
 		
-		# replotten der slices mit neuen scales; sliderpositonen neu gesetzt
-		for (i in 1:(nrslicesVec[1]*(nrpages-1))){ # Seiten 1 bis nrpages-1
+		# replot new slices with scaling factors; slider positons new set
+		for (i in 1:(nrslicesVec[1]*(nrpages-1))){ # pages till nrpages-1
 			if ((nrslicesVec[1]*(nrpages-1)) != 0){
 				if (view==1) {
 					posNew[sliceslist[i]] <<- sliceslist[i]	
@@ -1220,13 +1262,12 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 					posNew[sliceslist[i]] <<- (sliceslist[i]-sum(dt[1:2]))
 					tclvalue(posvNew[[sliceslist[i]]]) <<- (sliceslist[i]-sum(dt[1:2]))
 				}
-				mytkrreplot(img[[sliceslist[i]]],hscale=hscaleNew,vscale=vscaleNew)
+				tkrreplot(img[[sliceslist[i]]],hscale=hscaleNew,vscale=vscaleNew)
 				hscaleList[sliceslist[i]] <<- hscaleNew	
 				vscaleList[sliceslist[i]] <<- vscaleNew	
 			}
 		}
-		# replotten der slices mit neuen scales; sliderpositonen neu gesetzt
-		for (i in (nrslicesVec[1]*(nrpages-1)+1):nrslices){ # Seite nrpages
+		for (i in (nrslicesVec[1]*(nrpages-1)+1):nrslices){ # Page number nrpages
 			if (view==1) {
 				posNew[sliceslist[i]] <<- sliceslist[i]	
 				tclvalue(posvNew[[sliceslist[i]]]) <<- sliceslist[i]	
@@ -1239,12 +1280,12 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				posNew[sliceslist[i]] <<- (sliceslist[i]-sum(dt[1:2]))
 				tclvalue(posvNew[[sliceslist[i]]]) <<- (sliceslist[i]-sum(dt[1:2]))
 			}
-			mytkrreplot(img[[sliceslist[i]]],hscale=hscaleNewLast,vscale=vscaleNewLast)
+			tkrreplot(img[[sliceslist[i]]],hscale=hscaleNewLast,vscale=vscaleNewLast)
 			hscaleList[sliceslist[i]] <<- hscaleNewLast	
 			vscaleList[sliceslist[i]] <<- vscaleNewLast	
 		}
 		
-		# anordnung der slices
+		# order all slices
 		for (j in 1:rowsVec[1]){
 			for (l in 1:colsVec[1]){
 				if ((j-1)*colsVec[1]+l-1 < nrslicesVec[1]){
@@ -1254,19 +1295,20 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			}
 		}
 
-
-		# EVTL UNNOETIG VGL MIT PROBLEMEN 17-20, tkconfigure noetig aber auch nahc oben verschiebbar
+		# technical things
 		for (i in 1:nrslices){
 			if (view==1) tclvalue(posvNew[[sliceslist[i]]]) <<- sliceslist[i]		
 			if (view==2) tclvalue(posvNew[[sliceslist[i]]]) <<- (sliceslist[i]-dt[1])
 			if (view==3) tclvalue(posvNew[[sliceslist[i]]]) <<- (sliceslist[i]-sum(dt[1:2]))
-			tkconfigure(label2[[sliceslist[i]]],text=as.integer(tclvalue(posvNew[[sliceslist[i]]])))
+			tkconfigure(label2[[sliceslist[i]]],text=as.integer(tclvalue(posvNew[[sliceslist[i]]]))) # label infroamtion updated
 			tkconfigure(label1[[sliceslist[i]]],text=label[view])				
 		}	
 
-		if (as.integer(tclvalue(cbVar))==1) hide()
+		if (as.integer(tclvalue(cbVar))==1) hide() # hide sliders if wished
 	}	
 	
+	# is called by the right-arrow-button
+	# goes to next page and shows the next slices
 	nextPage <- function(){
 		oldPage <<- currPage
 		currPage <<- currPage + 1
@@ -1279,12 +1321,14 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			tclvalue(posvTime[[1]]) <<- posTimeHelp[currPage]
 			tkconfigure(label2Ti[[1]],text=posTimeHelp[currPage])
 		}
-
+		
+		# remove old slices and slider
 		for (j in ((oldPage-1)*nrslicesVec[1]+1):((oldPage-1)*nrslicesVec[1]+nrslicesVec[oldPage])){
 			tkgrid.forget(img[[sliceslist[j]]])
 			tkgrid.forget(s[[sliceslist[j]]])		
 		}
 		
+		# remove old buttons and scales and readd buttons and scales (necessary, since otherwise: displacement) 
 		if (nrpages>1){
 			if (oldPage==1 || oldPage==nrpages || currPage==1 || currPage==nrpages){
 				tkgrid.forget(prevPageButton,nrSlicesLabel,nrSlicesEntry,nrSlicesppLabel,nrSlicesppEntry,changeButton,viewAllButton,nextPageButton)
@@ -1302,19 +1346,22 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			}
 		}
 
+		# add new slices and sliders
 		for (j in 1:rowsVec[currPage]){
 			for (l in 1:colsVec[currPage]){
 				if ((j-1)*colsVec[currPage]+l-1 < nrslicesVec[currPage]){
 					tkgrid.configure(img[[sliceslist[(currPage-1)*nrslicesVec[1]+(j-1)*colsVec[currPage]+l]]],column=l,row=2*j-1) 
-					#note, that despite the last page every page has the same number of slices
+					# note, that despite the last page every page has the same number of slices
 					tkgrid.configure(s[[sliceslist[(currPage-1)*nrslicesVec[1]+(j-1)*colsVec[currPage]+l]]],column=l,row=2*j)
 				}
 			}
 		}
 
-		hide()
+		hide() # sliders hidden, if necessary
 	}
 	
+	# is called by the left-arrow-button
+	# goes to previous page and shows the previous slices
 	prevPage <- function(){
 		oldPage <<- currPage
 		currPage <<- currPage - 1
@@ -1328,11 +1375,13 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			tkconfigure(label2Ti[[1]],text=posTimeHelp[currPage])
 		}
 
+		# remove old slices and slider
 		for (j in ((oldPage-1)*nrslicesVec[1]+1):((oldPage-1)*nrslicesVec[1]+nrslicesVec[oldPage])){
 			tkgrid.forget(img[[sliceslist[j]]])
 			tkgrid.forget(s[[sliceslist[j]]])		
 		}
 		
+		# remove old buttons and scales and readd buttons and scales (necessary, since otherwise: displacement) 
 		if (nrpages>1){
 			if (oldPage==1 || oldPage==nrpages || currPage==1 || currPage==nrpages){
 				tkgrid.forget(prevPageButton,nrSlicesLabel,nrSlicesEntry,nrSlicesppLabel,nrSlicesppEntry,changeButton,viewAllButton,nextPageButton)
@@ -1350,6 +1399,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			}
 		}
 
+		# add new slices and sliders
 		for (j in 1:rowsVec[currPage]){
 			for (l in 1:colsVec[currPage]){
 				if ((j-1)*colsVec[currPage]+l-1 < nrslicesVec[currPage]){
@@ -1360,13 +1410,21 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			}
 		}
 
-		hide()
+		hide() # sliders hidden, if necessary
 	}
 	
+	# calls the 3-dimensional view
+	# is called by the button "View 3d"	
 	call3d <- function(){
 		plot.fmridata(localx,ttt,type="3d")
 	}
 
+	# save images with the help of adimpro
+	# is called via the button "Extract Images"
+	# first step: choose slices (from current viewing direction)
+	# second step: choose file format (only if ImageMagick is installed)
+	# third step; choose filename and directory
+	# if the filename is forgiven, antoher one can be chosen
 	extractImages <- function(){
 			if (!require(adimpro))
    				 stop("required package adimpro not found. Please install from cran.r-project.org")	
@@ -1378,8 +1436,9 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			chosenSlices <- c()
 			slicesCounter <- 0		
 
+			# filename chosen by user
+			# only once called
 			chooseFileNameGeneral <- function(){
-				print("in chooseFileNameGen")
 				imageFile <- tclVar()	
 				if (as.character(tclvalue(rbFF)) == "ppm")  tclvalue(imageFile) <- tkgetSaveFile(filetypes ="{{Image file} {.ppm}}",title="Save Images")  
 				if (as.character(tclvalue(rbFF)) == "jpeg") tclvalue(imageFile) <- tkgetSaveFile(filetypes ="{{Image file} {.jpeg}}",title="Save Images")  
@@ -1413,18 +1472,16 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				tclvalue(rbFF) = ending
 			}
 
+			# check if the filename is forgiven, if it is offer rechoosing of filename
+			# calls writeImage
+			# is called for every slices
 			chooseFileNameExactly <- function(overwrite=FALSE,nrofChosen=1){ #nrofchosen is the position of the current processed slice in chosenSlices
 				if (viewAxis==3) slicenr <- chosenSlices[nrofChosen]-dt[1]-dt[2]	
 				if (viewAxis==2) slicenr <- chosenSlices[nrofChosen]-dt[1]
 				if (viewAxis==1) slicenr <- chosenSlices[nrofChosen]			
-				print("in chooseFileNameEx ... slicenr:")
-				print(slicenr)
-				print(filePathFinal)
-				print(as.character(tclvalue(rbFF)))
 				filePathFinal <- paste(filePathFinal,slicenr,sep="")
-				#for (j in index:nrChars) filePathFinal <- paste(filePathFinal,help[j],sep="")
 				filePathFinal <- paste(filePathFinal,paste(".",as.character(tclvalue(rbFF)),sep=""),sep="") #.fileformat appended
-				if (overwrite == FALSE){
+				if (overwrite == FALSE){ # check if name forgiven
 					pathSplitted <- unlist(strsplit(filePathFinal,""))
 					noSeparator = TRUE
 					indexSep = length(pathSplitted)							
@@ -1438,8 +1495,6 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 					cuttedPart = ""
 					for (k in 1:indexSep) pathCutted <- paste(pathCutted,pathSplitted[k],sep="")
 					for (k in (indexSep+2):length(pathSplitted)) cuttedPart <- paste(cuttedPart,pathSplitted[k],sep="")
-					print(pathCutted)
-					print(cuttedPart)
 					listFiles <- list.files(pathCutted)
 					conflict = FALSE
 					for (k in 1:length(listFiles)){
@@ -1456,7 +1511,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 								chooseFileNameGeneral()
 								chooseFileNameExactly(FALSE,nrofChosen)
 							}
-							print("Doppelt!!!!")
+							print("Name forgiven !!")
 							ttWarn <- tktoplevel(bg=wiasblue)
 							framettWarn1 <- tkframe(ttWarn,bg=wiasblue)
 							framettWarn2 <- tkframe(ttWarn,bg=wiasblue)
@@ -1479,10 +1534,9 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				}							
 			}
 
+			# write the current slice into a previously determined file
+			# is called from chooseFileNameExactly		
 			writeImage <- function(nrofChosen){
-				print("in write image")
-				print(currentFileName)
-				print(chosenSlices[nrofChosen]-dt[1])
 				if (viewAxis==3) tmp <- make.image(ttt[,,chosenSlices[nrofChosen]-dt[1]-dt[2]],gamma=TRUE)
 				if (viewAxis==2) tmp <- make.image(ttt[,chosenSlices[nrofChosen]-dt[1],],gamma=TRUE)
 				if (viewAxis==1) tmp <- make.image(ttt[chosenSlices[nrofChosen],,],gamma=TRUE)	
@@ -1491,30 +1545,33 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				if (nrofChosen < slicesCounter) chooseFileNameExactly(FALSE,nrofChosen+1)
 			}
 
-			onNext <- function(){ # TODO: Check that name is not forgiven								
+			# is called via the next button after choosing the file format
+			# determines the filename with the help of chooseFileNameGeneral and chooseFileNameExactly
+			onNext <- function(){							
 				for (i in 1:dt[viewAxis]){
 					if (as.integer(tclvalue(cbVars[[i]]))==1) {
 						slicesCounter <<- slicesCounter +1
 						if (viewAxis==1) chosenSlices[slicesCounter] <<- i
 						if (viewAxis==2) chosenSlices[slicesCounter] <<- dt[1] + i
 						if (viewAxis==3) chosenSlices[slicesCounter] <<- dt[1] + dt[2] + i	
-						
 					}
 				}
 				if (slicesCounter>0){
 					chooseFileNameGeneral()
 					chooseFileNameExactly(FALSE,1)
 				}
-				else {
+				else { # error
 					quitttError <- function(){ tkdestroy(ttError) }
 					ttError <- tktoplevel(bg=wiasblue)
 					tkgrid(tklabel(ttError,text="No file was selected.",bg=wiasblue),padx=10,pady=10)
 					tkgrid(tkbutton(ttError,text="Ok",command=quitttError,bg=wiaslightblue),padx=10,pady=10)
 				}
-				
 				#writeImage called from chooseFileName
 			}
 
+			# is called after choosing the slices
+			# gives the user the possibility to choose the file format
+			# needs imgmagick, otherwise: file format == ppm (automatically)
 			toFileFormat <- function(){
 				tkdestroy(ttImgSelect) # Menu1 closed 
 				onNextHelp <- function(){
@@ -1536,11 +1593,8 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 							imgmagickInstalled = TRUE
 					}          
 				}
-				print("installed ??")
-				print(imgmagickInstalled)
-			
-				#if (2==1){
-				if (imgmagickInstalled){
+				
+				if (imgmagickInstalled){ # choose file format
 					ttFF = tktoplevel(bg=wiasblue)
 					tkwm.title(ttFF, "Extract Images - File format")
 			
@@ -1570,20 +1624,23 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				}
 			}
 
+			# can be called in step1 by the button "Select All"
 			selectAll <- function(){
 				for (i in 1:dt[viewAxis]) tclvalue(cbVars[[i]]) <- 1
 			}
-			
+
+			# can be called in step1 by the button "Deselect All"
 			deselectAll <- function(){
 				for (i in 1:dt[viewAxis]) tclvalue(cbVars[[i]]) <- 0
 			}
 			
-			ttImgSelect <- tktoplevel(bg=wiasblue)
+			ttImgSelect <- tktoplevel(bg=wiasblue) # toplevel window for the slices choice
 			tkwm.title(ttImgSelect, "Extract Images - Slices Choice")			 
 
 			imgSelectFrom <- list()
 	 		viewAxis = as.integer(tclvalue(rbValue))
 
+			# determine number of rows and cols in layout
 			cols <- rows <- ceiling(sqrt(dt[viewAxis]+1))
   			while ((rows-1)*cols >= (dt[viewAxis]+1)) rows <- rows-1
 			if (((cols-1)*rows==dt[viewAxis])) cols <- cols-1
@@ -1597,6 +1654,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			hsc = (0.9*as.numeric(tkwinfo("screenwidth", ttImgSelect)))/(480*cols)
 			vsc = (0.8*as.numeric(tkwinfo("screenheight", ttImgSelect))-rows*20)/(480*rows)
 
+			# create necessary slices
 			if (viewAxis == 1) for (i in 1:dt[1]) imgSelectFrom[[i]] = fmri.image("x",hsc,vsc,i,toplevel=ttImgSelect,overview=TRUE)
 			if (viewAxis == 2) for (i in 1:dt[2]) imgSelectFrom[[i]] = fmri.image("y",hsc,vsc,i,toplevel=ttImgSelect,overview=TRUE)
 			if (viewAxis == 3) for (i in 1:dt[3]) imgSelectFrom[[i]] = fmri.image("z",hsc,vsc,i,toplevel=ttImgSelect,overview=TRUE)
@@ -1625,6 +1683,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				}
 			}
 			
+			# add all necessary slices
 			for (j in 1:rows){
 				for (l in 1:cols){
 					if ((j-1)*cols+l-1 < dt[viewAxis]){
@@ -1634,6 +1693,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				}
 			}
 
+			# buttons
 			next2Button <- tkbutton(ttImgSelect,text="Next",command = toFileFormat,bg=wiaslightblue)
 			selAllButton <- tkbutton(ttImgSelect,text="Select All",command = selectAll,bg=wiaslightblue)
 			deselAllButton <- tkbutton(ttImgSelect,text="Deselect All",command = deselectAll,bg=wiaslightblue)
@@ -1658,6 +1718,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			rbFF <- tclVar("ppm")	
 	}
 
+	# is called by the button "View Help" 
 	helpFunction <- function(){	
 			onQuit <- function(){
 				tkdestroy(ttHelp)
@@ -1669,35 +1730,37 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			helptextViewOpt="Viewing Options \n \n You are able to choose between coronal,sagittal and axial planes. Furthermore you can \n decide how many slices shall be selected and how many of these shown at once. If you \nchoose the number of slices shown at once smaller than the number of selected slices, there \n will appear an arrow on the right side. With the help of this arrow you can go to next \npage, and the next slices will be presented. To confirm your choice on the number of slices \n and the viewing direction press the button 'Change View/Slices'. If you are not on\n page one, you are able to go back to this by using the arrow on the left side. Below each\n slice there is a slider, which you can use to slide between the slices of the current\n viewing direction. To remove the sliders press 'Hide Sliders'. By selecting 'Keep Aspect \n Ratio' the original heigth-to-width ratio is rebuilt. If this is unselected, the slice will\n be plotted nearly quadratic. To view a slice of each viewing direction at the same time press\n 'View 3d'.In the first row below the slices there is printed a scale, which interpolates\n between the colours red(lowest value) and white(highest value) or grey(lowest value) and\n white (highest value). If you have plotted the statistival parametric map, in the \nlast row there will be a slider which can be used to determine the threshold. Instead of the\n threshold the time can be chosen by a slider, if you plotted the data set.\n \n \n"
 			helptextSave="Save Results \n \n If you want to save your results the button 'Extract Images' gives you a comfortable \n possibility to do so. Fist you have to select all desired slices, To select/ deselect all\n slices use the corresponding button. To continue use 'Next'. If Image Magick is installed on\n your system you can choose between the image types ppm, jpeg, png and tif. If not ppm will\n automatically be taken. In the last step you have to choose a filename and filedirectory.\n To ensure not to overwrite existing data, it will be checked that this filedirectory/\nfileadress is not forgiven. If it is forgiven you will be warned, but still got the oppurti-\nnity to continue. The images will now be written in your chosen directory as [chosen \nfilename][viewing direction]Slice[slicenumber].[filetype]."		
 			helptext = paste(paste(helptextIntr,helptextViewOpt,sep=""),helptextSave,sep="")
-			#helptext = paste(helptextIntr,helptextViewOpt,sep="")
-			#print(helptext)
-			#helptext = "You have got many possibilities. Just try it!!"
 			helpFrame1 = tkframe(ttHelp,bg=wiasblue)
 			helpLabel = tklabel(helpFrame1,text=helptext,font="Arial 13",bg=wiasblue)
 			helpFrame2 = tkframe(ttHelp,bg=wiasblue)	
-			helpB1 = tkbutton(helpFrame2,text="Quit",command=onQuit)
+			helpB1 = tkbutton(helpFrame2,text="Quit",command=onQuit,bg="wiaslightblue")
 			tkgrid(helpLabel)
 			tkgrid(helpB1,padx=10,pady=10)
 			tkgrid(helpFrame1)	
 			tkgrid(helpFrame2)	
 	}
 
+	# is called by the checkbutton "Hide Sliders"
+	# pressing this checkbutton changes the value of cbVar
+	# changeFunction changes necessary things with higher local value of cbVar	
 	hidesliders <- function(){
 		helpPage <- currPage
-		changeFunction()
-		if (helpPage>1){
+		changeFunction() # change all necessary things
+		if (helpPage>1){ # go to current page
 			for (i in 1:(helpPage-1)) nextPage()
 		}
 		#hide() wird in changeFunction aufgreufen
 	}
 
+	# hide sliders if so selected
+	# can be called from changeFunction, nextPage and currentPage	
 	hide <- function(){
-		if (as.integer(tclvalue(cbVar))==1){
+		if (as.integer(tclvalue(cbVar))==1){ # remove sliders
 			for (i in ((currPage-1)*nrslicesVec[1]+1):((currPage-1)*nrslicesVec[1]+nrslicesVec[currPage])){
 				tkgrid.forget(s[[sliceslist[i]]])	
 			}
 		}
-		else {
+		else {  # add sliders
 			for (j in 1:rowsVec[currPage]){
 				for (l in 1:colsVec[currPage]){
 					if ((j-1)*colsVec[currPage]+l-1 < nrslicesVec[currPage]){
@@ -1710,19 +1773,20 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		}	
 	}
 
+	# is called from checkbutton "Keep Aspect Ratio"
+	# pressing this checkbutton changes the value of ksVar
+	# changeFunction changes necessary things with higher local value of ksVar	
 	keepsides <- function(){
 		changeFunction()
 	}
 
-	keep <- function(){
-	
-	}
-
+	# some variables, buttons, labels and so on
 	posTimeHelp <- c(1)
 	posThresHelp <- c(0)
 	wiasblue <- "#AACCDB"
 	wiaslightblue <- "#BBDDEC"
 	sliderheight = as.numeric(tkwinfo("height",s[[sliceslist[1]]]))
+	sliderwidth = as.numeric(tkwinfo("width",s[[sliceslist[1]]]))
 	rowsVec <- c(2)
 	colsVec <- c(2)
 	nrpages <- 0
@@ -1757,15 +1821,11 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	helpButton <- tkbutton(frame2,text="View Help", command = helpFunction,bg="#BBDDEC")
 	keepSides <- tkcheckbutton(frame2,text="Keep Aspect Ratio",variable=ksVar,bg="#BBDDEC",command=keepsides)	
 		
-	#scaleL <- list()	
-	
-
 	tkgrid(tklabel(frame0,text="Coronal",bg="#BBDDEC"),rb1,tklabel(frame0,text="Sagittal",bg="#BBDDEC"),rb2,tklabel(frame0,text="Axial",bg="#BBDDEC"),rb3,padx=10,pady=5)
 	tkgrid(frame0)
 	tkgrid(nrSlicesLabel,nrSlicesEntry,nrSlicesppLabel,nrSlicesppEntry,changeButton,viewAllButton,padx=10,pady=5)
 	tkgrid(frame1)	
 	tkgrid(cboxSlider,keepSides,dButton,extractButton,helpButton,padx=10,pady=5) # for HELP and adimpro
-	#tkgrid(cboxSlider,keepSides,dButton,padx=10,pady=5)
 	tkgrid(frame2)	
 		
 	sliderBottomHeight <- 0
@@ -1775,19 +1835,16 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		tkgrid(thres[[1]])
 		sliderBottomHeight <- (as.numeric(tkwinfo("height",thres[[1]])) + 5)
 	}
-    if (type=="data") {
+        if (type=="data") {
 		time <- c(fmri.slider(-1.))
 		tkgrid(time[[1]])
 		sliderBottomHeight <- (as.numeric(tkwinfo("height",time[[1]])) + 5)
 	}
         
-	print(sliderBottomHeight)
-	print("her")
-	
 	for (i in 1:nrslices){ 
 		posNew[sliceslist[i]] = i*round(0.2*dt[3])
 		tclvalue(posvNew[[sliceslist[i]]]) = i*round(0.2*dt[3])  
-		mytkrreplot(img[[sliceslist[i]]])
+		tkrreplot(img[[sliceslist[i]]])
 		tkconfigure(label2[[sliceslist[i]]],text=posNew[sliceslist[i]])
 	}
 
@@ -1835,7 +1892,7 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "axial",
                     NULL, zlim.o = NULL) {
 
   pvalue <- x$pvalue
-  pvalue[pvalue>maxpvalue] <- 1
+  pvalue[pvalue>0.05] <- 1
   pvalue[pvalue == 0] <- min(pvalue[pvalue>0])
   pvalue <- -log(pvalue)
   mask <- pvalue > 0
