@@ -1,5 +1,6 @@
 fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussian",skern="Plateau",weighted=TRUE,...) {
   cat("fmri.smooth: entering function\n")
+   args <- match.call()
   if(!adaptive) adaptation <- "none"
   if(!(tolower(adaptation)%in%c("none","aws","segment"))) {
       adaptation
@@ -74,11 +75,11 @@ fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussia
     z <- list(cbeta = ttthat$theta[,,,1], var = ttthat$var, rxyz =
               rxyz, rxyz0 = rxyz0, scorr = spm$scorr, weights =
               spm$weights, vwghts = spm$vwghts, bw=bw, 
-              hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf, segm = ttthat$segm)
+              hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf, segm = ttthat$segm, mask = ttthat$mask, call=args)
   } else {
     z <- list(cbeta = ttthat$theta, var = ttthat$var, rxyz = rxyz, rxyz0 = rxyz0, 
               scorr = spm$scorr, weights = spm$weights, vwghts = spm$vwghts, bw=bw,
-              hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf)
+              hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf, segm = ttthat$segm, mask = ttthat$mask, call=args)
   }
 
   class(z) <- c("fmridata","fmrispm")
@@ -231,6 +232,7 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE, minimum.sign
   cat("fmri.pvalue: thresholding\n")
   mask <- rep(TRUE,length=prod(spm$dim[1:3]))
   mask[stat < thresh] <- FALSE
+  mask <- mask&spm$mask
   pv[!mask] <- 1
   dim(pv) <- spm$dim[1:3]
 
@@ -1780,7 +1782,10 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		changeFunction()
 	}
 
-	# some variables, buttons, labels and so on
+	keep <- function(){
+	
+	}
+        convert.path <- paste(Sys.getenv("ImageMagick"),"convert",sep="")
 	posTimeHelp <- c(1)
 	posThresHelp <- c(0)
 	wiasblue <- "#AACCDB"
@@ -1892,7 +1897,7 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "axial",
                     NULL, zlim.o = NULL) {
 
   pvalue <- x$pvalue
-  pvalue[pvalue>0.05] <- 1
+  pvalue[pvalue>maxpvalue] <- 1
   pvalue[pvalue == 0] <- min(pvalue[pvalue>0])
   pvalue <- -log(pvalue)
   mask <- pvalue > 0
@@ -2031,7 +2036,6 @@ show.slice <- function(x, anatomic, maxpvalue = 0.05, slice = 1, view = "axial",
       }
     }
   }
-  print("hier war ich !!!!")	
 
   invisible(img)
 }
