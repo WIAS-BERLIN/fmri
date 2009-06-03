@@ -6,7 +6,7 @@ Author: Karsten Tabelow <tabelow@wias-berlin.de>,
         Joerg Polzehl <polzehl@wias-berlin.de>
 Maintainer: Karsten Tabelow <tabelow@wias-berlin.de>
 Depends: tcltk
-Suggests: tkrplot,fastICA
+Suggests: tkrplot,fastICA,adimpro
 Description: The package contains R-functions to perform an fmri analysis
              as described in
              Tabelow, K., Polzehl, J., Voss, H.U., and Spokoiny, V. 

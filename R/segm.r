@@ -56,42 +56,92 @@ segm3D <- function(y,weighted=TRUE,
 #    see file sim_fmri_kritval.r in R/segmentation/fmrikrv/
 
       h <- fwhm2bw(sqrt(h0[1]*h0[2]))
-      if(alpha>=.1){
-      explvar <- c(1,df,n,ladj,log(ladj),log(h+1),kstar,h,1/df^2,df*ladj,
-                  df*log(ladj),df*h,df*kstar,n*ladj,n*log(h+1),n/df^2,ladj*log(h+1),
-                  ladj*kstar,ladj/df^2,log(ladj)*log(h+1),log(ladj)*kstar, 
-                  log(h+1)*kstar,kstar*h,h/df^2,ladj*kstar*h)
-      coefs <- c(10.74, 0.006418, 2.506e-06, -9.16, 10.98, -1.978, -0.2392, 0.07853, 
-                 218.9, -0.008211, 0.01178, -0.0008796, -8.596e-05, -1.166e-06, 2.293e-06, 
-                 0.0006664, 3.949, 0.428, -182.7, -6.049, -0.5332, -0.1624, 0.08483, -200.7, -0.0243)
+      explvar <- c(1,              1/df,               n,                        ladj,
+                   log(ladj),      log(h+1),           kstar,                    h,
+                   1/df^2,         1/df*log(ladj),     n*log(h+1),               n*log(ladj),
+                   ladj*h,         log(ladj)*log(h+1), log(ladj)*h,              kstar*h,
+                   log(h+1)*kstar, ladj*kstar*h,       log(ladj)*log(h+1)*kstar, log(ladj)*h*kstar)
+      if(alpha>=.2){
+      cat("Using critical values for alpha = 0.2 \n")
+      coefs <- c( 0.1485,  48.4,    1.75e-06,    0.7107, 
+                 -1.039,    7.804,  0.1764,     13.62, 
+                 -1078,   -11.72,   2.231e-06,  -1.69e-06, 
+                 -18.06,  -28.15,  41.95,       -0.6027, 
+                 -0.3967,   0.8376, 1.073,      -1.844)
+      qres <- 0.0484
+      } else if(alpha>=.1){
+      cat("Using critical values for alpha = 0.1 \n")
+      coefs <- c( 0.3369,  52.17,   1.508e-06,   0.6634, 
+                 -0.9903,   9.034,  0.1796,     12.64, 
+                 -1011, -  13.68,   2.194e-06,  -1.397e-06, 
+                 -18.13,  -29.41,  43.75,       -0.555, 
+                 -0.4388,   0.8297, 1.106,      -1.894)
+      qres <- 0.049
+      } else if(alpha>=.08) {
+      cat("Using critical values for alpha = 0.08 \n")
+      coefs <- c( 0.4256,  53.41,   1.455e-06,   0.6179, 
+                 -0.9293,   9.289,  0.1804,     12.28, 
+                 -987.2,  -14.62,   2.152e-06,  -1.348e-06, 
+                 -17.99,  -29.35,  43.79,       -0.5383, 
+                 -0.4485,   0.8227, 1.106,      -1.895)
+      qres <- 0.0487
+      } else if(alpha>=.06) {
+      cat("Using critical values for alpha = 0.06 \n")
+      coefs <- c( 0.5601,  55.66,   1.393e-06,   0.5289, 
+                 -0.805,    9.886,  0.1815,     11.02, 
+                 -971.4,  -15.86,   2.141e-06,  -1.318e-06, 
+                 -17.23,  -30.27,  43.81,       -0.4877, 
+                 -0.4705,   0.7915, 1.142,      -1.895)
       qres <- 0.048
       } else if(alpha>=.05) {
-      explvar <- c(1,df,n,ladj,log(ladj),log(h+1),kstar,h,1/df^2,df*ladj,
-                  df*log(ladj),df*h,df*kstar,n*ladj,n*log(h+1),n/df^2,ladj*log(h+1),
-                  ladj*kstar,ladj/df^2,log(ladj)*log(h+1),log(ladj)*kstar, 
-                  log(h+1)*kstar,kstar*h,h/df^2,ladj*kstar*h)
-      coefs <- c(10.81, 0.01105, 2.405e-06, -9.067, 11.02, -1.185, -0.2431, -0.7695, 
-                 426.9, -0.01335, 0.01822, -0.0008828, -8.345e-05, -1.189e-06, 2.334e-06, 
-                 0.0006246, 4.192, 0.4362, -250.8, -5.718, -0.55, -0.2066, 0.139, -198.8, -0.04031)
-      qres <- 0.049
+      cat("Using critical values for alpha = 0.05 \n")
+      coefs <- c( 0.6215,  56.87,   1.359e-06,   0.4963, 
+                 -0.7564,  10.2,    0.1822,     10.69, 
+                 -954.4,  -16.67,   2.161e-06,  -1.31e-06, 
+                 -17.16,  -30.23,  43.88,       -0.4751,  
+                 -0.4826,  0.7901,  1.141,      -1.901)
+      qres <- 0.0474
+      } else if(alpha>=.04) {
+      cat("Using critical values for alpha = 0.04 \n")
+      coefs <- c( 0.6452,  58.79,   1.341e-06,   0.4984, 
+                 -0.7409,  10.32,   0.1832,     10.28, 
+                 -947.7,  -17.74,   2.152e-06,  -1.346e-06, 
+                 -16.89,  -29.4,   43.13,       -0.458, 
+                 -0.4863,   0.7782, 1.104,      -1.867)
+      qres <- 0.0486
       } else if(alpha>=.025){
-      explvar <- c(1,df,n,ladj,log(ladj),log(h+1),kstar,h,1/df^2,df*ladj,
-                  df*log(ladj),df*h,df*kstar,n*ladj,n*log(h+1),n/df^2,ladj*log(h+1),
-                  ladj*kstar,ladj/df^2,log(ladj)*log(h+1),log(ladj)*kstar, 
-                  log(h+1)*kstar,kstar*h,h/df^2,ladj*kstar*h)
-      coefs <- c(10.49, 0.01185, 2.138e-06, -8.508, 10.36, -1.221, -0.2212, -1.089, 
-                 553.5, -0.01539, 0.02176, -0.0007787, -5.232e-05, -1.013e-06, 2.129e-06, 
-                 0.0007087, 4.567, 0.415, -253.5, -5.852, -0.5289, -0.2222, 0.1647, -178.5, -0.0495)
-      qres <- 0.056
+      cat("Using critical values for alpha = 0.025 \n")
+      coefs <- c( 0.8513,  60.5,    1.292e-06,   0.3913, 
+                 -0.583,   10.85,   0.184,       9.247, 
+                 -862.6,  -19.84,   2.1e-06,    -1.244e-06, 
+                 -16.33,  -29.41,  42.8,        -0.4224, 
+                 -0.5051,   0.7618, 1.1,        -1.86)
+      qres <- 0.049
+      } else if(alpha>=.02){
+      cat("Using critical values for alpha = 0.02 \n")
+      coefs <- c( 0.8986,  60.42,   1.298e-06,   0.3855, 
+                 -0.5647,  11.18,   0.1848,      8.507, 
+                 -794.8,  -20.65,   2.081e-06,  -1.247e-06, 
+                 -15.88,  -28.92,  42.07,       -0.3935, 
+                 -0.5177,  0.7447,  1.077,      -1.831)
+      qres <- 0.0516
       } else if(alpha>=.01){
-      explvar <- c(1,df,n,ladj,log(ladj),log(h+1),kstar,h,1/df^2,df*ladj,
-                  df*h,n*ladj,n*log(h+1),ladj*log(h+1),
-                  ladj*kstar,ladj/df^2,log(ladj)*log(h+1),log(ladj)*kstar, 
-                  log(h+1)*kstar,kstar*h,h/df^2,ladj*kstar*h)
-      coefs <-c(11.2, -0.006744, 2.364e-06, -9.002, 11.19, -1.256, -0.189, -2.164,
-                941.2, 0.002191, -0.001276, -1.023e-06, 2.073e-06, 5.819, 0.3824, 
-                -306.5, -6.634, -0.4981, -0.2734, 0.2338, -223.8, -0.06904)
-      qres <- 0.073
+      cat("Using critical values for alpha = 0.01 \n")
+      coefs <- c( 1.143,   60.28,   1.236e-06,   0.301, 
+                 -0.4117,  11.68,   0.1857,      5.67, 
+                 -589.9,  -23.35,   2.3e-06,    -1.302e-06, 
+                 -13.63,  -27.54,  38.9,        -0.285, 
+                 -0.537,    0.661,  1.02,       -1.712)
+      qres <- 0.0557
+      } else {
+        warning("Significance levels smaller then 0.01 are not implemented,
+         using alpha = 0.01 instead")
+      coefs <- c( 1.143,   60.28,   1.236e-06,   0.301, 
+                 -0.4117,  11.68,   0.1857,      5.67, 
+                 -589.9,  -23.35,   2.3e-06,    -1.302e-06, 
+                 -13.63,  -27.54,  38.9,        -0.285, 
+                 -0.537,    0.661,  1.02,       -1.712)
+      qres <- 0.0557
       }
 #  add 0.9 quantile of residuals
       sum(coefs*explvar)+qres
@@ -152,7 +202,8 @@ segm3D <- function(y,weighted=TRUE,
                            as.integer(ddim[4]),
                            var = double(n1*n2*n3),
                            PACKAGE="fmri",DUP=FALSE)$var
-   varquot <- vartheta0/nt*sigma2
+   varest0 <- vartheta0/nt
+   vq <- varest0*sigma2
 # Initialize  list for bi and theta
    if (is.null(wghts)) wghts <- c(1,1,1)
    hinit <- hinit/wghts[1]
@@ -161,7 +212,7 @@ segm3D <- function(y,weighted=TRUE,
    tobj <- list(bi= rep(1,n))
    theta <- y
    segm <- array(0,dy[1:3])
-   varest <- 1/sigma2
+   varest <- varest0
    fix <- array(FALSE,dy[1:3])
    maxvol <- getvofh(hmax,lkern,wghts)
    if(is.null(fov)) fov <- sum(mask)
@@ -181,6 +232,10 @@ segm3D <- function(y,weighted=TRUE,
    thresh <- getkrval(df,h0,ladjust,n,kstar,alpha)
    cat("FOV",fov,"delta",delta,"thresh",thresh,"ladjust",ladjust,"lambda",lambda,"df",df,"\n")
 # run single steps to display intermediate results
+   residuals <- residuals*resscale
+#
+#   need these values to compute variances 
+#
    while (k<=kstar) {
       hakt0 <- gethani(1,10,lkern,1.25^(k-1),wghts,1e-4)
       hakt <- gethani(1,10,lkern,1.25^k,wghts,1e-4)
@@ -193,10 +248,6 @@ segm3D <- function(y,weighted=TRUE,
       hakt0 <- hakt
       theta0 <- theta
       bi0 <- tobj$bi
-#
-#   need these values to compute variances after the last iteration
-#
-      residuals <- readBin(res,"integer",prod(ddim),2)*resscale
       tobj <- .Fortran("segm3d",
                        as.double(y),
                        fix=as.logical(fix),
@@ -219,11 +270,12 @@ segm3D <- function(y,weighted=TRUE,
                        double(n1*n2*n3),#pvalues
                        segm=as.integer(segm),
                        as.double(beta),
-                       as.double(varquot),
                        as.double(delta),
                        as.double(thresh),
                        as.integer(k),
                        as.double(fov),
+                       as.double(vq),
+                       as.double(varest0),
                        varest=as.double(varest),
                        PACKAGE="fmri",DUP=FALSE)[c("bi","thnew","hakt","segm","varest","fix")]
       gc()
@@ -258,7 +310,8 @@ segm3D <- function(y,weighted=TRUE,
 
   z <- list(theta=theta,ni=tobj$bi,var=varest,y=y,segm=segm,
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),
-            call=args,scorr=scorr)
+            call=args,scorr=scorr,mask=mask)
   class(z) <- "aws.gaussian"
   invisible(z)
 }
+

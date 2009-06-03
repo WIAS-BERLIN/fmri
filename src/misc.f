@@ -47,6 +47,15 @@ C
       sofw3D=sw*sw/sw2
       RETURN
       END
+      subroutine sofw3Df(bw,kern,wght,fw)
+      implicit logical(a-z)
+      integer kern
+      real*8 bw,wght(2),fw,sofw3D
+      external sofw3D
+      fw=sofw3D(bw,kern,wght)
+      RETURN
+      END
+      
       real*8 function sofw3D0(bw,kern,wght)
       implicit logical(a-z)
       integer kern
@@ -120,8 +129,9 @@ C  Algorithmus zur Nullstellenbestimmung einer monotonen Funktion auf(0,\infty)
          y=y*y/x
          fw2=sofw3D(y,kern,wght)
       END DO
-      DO WHILE(min(fw2/value,value/fw1).gt.1.d0+eps)
-         z=x+(value-fw1)/(fw2-fw1)*(y-x)
+      DO WHILE(min(fw2/value,value/fw1).gt.1.d0+eps.and.y-x.gt.1e-6)
+C         z=x+(value-fw1)/(fw2-fw1)*(y-x)
+         z=(x+y)/2.d0
          fw3=sofw3D(z,kern,wght)
          if(fw3.le.value) THEN
             x=z
@@ -358,11 +368,10 @@ C
       integer n1,n2,n3,nv
       real*8 resscale,var(n1,n2,n3),res(nv,n1,n2,n3)
       logical mask(n1,n2,n3)
-      real*8 z2,zk,resi,ressc2,z1,zkf
+      real*8 z2,zk,resi,ressc2,z1
       integer i1,i2,i3,i4
       zk=nv
       ressc2=resscale*resscale
-      zkf=zk/(zk-1.d0)
       do i1=1,n1
          do i2=1,n2
             do i3=1,n3
@@ -377,7 +386,7 @@ C
                enddo
                z1 = z1/zk
                z2 = z2/zk
-               var(i1,i2,i3)=zkf*(z2-z1*z1)*ressc2
+               var(i1,i2,i3)=(z2-z1*z1)*ressc2
             enddo
          enddo
       enddo

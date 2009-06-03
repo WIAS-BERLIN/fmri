@@ -20,6 +20,14 @@ gethani <- function(x,y,lkern,value,wght,eps=1e-2){
          bw=double(1),
          PACKAGE="fmri")$bw
 }
+sofw3D <- function(bw,kern,wght){
+.Fortran("sofw3Df",
+         as.double(bw),
+         as.integer(kern),
+         as.double(wght),
+         fw=double(1),
+         PACKAGE="fmri")$fw
+}
 
 Varcor.gauss<-function(h,interv = 1){
 #
