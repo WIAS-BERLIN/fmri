@@ -290,14 +290,12 @@ mytkrplot <- function(parent, fun, hscale=1, vscale=1,slicenr=-1,which="unset",p
     lab
 }
 
-
 # replaces the generic function plot
 # can be called from fmri.gui or the command line (by plot)
 # calls fmri.view2d or fmri.view3d with the fitting data
 plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
-                            pos = c(-1,-1,-1), type="slice",
-                            device="X11", file="plot.png", slice =  1, view = "axial" ,zlim.u =
-                            NULL, zlim.o = NULL, col.o = heat.colors(256), col.u = grey(0:255/255), ...) {
+                            pos = c(-1,-1,-1), type="slice", slice =  1, view = "axial" ,zlim.u =
+                            NULL, zlim.o = NULL, col.o = heat.colors(256), col.u = grey(0:255/255), cutOff = c(0,1),...) {
 	
   library(tcltk)
   if (!require(tkrplot))
@@ -313,8 +311,9 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
     list(all=c(colors1,colors2),gray=colors1,col=colors2)
   }
 
+  inputStuff <- list(anatomic,maxpvalue,cutOff)
   localx <- x # ;)
- 
+   
   if ("fmripvalue" %in% class(x)) {
 
     if ("fmridata" %in% class(anatomic)) {
@@ -334,8 +333,8 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
     } else {
 
       signal <- x$pvalue
-      signal[signal > maxpvalue] <- 1
-      signal[signal < 1e-10] <- 1e-10
+      signal[signal > min(maxpvalue,cutOff[2])] <- 1
+      signal[signal < max(1e-10,cutOff[1])] <- max(1e-10,cutOff[1])
 
       signal <- -log(signal)
 
@@ -372,7 +371,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
    	for (counter in 1:dt[3]) posNew[counter+dt[1]+dt[2]] = counter  
         fmri.view2d(anatomic,col=mri.colors(255,255)$all,
                           weights=x$weights, scale=scale,scalecol=mri.colors(255,255)$col,
-                          type= "pvalue",maxpvalue=maxpvalue,posNew=posNew,localx=x)
+                          type= "pvalue",maxpvalue=maxpvalue,posNew=posNew,localx=x,inputStuff=inputStuff)
       }
     }
 
@@ -389,6 +388,13 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
     }
     signal[is.na(signal)] <- 0
     signal[is.infinite(signal)] <- 0
+    if (diff(scale) != 0){	
+  	 signal[signal<cutOff[1]] <- cutOff[1]
+ 	 signal[signal>cutOff[2]] <- cutOff[2]		
+   	 signal <- signal - cutOff[1]
+   	 signal <- signal*(1/(cutOff[2]-cutOff[1]))	
+    }    
+    scale <- scale*(cutOff[2]-cutOff[1]) 	
 
     ## check !!!!
     quant <- if (!is.null(attr(spm, "smooth"))) qnorm(1-maxpvalue) else qt(1-maxpvalue,length(x$hrf)) 
@@ -414,13 +420,15 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
    	for (counter in 1:dt[3]) posNew[counter+dt[1]+dt[2]] = counter  
        fmri.view2d(signal,col=mri.colors(255,0)$gray,
                           weights=x$weights, scale=scale,scalecol=mri.colors(255,0)$gray,
-                          type= "spm",maxpvalue=maxpvalue,posNew=posNew,localx=x)
+                          type= "spm",maxpvalue=maxpvalue,posNew=posNew,localx=x,inputStuff=inputStuff)
     }
   } else if ("fmridata" %in% class(x)) {
     signal <- extract.data(x)
     
     # re-scale signal to 0 ... 1
-    scale <- range(signal,finite=TRUE)
+    #print(range(signal,finite=TRUE)[2])
+    #signal[32,32,10,1] <- 9000	
+    scale <- range(signal,finite=TRUE)	
     if (diff(scale) != 0) {    
       signal <-  (signal - scale[1]) / diff(scale)
     } else {
@@ -428,6 +436,13 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
     }
     signal[is.na(signal)] <- 0
     signal[is.infinite(signal)] <- 0
+    if (diff(scale) != 0){	
+  	 signal[signal<cutOff[1]] <- cutOff[1]
+ 	 signal[signal>cutOff[2]] <- cutOff[2]		
+   	 signal <- signal - cutOff[1]
+   	 signal <- signal*(1/(cutOff[2]-cutOff[1]))	
+    }    
+    scale <- scale*(cutOff[2]-cutOff[1]) 	
     
     if (type == "3d" || type == "3D") {
       tt <- fmri.view3d(signal,col=mri.colors(255,0)$gray,
@@ -441,7 +456,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
       for (counter in 1:dt[3]) posNew[counter+dt[1]+dt[2]] = counter  	
       fmri.view2d(signal,col=mri.colors(255,0)$gray,
                           weights=x$weights, scale=scale,scalecol=mri.colors(255,0)$gray,
-                          type= "data",maxpvalue=maxpvalue,posNew=posNew,localx=x)
+                          type= "data",maxpvalue=maxpvalue,posNew=posNew,localx=x,inputStuff=inputStuff)
     }
 
   } else {
@@ -737,15 +752,15 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 # needs tkrplot
 fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ext = 1, weights =
                         c(1,1,1), scale=c(0,1), scalecol = col,
-                        hrf=rep(0,100), quant =3, maxpvalue = 0.05,posNew=c(-1,-1,-1), localx) {
+                        hrf=rep(0,100), quant =3, maxpvalue = 0.05,posNew=c(-1,-1,-1), localx, inputStuff) {
 
 	 # check whether Tk/Tcl environment is present
  	 if (!require(tkrplot))
  	   stop("required package mytkrplot not found. Please install from cran.r-project.org")
 
- 	 # some basic data properties
-  	 dt <- dim(ttt)
- 	 zlim <- range(ttt, na.rm = TRUE)
+	 # some basic data properties
+	 dt <- dim(ttt)
+	 zlim <- range(ttt, na.rm = TRUE)
   	 label <- c("x", "y", "z", "t", "signal cut-off")
 	
 
@@ -910,11 +925,11 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
  	             matrix(rep(seq(scale[1],scale[2],length=200),20),200,20),
  	             yaxt="n",xlab="", ylab="",zlim=scale, col=scalecol)
 		lines(c(scale[1]+0.25*scale[2],scale[1]+0.25*scale[2]),scale,col=2)
- 	        text(scale[1]+0.25*scale[2],scale[1]+0.01*diff(scale),pos=4,scale[1]+0.25*scale[2],col=2)
+ 	        text(scale[1]+0.25*scale[2],scale[1]+0.01*diff(scale),pos=4,0.01*round(100*(scale[1]+0.25*scale[2])),col=2)
 		lines(c(scale[1]+0.5*scale[2],scale[1]+0.5*scale[2]),scale,col=2)
- 	        text(scale[1]+0.5*scale[2],scale[1]+0.01*diff(scale),pos=4,scale[1]+0.5*scale[2],col=2)
+ 	        text(scale[1]+0.5*scale[2],scale[1]+0.01*diff(scale),pos=4,0.01*round(100*(scale[1]+0.5*scale[2])),col=2)
 		lines(c(scale[1]+0.75*scale[2],scale[1]+0.75*scale[2]),scale,col=2)
- 	        text(scale[1]+0.75*scale[2],scale[1]+0.01*diff(scale),pos=4,scale[1]+0.75*scale[2],col=2)
+ 	        text(scale[1]+0.75*scale[2],scale[1]+0.01*diff(scale),pos=4,0.01*round(100*(scale[1]+0.75*scale[2])),col=2)
 	     }
  	     # create the Tk-widget
  	     mytkrplot(tt, f, hscale=0.8, vscale=0.05,typeV=3)
@@ -947,23 +962,13 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
  	             matrix(rep(seq(-log(maxpvalue),scale[2],length=200),20),200,20),
  	             yaxt="n",xaxt="n",xlab="", ylab="",zlim=c(-log(maxpvalue),scale[2]), col=scalecol)
 		lines(c(value,value),scale,col=1)
- 	       lines(c(-log(0.01),-log(0.01)),scale,col=2)
- 	       text(-log(0.01),scale[1]+0.01*diff(scale),pos=4,"1e-2")
- 	       lines(c(-log(0.001),-log(0.001)),scale,col=2)
- 	       text(-log(0.001),scale[1]+0.01*diff(scale),pos=4,"1e-3")
- 	       lines(c(-log(0.0001),-log(0.0001)),scale,col=2)
- 	       text(-log(0.0001),scale[1]+0.01*diff(scale),pos=4,"1e-4")
- 	       lines(c(-log(0.00001),-log(0.00001)),scale,col=2)
- 	       text(-log(0.00001),scale[1]+0.01*diff(scale),pos=4,"1e-5")
- 	       lines(c(-log(0.000001),-log(0.000001)),scale,col=2)
- 	       text(-log(0.000001),scale[1]+0.01*diff(scale),pos=4,"1e-6")
- 	       lines(c(-log(0.0000001),-log(0.0000001)),scale,col=2)
- 	       text(-log(0.0000001),scale[1]+0.01*diff(scale),pos=4,"1e-7")
- 	       lines(c(-log(0.00000001),-log(0.00000001)),scale,col=2)
- 	       text(-log(0.00000001),scale[1]+0.01*diff(scale),pos=4,"1e-8")
- 	       lines(c(-log(0.000000001),-log(0.000000001)),scale,col=2)
- 	       text(-log(0.000000001),scale[1]+0.01*diff(scale),pos=4,"1e-9")
-	     }
+	       i = 2	
+ 	       while (-log(1/10^i)<0.95*scale[2]){
+			lines(c(-log(1/10^i),-log(1/10^i)),scale,col=2)
+ 	       		text(-log(1/10^i),scale[1]+0.01*diff(scale),pos=4,paste("1e-",i,sep=""))	
+			i = i + 1
+		}
+	       }
  	        # create the Tk-widget
 		mytkrplot(tt, f, hscale=0.8, vscale=0.05,typeV=3)
 	      })
@@ -1019,8 +1024,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		hscaleList[i+dt[1]+dt[2]] = hsc
 		vscaleList[i+dt[1]+dt[2]] = vsc	
  	 }
- 	 s <- lapply(1:(dt[1]+dt[2]+dt[3]), fmri.slider) # applying fmri.slider to every element of s
- 
+ 	 s <- lapply(1:(dt[1]+dt[2]+dt[3]), fmri.slider) # applying fmri.slider to every element of s 
 
 	 # place the images and scales (of start situation (2x2 slices))
 	for (i in 1:round(nrslices/2)){
@@ -1036,6 +1040,11 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 
  	tkgrid(frameSlicesList[[1]],padx=5,pady=5)
 	
+	# print(as.numeric(tkwinfo("height",s[[sliceslist[1]]])))
+	 print(as.numeric(tkwinfo("height",s[[4]])))
+	print(as.numeric(tkwinfo("height",s[[68]])))
+	print(as.numeric(tkwinfo("height",s[[132]])))		
+
 	scaleL <- list(fmri.scale(type,scale,scalecol))
 	tkgrid(scaleL[[1]],pady=5)
 	scaleHeight <- (2*5 + as.numeric(tkwinfo("height",scaleL[[1]]))) # height of the scale
@@ -1061,6 +1070,8 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		currPage <<- 1
 		oldPage <<- 1
 
+		if (as.integer(tclvalue(nrSlicespp))>50) tclvalue(cbVar) <<- 1
+			
 		cbVal <- ((as.integer(tclvalue(cbVar))+1)%%2)
 		screenwidth = as.numeric(tkwinfo("screenwidth", tt))
 		screenheight = as.numeric(tkwinfo("screenheight", tt))
@@ -1069,6 +1080,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		# this methods is especially senseful, if the aspect ratio is kept !!
 		# returns the optimal number of rows (the optimal number of colums is determined by this)
 		findOptimum <- function(nrSlicesTmp){
+			print(nrSlicesTmp)
 			# determine vector of the non chosen viewing directions			
 			helpVec = c(-1,-1)		
 			index = 1			
@@ -1088,7 +1100,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				for (rowsTmp in 1:matSize){
 					if ((colsTmp-1)*rowsTmp < nrSlicesTmp && colsTmp*rowsTmp >= nrSlicesTmp){
 						hscaleTmp = (0.9*screenwidth)/(480*colsTmp)
-						vscaleTmp = (0.8*screenheight-sliderBottomHeight-scaleHeight-cbVal*rowsTmp*sliderheight)/(480*rowsTmp)
+						vscaleTmp = (0.8*screenheight-sliderBottomHeight-scaleHeight-cbVal*rowsTmp*sliderheight+rowsTmp*3)/(480*rowsTmp)
 						if (as.integer(tclvalue(ksVar))==1) {	# keep aspect ratio					
 							if (dt[helpVec[1]]>dt[helpVec[2]]){
 								if (hscaleTmp*(dt[helpVec[2]]/dt[helpVec[1]]) > vscaleTmp){
@@ -1108,17 +1120,24 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 							if (vscaleTmp>=1.2*hscaleTmp) vscaleTmp <- 1.2*hscaleTmp
 						}	
 						val1 <- 480*hscaleTmp*colsTmp
-						val2 <- 480*vscaleTmp*rowsTmp+sliderBottomHeight+scaleHeight+cbVal*rowsTmp*sliderheight
+						val2 <- 480*vscaleTmp*rowsTmp+sliderBottomHeight+scaleHeight+cbVal*rowsTmp*sliderheight+rowsTmp*3
 						quot1 = val1/(screenwidth*0.9)	
-						quot2 = val2/(screenheight*0.8)	
+						quot2 = val2/(screenheight*0.8)
+						print(paste(colsTmp,paste(rowsTmp,paste(quot1,quot2))))	
+						print(paste(valueMax,indexMaxRow))					
 						sum <- quot2+quot1
-						if (sum > valueMax && (sliderwidth+20)*colsTmp<screenwidth){
-							valueMax = sum
-							indexMaxRow = rowsTmp
+						if (sum > valueMax){
+							if (as.integer(tclvalue(cbVar))==1 || (sliderwidth+20)*colsTmp<screenwidth){
+								print("in here")	
+								valueMax = sum
+								indexMaxRow = rowsTmp
+							}
 						}									
 					}				
 				}			
 			}
+			print(valueMax)
+			print(indexMaxRow)
 			return (indexMaxRow) # returns the optimal number of rows
 		}
 
@@ -1184,9 +1203,9 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	
 		# calculate standard scaling factors for the first and the last page
 		hscaleNew = (0.9*screenwidth)/(480*colsVec[currPage])
-		vscaleNew = (0.8*screenheight-sliderBottomHeight-scaleHeight-((as.integer(tclvalue(cbVar))+1)%%2)*rowsVec[currPage]*sliderheight)/(480*rowsVec[currPage])
+		vscaleNew = (0.8*screenheight-sliderBottomHeight-scaleHeight-((as.integer(tclvalue(cbVar))+1)%%2)*rowsVec[currPage]*sliderheight-rowsVec[currPage]*3)/(480*rowsVec[currPage])
 		hscaleNewLast = (0.9*screenwidth)/(480*colshelp)
-		vscaleNewLast = (0.8*screenheight-sliderBottomHeight-scaleHeight-((as.integer(tclvalue(cbVar))+1)%%2)*rowshelp*sliderheight)/(480*rowshelp)
+		vscaleNewLast = (0.8*screenheight-sliderBottomHeight-scaleHeight-((as.integer(tclvalue(cbVar))+1)%%2)*rowshelp*sliderheight-rowshelp*3)/(480*rowshelp)
 		
 		# if aspect ratio has to be kept: adjust scaling factors
 		if (as.integer(tclvalue(ksVar))==1) {	
@@ -1232,6 +1251,13 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			else curr = curr + 1
 		}
 	
+		print("info")
+		print(screenwidth)
+		print(screenheight)
+                print(sliderBottomHeight)
+		print(sliderheight)
+	 	print(scaleHeight)
+
 		# deviance from quadrat not too big
 		if (as.integer(tclvalue(ksVar))==0) {
 			if (hscaleNew>=1.2*vscaleNew) hscaleNew <- 1.2*vscaleNew
@@ -1419,6 +1445,42 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	# is called by the button "View 3d"	
 	call3d <- function(){
 		plot.fmridata(localx,ttt,type="3d")
+	}
+
+	adjustContrast <- function(){
+		print(min(ttt))	
+		print(max(ttt))
+		okAdjCon <- function(){ 
+			print(length(inputStuff))
+			tkdestroy(ttAdjCon) 
+			tkdestroy(tt)
+			plot(localx,inputStuff[[1]],maxpvalue=inputStuff[[2]],cutOff=c(as.numeric(tclvalue(minVal)),as.numeric(tclvalue(maxVal))))
+				
+		}
+		quitAdjCon <- function(){ tkdestroy(ttAdjCon) }
+		ttAdjCon <- tktoplevel(bg=wiasblue)
+		adjConFrame1 <- tkframe(ttAdjCon,bg=wiasblue)
+		adjConFrame2 <- tkframe(ttAdjCon,bg=wiasblue)
+		adjConFrame3 <- tkframe(ttAdjCon,bg=wiasblue)
+		adjConFrame4 <- tkframe(ttAdjCon,bg=wiasblue)
+		minVal <- tclVar(0)
+		maxVal <- tclVar(1)
+		if (type=="pvalue"){
+			tclvalue(minVal) <- 1e-10
+			tclvalue(maxVal) <- maxpvalue
+		}
+		minEntry <- tkentry(adjConFrame2,textvariable=minVal,bg="#FFF",width=8)
+		maxEntry <- tkentry(adjConFrame3,textvariable=maxVal,bg="#FFF",width=8)
+		okAdjConButton <- tkbutton(adjConFrame4,text="Ok",command=okAdjCon,bg=wiaslightblue)
+		quitAdjConButton <- tkbutton(adjConFrame4,text="Quit",command=quitAdjCon,bg=wiaslightblue)	
+		tkgrid(tklabel(adjConFrame1,text="Determine the value of the lower and the upper cutoff in relation to the maximal value: \n Note, that the reestimations can last a moment.",bg=wiasblue),padx=10,pady=10)
+		tkgrid(tklabel(adjConFrame2,text="Lower Cutoff ",bg=wiasblue),minEntry,padx=10,pady=10)
+		tkgrid(tklabel(adjConFrame3,text="Upper Cutoff ",bg=wiasblue),maxEntry,padx=10,pady=10)
+		tkgrid(okAdjConButton,quitAdjConButton,padx=20,pady=10)
+		tkgrid(adjConFrame1)
+		tkgrid(adjConFrame2)
+		tkgrid(adjConFrame3)
+		tkgrid(adjConFrame4)
 	}
 
 	# save images with the help of adimpro
@@ -1823,6 +1885,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	cboxSlider <- tkcheckbutton(frame2,text="Hide Sliders",variable=cbVar,bg="#BBDDEC",command=hidesliders)	
 	dButton <- tkbutton(frame2,text="View 3d",command = call3d,bg="#BBDDEC")
 	extractButton <- tkbutton(frame2,text="Extract Images", command = extractImages,bg="#BBDDEC")
+	adjustCButton <- tkbutton(frame2,text="Adjust Contrast", command = adjustContrast,bg="#BBDDEC")
 	helpButton <- tkbutton(frame2,text="View Help", command = helpFunction,bg="#BBDDEC")
 	keepSides <- tkcheckbutton(frame2,text="Keep Aspect Ratio",variable=ksVar,bg="#BBDDEC",command=keepsides)	
 		
@@ -1830,7 +1893,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	tkgrid(frame0)
 	tkgrid(nrSlicesLabel,nrSlicesEntry,nrSlicesppLabel,nrSlicesppEntry,changeButton,viewAllButton,padx=10,pady=5)
 	tkgrid(frame1)	
-	tkgrid(cboxSlider,keepSides,dButton,extractButton,helpButton,padx=10,pady=5) # for HELP and adimpro
+	tkgrid(cboxSlider,keepSides,dButton,extractButton,adjustCButton,helpButton,padx=10,pady=5) # for HELP and adimpro
 	tkgrid(frame2)	
 		
 	sliderBottomHeight <- 0
