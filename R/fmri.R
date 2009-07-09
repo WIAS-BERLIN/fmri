@@ -1,121 +1,134 @@
-fmri.smooth <- function(spm,hmax=4,adaptive=TRUE,adaptation="aws",lkern="Gaussian",skern="Plateau",weighted=TRUE,...) {
-  cat("fmri.smooth: entering function\n")
-   args <- match.call()
-  if(!adaptive) adaptation <- "none"
-  if(!(tolower(adaptation)%in%c("none","aws","segment"))) {
-      adaptation
-  }
-  ladjust <- if("ladjust" %in% names(list(...))) list(...)[["ladjust"]] else 1
-  fov <- if("fov" %in% names(list(...))) list(...)[["fov"]] else NULL
-  thresh <- if("thresh" %in% names(list(...))) list(...)[["thresh"]] else 3.5
-  delta <- if("delta" %in% names(list(...))) list(...)[["delta"]] else 0
-  propagation <- if("propagation" %in% names(list(...))) list(...)[["propagation"]] else FALSE
-
-  if (!("fmrispm" %in% class(spm))) {
-    warning("fmri.smooth: data not of class <fmrispm>. Try to proceed but strange things may happen")
-  }
-
-  if (!is.null(attr(spm,"smooth"))) {
-    warning("fmri.smooth: Parametric Map seems to be smoothed already!")
-  }
-  
-  variance <- spm$var
-#  variance[variance < quantile(variance,0.25)] <- quantile(variance,0.25)
-  variance[variance == 0] <- 1e20
-  
-  if (is.null(spm$weights)) {
-    weights <- c(1,1,1)
-  } else {
-    weights <- spm$weights
-  }
-  if (is.null(spm$bw)) {
-    bw <- rep(0,3)
-  } else {
-    bw <- spm$bw
-  }
-
-  cat("fmri.smooth: smoothing the Statistical Parametric Map\n")
-  ttthat <- switch(tolower(adaptation),
-                   "aws"=vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
-                         wghts=weights, h0=bw, vwghts = spm$vwghts,
-                         lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
-                         resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust,
-                         testprop=propagation),
-                   "fullaws"=vaws3Dfull(y=spm$cbeta, sigma2=variance, hmax=hmax,
-                         mask=spm$mask,wghts=weights, vwghts = spm$vwghts,
-                         lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
-                         resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust,
-                         testprop=propagation),
-                   "none"=vaws3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
-                         qlambda = 1, wghts=weights, h0=bw,
-                         vwghts = spm$vwghts,lkern=lkern,skern=skern,weighted=weighted,res=spm$res,
-                         resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust),
-                   "segment"=segm3D(y=spm$cbeta, sigma2=variance, hmax=hmax, mask=spm$mask,
-                         wghts=weights, h0=bw,lkern=lkern,weighted=weighted,res=spm$res,
-                         resscale=spm$resscale, ddim=spm$dim,ladjust=ladjust,delta=delta,
-                         thresh=thresh,fov=fov))
-  cat("\n")
-  
-  cat("fmri.smooth: determine local smoothness\n")
-  if(is.null(ttthat$scorr)){
-     bw <- get3Dh.gauss(ttthat$vred,weights)
-  } else {
-     bw <- optim(c(2,2,2),corrrisk,method="L-BFGS-B",lower=c(.25,.25,.25),upper=c(6,6,6),lag=c(5,5,3),data=ttthat$scorr)$par  
-     bw[bw<=.25] <- 0
-     dim(bw) <- c(1,3)
-  } 
-  rxyz <- c(resel(1,bw[,1]), resel(1,bw[,2]), resel(1,bw[,3]))
-  dim(rxyz) <- c(dim(bw)[1],3)
-  bw0 <- get3Dh.gauss(ttthat$vred0,weights)
-  rxyz0 <- c(resel(1,bw0[,1]), resel(1,bw0[,2]), resel(1,bw0[,3]))
-  dim(rxyz0) <- c(dim(bw0)[1],3)
-  cat("fmri.smooth: exiting function\n")
-  if(length(dim(ttthat$theta))==3) dim(ttthat$theta) <- c(dim(ttthat$theta),1)
-  if (dim(ttthat$theta)[4] == 1) {
-    z <- list(cbeta = ttthat$theta[,,,1], var = ttthat$var, rxyz =
-              rxyz, rxyz0 = rxyz0, scorr = spm$scorr, weights =
-              spm$weights, vwghts = spm$vwghts, bw=bw, 
-              hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf, segm = ttthat$segm, mask = ttthat$mask, call=args)
-  } else {
-    z <- list(cbeta = ttthat$theta, var = ttthat$var, rxyz = rxyz, rxyz0 = rxyz0, 
-              scorr = spm$scorr, weights = spm$weights, vwghts = spm$vwghts, bw=bw,
-              hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf, segm = ttthat$segm, mask = ttthat$mask, call=args)
-  }
-
-  class(z) <- c("fmridata","fmrispm")
-
-  z$roixa <- spm$roixa
-  z$roixe <- spm$roixe
-  z$roiya <- spm$roiya
-  z$roiye <- spm$roiye
-  z$roiza <- spm$roiza
-  z$roize <- spm$roize
-  z$roit <- spm$roit
-  z$header <- spm$header
-  z$format <- spm$format
-  z$dim0 <- spm$dim0
-  z$scorr <- ttthat$scorr
-
-  attr(z, "file") <- attr(spm, "file")
-  attr(z, "white") <- attr(spm, "white")
-  attr(z, "design") <- attr(spm, "design")
-  attr(z, "residuals") <- attr(spm, "residuals")
-
-  if (!is.null(attr(spm, "smooth"))) {
-    attr(z, "smooth") <-
-      paste("Already smoothed before:\n",attr(spm, "smooth"),
-            "\nnow with:\n  adaptive  :",as.character(adaptive),
-            "\n  bandwidth :",signif(hmax,3),
-            "\n  lkern     :",lkern,
-            "\n  skern     :",skern,"\n")
-  } else {
-    attr(z, "smooth") <-
-      paste("Smoothed with:\n  adaptive  :",as.character(adaptive),
-            "\n  bandwidth :",signif(hmax,3),
-            "\n  lkern     :",lkern,
-            "\n  skern     :",skern,"\n")      
-  }
-  z
+fmri.smooth <- function (spm, hmax = 4, adaptive = TRUE, adaptation = "aws",
+    lkern = "Gaussian", skern = "Plateau", weighted = TRUE, ...)
+{
+    cat("fmri.smooth: entering function\n")
+    args <- match.call()
+    if (!adaptive)
+        adaptation <- "none"
+    if (!(tolower(adaptation) %in% c("none", "aws", "segment"))) {
+        adaptation
+    }
+    ladjust <- if ("ladjust" %in% names(list(...)))
+        list(...)[["ladjust"]]
+    else 1
+    fov <- if ("fov" %in% names(list(...)))
+        list(...)[["fov"]]
+    else NULL
+    delta <- if ("delta" %in% names(list(...)))
+        list(...)[["delta"]]
+    else 0
+    alpha <- if ("alpha" %in% names(list(...)))
+        list(...)[["alpha"]]
+    else 0.05
+    propagation <- if ("propagation" %in% names(list(...)))
+        list(...)[["propagation"]]
+    else FALSE
+    if (!("fmrispm" %in% class(spm))) {
+        warning("fmri.smooth: data not of class <fmrispm>. Try to proceed but strange things may happen")
+    }
+    if (!is.null(attr(spm, "smooth"))) {
+        warning("fmri.smooth: Parametric Map seems to be smoothed already!")
+    }
+    variance <- spm$var
+    variance[variance == 0] <- 1e+20
+    if (is.null(spm$weights)) {
+        weights <- c(1, 1, 1)
+    }
+    else {
+        weights <- spm$weights
+    }
+    if (is.null(spm$bw)) {
+        bw <- rep(0, 3)
+    }
+    else {
+        bw <- spm$bw
+    }
+    cat("fmri.smooth: smoothing the Statistical Parametric Map\n")
+    ttthat <- switch(tolower(adaptation), aws = vaws3D(y = spm$cbeta,
+        sigma2 = variance, hmax = hmax, mask = spm$mask, wghts = weights,
+        h0 = bw, vwghts = spm$vwghts, lkern = lkern, skern = skern,
+        weighted = weighted, res = spm$res, resscale = spm$resscale,
+        ddim = spm$dim, ladjust = ladjust, testprop = propagation),
+        fullaws = vaws3Dfull(y = spm$cbeta, sigma2 = variance,
+            hmax = hmax, mask = spm$mask, wghts = weights, vwghts = spm$vwghts,
+            lkern = lkern, skern = skern, weighted = weighted,
+            res = spm$res, resscale = spm$resscale, ddim = spm$dim,
+            ladjust = ladjust, testprop = propagation), none = vaws3D(y = spm$cbeta,
+            sigma2 = variance, hmax = hmax, mask = spm$mask,
+            qlambda = 1, wghts = weights, h0 = bw, vwghts = spm$vwghts,
+            lkern = lkern, skern = skern, weighted = weighted,
+            res = spm$res, resscale = spm$resscale, ddim = spm$dim,
+            ladjust = ladjust), segment = segm3D(y = spm$cbeta,
+            sigma2 = variance, hmax = hmax, mask = spm$mask,
+            wghts = weights, df = spm$df, h0 = bw, weighted = weighted,
+            res = spm$res, resscale = spm$resscale, ddim = spm$dim,
+            ladjust = ladjust, delta = delta, fov = fov, alpha = alpha))
+    cat("\n")
+    cat("fmri.smooth: determine local smoothness\n")
+    if (is.null(ttthat$scorr)) {
+        bw <- get3Dh.gauss(ttthat$vred, weights)
+    }
+    else {
+        bw <- optim(c(2, 2, 2), corrrisk, method = "L-BFGS-B",
+            lower = c(0.25, 0.25, 0.25), upper = c(6, 6, 6),
+            lag = c(5, 5, 3), data = ttthat$scorr)$par
+        bw[bw <= 0.25] <- 0
+        dim(bw) <- c(1, 3)
+    }
+    rxyz <- c(resel(1, bw[, 1]), resel(1, bw[, 2]), resel(1,
+        bw[, 3]))
+    dim(rxyz) <- c(dim(bw)[1], 3)
+    bw0 <- get3Dh.gauss(ttthat$vred0, weights)
+    rxyz0 <- c(resel(1, bw0[, 1]), resel(1, bw0[, 2]), resel(1,
+        bw0[, 3]))
+    dim(rxyz0) <- c(dim(bw0)[1], 3)
+    cat("fmri.smooth: exiting function\n")
+    if (length(dim(ttthat$theta)) == 3)
+        dim(ttthat$theta) <- c(dim(ttthat$theta), 1)
+    if (dim(ttthat$theta)[4] == 1) {
+        z <- list(cbeta = ttthat$theta[, , , 1], var = ttthat$var,
+            rxyz = rxyz, rxyz0 = rxyz0, scorr = spm$scorr, weights = spm$weights,
+            vwghts = spm$vwghts, bw = bw, hmax = ttthat$hmax,
+            dim = spm$dim, hrf = spm$hrf, segm = ttthat$segm,
+            mask = ttthat$mask, call = args)
+    }
+    else {
+        z <- list(cbeta = ttthat$theta, var = ttthat$var, rxyz = rxyz,
+            rxyz0 = rxyz0, scorr = spm$scorr, weights = spm$weights,
+            vwghts = spm$vwghts, bw = bw, hmax = ttthat$hmax,
+            dim = spm$dim, hrf = spm$hrf, segm = ttthat$segm,
+            mask = ttthat$mask, call = args)
+    }
+    class(z) <- c("fmridata", "fmrispm")
+    z$roixa <- spm$roixa
+    z$roixe <- spm$roixe
+    z$roiya <- spm$roiya
+    z$roiye <- spm$roiye
+    z$roiza <- spm$roiza
+    z$roize <- spm$roize
+    z$roit <- spm$roit
+    z$header <- spm$header
+    z$format <- spm$format
+    z$dim0 <- spm$dim0
+    z$scorr <- ttthat$scorr
+    attr(z, "file") <- attr(spm, "file")
+    attr(z, "white") <- attr(spm, "white")
+    attr(z, "design") <- attr(spm, "design")
+    attr(z, "residuals") <- attr(spm, "residuals")
+    if (!is.null(attr(spm, "smooth"))) {
+        attr(z, "smooth") <- paste("Already smoothed before:\n",
+            attr(spm, "smooth"), "\nnow with:\n  adaptive  :",
+            as.character(adaptive), "\n  bandwidth :", signif(hmax,
+                3), "\n  lkern     :", lkern, "\n  skern     :",
+            skern, "\n")
+    }
+    else {
+        attr(z, "smooth") <- paste("Smoothed with:\n  adaptive  :",
+            as.character(adaptive), "\n  bandwidth :", signif(hmax,
+                3), "\n  lkern     :", lkern, "\n  skern     :",
+            skern, "\n")
+    }
+    z
 }
 
 fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE, minimum.signal=0 ) {

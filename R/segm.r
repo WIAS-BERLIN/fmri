@@ -36,13 +36,6 @@ segm3D <- function(y,weighted=TRUE,
 #
 #  Auxilary functions
    IQRdiff <- function(y) IQR(diff(y))/1.908
-   getbeta <- function(df,h0){
-#    df in (40 : 100)
-#    h0 in (0 : 1.5) (in FWHM)
-#    see file sim_fmri_kritval.r in R/segmentation/fmrikrv/
-      h <- fwhm2bw(sqrt(h0[1]*h0[2]))
-      1.461+2150/df^2+0.3*h
-}
    getkrval <- function(df,h0,ladj,n,kstar,alpha){
 #
 #    this delivers an upper bound for kritical values over a wide range of parameters
@@ -56,96 +49,69 @@ segm3D <- function(y,weighted=TRUE,
 #    see file sim_fmri_kritval.r in R/segmentation/fmrikrv/
 
       h <- fwhm2bw(sqrt(h0[1]*h0[2]))
-      explvar <- c(1,              1/df,               n,                        ladj,
-                   log(ladj),      log(h+1),           kstar,                    h,
-                   1/df^2,         1/df*log(ladj),     n*log(h+1),               n*log(ladj),
-                   ladj*h,         log(ladj)*log(h+1), log(ladj)*h,              kstar*h,
-                   log(h+1)*kstar, ladj*kstar*h,       log(ladj)*log(h+1)*kstar, log(ladj)*h*kstar)
-      if(alpha>=.2){
+      explvar <- c(1,    log(h+1),     h,     kstar,      sqrt(log(n)),   1/df,
+                   log(ladj)/df, log(h+1)/df, log(ladj)*log(h+1), sqrt(log(n))/df)
+      if(alpha>=.25){
+      cat("Using critical values for alpha = 0.25 \n")
+      coefs <- c(-1.759, 6.085, -3.159, 0.00257, 0.3874, -27.11, -30.04, 24.78, -1.553, 21.44)
+      qres <- 0.0592  # res.quantiles(.9,.95,.99,1) 0.0300 0.0356 0.0445 0.0592
+      } else if(alpha>=.2){
       cat("Using critical values for alpha = 0.2 \n")
-      coefs <- c( 0.1485,  48.4,    1.75e-06,    0.7107, 
-                 -1.039,    7.804,  0.1764,     13.62, 
-                 -1078,   -11.72,   2.231e-06,  -1.69e-06, 
-                 -18.06,  -28.15,  41.95,       -0.6027, 
-                 -0.3967,   0.8376, 1.073,      -1.844)
-      qres <- 0.0484
+      coefs <- c(-1.56, 6.076, -3.15, 0.003117, 0.3441, -26.21, -30.21, 25.6, -1.559, 21.73)
+      qres <- 0.0634  # res.quantiles(.9,.95,.99,1) 0.0303 0.0365 0.0468 0.0634
+      } else if(alpha>=.15){
+      cat("Using critical values for alpha = 0.15 \n")
+      coefs <- c(-1.346, 6.061, -3.127, 0.003738, 0.2988, -24.54, -30.29, 25.84, -1.556, 21.98)
+      qres <- 0.0732  # res.quantiles(.9,.95,.99,1) 0.0310 0.0377 0.0476 0.0732
+      } else if(alpha>=.125){
+      cat("Using critical values for alpha = 0.125 \n")
+      coefs <- c(-1.266, 6.075, -3.132, 0.004119, 0.2861, -19.34, -30.4, 26, -1.556, 20.9)
+      qres <- 0.0691  # res.quantiles(.9,.95,.99,1) 0.0326 0.0392 0.0492 0.0691
       } else if(alpha>=.1){
       cat("Using critical values for alpha = 0.1 \n")
-      coefs <- c( 0.3369,  52.17,   1.508e-06,   0.6634, 
-                 -0.9903,   9.034,  0.1796,     12.64, 
-                 -1011, -  13.68,   2.194e-06,  -1.397e-06, 
-                 -18.13,  -29.41,  43.75,       -0.555, 
-                 -0.4388,   0.8297, 1.106,      -1.894)
-      qres <- 0.049
-      } else if(alpha>=.08) {
-      cat("Using critical values for alpha = 0.08 \n")
-      coefs <- c( 0.4256,  53.41,   1.455e-06,   0.6179, 
-                 -0.9293,   9.289,  0.1804,     12.28, 
-                 -987.2,  -14.62,   2.152e-06,  -1.348e-06, 
-                 -17.99,  -29.35,  43.79,       -0.5383, 
-                 -0.4485,   0.8227, 1.106,      -1.895)
-      qres <- 0.0487
-      } else if(alpha>=.06) {
-      cat("Using critical values for alpha = 0.06 \n")
-      coefs <- c( 0.5601,  55.66,   1.393e-06,   0.5289, 
-                 -0.805,    9.886,  0.1815,     11.02, 
-                 -971.4,  -15.86,   2.141e-06,  -1.318e-06, 
-                 -17.23,  -30.27,  43.81,       -0.4877, 
-                 -0.4705,   0.7915, 1.142,      -1.895)
-      qres <- 0.048
-      } else if(alpha>=.05) {
+      coefs <- c(-1.036, 6.077, -3.126, 0.004547, 0.2316, -21.86, -30.78, 26.44, -1.571, 22.21)
+      qres <- 0.0749  # res.quantiles(.9,.95,.99,1) 0.0342 0.0415 0.0538 0.0749
+      } else if(alpha>=.075){
+      cat("Using critical values for alpha = 0.075 \n")
+      coefs <- c(-0.7676, 6.11, -3.147, 0.005197, 0.1678, -27.27, -31.17, 27.47, -1.58, 24.55)
+      qres <- 0.0904  # res.quantiles(.9,.95,.99,1) 0.0373 0.0477 0.0654 0.0904
+      } else if(alpha>=.05){
       cat("Using critical values for alpha = 0.05 \n")
-      coefs <- c( 0.6215,  56.87,   1.359e-06,   0.4963, 
-                 -0.7564,  10.2,    0.1822,     10.69, 
-                 -954.4,  -16.67,   2.161e-06,  -1.31e-06, 
-                 -17.16,  -30.23,  43.88,       -0.4751,  
-                 -0.4826,  0.7901,  1.141,      -1.901)
-      qres <- 0.0474
-      } else if(alpha>=.04) {
-      cat("Using critical values for alpha = 0.04 \n")
-      coefs <- c( 0.6452,  58.79,   1.341e-06,   0.4984, 
-                 -0.7409,  10.32,   0.1832,     10.28, 
-                 -947.7,  -17.74,   2.152e-06,  -1.346e-06, 
-                 -16.89,  -29.4,   43.13,       -0.458, 
-                 -0.4863,   0.7782, 1.104,      -1.867)
-      qres <- 0.0486
-      } else if(alpha>=.025){
-      cat("Using critical values for alpha = 0.025 \n")
-      coefs <- c( 0.8513,  60.5,    1.292e-06,   0.3913, 
-                 -0.583,   10.85,   0.184,       9.247, 
-                 -862.6,  -19.84,   2.1e-06,    -1.244e-06, 
-                 -16.33,  -29.41,  42.8,        -0.4224, 
-                 -0.5051,   0.7618, 1.1,        -1.86)
-      qres <- 0.049
+      coefs <- c(-0.4409, 6.1, -3.129, 0.006261, 0.09223, -31.3, -30.87, 28.65, -1.652, 26.68)
+      qres <- 0.0917  # res.quantiles(.9,.95,.99,1) 0.0419 0.0545 0.0764 0.0917
       } else if(alpha>=.02){
       cat("Using critical values for alpha = 0.02 \n")
-      coefs <- c( 0.8986,  60.42,   1.298e-06,   0.3855, 
-                 -0.5647,  11.18,   0.1848,      8.507, 
-                 -794.8,  -20.65,   2.081e-06,  -1.247e-06, 
-                 -15.88,  -28.92,  42.07,       -0.3935, 
-                 -0.5177,  0.7447,  1.077,      -1.831)
-      qres <- 0.0516
+      coefs <- c(-0.1448, 6.076, -3.09, 0.00857, 0.04783, -22.23, -30.81, 31.67, -1.848, 26.27)
+      qres <- 0.105  # res.quantiles(.9,.95,.99,1) 0.0522 0.0663 0.0861 0.1050
       } else if(alpha>=.01){
       cat("Using critical values for alpha = 0.01 \n")
-      coefs <- c( 1.143,   60.28,   1.236e-06,   0.301, 
-                 -0.4117,  11.68,   0.1857,      5.67, 
-                 -589.9,  -23.35,   2.3e-06,    -1.302e-06, 
-                 -13.63,  -27.54,  38.9,        -0.285, 
-                 -0.537,    0.661,  1.02,       -1.712)
-      qres <- 0.0557
+      coefs <- c(0.3636, 6.102, -3.085, 0.01067, -0.07914, -46.55, -31.02, 33.09, -1.999, 35.57)
+      qres <- 0.149  # res.quantiles(.9,.95,.99,1) 0.0626 0.0784 0.1100 0.1490
+      } else if(alpha>=.005){
+      cat("Using critical values for alpha = 0.005 \n")
+      coefs <- c(0.3803, 6.179, -3.102, 0.01388, -0.07502, -32.43, -30.45, 35.01, -2.143, 33.69)
+      qres <- 0.213  # res.quantiles(.9,.95,.99,1) 0.0783 0.1040 0.1560 0.2130
+      } else if(alpha>=.002){
+      cat("Using critical values for alpha = 0.002 \n")
+      coefs <- c(0.2181, 6.374, -3.127, 0.02009, -0.03312, -12.31, -30.59, 31.57, -2.374, 30.89)
+      qres <- 0.211  # res.quantiles(.9,.95,.99,1) 0.112 0.137 0.189 0.211
+      } else if(alpha>=.001){
+      cat("Using critical values for alpha = 0.001 \n")
+      coefs <- c(-0.0509, 6.654, -3.255, 0.02556, 0.03278, 2.36, -29.05, 29.92, -2.466, 29.13)
+      qres <- 0.416  # res.quantiles(.9,.95,.99,1) 0.128 0.167 0.253 0.416
       } else {
-        warning("Significance levels smaller then 0.01 are not implemented,
-         using alpha = 0.01 instead")
-      coefs <- c( 1.143,   60.28,   1.236e-06,   0.301, 
-                 -0.4117,  11.68,   0.1857,      5.67, 
-                 -589.9,  -23.35,   2.3e-06,    -1.302e-06, 
-                 -13.63,  -27.54,  38.9,        -0.285, 
-                 -0.537,    0.661,  1.02,       -1.712)
-      qres <- 0.0557
+      cat("Using critical values for alpha = 0.001 \n")
+      coefs <- c(-0.0509, 6.654, -3.255, 0.02556, 0.03278, 2.36, -29.05, 29.92, -2.466, 29.13)
+      qres <- 0.416  # res.quantiles(.9,.95,.99,1) 0.128 0.167 0.253 0.416
       }
-#  add 0.9 quantile of residuals
+#  add maximum of residuals
+      print(rbind(coefs,explvar,coefs*explvar))
       sum(coefs*explvar)+qres
    }
+#
+#  set beta depending on df
+#
+   beta <- 2+30/df+285/df^2+5000/df^3
 #
 # first check arguments and initialize
 #
@@ -228,8 +194,7 @@ segm3D <- function(y,weighted=TRUE,
    if(h0[2]>0) scorr[2] <-  get.corr.gauss(h0[2],2)
    if(h0[3]>0) scorr[3] <-  get.corr.gauss(h0[3],2)
    total <- cumsum(1.25^(1:kstar))/sum(1.25^(1:kstar))
-   beta <- getbeta(df,h0)
-   thresh <- getkrval(df,h0,ladjust,n,kstar,alpha)
+   thresh <- getkrval(df,h0,ladjust,fov,kstar,alpha)
    cat("FOV",fov,"delta",delta,"thresh",thresh,"ladjust",ladjust,"lambda",lambda,"df",df,"\n")
 # run single steps to display intermediate results
    residuals <- residuals*resscale

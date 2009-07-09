@@ -29,8 +29,9 @@ C
      1      varest(n1,n2,n3),res(nt,n1,n2,n3),vest0i(n1,n2,n3)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
-      real*8 bii,swj,swjy,wj,hakt2,spf,si2j,si2i,swjv,cofh,lsi,s,vqi,
-     1       varesti,fpchisq,ti,thij,sij,z,si,swr,z1,lfov,linc,sm1
+      real*8 bii,swj,swjy,wj,hakt2,spf,si2j,si2i,swjv,cofh,s,vqi,
+     1       varesti,fpchisq,ti,thij,sij,z,si,swr,z1,lfov,linc,sm1,
+     2       arg,sqrtarg
       external getlwght,fpchisq
       kern=1
       hakt2=hakt*hakt
@@ -71,7 +72,9 @@ C
                thi=theta(i1,i2,i3)
                si2i=vest0i(i1,i2,i3)
                varesti=varest(i1,i2,i3)
-               cofh=sqrt(beta*log(varesti*si2i*fov))-0.17d0*sm1
+               arg = beta*log(1.301d0*varesti*si2i*fov)
+               sqrtarg = sqrt(arg)
+               cofh = sqrtarg + log(arg)/sqrtarg
 C               lsi = min(sm1,-log(varesti*si2i)/linc)
 C               cofh = sqrt(beta*log(varesti*si2i*fov))-0.17d0*lsi
 C   this should be more conservative using actual variance reduction instead of theoretical
@@ -169,9 +172,13 @@ C  weighted sum of residuals
                si = (z/nt - z1*z1)
                si = si/nt
                varest(i1,i2,i3)=si
-               cofh = sqrt(beta*log(si*si2i*fov))-0.17d0*step
-C               lsi = min(s,-log(si*si2i)/linc)
-C               cofh = sqrt(beta*log(si*si2i*fov))-0.17d0*lsi
+               arg = beta*log(1.301d0*si*si2i*fov)
+               sqrtarg = sqrt(arg)
+               cofh = sqrtarg + log(arg)/sqrtarg
+C
+C  this is an essentially 2D correction term (p=2 instead of p=3)
+C  reflecting that smoothing is mainly within slices
+C
 C   this should be more conservative using actual variance reduction instead of theoretical
                si=sqrt(si/vqi)
                if((thi+delta)/si+cofh.lt.-thresh) THEN
