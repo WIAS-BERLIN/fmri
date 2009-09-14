@@ -1,4 +1,4 @@
-ngca <- function(data,L=c(1000,1000,1000),T=10,m=3,eps=1.5,npca=min(dim(x)[2],dim(x)[1]),filter.time="None",filter.space=FALSE,method="temporal",h.space=3,h.time=3,keepv=FALSE){
+ngca <- function(data,L=c(1000,1000,1000),T=10,m=2,eps=1.6,npca=min(dim(x)[2],dim(x)[1]),filter.time="None",filter.space=FALSE,method="temporal",h.space=3,h.time=3,keepv=FALSE){
 #
 #  NGCA algorithm  for fMRI
 #  x should be either a fMRI object or a matrix 
@@ -83,25 +83,18 @@ x <- t(x)
 d <- dim(x)[2]
 n <- dim(x)[1]
 }
-#svdx <- svd(x,nu=0,nv=npca)
-svdx <- svd(x,nu=npca,nv=npca)
-#cat("Dimension reduced to:",npca,"\n")
-#svdxd <- svdxdinv <- abs(svdx$d[1:npca])
-#svdxdinv[svdxdinv>1e-10] <- 1/svdxdinv[svdxdinv>1e-10]
-#y <- t(x%*%t(svdx$v)%*%diag(svdxdinv)%*%svdx$v)
-if(d>n) {
-# reduce to space of first npca components
-y <- svdx$v[1:npca,]%*%t(svdx$u)*sqrt(n-1)
-} else {
-y <- svdx$v%*%t(svdx$u)*sqrt(n-1)
-}
-#
+npca <- min(npca,d,n-1)
+z <- prcomp(x)
+y <- z$x%*%diag(1/z$sdev)[,1:npca]
+sigma <- diag(z$sdev)[1:npca,]%*%t(z$rotation)
+center <- z$center
+# x-sweep(y%*%sigma,2,z$center,"+")  should be zero
 #
 Lsum <- L[1]+L[2]+2*L[3]
 s <- c(if(L[1]>0) seq(.5,5,length=L[1]), 
-       if(L[2]>0) seq(5/L[2],5,length=L[2]), 
-       if(L[3]>0) seq(1/L[3],4,length=L[3]),
-       if(L[3]>0) seq(0,4,length=L[3]))
+       if(L[2]>0) seq(0.05,5,length=L[2]), 
+       if(L[3]>0) seq(0.05,4,length=L[3]),
+       if(L[3]>0) seq(0.05,4,length=L[3]))
 Lsum <- L[1]+L[2]+2*L[3]
 ifun <- c(rep(1,L[1]),rep(2,L[2]),rep(3,L[3]),rep(4,L[3]))
 #
@@ -110,7 +103,7 @@ ifun <- c(rep(1,L[1]),rep(2,L[2]),rep(3,L[3]),rep(4,L[3]))
 omega <- matrix(rnorm(Lsum*npca),npca,Lsum)
 omega <- sweep(omega,2,sqrt(apply(omega^2,2,sum)),"/")
 fz <- .Fortran("fastica",
-              as.double(y),
+              as.double(t(y)),
               as.double(omega),
               as.integer(npca),
               as.integer(n),
@@ -125,39 +118,39 @@ fz <- .Fortran("fastica",
               PACKAGE="fmri")[c("v","normv")]
 v <- fz$v
 normv <- fz$normv
+plot(density(normv))
+if(eps>quantile(normv,.95)) {
+eps <- quantile(normv,.95)
+cat("eps reset to",eps,"\n")
+}
 dim(v) <- c(npca,Lsum)
-v <- t(v[,normv>eps])
-jhat <- prcomp(v)
-if(d>n){
-ihat <- svdx$v%*%diag(svdx$d)%*%t(svdx$v[1:npca,])%*%jhat$rotation[,1:m]/sqrt(n-1)
-} else {
-ihat <- svdx$v%*%diag(svdx$d)%*%t(svdx$v)%*%jhat$rotation[,1:m]/sqrt(n-1)
-}
-xhat <- x%*%ihat
-if(fmriobj){
-if(method=="spatial"){
-z <- matrix(0,nn,m)
-z[mask,]<-ihat
-ihat <- array(z,c(xdim[1:3],m))
-} else {
-z <- matrix(0,nn,m)
-z[mask,]<-xhat
-xhat <- array(z,c(xdim[1:3],m))
-}
-z <- list(ihat=ihat,sdev=jhat$sdev[1:m],xhat=xhat)
-if(keepv) {
-z$v <- v
-z$normv <- normv
-}
-class(z) <- "fmringca"
-} else {
-z <- list(ihat=ihat,sdev=jhat$sdev[1:m],xhat=xhat,jhat=jhat,svdx=svdx)
+vr <- t(v[,normv>eps])
+jhat <- prcomp(vr)
+ihat <- t(jhat$rotation[1:m,]%*%sigma%*%t(y))
+#if(fmriobj){
+#if(method=="spatial"){
+#z <- matrix(0,nn,m)
+#z[mask,]<-ihat
+#ihat <- array(z,c(xdim[1:3],m))
+#} else {
+#z <- matrix(0,nn,m)
+#z[mask,]<-xhat
+#xhat <- array(z,c(xdim[1:3],m))
+#}
+#z <- list(ihat=ihat,jhat=jhat,center=center,sigma=sigma,y=y,v=v,normv=normv)
+#if(keepv) {
+#z$v <- v
+#z$normv <- normv
+#}
+#class(z) <- "fmringca"
+#} else {
+z <- list(ihat=ihat,jhat=jhat,center=center,sigma=sigma,y=y,v=v,normv=normv)
 if(keepv) {
 z$v <- v
 z$normv <- normv
 }
 class(z) <- "ngca"
-}
+#}
 z
 }
 
