@@ -35,7 +35,10 @@ fmri.stimulus <- function(scans=1 ,onsets=c(1) ,durations=c(1),
       stimulus[j] <- 1
     }
   }
-  hrf <- convolve(stimulus,mygamma(scans:1, a1, a2, b1/rt, b2/rt, cc))/scale
+  stimulus <- c(rep(0,40),stimulus,rep(0,40))
+#  just fill with zeros to avoid bounding effects in convolve
+  hrf <- convolve(stimulus,mygamma((80+scans):1, a1, a2, b1/rt, b2/rt, cc))/scale
+  hrf <- hrf[-(1:40)][1:scans]
   hrf <- hrf[unique((scale:scans)%/%scale)*scale]
   
   dim(hrf) <- c(scans/scale,1)
