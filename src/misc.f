@@ -401,8 +401,9 @@ C   result: mask == .TRUE. if voxel is connected to seed
       implicit logical (a-z)
       integer n1,n2,n3,i1,i2,i3,ind1(1),ind2(1),ind3(1)
       logical final,checked(1),mask(n1,n2,n3),segm(n1,n2,n3)
-      integer j1,j2,j3,k,l1,l2,l3,lind,lind0
+      integer j1,j2,j3,k,l1,l2,l3,lind,lind0,n
 C     first find pixel close to (i1,i2) with segm(j1,j2)=0
+      n=n1*n2*n3
       DO j1=1,n1
          DO j2=1,n2
             DO j3=1,n3
@@ -464,6 +465,8 @@ C     first find pixel close to (i1,i2) with segm(j1,j2)=0
                      if(segm(j1,j2,j3).and..not.mask(j1,j2,j3)) THEN
                         mask(j1,j2,j3)=.TRUE.
                         lind=lind+1
+                        if(lind.gt.n) THEN
+               call intpr("lconnect: lind exeeds maximum of",32,n,1)
                         ind1(lind)=j1
                         ind2(lind)=j2
                         ind3(lind)=j3
