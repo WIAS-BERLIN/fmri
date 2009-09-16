@@ -292,8 +292,8 @@ fmri.lm <- function(data,z,actype="smooth",vtype="var",step=0.01,contrast=c(1),v
      scale <- max(abs(qscale))/32767
      residuals <- writeBin(as.integer(residuals/scale),raw(),2)
   }
-  bw <- optim(c(2,2,2),corrrisk,method="L-BFGS-B",lower=c(.25,.25,.25),upper=c(4,4,4),lag=lags,data=corr)$par  
-  bw[bw<=.25] <- 0
+  bw <- optim(c(2,2,2),corrrisk,method="L-BFGS-B",lower=c(.59,.59,.59),upper=c(4,4,4),lag=lags,data=corr)$par  
+  bw[bw<=.6] <- 0
   if( (max(bw) > 2.5 ) || (corr[lags[1],1,1]+corr[1,lags[2],1]+corr[1,1,lags[3]] >0.5) ) warning(paste("Local smoothness characterized by large bandwidth ",bw," check residuals for structure",collapse=","))
   rxyz <- c(resel(1,bw[1]), resel(1,bw[2]), resel(1,bw[3]))
   dim(rxyz) <- c(1,3)
