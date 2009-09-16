@@ -467,6 +467,8 @@ C     first find pixel close to (i1,i2) with segm(j1,j2)=0
                         lind=lind+1
                         if(lind.gt.n) THEN
                call intpr("lconnect: lind exeeds maximum of",32,n,1)
+                            return
+                        END IF
                         ind1(lind)=j1
                         ind2(lind)=j2
                         ind3(lind)=j3
