@@ -84,7 +84,10 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
       if (diff(scale) != 0) {
         signal <- 0.5 + 0.5 * (signal - scale[1]) / diff(scale)
       } else if (scale[1] == 0) {
-        signal <- 0.5
+        signal <- 1
+# changed from 0.5 to 1 
+# original setting caused signals to be displayed if there were non 
+# now the windows show no information in case of no activalion at all
       } else {
         signal <- 1
       }
@@ -353,7 +356,7 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
         plot(ttt[pos[1],pos[2],pos[3],], xlab="Scan", ylab="BOLD signal")
         # mark scan number position
         lines(c(pos[4], pos[4]),range(ttt[pos[1],pos[2],pos[3],]),col=2)
-        # draw scale
+        # draw scale 
         image(seq(scale[1],scale[2],length=100),seq(scale[1],scale[2],length=10)/10,
               matrix(rep(seq(scale[1],scale[2],length=100),10),100,10),
               yaxt="n",xlab="", ylab="",zlim=scale, col=scalecol)
@@ -401,13 +404,17 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
         # draw something
         plot(c(0,1),c(0,1),xaxt="n",yaxt="n",xlab="",ylab="",type="n",bty="n",bg="#AACCDB")
         if (value == -log(maxpvalue)) {
-          text(0.2,0.5,paste("p-value: >",signif(exp(-value),3)),pos=4,cex=1.5,bg="#AACCDB")
+          text(0.2,0.5,paste("p-value: <",signif(exp(-value),3)),pos=4,cex=1.5,bg="#AACCDB")
         } else if (value == scale[2]) {
           text(0.2,0.5,paste("p-value: <",signif(exp(-value),3)),pos=4,cex=1.5,bg="#AACCDB")
         } else {
           text(0.2,0.5,paste("p-value:",signif(exp(-value),3)),pos=4,cex=1.5,bg="#AACCDB")
         }
         # draw scale
+#
+#   test if there are any significant voxel
+#
+        if(scale[2] > -log(maxpvalue)){
         image(seq(-log(maxpvalue),scale[2],length=100),seq(scale[1],scale[2],length=10)/10,
               matrix(rep(seq(-log(maxpvalue),scale[2],length=100),10),100,10),
               yaxt="n",xaxt="n",xlab="", ylab="",zlim=c(-log(maxpvalue),scale[2]), col=scalecol,bg="#AACCDB")
@@ -428,6 +435,9 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
         text(-log(0.00000001),scale[1]+0.01*diff(scale),pos=4,"1e-8")
         lines(c(-log(0.000000001),-log(0.000000001)),scale,col=2)
         text(-log(0.000000001),scale[1]+0.01*diff(scale),pos=4,"1e-9")
+        } else {
+           cat("No significant voxel\n")
+        }
       }
       # create the Tk-widget
       mytkrplot(tt3, f, hscale=ext, vscale=ext,typeV=3)
@@ -692,6 +702,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
  	       on.exit(par(oldpar))
  	        # draw scale
 		par(mai=c(0,0,0,0))
+               if(-log(maxpvalue) < scale[2]){
  	       image(seq(-log(maxpvalue),scale[2],length=200),seq(scale[1],scale[2],length=20)/20,
  	             matrix(rep(seq(-log(maxpvalue),scale[2],length=200),20),200,20),
  	             yaxt="n",xaxt="n",xlab="", ylab="",zlim=c(-log(maxpvalue),scale[2]), col=scalecol)
@@ -702,6 +713,9 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
  	       		text(-log(1/10^i),scale[1]+0.01*diff(scale),pos=4,paste("1e-",i,sep=""))	
 			i = i + 1
 		}
+                } else {
+                   cat("No significant voxel\n")
+                }
 	       }
  	        # create the Tk-widget
 		mytkrplot(tt, f, hscale=0.8, vscale=0.05,typeV=3)
