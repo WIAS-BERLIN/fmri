@@ -306,3 +306,23 @@ spatial.corr <- function(residuals){
   dim(rxyz) <- c(1,3)
 list(scorr=corr,bw=bw)
 }
+
+generate.filename <- function(prefix="", suffix="", picstart=1, numbpic=1, digits=3) {
+  start <- as.integer(picstart)
+  if (is.na(start)|(start<0)) stop("Illegal start number: ",picstart)
+  number <- as.integer(numbpic)
+  if (is.na(number)|(number<1)) stop("Illegal number of images: ",numbpic)
+
+  counter <- as.character(start:(start+number-1))
+  filename <- character(number)
+
+  if (digits == 0) {
+    for (i in 1:number) filename[i] <- paste(prefix,counter[i],suffix,sep="")
+  } else {
+    digits <- max(digits, nchar(counter[number]))
+
+    for (i in 1:number) filename[i] <- paste(prefix,paste(rep("0",digits-nchar(counter[i])),collapse=""),counter[i],suffix,sep="")
+  }
+  invisible(filename)
+}
+
