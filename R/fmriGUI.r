@@ -526,7 +526,7 @@ fmri.gui <- function() {
 		quantile = as.numeric(tclvalue(quantileTc))
 		anatomicHelp <- extract.data(data)[,,,1]
 		anatomicHelp[anatomicHelp<quantile] <- 0
-		data$mask <<- anatomicHelp
+		data$mask <<- anatomicHelp>0
 	
 		tkgrid(objcontrastL,padx=10,pady=10)
 		tkgrid(frameContrast1)	
