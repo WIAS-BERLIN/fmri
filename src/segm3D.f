@@ -3,9 +3,9 @@ C
 C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine segm3d(y,fix,res,si2,mask,wlse,n1,n2,n3,nt,hakt,
+      subroutine segm3d(y,fix,res,si2,mask,wlse,n1,n2,n3,nt,df,hakt,
      1                  lambda,theta,bi,thn,lwght,wght,swres,pval,
-     3                  segm,beta,delta,thresh,step,fov,vq,vest0i,
+     3                  segm,delta,thresh,step,fov,vq,vest0i,
      4                  varest)
 C
 C   y        observed values of regression function
@@ -25,13 +25,13 @@ C
       logical aws,wlse,mask(n1,n2,n3),fix(n1,n2,n3)
       real*8 y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),delta,thresh,
      1      thn(n1,n2,n3),lambda,wght(2),si2(n1,n2,n3),pval(n1,n2,n3),
-     1      hakt,lwght(1),thi,getlwght,swres(nt),fov,beta,vq(n1,n2,n3),
-     1      varest(n1,n2,n3),res(nt,n1,n2,n3),vest0i(n1,n2,n3)
+     1      hakt,lwght(1),thi,getlwght,swres(nt),fov,vq(n1,n2,n3),
+     1      varest(n1,n2,n3),res(nt,n1,n2,n3),vest0i(n1,n2,n3),df
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
-      real*8 bii,swj,swjy,wj,hakt2,spf,si2j,si2i,swjv,cofh,s,vqi,
+      real*8 bii,swj,swjy,wj,hakt2,spf,si2j,si2i,swjv,s,vqi,
      1       varesti,fpchisq,ti,thij,sij,z,si,swr,z1,lfov,linc,sm1,
-     2       arg,sqrtarg
+     2       a,b,dn
       external getlwght,fpchisq
       kern=1
       hakt2=hakt*hakt
@@ -72,15 +72,17 @@ C
                thi=theta(i1,i2,i3)
                si2i=vest0i(i1,i2,i3)
                varesti=varest(i1,i2,i3)
-               arg = beta*log(1.301d0*varesti*si2i*fov)
-               sqrtarg = sqrt(arg)
-               cofh = sqrtarg + log(arg)/sqrtarg
+C               arg = beta*log(1.301d0*varesti*si2i*fov)
+C               sqrtarg = sqrt(arg)
+C               cofh = sqrtarg + 2.d0*log(arg)/sqrtarg
+               dn=varesti*si2i*fov
+               call getdfnab(df,dn,a,b)
 C               lsi = min(sm1,-log(varesti*si2i)/linc)
 C               cofh = sqrt(beta*log(varesti*si2i*fov))-0.17d0*lsi
 C   this should be more conservative using actual variance reduction instead of theoretical
                ti=max(0.d0,abs(thi)-delta)
-               IF(ti/sqrt(varesti/vqi)-cofh.gt.thresh) THEN
-                  z=ti/sqrt(varesti/vqi)-cofh-thresh
+               IF(a*ti/sqrt(varesti/vqi)+b.gt.thresh) THEN
+                  z=a*ti/sqrt(varesti/vqi)+b-thresh
                   pval(i1,i2,i3)=exp(0.25d0*z*z)
 C                  pval(i1,i2,i3)=1.d0-fpchisq(z,1.d0,1,0)
 C                  pval(i1,i2,i3)=1.d0
@@ -172,18 +174,20 @@ C  weighted sum of residuals
                si = (z/nt - z1*z1)
                si = si/nt
                varest(i1,i2,i3)=si
-               arg = beta*log(1.301d0*si*si2i*fov)
-               sqrtarg = sqrt(arg)
-               cofh = sqrtarg + log(arg)/sqrtarg
+               dn=si*si2i*fov
+               call getdfnab(df,dn,a,b)
+C               arg = beta*log(1.301d0*si*si2i*fov)
+C               sqrtarg = sqrt(arg)
+C               cofh = sqrtarg + 2.d0*log(arg)/sqrtarg
 C
 C  this is an essentially 2D correction term (p=2 instead of p=3)
 C  reflecting that smoothing is mainly within slices
 C
 C   this should be more conservative using actual variance reduction instead of theoretical
                si=sqrt(si/vqi)
-               if((thi+delta)/si+cofh.lt.-thresh) THEN
+               if(a*(thi+delta)/si-b.lt.-thresh) THEN
                   segm(i1,i2,i3)=-1
-               ELSE IF ((thi-delta)/si-cofh.gt.thresh) THEN
+               ELSE IF (a*(thi-delta)/si+b.gt.thresh) THEN
                   segm(i1,i2,i3)=1
 C               ELSE
 C                  segm(i1,i2,i3)=0
@@ -192,5 +196,38 @@ C                  segm(i1,i2,i3)=0
             END DO
          END DO
       END DO
+      RETURN
+      END
+      subroutine getdfnab(df,n,a,b)
+C
+C   this function computes approximations for constants a_n and b_n
+C   such that for the maximum T_n of n r.v. from student t_df  
+C   T_n/a +b  ~ \Phi_\df    (asymp. extreme value distribution for t_df)
+C
+C   approximation formulaes obtained from samples of 100000 Extremes 
+C   df \in 10:264   n \in  100 : 20000   
+C   max. approx error < 0.002 for a   and < 0.006   for b
+C
+      implicit logical (a-z)
+      real*8 a,b,df,n
+      real*8 dfinv,ldf,dfq,ninvh,x1,x2,x3,x4,x5,x6,lna,lnb,ln
+      dfinv=1.d0/(df-1.d0)
+      dfq=sqrt(sqrt(df))
+      ldf=log(df+1.d1)
+      ninvh=exp(-.2d0*log(n+8.d0))
+      ln=log(n)
+      lna=exp(1.2d0*log(ln))
+      lnb=exp(1.85d0*log(ln))
+      x1=1.d0/(df+lnb)
+      x2=df/(df+lna)
+      x3=df/lna
+      x4=1.d0/(df+lna)
+      x5=df/(df+lnb)
+      x6=df/lnb
+      a=0.06555d0-0.8846d0*dfinv-0.00515d0*dfq-0.01254d0*ninvh-
+     1        3.48805d0*x1-0.03854d0*x2+6.01443d0*x4
+      b=-0.328391d0-0.053489d0*ldf+0.069629d0*dfq-0.065177d0*ninvh+
+     1   2.988981d0*x1+1.530377d0*x2-1.590449d0*x4-0.216131d0*x5-
+     2   0.002282d0*x6+0.057491d0*dfq*ninvh
       RETURN
       END

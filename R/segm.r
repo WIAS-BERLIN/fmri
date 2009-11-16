@@ -43,75 +43,32 @@ segm3D <- function(y,weighted=TRUE,
 #    n in (32^3 : 64^2*32)
 #    df in (40 : 100)
 #    h0 in (0 : 1.5) (in FWHM)
-#    ladj in (1 : 1.6) 
-#    kstar in (20:29)  corrsponding to maximal bandwidths  3 - 6 
+#    ladj in (1 : 1.4) 
+#    kstar in (11:29)  corrsponding to maximal bandwidths  3 - 6 
 #    internal adjustment by 0.1*kstar 
 #    see file sim_fmri_kritval.r in R/segmentation/fmrikrv/
-
+      kstar <- max(kstar,11)  #  use minimal kstar
       h <- fwhm2bw(sqrt(h0[1]*h0[2]))
-      explvar <- c(1,    log(h+1),     h,     kstar,      sqrt(log(n)),   1/df,
-                   log(ladj)/df, log(h+1)/df, log(ladj)*log(h+1), sqrt(log(n))/df)
-      if(alpha>=.25){
-      cat("Using critical values for alpha = 0.25 \n")
-      coefs <- c(-1.759, 6.085, -3.159, 0.00257, 0.3874, -27.11, -30.04, 24.78, -1.553, 21.44)
-      qres <- 0.0592  # res.quantiles(.9,.95,.99,1) 0.0300 0.0356 0.0445 0.0592
-      } else if(alpha>=.2){
-      cat("Using critical values for alpha = 0.2 \n")
-      coefs <- c(-1.56, 6.076, -3.15, 0.003117, 0.3441, -26.21, -30.21, 25.6, -1.559, 21.73)
-      qres <- 0.0634  # res.quantiles(.9,.95,.99,1) 0.0303 0.0365 0.0468 0.0634
-      } else if(alpha>=.15){
-      cat("Using critical values for alpha = 0.15 \n")
-      coefs <- c(-1.346, 6.061, -3.127, 0.003738, 0.2988, -24.54, -30.29, 25.84, -1.556, 21.98)
-      qres <- 0.0732  # res.quantiles(.9,.95,.99,1) 0.0310 0.0377 0.0476 0.0732
-      } else if(alpha>=.125){
-      cat("Using critical values for alpha = 0.125 \n")
-      coefs <- c(-1.266, 6.075, -3.132, 0.004119, 0.2861, -19.34, -30.4, 26, -1.556, 20.9)
-      qres <- 0.0691  # res.quantiles(.9,.95,.99,1) 0.0326 0.0392 0.0492 0.0691
-      } else if(alpha>=.1){
-      cat("Using critical values for alpha = 0.1 \n")
-      coefs <- c(-1.036, 6.077, -3.126, 0.004547, 0.2316, -21.86, -30.78, 26.44, -1.571, 22.21)
-      qres <- 0.0749  # res.quantiles(.9,.95,.99,1) 0.0342 0.0415 0.0538 0.0749
-      } else if(alpha>=.075){
-      cat("Using critical values for alpha = 0.075 \n")
-      coefs <- c(-0.7676, 6.11, -3.147, 0.005197, 0.1678, -27.27, -31.17, 27.47, -1.58, 24.55)
-      qres <- 0.0904  # res.quantiles(.9,.95,.99,1) 0.0373 0.0477 0.0654 0.0904
-      } else if(alpha>=.05){
-      cat("Using critical values for alpha = 0.05 \n")
-      coefs <- c(-0.4409, 6.1, -3.129, 0.006261, 0.09223, -31.3, -30.87, 28.65, -1.652, 26.68)
-      qres <- 0.0917  # res.quantiles(.9,.95,.99,1) 0.0419 0.0545 0.0764 0.0917
-      } else if(alpha>=.02){
-      cat("Using critical values for alpha = 0.02 \n")
-      coefs <- c(-0.1448, 6.076, -3.09, 0.00857, 0.04783, -22.23, -30.81, 31.67, -1.848, 26.27)
-      qres <- 0.105  # res.quantiles(.9,.95,.99,1) 0.0522 0.0663 0.0861 0.1050
-      } else if(alpha>=.01){
-      cat("Using critical values for alpha = 0.01 \n")
-      coefs <- c(0.3636, 6.102, -3.085, 0.01067, -0.07914, -46.55, -31.02, 33.09, -1.999, 35.57)
-      qres <- 0.149  # res.quantiles(.9,.95,.99,1) 0.0626 0.0784 0.1100 0.1490
-      } else if(alpha>=.005){
-      cat("Using critical values for alpha = 0.005 \n")
-      coefs <- c(0.3803, 6.179, -3.102, 0.01388, -0.07502, -32.43, -30.45, 35.01, -2.143, 33.69)
-      qres <- 0.213  # res.quantiles(.9,.95,.99,1) 0.0783 0.1040 0.1560 0.2130
-      } else if(alpha>=.002){
-      cat("Using critical values for alpha = 0.002 \n")
-      coefs <- c(0.2181, 6.374, -3.127, 0.02009, -0.03312, -12.31, -30.59, 31.57, -2.374, 30.89)
-      qres <- 0.211  # res.quantiles(.9,.95,.99,1) 0.112 0.137 0.189 0.211
-      } else if(alpha>=.001){
-      cat("Using critical values for alpha = 0.001 \n")
-      coefs <- c(-0.0509, 6.654, -3.255, 0.02556, 0.03278, 2.36, -29.05, 29.92, -2.466, 29.13)
-      qres <- 0.416  # res.quantiles(.9,.95,.99,1) 0.128 0.167 0.253 0.416
-      } else {
-      cat("Using critical values for alpha = 0.001 \n")
-      coefs <- c(-0.0509, 6.654, -3.255, 0.02556, 0.03278, 2.36, -29.05, 29.92, -2.466, 29.13)
-      qres <- 0.416  # res.quantiles(.9,.95,.99,1) 0.128 0.167 0.253 0.416
-      }
-#  add maximum of residuals
-      print(rbind(coefs,explvar,coefs*explvar))
-      sum(coefs*explvar)+qres
+      explvar <- c(1,    df^(-2.75),     1/df,     1/ladj,      kstar,   kstar^(-.5),
+                   sqrt(h), log(n), 1/df/ladj, kstar/df, 1/sqrt(kstar)/df, sqrt(h)/df, log(n)/df)
+      a <- c(1, alpha, alpha^2, sqrt(alpha), log(alpha), exp(alpha), exp(-alpha))
+      acoef <- matrix(c( 9.930e-1,  6.713e-3,  0       ,  0       ,  0       ,  0       ,  0       ,
+                         7.408e+2,  0       ,  0       ,  3.321e+2, -1.561e+2,  0       ,  0       ,
+                        -7.435e+2,  0       , -4.135e+2, -2.537e+1,  0       ,  3.934e+2,  3.623e+2,
+                        -6.816e-1,  6.083e-1, -2.266e-1,  3.585e-2,  0       ,  0       ,  6.731e-1,
+                        -9.116e-3,  0       ,  0       ,  5.295e-3, -2.893e-4,  7.569e-4,  6.941e-3,
+                        -8.356e-1, -1.466e+0,  0       ,  7.695e-1, -5.010e-2,  6.394e-1,  0       ,
+                        -7.673e-4,  0       ,  0       ,  1.430e-3,  0       ,  0       ,  0       ,
+                        -2.461e-3,  0       ,  2.315e-3,  0       ,  0       ,  0       ,  0       ,
+                         2.512e+3, -7.747e+2,  1.186e+3, -8.260e+0,  0       , -8.556e+2, -1.653e+3,
+                         4.776e-1,  1.047e+0,  0       , -5.422e-1,  3.536e-2, -4.287e-1,  0       ,
+                         7.860e+1,  1.839e+2,  0       , -1.031e+2,  8.786e+0, -7.154e+1,  0       ,
+                         3.407e+0, -2.543e-1,  0       ,  0       ,  1.517e-1,  0       ,  0       ,
+                         8.652e-1,  0       ,  0       , -2.830e-1,  1.345e-2,  0       ,  0       ),7,13)
+      dimnames(acoef) <- list(c("(Intercept)","a","a2","ah","al","ae","aei"),NULL)
+      ecoefs <- t(acoef)%*%a
+      t(explvar)%*%ecoefs
    }
-#
-#  set beta depending on df
-#
-   beta <- 2+30/df+285/df^2+5000/df^3
 #
 # first check arguments and initialize
 #
@@ -224,6 +181,7 @@ segm3D <- function(y,weighted=TRUE,
                        as.integer(n2),
                        as.integer(n3),
                        as.integer(nt),
+                       as.double(df),
                        hakt=as.double(hakt),
                        as.double(lambda0),
                        as.double(theta0),
@@ -234,7 +192,6 @@ segm3D <- function(y,weighted=TRUE,
                        double(nt),#swres
                        double(n1*n2*n3),#pvalues
                        segm=as.integer(segm),
-                       as.double(beta),
                        as.double(delta),
                        as.double(thresh),
                        as.integer(k),
