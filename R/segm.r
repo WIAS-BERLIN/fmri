@@ -49,22 +49,22 @@ segm3D <- function(y,weighted=TRUE,
 #    see file sim_fmri_kritval.r in R/segmentation/fmrikrv/
       kstar <- max(kstar,11)  #  use minimal kstar
       h <- fwhm2bw(sqrt(h0[1]*h0[2]))
-      explvar <- c(1,    df^(-2.75),     1/df,     1/ladj,      kstar,   kstar^(-.5),
-                   sqrt(h), log(n), 1/df/ladj, kstar/df, 1/sqrt(kstar)/df, sqrt(h)/df, log(n)/df)
+      explvar <- c(1,    df^(-3),     1/df,     1/ladj,      kstar,   1/kstar,
+                   sqrt(h), log(n), 1/df/ladj, kstar/df, 1/kstar/df, sqrt(h)/df, log(n)/df)
       a <- c(1, alpha, alpha^2, sqrt(alpha), log(alpha), exp(alpha), exp(-alpha))
-      acoef <- matrix(c( 9.930e-1,  6.713e-3,  0       ,  0       ,  0       ,  0       ,  0       ,
-                         7.408e+2,  0       ,  0       ,  3.321e+2, -1.561e+2,  0       ,  0       ,
-                        -7.435e+2,  0       , -4.135e+2, -2.537e+1,  0       ,  3.934e+2,  3.623e+2,
-                        -6.816e-1,  6.083e-1, -2.266e-1,  3.585e-2,  0       ,  0       ,  6.731e-1,
-                        -9.116e-3,  0       ,  0       ,  5.295e-3, -2.893e-4,  7.569e-4,  6.941e-3,
-                        -8.356e-1, -1.466e+0,  0       ,  7.695e-1, -5.010e-2,  6.394e-1,  0       ,
-                        -7.673e-4,  0       ,  0       ,  1.430e-3,  0       ,  0       ,  0       ,
-                        -2.461e-3,  0       ,  2.315e-3,  0       ,  0       ,  0       ,  0       ,
-                         2.512e+3, -7.747e+2,  1.186e+3, -8.260e+0,  0       , -8.556e+2, -1.653e+3,
-                         4.776e-1,  1.047e+0,  0       , -5.422e-1,  3.536e-2, -4.287e-1,  0       ,
-                         7.860e+1,  1.839e+2,  0       , -1.031e+2,  8.786e+0, -7.154e+1,  0       ,
-                         3.407e+0, -2.543e-1,  0       ,  0       ,  1.517e-1,  0       ,  0       ,
-                         8.652e-1,  0       ,  0       , -2.830e-1,  1.345e-2,  0       ,  0       ),7,13)
+      acoef <- matrix(c(1.534   ,  0.5029 ,  0.3114 ,  0      ,  0       , -0.5209  ,  0       ,
+                        1.732e+3,  0      ,  0      ,  809.4  , -3.749e+2,  0       ,  0       ,
+                       -7.954   ,  0      , -12.87  , -13.13  ,  0       , 11.65    ,  0       ,
+                        3.417e-3,  0      ,  0      ,  0      ,  6.e-4   ,  0       , -0.004655,
+                       -5.823e-2,  0      , -0.0305 ,  0      ,  0       ,  0.02936 ,  0.02906 ,
+                       -4.009   , -3.961  , -2.74   ,  0      , -1.172e-2,  4.103   ,  0       ,
+                        8.148e-3,  0.02895, -0.01401, -0.02545,  1.423e-3,  0       ,  0       ,
+                       -8.671e-3,  0      ,  0      ,  0      ,  0       ,  0.002984,  0.002909,
+                        2.776   , -0.8527 ,  0      ,  0      ,  0       ,  0       ,  0       ,
+                       -8.946e-2,  0.06327,  0      , -0.01582,  0       ,  0       ,  0       ,
+                       -6.542e+1,  0      ,  0      , 34.77   ,  0       ,  0       ,  0       ,
+                       -1.760   ,  1.023  ,  0      ,  2.608  ,  0       ,  0       ,  4.29    ,
+                        8.361e-1, -0.05367,  0      , -0.1969 ,  0       ,  0       ,  0       ),7,13)
       dimnames(acoef) <- list(c("(Intercept)","a","a2","ah","al","ae","aei"),NULL)
       ecoefs <- t(acoef)%*%a
       t(explvar)%*%ecoefs
@@ -151,7 +151,10 @@ segm3D <- function(y,weighted=TRUE,
    if(h0[2]>0) scorr[2] <-  get.corr.gauss(h0[2],2)
    if(h0[3]>0) scorr[3] <-  get.corr.gauss(h0[3],2)
    total <- cumsum(1.25^(1:kstar))/sum(1.25^(1:kstar))
-   thresh <- getkrval(df,h0,ladjust,fov,kstar,alpha)
+   thresh <- 1
+   for(i in 11:kstar) thresh <- max(thresh,getkrval(df,h0,ladjust,fov,i,alpha))
+#  just to ensure monotonicity of thresh with kmax, there exist a few parameter configurations
+#  where the approximation formula does not ensure monotonicity
    cat("FOV",fov,"delta",delta,"thresh",thresh,"ladjust",ladjust,"lambda",lambda,"df",df,"\n")
 # run single steps to display intermediate results
    residuals <- residuals*resscale
