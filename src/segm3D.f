@@ -81,8 +81,8 @@ C               lsi = min(sm1,-log(varesti*si2i)/linc)
 C               cofh = sqrt(beta*log(varesti*si2i*fov))-0.17d0*lsi
 C   this should be more conservative using actual variance reduction instead of theoretical
                ti=max(0.d0,abs(thi)-delta)
-               IF(a*ti/sqrt(varesti/vqi)+b.gt.thresh) THEN
-                  z=a*ti/sqrt(varesti/vqi)+b-thresh
+               IF(a*ti/sqrt(varesti/vqi)-b.gt.thresh) THEN
+                  z=a*ti/sqrt(varesti/vqi)-b-thresh
                   pval(i1,i2,i3)=exp(0.25d0*z*z)
 C                  pval(i1,i2,i3)=1.d0-fpchisq(z,1.d0,1,0)
 C                  pval(i1,i2,i3)=1.d0
@@ -185,9 +185,9 @@ C  reflecting that smoothing is mainly within slices
 C
 C   this should be more conservative using actual variance reduction instead of theoretical
                si=sqrt(si/vqi)
-               if(a*(thi+delta)/si-b.lt.-thresh) THEN
+               if(a*(thi+delta)/si+b.lt.-thresh) THEN
                   segm(i1,i2,i3)=-1
-               ELSE IF (a*(thi-delta)/si+b.gt.thresh) THEN
+               ELSE IF (a*(thi-delta)/si-b.gt.thresh) THEN
                   segm(i1,i2,i3)=1
 C               ELSE
 C                  segm(i1,i2,i3)=0
@@ -216,18 +216,21 @@ C
       ldf=log(df+1.d1)
       ninvh=exp(-.2d0*log(n+8.d0))
       ln=log(n)
-      lna=exp(1.2d0*log(ln))
-      lnb=exp(1.85d0*log(ln))
+      lna=exp(0.01*log(ln))
+      lnb=exp(1.85*log(ln))
       x1=1.d0/(df+lnb)
       x2=df/(df+lna)
       x3=df/lna
       x4=1.d0/(df+lna)
       x5=df/(df+lnb)
       x6=df/lnb
-      a=0.06555d0-0.8846d0*dfinv-0.00515d0*dfq-0.01254d0*ninvh-
-     1        3.48805d0*x1-0.03854d0*x2+6.01443d0*x4
-      b=-0.328391d0-0.053489d0*ldf+0.069629d0*dfq-0.065177d0*ninvh+
-     1   2.988981d0*x1+1.530377d0*x2-1.590449d0*x4-0.216131d0*x5-
-     2   0.002282d0*x6+0.057491d0*dfq*ninvh
+      a=-7.754959d1-1.210474d1*dfinv+2.996616d-2*dfq-3.428621d-2*ldf-
+     -   3.702433d-3*ln+2.354546*lna+1.055396d-4*lnb-4.086823*x1+
+     +   7.527587d1*x2-1.180929d-5*x3+9.221818d+1*x4-2.438421d-2*x5+
+     +   6.206907d-5*x6
+      b= 1.28747d3-2.657702d1*dfinv-1.229952d-1*dfq+1.483752d-1*ldf+
+     +   1.909285d-2*ln-2.286336d+1*lna-3.68511d-4*lnb+2.490921*x1-
+     -   1.265445d3*x2+5.276941d-5*x3-1.255524d3*x4-1.510486d-1*x5-
+     -   7.066693d-4*x6-2.079471d-1*ninvh-5.203836d-3*ninvh*dfq
       RETURN
       END
