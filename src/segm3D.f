@@ -3,7 +3,7 @@ C
 C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine segm3d(y,fix,res,si2,mask,wlse,n1,n2,n3,nt,df,hakt,
+      subroutine segm3d(y,res,si2,mask,wlse,n1,n2,n3,nt,df,hakt,
      1                  lambda,theta,bi,thn,lwght,wght,swres,pval,
      3                  segm,delta,thresh,step,fov,vq,vest0i,
      4                  varest)
@@ -22,7 +22,7 @@ C   wght     scaling factor for second and third dimension (larger values shrink
 C
       implicit logical (a-z)
       integer n1,n2,n3,nt,kern,segm(n1,n2,n3),step
-      logical aws,wlse,mask(n1,n2,n3),fix(n1,n2,n3)
+      logical aws,wlse,mask(n1,n2,n3)
       real*8 y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),delta,thresh,
      1      thn(n1,n2,n3),lambda,wght(2),si2(n1,n2,n3),pval(n1,n2,n3),
      1      hakt,lwght(1),thi,getlwght,swres(nt),fov,vq(n1,n2,n3),
@@ -82,13 +82,11 @@ C               cofh = sqrt(beta*log(varesti*si2i*fov))-0.17d0*lsi
 C   this should be more conservative using actual variance reduction instead of theoretical
                ti=max(0.d0,abs(thi)-delta)
                IF(a*ti/sqrt(varesti/vqi)-b.gt.thresh) THEN
-                  z=a*ti/sqrt(varesti/vqi)-b-thresh
-                  pval(i1,i2,i3)=exp(0.25d0*z*z)
-C                  pval(i1,i2,i3)=1.d0-fpchisq(z,1.d0,1,0)
-C                  pval(i1,i2,i3)=1.d0
+C                  z=max(0.d0,a*ti/sqrt(varesti/vqi)-b-thresh)
+C                  pval(i1,i2,i3)=exp(-0.5d0*z*z)
+                   pval(i1,i2,i3)=0.d0
                ELSE
                    pval(i1,i2,i3)=1.d0
-C                   pval(i1,i2,i3)=fpchisq(ti*si2i,1.d0,1,0)
                END IF
             END DO
          END DO
@@ -102,7 +100,6 @@ C   scaling of sij outside the loop
                   thn(i1,i2,i3)=0.d0
                   CYCLE
                END IF
-               IF (fix(i1,i2,i3)) CYCLE
                vqi=vq(i1,i2,i3)
                si2i=vest0i(i1,i2,i3)
                varesti=varest(i1,i2,i3)
@@ -165,6 +162,8 @@ C  weighted sum of residuals
                END DO
                thi=swjy/swj
                thn(i1,i2,i3)=thi
+               if(segm(i1,i2,i3).ne.0) CYCLE
+C   keep the detected segment
                IF(wlse) THEN
                   bi(i1,i2,i3)=swj
                ELSE
@@ -176,12 +175,8 @@ C  weighted sum of residuals
                varest(i1,i2,i3)=si
                dn=si*si2i*fov
                call getdfnab(df,dn,a,b)
-C               arg = beta*log(1.301d0*si*si2i*fov)
-C               sqrtarg = sqrt(arg)
-C               cofh = sqrtarg + 2.d0*log(arg)/sqrtarg
-C
-C  this is an essentially 2D correction term (p=2 instead of p=3)
-C  reflecting that smoothing is mainly within slices
+C 
+C   note that a and b refer to  1/a_n and b_n/a_n
 C
 C   this should be more conservative using actual variance reduction instead of theoretical
                si=sqrt(si/vqi)
@@ -189,8 +184,6 @@ C   this should be more conservative using actual variance reduction instead of 
                   segm(i1,i2,i3)=-1
                ELSE IF (a*(thi-delta)/si-b.gt.thresh) THEN
                   segm(i1,i2,i3)=1
-C               ELSE
-C                  segm(i1,i2,i3)=0
                END IF
                call rchkusr()
             END DO
@@ -200,9 +193,9 @@ C                  segm(i1,i2,i3)=0
       END
       subroutine getdfnab(df,n,a,b)
 C
-C   this function computes approximations for constants a_n and b_n
+C   this function computes approximations for constants a=1/a_n and b=b_n/a_n
 C   such that for the maximum T_n of n r.v. from student t_df  
-C   T_n/a +b  ~ \Phi_\df    (asymp. extreme value distribution for t_df)
+C   a_n T_n +b_n  ~ \Phi_\df    (asymp. extreme value distribution for t_df)
 C
 C   approximation formulaes obtained from samples of 100000 Extremes 
 C   df \in 10:264   n \in  100 : 20000   

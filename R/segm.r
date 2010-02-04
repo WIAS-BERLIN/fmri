@@ -41,31 +41,29 @@ segm3D <- function(y,weighted=TRUE,
 #    this delivers an upper bound for kritical values over a wide range of parameters
 #    covering the typical situations in fMRI
 #    n in (32^3 : 64^2*32)
-#    df in (40 : 100)
+#    df in (40 : 250)
 #    h0 in (0 : 1.5) (in FWHM)
 #    ladj in (1 : 1.4) 
-#    kstar in (11:29)  corrsponding to maximal bandwidths  3 - 6 
-#    internal adjustment by 0.1*kstar 
+#    kstar in (10:27)  corrsponding to maximal bandwidths  2.5 - 5
 #    see file sim_fmri_kritval.r in R/segmentation/fmrikrv/
-      kstar <- max(kstar,11)  #  use minimal kstar
+      kstar <- max(kstar,10)  #  use minimal kstar
+      if(length(h0)==1) h0 <- c(h0,h0)
       h <- fwhm2bw(sqrt(h0[1]*h0[2]))
-      explvar <- c(1,    df^(-3),     1/df,     1/ladj,      kstar,   1/kstar,
-                   sqrt(h), log(n), 1/df/ladj, kstar/df, 1/kstar/df, sqrt(h)/df, log(n)/df)
-      a <- c(1, alpha, alpha^2, sqrt(alpha), log(alpha), exp(alpha), exp(-alpha))
-      acoef <- matrix(c(1.534   ,  0.5029 ,  0.3114 ,  0      ,  0       , -0.5209  ,  0       ,
-                        1.732e+3,  0      ,  0      ,  809.4  , -3.749e+2,  0       ,  0       ,
-                       -7.954   ,  0      , -12.87  , -13.13  ,  0       , 11.65    ,  0       ,
-                        3.417e-3,  0      ,  0      ,  0      ,  6.e-4   ,  0       , -0.004655,
-                       -5.823e-2,  0      , -0.0305 ,  0      ,  0       ,  0.02936 ,  0.02906 ,
-                       -4.009   , -3.961  , -2.74   ,  0      , -1.172e-2,  4.103   ,  0       ,
-                        8.148e-3,  0.02895, -0.01401, -0.02545,  1.423e-3,  0       ,  0       ,
-                       -8.671e-3,  0      ,  0      ,  0      ,  0       ,  0.002984,  0.002909,
-                        2.776   , -0.8527 ,  0      ,  0      ,  0       ,  0       ,  0       ,
-                       -8.946e-2,  0.06327,  0      , -0.01582,  0       ,  0       ,  0       ,
-                       -6.542e+1,  0      ,  0      , 34.77   ,  0       ,  0       ,  0       ,
-                       -1.760   ,  1.023  ,  0      ,  2.608  ,  0       ,  0       ,  4.29    ,
-                        8.361e-1, -0.05367,  0      , -0.1969 ,  0       ,  0       ,  0       ),7,13)
-      dimnames(acoef) <- list(c("(Intercept)","a","a2","ah","al","ae","aei"),NULL)
+      explvar <- c(1,          log(df),     1/df^2,      log(n),          ladj,             h^.05,
+                   1.25^kstar, log(n)/df^2, h^0.05/df^2, 1.25^kstar/df^2, h^.05*1.25^kstar)
+       a <- c(1, alpha, alpha^2, sqrt(alpha))
+      acoef <- matrix(c(1.164622   ,  1.331037   , -2.8886915  , -0.6676293  ,
+                       -3.113630e-2, -0.2175228  ,  0.45943173 ,  0.1074354  ,
+                       -1.384545e+2, -5.430042e+2,  0          ,  6.018536e+2,
+                        4.353907e-3,  0          ,  0          ,  5.996123e-4,
+                       -1.394571e-2,  5.356474e-2, -0.311064   , -5.450575e-3,
+                        3.883493e-4, -1.208777e-2,  0          ,  1.110509e-2,
+                       -1.009278e-5,  8.713720e-5,  0          , -7.024334e-5,
+                        3.599833e+1,  1.880239e+2,  0          , -1.357274e+2,
+                       -6.354120   , -3.181102e+2,  0          ,  2.423426e+2,
+                        9.368627e-2,  5.891838e-1, -2.6933705  ,  0          ,
+                        3.879651e-5,  5.202028e-5, -0.000305926,  0),4,11)
+      dimnames(acoef) <- list(c("(Intercept)","a","a2","ah"),NULL)
       ecoefs <- t(acoef)%*%a
       t(explvar)%*%ecoefs
    }
@@ -136,7 +134,6 @@ segm3D <- function(y,weighted=TRUE,
    theta <- y
    segm <- array(0,dy[1:3])
    varest <- varest0
-   fix <- array(FALSE,dy[1:3])
    maxvol <- getvofh(hmax,lkern,wghts)
    if(is.null(fov)) fov <- sum(mask)
    kstar <- as.integer(log(maxvol)/log(1.25))
@@ -152,7 +149,7 @@ segm3D <- function(y,weighted=TRUE,
    if(h0[3]>0) scorr[3] <-  get.corr.gauss(h0[3],2)
    total <- cumsum(1.25^(1:kstar))/sum(1.25^(1:kstar))
    thresh <- 1
-   for(i in 11:kstar) thresh <- max(thresh,getkrval(df,h0,ladjust,fov,i,alpha))
+   for(i in 10:kstar) thresh <- max(thresh,getkrval(df,h0,ladjust,fov,i,alpha))
 #  just to ensure monotonicity of thresh with kmax, there exist a few parameter configurations
 #  where the approximation formula does not ensure monotonicity
    cat("FOV",fov,"delta",delta,"thresh",thresh,"ladjust",ladjust,"lambda",lambda,"df",df,"\n")
@@ -175,7 +172,6 @@ segm3D <- function(y,weighted=TRUE,
       bi0 <- tobj$bi
       tobj <- .Fortran("segm3d",
                        as.double(y),
-                       fix=as.logical(fix),
                        as.double(residuals),
                        as.double(sigma2),
                        as.logical(!mask),
@@ -202,10 +198,9 @@ segm3D <- function(y,weighted=TRUE,
                        as.double(vq),
                        as.double(varest0),
                        varest=as.double(varest),
-                       PACKAGE="fmri",DUP=FALSE)[c("bi","thnew","hakt","segm","varest","fix")]
+                       PACKAGE="fmri",DUP=FALSE)[c("bi","thnew","hakt","segm","varest")]
       gc()
       theta <- array(tobj$thnew,dy[1:3]) 
-      fix <- array(tobj$fix,dy[1:3]) 
       segm <- array(tobj$segm,dy[1:3])
       varest <- array(tobj$varest,dy[1:3])
       dim(tobj$bi) <- dy[1:3]
