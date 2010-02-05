@@ -36,37 +36,35 @@ segm3D <- function(y,weighted=TRUE,
 #
 #  Auxilary functions
    IQRdiff <- function(y) IQR(diff(y))/1.908
-   getkrval <- function(df,h0,ladj,n,kstar,alpha){
+   getkrval <- function(df,ladj,n,kstar,alpha){
 #
 #    this delivers an upper bound for kritical values over a wide range of parameters
 #    covering the typical situations in fMRI
 #    n in (32^3 : 64^2*32)
 #    df in (40 : 250)
-#    h0 in (0 : 1.5) (in FWHM)
 #    ladj in (1 : 1.4) 
 #    kstar in (10:27)  corrsponding to maximal bandwidths  2.5 - 5
 #    see file sim_fmri_kritval.r in R/segmentation/fmrikrv/
-      kstar <- max(kstar,10)  #  use minimal kstar
-      if(length(h0)==1) h0 <- c(h0,h0)
-      h <- fwhm2bw(sqrt(h0[1]*h0[2]))
-      explvar <- c(1,          log(df),     1/df^2,      log(n),          ladj,             h^.05,
-                   1.25^kstar, log(n)/df^2, h^0.05/df^2, 1.25^kstar/df^2, h^.05*1.25^kstar)
-       a <- c(1, alpha, alpha^2, sqrt(alpha))
-      acoef <- matrix(c(1.164622   ,  1.331037   , -2.8886915  , -0.6676293  ,
-                       -3.113630e-2, -0.2175228  ,  0.45943173 ,  0.1074354  ,
-                       -1.384545e+2, -5.430042e+2,  0          ,  6.018536e+2,
-                        4.353907e-3,  0          ,  0          ,  5.996123e-4,
-                       -1.394571e-2,  5.356474e-2, -0.311064   , -5.450575e-3,
-                        3.883493e-4, -1.208777e-2,  0          ,  1.110509e-2,
-                       -1.009278e-5,  8.713720e-5,  0          , -7.024334e-5,
-                        3.599833e+1,  1.880239e+2,  0          , -1.357274e+2,
-                       -6.354120   , -3.181102e+2,  0          ,  2.423426e+2,
-                        9.368627e-2,  5.891838e-1, -2.6933705  ,  0          ,
-                        3.879651e-5,  5.202028e-5, -0.000305926,  0),4,11)
+      dfinv <- log(df)-30000/df^1.44
+      explvar <- c(1, dfinv, log(n), kstar, dfinv*log(n), dfinv*(ladj-1))
+      a <- c(1, alpha, alpha^2, sqrt(alpha))
+      acoef <- matrix(c(1           ,  0           ,  0          ,  0           ,
+                        0.0002129201, -0.000820306 ,  0          ,  0           ,
+                        0.0016314442,  0.0061321878,  0          , -0.0043558989,
+                        0.0001558305,  0.0007918858,  0          , -0.0006520962,
+                       -0.0001535607,  0.0009159794, -0.004950741,  0           ,
+                        0.0003009761, -0.0017770459,  0.013396270,  0   ),4,6)
       dimnames(acoef) <- list(c("(Intercept)","a","a2","ah"),NULL)
       ecoefs <- t(acoef)%*%a
       t(explvar)%*%ecoefs
    }
+fovcorr <- function(h,fwhm=TRUE){
+# correction factor for FOV in case of spatial correlation
+fwhm2bw <- function(hfwhm) hfwhm/sqrt(8*log(2))
+if(fwhm) h <- fwhm2bw(h)
+ 1-0.3181*log(h[1]+1)-0.3189*log(h[2]+1)+
+                       0.1025*log(h[1]+1)*log(h[2]+1)
+}
 #
 # first check arguments and initialize
 #
@@ -99,8 +97,6 @@ segm3D <- function(y,weighted=TRUE,
 
 
 # define hincr
-# determine corresponding bandwidth for specified correlation
-   if(is.null(h0)) h0 <- rep(0,3)
 
 # estimate variance in the gaussian case if necessary  
 # deal with homoskedastic Gaussian case by extending sigma2
@@ -136,6 +132,7 @@ segm3D <- function(y,weighted=TRUE,
    varest <- varest0
    maxvol <- getvofh(hmax,lkern,wghts)
    if(is.null(fov)) fov <- sum(mask)
+   fov <- fovcorr(h0)*fov
    kstar <- as.integer(log(maxvol)/log(1.25))
    steps <- kstar+1
    k <- 1 
@@ -144,12 +141,9 @@ segm3D <- function(y,weighted=TRUE,
    lambda0 <- lambda
    if (hinit>1) lambda0 <- 1e50 # that removes the stochstic term for the first step
    scorr <- numeric(3)
-   if(h0[1]>0) scorr[1] <-  get.corr.gauss(h0[1],2)
-   if(h0[2]>0) scorr[2] <-  get.corr.gauss(h0[2],2)
-   if(h0[3]>0) scorr[3] <-  get.corr.gauss(h0[3],2)
    total <- cumsum(1.25^(1:kstar))/sum(1.25^(1:kstar))
    thresh <- 1
-   for(i in 10:kstar) thresh <- max(thresh,getkrval(df,h0,ladjust,fov,i,alpha))
+   for(i in 10:kstar) thresh <- max(thresh,getkrval(df,ladjust,fov,i,alpha))
 #  just to ensure monotonicity of thresh with kmax, there exist a few parameter configurations
 #  where the approximation formula does not ensure monotonicity
    cat("FOV",fov,"delta",delta,"thresh",thresh,"ladjust",ladjust,"lambda",lambda,"df",df,"\n")
@@ -163,10 +157,6 @@ segm3D <- function(y,weighted=TRUE,
       hakt <- gethani(1,10,lkern,1.25^k,wghts,1e-4)
       cat("step",k,"bandwidth",signif(hakt,3)," ")
       dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
-#  need bandwidth in voxel for Spaialvar.gauss, h0 is in voxel
-      if (any(h0>0)) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0)/4/c(1,wghts),h0,d)/
-      Spatialvar.gauss(h0,1e-5,d)/Spatialvar.gauss(bw2fwhm(hakt0)/4/c(1,wghts),1e-5,d)
-# Correction C(h0,hakt) for spatial correlation depends on h^{(k-1)}  all bandwidth-arguments in FWHM 
       hakt0 <- hakt
       theta0 <- theta
       bi0 <- tobj$bi
@@ -220,11 +210,7 @@ segm3D <- function(y,weighted=TRUE,
       }
       k <- k+1
 #  adjust lambda for the high intrinsic correlation between  neighboring estimates 
-      c1 <- (prod(h0+1))^(1/3)
-      c1 <- 2.7214286 - 3.9476190*c1 + 1.6928571*c1*c1 - 0.1666667*c1*c1*c1
-      x <- (prod(1.25^(k-1)/c(1,wghts)))^(1/3)
-      scorrfactor <- (c1+x)/(c1*prod(h0+1)+x)
-      lambda0 <- lambda*scorrfactor
+      lambda0 <- lambda
       gc()
    }
 
