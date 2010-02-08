@@ -119,14 +119,15 @@ if(fwhm) h <- fwhm2bw(h)
                            as.integer(ddim[4]),
                            var = double(n1*n2*n3),
                            PACKAGE="fmri",DUP=FALSE)$var
-   varest0 <- vartheta0/nt
+   varest0 <- vartheta0
    vq <- varest0*sigma2
 # Initialize  list for bi and theta
    if (is.null(wghts)) wghts <- c(1,1,1)
    hinit <- hinit/wghts[1]
    hmax <- hmax/wghts[1]
-   wghts <- (wghts[2:3]/wghts[1])
-   tobj <- list(bi= rep(1,n))
+   wghts <- wghts[2:3]/wghts[1]
+#   tobj <- list(bi= rep(1,n))
+   tobj <- list(bi= sigma2)
    theta <- y
    segm <- array(0,dy[1:3])
    varest <- varest0

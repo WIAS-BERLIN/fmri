@@ -29,7 +29,7 @@ C
      1      varest(n1,n2,n3),res(nt,n1,n2,n3),vest0i(n1,n2,n3),df
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
-      real*8 bii,swj,swjy,wj,hakt2,spf,si2j,si2i,swjv,s,vqi,
+      real*8 bii,swj,swjy,wj,hakt2,spf,si2j,si2i,s,vqi,
      1       varesti,fpchisq,ti,thij,sij,z,si,swr,z1,lfov,linc,sm1,
      2       a,b,dn
       external getlwght,fpchisq
@@ -72,18 +72,11 @@ C
                thi=theta(i1,i2,i3)
                si2i=vest0i(i1,i2,i3)
                varesti=varest(i1,i2,i3)
-C               arg = beta*log(1.301d0*varesti*si2i*fov)
-C               sqrtarg = sqrt(arg)
-C               cofh = sqrtarg + 2.d0*log(arg)/sqrtarg
                dn=varesti*si2i*fov
                call getdfnab(df,dn,a,b)
-C               lsi = min(sm1,-log(varesti*si2i)/linc)
-C               cofh = sqrt(beta*log(varesti*si2i*fov))-0.17d0*lsi
 C   this should be more conservative using actual variance reduction instead of theoretical
                ti=max(0.d0,abs(thi)-delta)
                IF(a*ti/sqrt(varesti/vqi)-b.gt.thresh) THEN
-C                  z=max(0.d0,a*ti/sqrt(varesti/vqi)-b-thresh)
-C                  pval(i1,i2,i3)=exp(-0.5d0*z*z)
                    pval(i1,i2,i3)=0.d0
                ELSE
                    pval(i1,i2,i3)=1.d0
@@ -105,7 +98,6 @@ C   scaling of sij outside the loop
                varesti=varest(i1,i2,i3)
                bii=bi(i1,i2,i3)/lambda
                swj=0.d0
-               swjv=0.d0
                swjy=0.d0
                DO k=1,nt
                   swres(k)=0.d0
@@ -141,11 +133,7 @@ C
                            IF(sij.gt.1.d0) CYCLE
                         IF(sij.gt.0.25d0) wj=wj*(1.d0-spf*(sij-0.25d0))
                         END IF
-                        if(wlse) THEN 
-                           wj=wj*si2j
-                        ELSE
-                           swjv=swjv+wj/si2j
-                        END IF
+                        if(wlse)  wj=wj*si2j
                         swj=swj+wj
                         swjy=swjy+wj*y(j1,j2,j3)
 C  weighted sum of residuals
@@ -162,17 +150,12 @@ C  weighted sum of residuals
                END DO
                thi=swjy/swj
                thn(i1,i2,i3)=thi
-               if(segm(i1,i2,i3).ne.0) CYCLE
-C   keep the detected segment
-               IF(wlse) THEN
-                  bi(i1,i2,i3)=swj
-               ELSE
-                  bi(i1,i2,i3)=swj*swj/swjv
-               END IF
                z1=z1/nt
                si = (z/nt - z1*z1)
-               si = si/nt
                varest(i1,i2,i3)=si
+               bi(i1,i2,i3)=si2i/si*si2(i1,i2,i3)
+               if(segm(i1,i2,i3).ne.0) CYCLE
+C   keep the detected segment
                dn=si*si2i*fov
                call getdfnab(df,dn,a,b)
 C 
