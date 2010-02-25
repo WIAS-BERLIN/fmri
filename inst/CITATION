@@ -1,4 +1,4 @@
-citHeader("To cite dti in publications use:")
+citHeader("To cite fmri in publications use:")
 
 citEntry(entry = "Article",
   title        = "{fmri}: A package for analyzing fmri data",
