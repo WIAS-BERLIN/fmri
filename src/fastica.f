@@ -21,7 +21,7 @@ C     Step 1 Orthonormalization of w
 C     step 2 generate new guess for w
          convgd=.TRUE.
          DO i=1,T
-            call updtw(w,T,X,n,work,ifun,parifun)
+            call updtw(w,i,T,X,n,work,ifun,parifun)
             z1=0.d0
             z2=0.d0
             DO j=1,T
