@@ -99,7 +99,11 @@ fmri.smooth <- function (spm, hmax = 4, adaptive = TRUE, adaptation = "aws",
             dim = spm$dim, hrf = spm$hrf, segm = ttthat$segm,
             mask = ttthat$mask, call = args)
     }
-    class(z) <- c("fmridata", "fmrispm")
+    if (adaptation == "segment") {
+      class(z) <- c("fmridata", "fmrisegment")
+    } else {
+      class(z) <- c("fmridata", "fmrispm")
+    }
     z$roixa <- spm$roixa
     z$roixe <- spm$roixe
     z$roiya <- spm$roiya
@@ -128,7 +132,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptive = TRUE, adaptation = "aws",
                 3), "\n  lkern     :", lkern, "\n  skern     :",
             skern, "\n")
     }
-    z
+    invisible(z)
 }
 
 fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE, minimum.signal=0 ) {

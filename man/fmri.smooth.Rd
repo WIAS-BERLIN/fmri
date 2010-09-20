@@ -57,7 +57,7 @@ fmri.smooth(spm, hmax = 4, adaptive=TRUE,adaptation="aws",
   to these variances. Smoothing is restricted to voxel with \code{spm$mask}.
 }
 \value{
-  object with class attributes "fmrispm" and "fmridata"
+  object with class attributes "fmrispm" and "fmridata", or "fmrisegment" and "fmridata" for segmentation choice
   \item{cbeta}{ smoothed parameter estimate}
   \item{var}{ variance of the parameter}
   \item{hmax}{ maximum bandwidth used}
