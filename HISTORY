@@ -1,3 +1,7 @@
+2010-09-20 version 1.4.2
+  - results of segmentation results can be 
+    plotted by plot.fmridata() now.
+
 2010-04-06 version 1.4.1
   - new line in Makevars
   - removed unused Fortran code
