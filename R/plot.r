@@ -52,7 +52,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
     sigrange <- quantile(x$cbeta[x$segm == 1], c(0, 0.98))
     if (is.null(zlim.o)) zlim.o <- -log(0.05)*c(1,sigrange[2]/sigrange[1]);
     pseudox$pvalue[x$segm == 1] <- exp(log(0.05)*x$cbeta[x$segm == 1]/sigrange[1])
-    pseudox$weight <- x$weight;
+    pseudox$weights <- x$weights;
     pseudox$header <- x$header;
     pseudox$format <- x$format;
     pseudox$roixa <- x$roixa;
