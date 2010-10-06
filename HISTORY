@@ -1,3 +1,11 @@
+2010-10-06 version 1.4.2
+  - fmri.gui() includes possibility of evoking
+    structural adaptive segmentation
+  - corrected R CMD check error for invisible binding 
+    of global variables
+  - initialized nbeta in fastica in ngca.f, otherwise
+    compiler warning
+
 2010-09-20 version 1.4.2
   - results of segmentation results can be 
     plotted by plot.fmridata() now.

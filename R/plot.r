@@ -1301,7 +1301,9 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 
 	adjustMask <- function(){
 		dataFile  <- ""
-
+                nrrow <- numeric(1)
+                nrcol <- numeric(1)
+                
 		selectDataFile <- function(){
 			tclvalue(dataFileTcl) <- tkgetOpenFile(filetypes ="{{ANALYZE} {.IMG .Img .img .HDR .Hdr .hdr}} {{AFNI} {.BRIK .Brik .brik .HEAD .Head .head}} {{NIFTI} {.NII .Nii .nii .HDR .Hdr .hdr}} {{All files} *}",title="Select Data")  
 		}
