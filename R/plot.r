@@ -1506,10 +1506,14 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			# only once called
 			chooseFileNameGeneral <- function(){
 				imageFile <- tclVar()	
-				if (as.character(tclvalue(rbFF)) == "ppm")  tclvalue(imageFile) <- tkgetSaveFile(filetypes ="{{Image file} {.ppm}}",title="Save Images")  
-				if (as.character(tclvalue(rbFF)) == "jpeg") tclvalue(imageFile) <- tkgetSaveFile(filetypes ="{{Image file} {.jpeg}}",title="Save Images")  
-				if (as.character(tclvalue(rbFF)) == "png")  tclvalue(imageFile) <- tkgetSaveFile(filetypes ="{{Image file} {.png}}",title="Save Images")  
-				if (as.character(tclvalue(rbFF)) == "tif")  tclvalue(imageFile) <- tkgetSaveFile(filetypes ="{{Image file} {.tif}}",title="Save Images")
+				if (as.character(tclvalue(rbFF)) == "ppm")  tclvalue(imageFile) <- 
+				           tkgetSaveFile(filetypes ="{{Image file} {.ppm}}",title="Save Images")  
+				if (as.character(tclvalue(rbFF)) == "jpeg") tclvalue(imageFile) <- 
+				           tkgetSaveFile(filetypes ="{{Image file} {.jpeg}}",title="Save Images")  
+				if (as.character(tclvalue(rbFF)) == "png")  tclvalue(imageFile) <- 
+				           tkgetSaveFile(filetypes ="{{Image file} {.png}}",title="Save Images")  
+				if (as.character(tclvalue(rbFF)) == "tif")  tclvalue(imageFile) <- 
+				           tkgetSaveFile(filetypes ="{{Image file} {.tif}}",title="Save Images")
 				# check file extension				
 				help <- tolower(unlist(strsplit(as.character(tclvalue(imageFile)),"")))
 				nrChars <- length(help)		
@@ -1635,15 +1639,22 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 						if (viewAxis==1) tmp <- make.image(tttHelp[chosenSlices[nrofChosen],,],gamma=TRUE)
 					}
 					else{
-						if (viewAxis==3) tmp <- make.image(ttt[,dt[2]:1,chosenSlices[nrofChosen]-dt[1]-dt[2]],gamma=TRUE)
-						if (viewAxis==2) tmp <- make.image(ttt[,chosenSlices[nrofChosen]-dt[1],],gamma=TRUE)
-						if (viewAxis==1) tmp <- make.image(ttt[chosenSlices[nrofChosen],,],gamma=TRUE)
+						if (viewAxis==3) tmp <- ttt[,dt[2]:1,chosenSlices[nrofChosen]-dt[1]-dt[2]]
+						if (viewAxis==2) tmp <- ttt[,chosenSlices[nrofChosen]-dt[1],]
+						if (viewAxis==1) tmp <- ttt[chosenSlices[nrofChosen],,]
+#			                        rgbcolors <- col2rgb(mri.colors(255,255)$all)/255
+                                                rgbcolors <-col2rgb(col)/255
+						ctmp <- array(0,c(dim(tmp),3))
+						ctmp[,,1] <- rgbcolors[1,trunc(tmp*511+1)]
+						ctmp[,,2] <- rgbcolors[2,trunc(tmp*511+1)]
+						ctmp[,,3] <- rgbcolors[3,trunc(tmp*511+1)]
+						tmp <- make.image(ctmp,gamma=TRUE)
 					}
 				}
 				write.image(tmp,currentFileName)
 				if (nrofChosen < slicesCounter) chooseFileNameExactly(FALSE,nrofChosen+1)
 			}
-
+                        debug(writeImage)
 			# is called via the next button after choosing the file format
 			# determines the filename with the help of chooseFileNameGeneral and chooseFileNameExactly
 			onNext <- function(){							
@@ -1830,9 +1841,40 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			ttHelp = tktoplevel(bg=wiasblue)
 			tkwm.title(ttHelp, "Help")
 			
-			helptextIntr = "By using plot on fmridata, that is the data set, the statistical parametric map and the pvalues, \n you can view and analyze the fmri data.\n \n \n"	
-			helptextViewOpt="Viewing Options \n \n You are able to choose between coronal,sagittal and axial planes. Furthermore you can \n decide how many slices shall be selected and how many of these shown at once. If you \nchoose the number of slices shown at once smaller than the number of selected slices, there \n will appear an arrow on the right side. With the help of this arrow you can go to next \npage, and the next slices will be presented. To confirm your choice on the number of slices \n and the viewing direction press the button 'Change View/Slices'. If you are not on\n page one, you are able to go back to this by using the arrow on the left side. Below each\n slice there is a slider, which you can use to slide between the slices of the current\n viewing direction. To remove the sliders press 'Hide Sliders'. By selecting 'Keep Aspect \n Ratio' the original heigth-to-width ratio is rebuilt. If this is unselected, the slice will\n be plotted nearly quadratic. To view a slice of each viewing direction at the same time press\n 'View 3d'.In the first row below the slices there is printed a scale, which interpolates\n between the colours red(lowest value) and white(highest value) or grey(lowest value) and\n white (highest value). If you have plotted the statistival parametric map, in the \nlast row there will be a slider which can be used to determine the threshold. Instead of the\n threshold the time can be chosen by a slider, if you plotted the data set.\n By pushing the button 'Adjust Mask' you can create an underlying mask. Therefore you can \n determine a threshold. \n If you have problems with the brightness you can use 'Adjust Contract' too lower the values\n of the very big or small valued points. This will lead too a more balanced colour disrtribution. \n \n"
-			helptextSave="Save Results \n \n If you want to save your results the button 'Extract Images' gives you a comfortable \n possibility to do so. Fist you have to select all desired slices, To select/ deselect all\n slices use the corresponding button. To continue use 'Next'. If Image Magick is installed on\n your system you can choose between the image types ppm, jpeg, png and tif. If not ppm will\n automatically be taken. In the last step you have to choose a filename and filedirectory.\n To ensure not to overwrite existing data, it will be checked that this filedirectory/\nfileadress is not forgiven. If it is forgiven you will be warned, but still got the oppurti-\nnity to continue. The images will now be written in your chosen directory as [chosen \nfilename][viewing direction]Slice[slicenumber].[filetype]."		
+			helptextIntr = "By using plot on fmridata, that is the data set, the statistical parametric map and the pvalues, 
+			\n you can view and analyze the fmri data.\n \n \n"	
+			helptextViewOpt="Viewing Options \n 
+			\n You are able to choose between coronal,sagittal and axial planes. Furthermore you can 
+			\n decide how many slices shall be selected and how many of these shown at once. If you 
+			\nchoose the number of slices shown at once smaller than the number of selected slices, there 
+			\n will appear an arrow on the right side. With the help of this arrow you can go to next 
+			\npage, and the next slices will be presented. To confirm your choice on the number of slices 
+			\n and the viewing direction press the button 'Change View/Slices'. If you are not on
+			\n page one, you are able to go back to this by using the arrow on the left side. Below each
+			\n slice there is a slider, which you can use to slide between the slices of the current
+			\n viewing direction. To remove the sliders press 'Hide Sliders'. By selecting 'Keep Aspect 
+			\n Ratio' the original heigth-to-width ratio is rebuilt. If this is unselected, the slice will
+			\n be plotted nearly quadratic. To view a slice of each viewing direction at the same time press
+			\n 'View 3d'.In the first row below the slices there is printed a scale, which interpolates
+			\n between the colours red(lowest value) and white(highest value) or grey(lowest value) and
+			\n white (highest value). If you have plotted the statistival parametric map, in the 
+			\nlast row there will be a slider which can be used to determine the threshold. Instead of the
+			\n threshold the time can be chosen by a slider, if you plotted the data set.
+			\n By pushing the button 'Adjust Mask' you can create an underlying mask. Therefore you can 
+			\n determine a threshold. 
+			\n If you have problems with the brightness you can use 'Adjust Contract' too lower the values
+			\n of the very big or small valued points. This will lead too a more balanced colour disrtribution. \n 
+			\n"
+			helptextSave="Save Results \n 
+			\n If you want to save your results the button 'Extract Images' gives you a comfortable 
+			\n possibility to do so. Fist you have to select all desired slices, To select/ deselect all
+			\n slices use the corresponding button. To continue use 'Next'. If Image Magick is installed on
+			\n your system you can choose between the image types ppm, jpeg, png and tif. If not ppm will
+			\n automatically be taken. In the last step you have to choose a filename and filedirectory.
+			\n To ensure not to overwrite existing data, it will be checked that this filedirectory/
+			\nfileadress is not forgiven. If it is forgiven you will be warned, but still got the oppurti-
+			\nnity to continue. The images will now be written in your chosen directory as [chosen 
+			\nfilename][viewing direction]Slice[slicenumber].[filetype]."		
 			helptext = paste(paste(helptextIntr,helptextViewOpt,sep=""),helptextSave,sep="")
 			helpFrame1 = tkframe(ttHelp,bg=wiasblue)
 			helpLabel = tklabel(helpFrame1,text=helptext,font="Arial 13",bg=wiasblue)
@@ -1934,7 +1976,8 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	helpButton <- tkbutton(frame2,text="View Help", command = helpFunction,bg="#BBDDEC")
 	keepSides <- tkcheckbutton(frame2,text="Keep Aspect Ratio",variable=ksVar,bg="#BBDDEC",command=keepsides)	
 		
-	tkgrid(tklabel(frame0,text="Coronal",bg="#BBDDEC"),rb1,tklabel(frame0,text="Sagittal",bg="#BBDDEC"),rb2,tklabel(frame0,text="Axial",bg="#BBDDEC"),rb3,padx=10,pady=5)
+	tkgrid(tklabel(frame0,text="Coronal",bg="#BBDDEC"),rb1,tklabel(frame0,text="Sagittal",bg="#BBDDEC"),rb2,
+	       tklabel(frame0,text="Axial",bg="#BBDDEC"),rb3,padx=10,pady=5)
 	tkgrid(frame0)
 	tkgrid(nrSlicesLabel,nrSlicesEntry,nrSlicesppLabel,nrSlicesppEntry,changeButton,viewAllButton,padx=10,pady=5)
 	tkgrid(frame1)	

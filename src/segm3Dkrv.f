@@ -116,7 +116,7 @@ C    thats the variance of thi
                call getdfnab(df,dn,a,b)
                si=sqrt(si)
                maxvalue=max(maxvalue,a*thi/si-b)
-               minvalue=min(minvalue,-a*thi/si+b)
+               minvalue=min(minvalue,a*thi/si+b)
                call rchkusr()
             END DO
          END DO

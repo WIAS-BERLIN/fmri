@@ -8,7 +8,8 @@ fmri.gui <- function() {
 
 	# select file, name saved in tclVar dataFile
 	selectFirstDataFile <- function(){
-		tclvalue(dataFileFirst) <- tkgetOpenFile(filetypes ="{{ANALYZE} {.IMG .Img .img .HDR .Hdr .hdr}} {{AFNI} {.BRIK .Brik .brik .HEAD .Head .head}} {{NIFTI} {.NII .Nii .nii .HDR .Hdr .hdr}} {{All files} *}",title="Select Data")  
+		tclvalue(dataFileFirst) <- tkgetOpenFile(filetypes ="{{ANALYZE} {.IMG .Img .img .HDR .Hdr .hdr}} 
+		{{AFNI} {.BRIK .Brik .brik .HEAD .Head .head}} {{NIFTI} {.NII .Nii .nii .HDR .Hdr .hdr}} {{All files} *}",title="Select Data")  
 	}	
 	selectDesignFileSave <- function(){
         	tclvalue(designFile) <- tkgetSaveFile(filetypes ="{{Text} {.TXT .Txt .txt}} {{All files} *}",title="Save Design")  
@@ -33,7 +34,8 @@ fmri.gui <- function() {
 	}
 
 	# save design in filepath/filename.Design
-	# format: (number of scans, sum of number of onsets for all conditions, number of onsets (n1) for condition1 (of M), first onset condition1, second onset, ..., 	
+	# format: (number of scans, sum of number of onsets for all conditions, number of onsets 
+	# (n1) for condition1 (of M), first onset condition1, second onset, ..., 	
         #          nM-th onset conditionM, sum of number of durations for all conditions, number of durations (d1) for condtion1, first duration condition1, ..., dM-th duration 
 	#	   conditionM, interscan intervals)  
 	saveDesign <- function(){
@@ -116,7 +118,8 @@ fmri.gui <- function() {
 			ttWarning = tktoplevel(bg=wiasblue)
 			tkwm.title(ttWarning, "Affirmation")
 			warningFrame1 = tkframe(ttWarning,bg=wiasblue)
-			warningLabel = tklabel(warningFrame1,text="Are you sure you want to reload the design? \n All progresses will be lost.",font="Arial 13",bg=wiasblue)
+			warningLabel = tklabel(warningFrame1,text="Are you sure you want to reload the design? 
+			\n All progresses will be lost.",font="Arial 13",bg=wiasblue)
 			warningFrame2 = tkframe(ttWarning,bg=wiasblue)	
 			warningB1 = tkbutton(warningFrame2,text="Yes",command=onYes)
 			warningB2 = tkbutton(warningFrame2,text="No",command=onNo)	
@@ -141,7 +144,8 @@ fmri.gui <- function() {
 			ttWarning = tktoplevel(bg=wiasblue)
 			tkwm.title(ttWarning, "Affirmation")
 			warningFrame1 = tkframe(ttWarning,bg=wiasblue)
-			warningLabel = tklabel(warningFrame1,text="Are you sure you want to recreate the design? \n All progresses will be lost.",font="Arial 13",bg=wiasblue)
+			warningLabel = tklabel(warningFrame1,text="Are you sure you want to recreate the design? 
+			\n All progresses will be lost.",font="Arial 13",bg=wiasblue)
 			warningFrame2 = tkframe(ttWarning,bg=wiasblue)	
 			warningB1 = tkbutton(warningFrame2,text="Yes",command=onYes)
 			warningB2 = tkbutton(warningFrame2,text="No",command=onNo)	
@@ -153,7 +157,8 @@ fmri.gui <- function() {
 	}
 
 	# load Design, saved in filepath/dataFile.Design
-	# format (see above) deciphered and save partly as reals, partly as real-matrices (durations/onsets of condition i in column i saved, and some placeholders (-1))	
+	# format (see above) deciphered and save partly as reals, partly as real-matrices 
+	# (durations/onsets of condition i in column i saved, and some placeholders (-1))	
 	loadDesign <- function(){
 		print("Loading ...")
 
@@ -252,7 +257,8 @@ fmri.gui <- function() {
 			ttWarning = tktoplevel(bg=wiasblue)
 			tkwm.title(ttWarning, "Affirmation")
 			warningFrame1 = tkframe(ttWarning,bg=wiasblue)
-			warningLabel = tklabel(warningFrame1,text="Are you sure you want to quit the design definition? ",font="Arial 13",bg=wiasblue)
+			warningLabel = tklabel(warningFrame1,text="Are you sure you want to quit the design definition? ",
+			font="Arial 13",bg=wiasblue)
 			warningFrame2 = tkframe(ttWarning,bg=wiasblue)	
 			warningB1 = tkbutton(warningFrame2,text="Yes",command=onYes)
 			warningB2 = tkbutton(warningFrame2,text="No",command=onNo)	
@@ -454,7 +460,8 @@ fmri.gui <- function() {
 		tkconfigure(rbD1,variable=rbDesign,value="scans",bg=wiasblue)
 		tkconfigure(rbD2,variable=rbDesign,value="seconds",bg=wiasblue)
 		tkgrid(tklabel(frame2D,text="Design in scans or seconds?",bg = wiasblue,font="Arial 12 bold"))
-		tkgrid(tklabel(frame2D,text="scans ",bg = wiaslightblue,font="Arial 12"),rbD1,tklabel(frame2D,text="seconds ",bg = wiaslightblue,font="Arial 12"), rbD2, padx=10,pady=10)
+		tkgrid(tklabel(frame2D,text="scans ",bg = wiaslightblue,font="Arial 12"),rbD1,
+		       tklabel(frame2D,text="seconds ",bg = wiaslightblue,font="Arial 12"), rbD2, padx=10,pady=10)
 		tkgrid(frame2D,sticky="ew")	
 	
 		# frame for appointing the number of conditions
@@ -512,7 +519,8 @@ fmri.gui <- function() {
 			ttWarning = tktoplevel(bg=wiasblue)
 			tkwm.title(ttWarning, "Affirmation")
 			warningFrame1 = tkframe(ttWarning,bg=wiasblue)
-			warningLabel = tklabel(warningFrame1,text="Are you sure you want to readjust the mask? \n All subsequent steps have to be redone.", font="Arial 13", bg=wiasblue)
+			warningLabel = tklabel(warningFrame1,text="Are you sure you want to readjust the mask? \n 
+			                       All subsequent steps have to be redone.", font="Arial 13", bg=wiasblue)
 			warningFrame2 = tkframe(ttWarning,bg=wiasblue)	
 			warningB1 = tkbutton(warningFrame2,text="Yes",command=onYes)
 			warningB2 = tkbutton(warningFrame2,text="No",command=onNo)	
@@ -560,7 +568,8 @@ fmri.gui <- function() {
 			ttWarning = tktoplevel(bg=wiasblue)
 			tkwm.title(ttWarning, "Affirmation")
 			warningFrame1 = tkframe(ttWarning,bg=wiasblue)
-			warningLabel = tklabel(warningFrame1,text="Are you sure you want to change the contrast? \n All subsequent steps have to be redone.",font="Arial 13",bg=wiasblue)
+			warningLabel = tklabel(warningFrame1,text="Are you sure you want to change the contrast? \n 
+			                       All subsequent steps have to be redone.",font="Arial 13",bg=wiasblue)
 			warningFrame2 = tkframe(ttWarning,bg=wiasblue)	
 			warningB1 = tkbutton(warningFrame2,text="Yes",command=onYes)
 			warningB2 = tkbutton(warningFrame2,text="No",command=onNo)	
@@ -686,7 +695,8 @@ fmri.gui <- function() {
 			ttWarning = tktoplevel(bg=wiasblue)
 			tkwm.title(ttWarning, "Affirmation")
 			warningFrame1 = tkframe(ttWarning,bg=wiasblue)
-			warningLabel = tklabel(warningFrame1,text="Are you sure you want to continue? \n The p values will get recalculated.",font="Arial 13",bg=wiasblue)
+			warningLabel = tklabel(warningFrame1,text="Are you sure you want to continue? \n 
+			                       The p values will get recalculated.",font="Arial 13",bg=wiasblue)
 			warningFrame2 = tkframe(ttWarning,bg=wiasblue)	
 			warningB1 = tkbutton(warningFrame2,text="Yes",command=onYes)
 			warningB2 = tkbutton(warningFrame2,text="No",command=onNo)	
@@ -724,7 +734,8 @@ fmri.gui <- function() {
 			ttWarning = tktoplevel(bg=wiasblue)
 			tkwm.title(ttWarning, "Affirmation")
 			warningFrame1 = tkframe(ttWarning,bg=wiasblue)
-			warningLabel = tklabel(warningFrame1,text="Are you sure you want to (re)smooth the parametric map? \n The p values will get recalculated, too.", font="Arial 13",bg=wiasblue)
+			warningLabel = tklabel(warningFrame1,text="Are you sure you want to (re)
+			             smooth the parametric map? \n The p values will get recalculated, too.", font="Arial 13",bg=wiasblue)
 			warningFrame2 = tkframe(ttWarning,bg=wiasblue)	
 			warningB1 = tkbutton(warningFrame2,text="Yes",command=onYes)
 			warningB2 = tkbutton(warningFrame2,text="No",command=onNo)	
@@ -869,16 +880,20 @@ fmri.gui <- function() {
 		par(mar=c(5,5,3,1))
 		bwV = diff(range(ttt))/(length(ttt[,,,1])/1200)
 		d0 <- density(ttt[,,,1],bw=bwV)	
-		d1 <- density(ttt[round((1/8)*ddim[1]):round((7/8)*ddim[1]),round((1/8)*ddim[2]):round((7/8)*ddim[2]),round((1/8)*ddim[3]):round((7/8)*ddim[3]),1],bw=bwV)
-		d2 <- density(ttt[round((2/8)*ddim[1]):round((6/8)*ddim[1]),round((2/8)*ddim[2]):round((6/8)*ddim[2]),round((2/8)*ddim[3]):round((6/8)*ddim[3]),1],bw=bwV)	
-		d3 <- density(ttt[round((3/8)*ddim[1]):round((5/8)*ddim[1]),round((3/8)*ddim[2]):round((5/8)*ddim[2]),round((3/8)*ddim[3]):round((5/8)*ddim[3]),1],bw=bwV)	
+		d1 <- density(ttt[round((1/8)*ddim[1]):round((7/8)*ddim[1]),round((1/8)*ddim[2]):round((7/8)*ddim[2]),
+		             round((1/8)*ddim[3]):round((7/8)*ddim[3]),1],bw=bwV)
+		d2 <- density(ttt[round((2/8)*ddim[1]):round((6/8)*ddim[1]),round((2/8)*ddim[2]):round((6/8)*ddim[2]),
+		             round((2/8)*ddim[3]):round((6/8)*ddim[3]),1],bw=bwV)	
+		d3 <- density(ttt[round((3/8)*ddim[1]):round((5/8)*ddim[1]),round((3/8)*ddim[2]):round((5/8)*ddim[2]),
+		             round((3/8)*ddim[3]):round((5/8)*ddim[3]),1],bw=bwV)	
 		plot(d0,main="")
 		title(main="Density plots",cex.main=1.5)
 		lines(d1,col=2)
 		lines(d2,col=3)
 		lines(d3,col=4)		
 		lines(c(as.numeric(tclvalue(quantileTc)),as.numeric(tclvalue(quantileTc))),range(d0$y),col=6)
-		legend(0.55*max(d0$x),0.98*max(d0$y),c("Data","Centered 75% of data","Centered 50% of data","Centered 25% of data","Threshold line"),text.col=c(1,2,3,4,6),pch=c(1,1,1,1,1),col=c(1,2,3,4,6),title="Density of",cex=1.5)
+		legend(0.55*max(d0$x),0.98*max(d0$y),c("Data","Centered 75% of data","Centered 50% of data",
+		"Centered 25% of data","Threshold line"),text.col=c(1,2,3,4,6),pch=c(1,1,1,1,1),col=c(1,2,3,4,6),title="Density of",cex=1.5)
 	}
 
 	# startAdjustHelp is the prefixed function of startAdjust
@@ -911,7 +926,8 @@ fmri.gui <- function() {
 				ttWarning = tktoplevel(bg=wiasblue)
 				tkwm.title(ttWarning, "Affirmation")
 				warningFrame1 = tkframe(ttWarning,bg=wiasblue)
-				warningLabel = tklabel(warningFrame1,text="Are you sure you want to reload the data? \n All progresses despite design definition will be lost.",font="Arial 13",bg=wiasblue)
+				warningLabel = tklabel(warningFrame1,text="Are you sure you want to reload the data? 
+				\n All progresses despite design definition will be lost.",font="Arial 13",bg=wiasblue)
 				warningFrame2 = tkframe(ttWarning,bg=wiasblue)	
 				warningB1 = tkbutton(warningFrame2,text="Yes",command=onYes)
 				warningB2 = tkbutton(warningFrame2,text="No",command=onNo)	
@@ -938,7 +954,8 @@ fmri.gui <- function() {
 		else if (help[nrChars-2]=="n"&& help[nrChars-1]=="i" && help[nrChars]=="i"){
 			dataType = "NIFTI"
 		}
-		else if ((help[nrChars-3]=="h"&& help[nrChars-2]=="e" && help[nrChars-1]=="a" && help[nrChars]=="d")||(help[nrChars-3]=="b"&& help[nrChars-2]=="r" && help[nrChars-1]=="i" && help[nrChars]=="k")){
+		else if ((help[nrChars-3]=="h"&& help[nrChars-2]=="e" && help[nrChars-1]=="a" && help[nrChars]=="d")||
+		        (help[nrChars-3]=="b"&& help[nrChars-2]=="r" && help[nrChars-1]=="i" && help[nrChars]=="k")){
 			dataType = "AFNI"
 		}
 		else if (help[nrChars-2]=="h"&& help[nrChars-1]=="d" && help[nrChars]=="r"){
@@ -1236,8 +1253,37 @@ fmri.gui <- function() {
 
 	
 	# set variables
-	helptextVec <- c("Define the design of the experiment. You can load a previously saved \n design file here, or define a new design and save it to disk. You can \n define the design in scans or seconds, giving the onset times and \n duration of the stimulus. The expected hemodynamic response will be \n created as convolution of the task indicator function with the common \n difference of two gamma functions. \n \n See fmri.stimulus() for more details.","Load the data file(s). AFNI, ANALYZE, and NIFTI are supported file \n formats and will be automatically detected. Select either the header \n or data file. To work with a series of ANALYZE files, just select the \n first file. \n \n See read.AFNI(), read.ANALYZE(), read.NIFTI() for more details.","Smoothing will only be performed on a mask of voxels with \n sufficiently large T2-values. If you want to change the threshold for \n this cutting, adjust the mask with the help of the given density plots.","Define the contrast vector for a t-contrast, if more than one \n stimulus is defined. Otherwise, the simple t-contrast is used. \n \n See fmri.lm() for more details.","Define the maximum bandwith for structural adaptive smoothing or segmentation. The \n bandwidth is defined by the largest homogeneous structure in the SPM. \n Continue without smoothing if you like to perform signal detection using \n Random Field Theory on the SPM directly. \n \n See fmri.smooth() and fmri.pvalue() for more details.","You can view the pvalues in 2D and 3D. The 2D view \n presents to you several slices. It is possible to define the\n number of slices displayed, and the direction (axial, sagittal, \n coronal). The 3D view shows you one slice of every direction. \n The slice displayed, can be chosen by a silder. ","You can quit the FMRI analysis here. It is possible to save \n the workspace to disk, to overtake the workspace to the global \n R environment or to quit without overtaking the workspace. \n Overtaking the workspace may overwrite objects in your work- \nspace. Ensure, that your important objects aren't called fmriData, \n fmriDesignMatrix, fmriSpm, fmriSpmsmooth or fmriPvalue. To abort \n quitting press cancel.","You have got the possibility either to save the workspace to disk or to overtake \n the workspace to the global R environment. Overtaking the workspace may over- \n write objects in your workspace. Ensure, that your important objects aren't called \n fmriData, fmriDesignMatrix, fmriSpm, fmriSpmsmooth or fmriPvalue.")
-
+	helptextVec <- c("Define the design of the experiment. You can load a previously saved 
+	\n design file here, or define a new design and save it to disk. You can 
+	\n define the design in scans or seconds, giving the onset times and 
+	\n duration of the stimulus. The expected hemodynamic response will be 
+	\n created as convolution of the task indicator function with the common 
+	\n difference of two gamma functions. \n 
+	\n See fmri.stimulus() for more details.","Load the data file(s). AFNI, ANALYZE, and NIFTI are supported file 
+	\n formats and will be automatically detected. Select either the header \n or data file. To work with a series of ANALYZE files, just select the 
+	\n first file. \n 
+	\n See read.AFNI(), read.ANALYZE(), read.NIFTI() for more details.","Smoothing will only be performed on a mask of voxels with 
+	\n sufficiently large T2-values. If you want to change the threshold for 
+	\n this cutting, adjust the mask with the help of the given density plots.","Define the contrast vector for a t-contrast, if more than one 
+	\n stimulus is defined. Otherwise, the simple t-contrast is used. \n 
+	\n See fmri.lm() for more details.","Define the maximum bandwith for structural adaptive smoothing. The 
+	\n bandwidth is defined by the largest homogeneous structure in the SPM. 
+	\n Continue without smoothing if you like to perform signal detection using 
+	\n Random Field Theory on the SPM directly. \n 
+	\n See fmri.smooth() and fmri.pvalue() for more details.","You can view the pvalues in 2D and 3D. The 2D view 
+	\n presents to you several slices. It is possible to define the
+	\n number of slices displayed, and the direction (axial, sagittal, 
+	\n coronal). The 3D view shows you one slice of every direction. 
+	\n The slice displayed, can be chosen by a silder. ","You can quit the FMRI analysis here. It is possible to save 
+	\n the workspace to disk, to overtake the workspace to the global 
+	\n R environment or to quit without overtaking the workspace.
+	\n Overtaking the workspace may overwrite objects in your work- 
+	\nspace. Ensure, that your important objects aren't called fmriData, 
+	\n fmriDesignMatrix, fmriSpm, fmriSpmsmooth or fmriPvalue. To abort 
+	\n quitting press cancel.","You have got the possibility either to save the workspace to disk or to overtake 
+	\n the workspace to the global R environment. Overtaking the workspace may over- 
+	\n write objects in your workspace. Ensure, that your important objects aren't called 
+	\n fmriData, fmriDesignMatrix, fmriSpm, fmriSpmsmooth or fmriPvalue.")
 	wiasblue <- "#AACCDB" # colours of the gui
 	wiaslightblue <- "#BBDDEC"
 	nrStep <-0	

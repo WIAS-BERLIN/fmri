@@ -750,21 +750,26 @@ write.AFNI <- function(filename, ttt, label=NULL, note=NULL, origin=NULL, delta=
   if (is.null(header$DATASET_DIMENSIONS)) header$DATASET_DIMENSIONS <- c(dim(ttt)[1:3])
   AFNIheaderpart("DATASET_DIMENSIONS",header$DATASET_DIMENSIONS, conhead,c(dim(ttt)[1:3]))
   header$DATASET_DIMENSIONS <- NULL
-  if (is.null(header$TYPESTRING)) {header$TYPESTRING <- "3DIM_HEAD_FUNC"; warning("TYPESTRING not given, setting to 3DIM_HEAD_FUNC for backward compatibility", call.=FALSE) }
+  if (is.null(header$TYPESTRING)) {header$TYPESTRING <- "3DIM_HEAD_FUNC"; 
+          warning("TYPESTRING not given, setting to 3DIM_HEAD_FUNC for backward compatibility", call.=FALSE) }
   AFNIheaderpart("TYPESTRING",header$TYPESTRING, conhead,c("3DIM_HEAD_ANAT","3DIM_HEAD_FUNC","3DIM_GEN_ANAT","3DIM_GEN_ANAT"))
   header$TYPESTRING <- NULL
-  if (is.null(header$SCENE_DATA)) {header$SCENE_DATA <- c(0,11,1,-999,-999,-999,-999,-999); warning("SCENE_DATA not given, setting to c(0,11,1,-999,-999,-999,-999,-999) for backward compatibility", call.=FALSE) }
+  if (is.null(header$SCENE_DATA)) {header$SCENE_DATA <- c(0,11,1,-999,-999,-999,-999,-999); 
+           warning("SCENE_DATA not given, setting to c(0,11,1,-999,-999,-999,-999,-999) for backward compatibility", call.=FALSE) }
   AFNIheaderpart("SCENE_DATA",header$SCENE_DATA, conhead)
   header$SCENE_DATA <- NULL
-  if (is.null(header$ORIENT_SPECIFIC)) {header$ORIENT_SPECIFIC <- c(0,3,4); warning("ORIENT_SPECIFIC not given, setting to c(0,3,4) for backward compatibility", call.=FALSE) }
+  if (is.null(header$ORIENT_SPECIFIC)) {header$ORIENT_SPECIFIC <- c(0,3,4); 
+             warning("ORIENT_SPECIFIC not given, setting to c(0,3,4) for backward compatibility", call.=FALSE) }
   AFNIheaderpart("ORIENT_SPECIFIC",header$ORIENT_SPECIFIC, conhead)
   header$ORIENT_SPECIFIC <- NULL
   if (!is.null(origin)) header$ORIGIN <- origin
-  if (is.null(header$ORIGIN)) { header$ORIGIN <- c(0,0,0); warning("ORIGIN not given, setting to c(0,0,0) for backward compatibility", call.=FALSE) }
+  if (is.null(header$ORIGIN)) { header$ORIGIN <- c(0,0,0); 
+             warning("ORIGIN not given, setting to c(0,0,0) for backward compatibility", call.=FALSE) }
   AFNIheaderpart("ORIGIN",header$ORIGIN, conhead)
   header$ORIGIN <- NULL
   if (!is.null(delta)) header$DELTA <- delta
-  if (is.null(header$DELTA)) { header$DELTA <- c(4,4,4); warning("DELTA not given, setting to c(4,4,4) for backward compatibility", call.=FALSE) }
+  if (is.null(header$DELTA)) { header$DELTA <- c(4,4,4); 
+          warning("DELTA not given, setting to c(4,4,4) for backward compatibility", call.=FALSE) }
   AFNIheaderpart("DELTA",header$DELTA, conhead)
   header$DELTA <- NULL
 
@@ -897,9 +902,11 @@ read.DICOM <- function(filename,includedata=TRUE) {
             bytes <- bytes + 4
             while (TRUE) {
               if (endian == "little") {
-                testelement <- paste(paste(rev(sqv[(length(sqv)-3):(length(sqv)-2)]),collapse=""),paste(rev(sqv[(length(sqv)-1):length(sqv)]),collapse=""),sep=",")
+                testelement <- paste(paste(rev(sqv[(length(sqv)-3):(length(sqv)-2)]),collapse=""),
+                                     paste(rev(sqv[(length(sqv)-1):length(sqv)]),collapse=""),sep=",")
               } else {
-                testelement <- paste(paste(sqv[(length(sqv)-3):(length(sqv)-2)],collapse=""),paste(sqv[(length(sqv)-1):length(sqv)],collapse=""),sep=",")
+                testelement <- paste(paste(sqv[(length(sqv)-3):(length(sqv)-2)],collapse=""),
+                                     paste(sqv[(length(sqv)-1):length(sqv)],collapse=""),sep=",")
               }    
               if (testelement == "fffe,e00d") {
                 length <- readBin(con,"integer",1,4,signed=FALSE,endian=endian)
