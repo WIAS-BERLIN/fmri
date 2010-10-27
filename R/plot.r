@@ -1619,14 +1619,14 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				if (length(dt)==4){
 					if (type=="data"){
 						timeVal <- as.numeric(tclvalue(posvTime[[1]]))
-						if (viewAxis==3) tmp <- make.image(ttt[,dt[2]:1,chosenSlices[nrofChosen]-dt[1]-dt[2],timeVal],gamma=TRUE)
-						if (viewAxis==2) tmp <- make.image(ttt[,chosenSlices[nrofChosen]-dt[1],,timeVal],gamma=TRUE)
-						if (viewAxis==1) tmp <- make.image(ttt[chosenSlices[nrofChosen],,,timeVal],gamma=TRUE)
+						if (viewAxis==3) tmp <- make.image(ttt[,dt[2]:1,chosenSlices[nrofChosen]-dt[1]-dt[2],timeVal],gammatype="ITU")
+						if (viewAxis==2) tmp <- make.image(ttt[,chosenSlices[nrofChosen]-dt[1],,timeVal],gammatype="ITU")
+						if (viewAxis==1) tmp <- make.image(ttt[chosenSlices[nrofChosen],,,timeVal],gammatype="ITU")
 					}
 					else { # threshold korrektur koennte man noch einbauen
-						if (viewAxis==3) tmp <- make.image(ttt[,dt[2]:1,chosenSlices[nrofChosen]-dt[1]-dt[2],1],gamma=TRUE)
-						if (viewAxis==2) tmp <- make.image(ttt[,chosenSlices[nrofChosen]-dt[1],,1],gamma=TRUE)
-						if (viewAxis==1) tmp <- make.image(ttt[chosenSlices[nrofChosen],,,1],gamma=TRUE)
+						if (viewAxis==3) tmp <- make.image(ttt[,dt[2]:1,chosenSlices[nrofChosen]-dt[1]-dt[2],1],gammatype="ITU")
+						if (viewAxis==2) tmp <- make.image(ttt[,chosenSlices[nrofChosen]-dt[1],,1],gammatype="ITU")
+						if (viewAxis==1) tmp <- make.image(ttt[chosenSlices[nrofChosen],,,1],gammatype="ITU")
 					}
 				}
 				else {	
@@ -1634,21 +1634,20 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 						thresVal <- (as.numeric(tclvalue(posvThreshold[[1]])) - scale[1])/diff(scale)
 						tttHelp <- ttt
 						tttHelp[tttHelp < thresVal] <- 0
-						if (viewAxis==3) tmp <- make.image(tttHelp[,dt[2]:1,chosenSlices[nrofChosen]-dt[1]-dt[2]],gamma=TRUE)
-						if (viewAxis==2) tmp <- make.image(tttHelp[,chosenSlices[nrofChosen]-dt[1],],gamma=TRUE)
-						if (viewAxis==1) tmp <- make.image(tttHelp[chosenSlices[nrofChosen],,],gamma=TRUE)
+						if (viewAxis==3) tmp <- make.image(tttHelp[,dt[2]:1,chosenSlices[nrofChosen]-dt[1]-dt[2]],gammatype="ITU")
+						if (viewAxis==2) tmp <- make.image(tttHelp[,chosenSlices[nrofChosen]-dt[1],],gammatype="ITU")
+						if (viewAxis==1) tmp <- make.image(tttHelp[chosenSlices[nrofChosen],,],gammatype="ITU")
 					}
 					else{
 						if (viewAxis==3) tmp <- ttt[,dt[2]:1,chosenSlices[nrofChosen]-dt[1]-dt[2]]
 						if (viewAxis==2) tmp <- ttt[,chosenSlices[nrofChosen]-dt[1],]
 						if (viewAxis==1) tmp <- ttt[chosenSlices[nrofChosen],,]
-#			                        rgbcolors <- col2rgb(mri.colors(255,255)$all)/255
                                                 rgbcolors <-col2rgb(col)/255
 						ctmp <- array(0,c(dim(tmp),3))
 						ctmp[,,1] <- rgbcolors[1,trunc(tmp*511+1)]
 						ctmp[,,2] <- rgbcolors[2,trunc(tmp*511+1)]
 						ctmp[,,3] <- rgbcolors[3,trunc(tmp*511+1)]
-						tmp <- make.image(ctmp,gamma=TRUE)
+						tmp <- make.image(ctmp,gammatype="ITU")
 					}
 				}
 				write.image(tmp,currentFileName)

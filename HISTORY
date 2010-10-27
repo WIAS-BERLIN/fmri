@@ -1,3 +1,8 @@
+2010-10-27 version 1.4.2
+  - enable color plots from plot() GUI
+  - remove \code{adaptive} argument from \code{fmri.smooth()},
+    use \code{adaptation="none") instead
+
 2010-10-06 version 1.4.2
   - fmri.gui() includes possibility of evoking
     structural adaptive segmentation

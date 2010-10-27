@@ -1,12 +1,10 @@
-fmri.smooth <- function (spm, hmax = 4, adaptive = TRUE, adaptation = "aws",
+fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
     lkern = "Gaussian", skern = "Plateau", weighted = TRUE, ...)
 {
     cat("fmri.smooth: entering function\n")
     args <- match.call()
-    if (!adaptive)
-        adaptation <- "none"
     if (!(tolower(adaptation) %in% c("none", "aws", "segment"))) {
-        adaptation
+        adaptation <- "aws"
     }
     ladjust <- if ("ladjust" %in% names(list(...)))
         list(...)[["ladjust"]]
@@ -44,25 +42,66 @@ fmri.smooth <- function (spm, hmax = 4, adaptive = TRUE, adaptation = "aws",
         bw <- spm$bw
     }
     cat("fmri.smooth: smoothing the Statistical Parametric Map\n")
-    ttthat <- switch(tolower(adaptation), aws = vaws3D(y = spm$cbeta,
-        sigma2 = variance, hmax = hmax, mask = spm$mask, wghts = weights,
-        h0 = bw, vwghts = spm$vwghts, lkern = lkern, skern = skern,
-        weighted = weighted, res = spm$res, resscale = spm$resscale,
-        ddim = spm$dim, ladjust = ladjust, testprop = propagation),
-        fullaws = vaws3Dfull(y = spm$cbeta, sigma2 = variance,
-            hmax = hmax, mask = spm$mask, wghts = weights, vwghts = spm$vwghts,
-            lkern = lkern, skern = skern, weighted = weighted,
-            res = spm$res, resscale = spm$resscale, ddim = spm$dim,
-            ladjust = ladjust, testprop = propagation), none = vaws3D(y = spm$cbeta,
-            sigma2 = variance, hmax = hmax, mask = spm$mask,
-            qlambda = 1, wghts = weights, h0 = bw, vwghts = spm$vwghts,
-            lkern = lkern, skern = skern, weighted = weighted,
-            res = spm$res, resscale = spm$resscale, ddim = spm$dim,
-            ladjust = ladjust), segment = segm3D(y = spm$cbeta,
-            sigma2 = variance, hmax = hmax, mask = spm$mask,
-            wghts = weights, df = spm$df, h0 = bw, weighted = weighted,
-            res = spm$res, resscale = spm$resscale, ddim = spm$dim,
-            ladjust = ladjust, delta = delta, fov = fov, alpha = alpha))
+    ttthat <- switch(tolower(adaptation), 
+                     aws = vaws3D(y = spm$cbeta,
+                                  sigma2 = variance, 
+                                  hmax = hmax, 
+                                  mask = spm$mask, 
+                                  wghts = weights,
+                                  h0 = bw, 
+                                  vwghts = spm$vwghts, 
+                                  lkern = lkern, 
+                                  skern = skern,
+                                  weighted = weighted, 
+                                  res = spm$res, 
+                                  resscale = spm$resscale,
+                                  ddim = spm$dim, 
+                                  ladjust = ladjust, 
+                                  testprop = propagation),
+                     fullaws = vaws3Dfull(y = spm$cbeta, 
+                                          sigma2 = variance,
+                                          hmax = hmax, 
+                                          mask = spm$mask, 
+                                          wghts = weights, 
+                                          vwghts = spm$vwghts,
+                                          lkern = lkern, 
+                                          skern = skern, 
+                                          weighted = weighted,
+                                          res = spm$res, 
+                                          resscale = spm$resscale, 
+                                          ddim = spm$dim,
+                                          ladjust = ladjust, 
+                                          testprop = propagation),
+                     none = vaws3D(y = spm$cbeta,
+                                   sigma2 = variance, 
+                                   hmax = hmax, 
+                                   mask = spm$mask,
+                                   qlambda = 1, 
+                                   wghts = weights, 
+                                   h0 = bw, 
+                                   vwghts = spm$vwghts,
+                                   lkern = lkern, 
+                                   skern = skern, 
+                                   weighted = weighted,
+                                   res = spm$res, 
+                                   resscale = spm$resscale, 
+                                   ddim = spm$dim,
+                                   ladjust = ladjust),
+                     segment = segm3D(y = spm$cbeta,
+                                      sigma2 = variance, 
+                                      hmax = hmax, 
+                                      mask = spm$mask,
+                                      wghts = weights, 
+                                      df = spm$df, 
+                                      h0 = bw, 
+                                      weighted = weighted,
+                                      res = spm$res, 
+                                      resscale = spm$resscale, 
+                                      ddim = spm$dim,
+                                      ladjust = ladjust, 
+                                      delta = delta, 
+                                      fov = fov, 
+                                      alpha = alpha))
     cat("\n")
     cat("fmri.smooth: determine local smoothness\n")
     if (is.null(ttthat$scorr)) {
@@ -121,14 +160,14 @@ fmri.smooth <- function (spm, hmax = 4, adaptive = TRUE, adaptation = "aws",
     attr(z, "residuals") <- attr(spm, "residuals")
     if (!is.null(attr(spm, "smooth"))) {
         attr(z, "smooth") <- paste("Already smoothed before:\n",
-            attr(spm, "smooth"), "\nnow with:\n  adaptive  :",
-            as.character(adaptive), "\n  bandwidth :", signif(hmax,
+            attr(spm, "smooth"), "\nnow with:\n  adaptation  :",
+            adaptation, "\n  bandwidth :", signif(hmax,
                 3), "\n  lkern     :", lkern, "\n  skern     :",
             skern, "\n")
     }
     else {
-        attr(z, "smooth") <- paste("Smoothed with:\n  adaptive  :",
-            as.character(adaptive), "\n  bandwidth :", signif(hmax,
+        attr(z, "smooth") <- paste("Smoothed with:\n  adaptation  :",
+            adaptation, "\n  bandwidth :", signif(hmax,
                 3), "\n  lkern     :", lkern, "\n  skern     :",
             skern, "\n")
     }
