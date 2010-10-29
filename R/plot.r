@@ -29,9 +29,9 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
 
   mri.colors <- function (n1, n2, factor=n1/(n1+n2), from=0, to=.2) {
     colors1 <- gray((0:n1)/(n1+n2))
-    colors2 <- hsv(h = seq(from,to,length=n2),
+    colors2 <- hsv(h = seq(from,to,length=n2+1),
                    s = seq(from = n2/(n2+factor*n1) - 1/(2 * (n2+factor*n1)), to =
-                     1/(2 * (n2+factor*n1)), length = n2),
+                     1/(2 * (n2+factor*n1)), length = n2+1),
                    v = 1,
                    gamma=1)
     list(all=c(colors1,colors2),gray=colors1,col=colors2)
@@ -145,7 +145,10 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
     } else {
 
       signal <- x$pvalue
+      cat("maxpvalue",maxpvalue,"\n")
+      cat(sum(signal<maxpvalue),sum(signal<0.05),"mean signal",mean(signal),"\n")
       signal[signal > maxpvalue] <- 1
+      cat(sum(signal<maxpvalue),"mean signal",mean(signal),"\n")
       signal[signal < 1e-10] <- 1e-10
 
       signal <- -log(signal)
@@ -162,19 +165,26 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
       anatomic <- anatomic/(cutOff[2]-cutOff[1])					
 
       # re-scale signal to 0.5 ... 1
-      scale <- range(signal,finite=TRUE)
-      if (diff(scale) != 0) {
-        signal <- 0.5 + 0.5 * (signal - scale[1]) / diff(scale)
-      } else if (scale[1] == 0) {
-        signal <- 1
+#      scale <- range(signal,finite=TRUE)
+#      if (diff(scale) != 0) {
+#        signal <- 0.5 + 0.5 * (signal - scale[1]) / diff(scale)
+#      } else if (scale[1] == 0) {
+#        signal <- 1
 # changed from 0.5 to 1 
 # original setting caused signals to be displayed if there were non 
 # now the windows show no information in case of no activalion at all
+ #     } else {
+ #       signal <- 1
+ #     }
+      scale <- c(-log(maxpvalue),max(signal[is.finite(signal)]))
+      cat("scale",scale,"\n")
+      if (diff(scale)!=0) {
+        signal <- 0.5 + 0.5 * (signal - scale[1]) / diff(scale)
       } else {
-        signal <- 1
+        signal <- 0
       }
       # create an overlay
-      anatomic[signal > 0.5] <- signal[signal > 0.5]
+      anatomic[signal >= 0.5] <- signal[signal >= 0.5]
       anatomic[is.na(anatomic)] <- 0
       anatomic[is.infinite(anatomic)] <- 0
     
@@ -276,7 +286,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
     }
 
   } else {
-    cat("sorry. plot for this class not implemented\nFalling back to generic function, but this may fail!")
+    cat("Sorry, no plot for this class implemented\nFalling back to generic function, but this may fail!")
     plot(x)
   }
 
@@ -453,7 +463,7 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
         # draw something
         if (!is.null(sigma)) {
           value <- scale[1]+ttt[pos[1],pos[2],pos[3]]*diff(scale)          
-          plot(c(1,length(hrf)),range(c(value*hrf,(value-3*sigma[pos[1],pos[2],pos[3]])*hrf,(value+3*sigma[pos[1],pos[2],pos[3]])*hrf)),type="n",xlab="Scan",ylab="Paramter estimate")
+          plot(c(1,length(hrf)),range(c(value*hrf,(value-3*sigma[pos[1],pos[2],pos[3]])*hrf,(value+3*sigma[pos[1],pos[2],pos[3]])*hrf)),type="n",xlab="Scan",ylab="Parameter estimate")
           xx <- c(1:length(hrf),length(hrf):1)
           yy <- c((value-quant*sigma[pos[1],pos[2],pos[3]])*hrf,rev((value+quant*sigma[pos[1],pos[2],pos[3]])*hrf))
           polygon(xx,yy,col="gray",lty=1)
@@ -789,10 +799,10 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
  	             matrix(rep(seq(-log(maxpvalue),scale[2],length=200),20),200,20),
  	             yaxt="n",xaxt="n",xlab="", ylab="",zlim=c(-log(maxpvalue),scale[2]), col=scalecol)
 		lines(c(value,value),scale,col=1)
-	       i = 2	
+	       i <- trunc(-log(maxpvalue)/log(10))+1
  	       while (-log(1/10^i)<0.95*scale[2]){
 			lines(c(-log(1/10^i),-log(1/10^i)),scale,col=2)
- 	       		text(-log(1/10^i),scale[1]+0.01*diff(scale),pos=4,paste("1e-",i,sep=""))	
+ 	       		text(-log(1/10^i),0.01*diff(scale),pos=4,paste("1e-",i,sep=""))	
 			i = i + 1
 		}
                 } else {
@@ -981,7 +991,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		
 		if (nrslices>dt[view]){ # chosen nr of slices unnecessary bi
 				nrslices <<- dt[view]
-				print(append("Maximale Slicesanzahl:",dt[view]),quote=FALSE)		
+				print(append("Maximum number of slices:",dt[view]),quote=FALSE)		
 		}
 		
 		nrpages <<- ceiling(nrslices/nrslicespp) # number of pages
@@ -1278,7 +1288,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		}
 		quitAdjCon <- function(){ tkdestroy(ttAdjCon) }
 		ttAdjCon <- tktoplevel(bg=wiasblue)
-		tkwm.title(ttAdjCon, "Adjust Contrast")
+		tkwm.title(ttAdjCon, "Adjust contrast")
 		adjConFrame1 <- tkframe(ttAdjCon,bg=wiasblue)
 		adjConFrame2 <- tkframe(ttAdjCon,bg=wiasblue)
 		adjConFrame3 <- tkframe(ttAdjCon,bg=wiasblue)
@@ -1289,7 +1299,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		maxEntry <- tkentry(adjConFrame3,textvariable=maxVal,bg="#FFF",width=8)
 		okAdjConButton <- tkbutton(adjConFrame4,text="Ok",command=okAdjCon,bg=wiaslightblue)
 		quitAdjConButton <- tkbutton(adjConFrame4,text="Quit",command=quitAdjCon,bg=wiaslightblue)	
-		tkgrid(tklabel(adjConFrame1,text="Determine the value of the lower and the upper cutoff in relation to the maximal value: \n Note, that the reestimations can last a moment.",bg=wiasblue),padx=10,pady=10)
+		tkgrid(tklabel(adjConFrame1,text="Determine the value of the lower and the upper cutoff in relation to the maximum value: \n Re estimations can last a moment.",bg=wiasblue),padx=10,pady=10)
 		tkgrid(tklabel(adjConFrame2,text="Lower Cutoff ",bg=wiasblue),minEntry,padx=10,pady=10)
 		tkgrid(tklabel(adjConFrame3,text="Upper Cutoff ",bg=wiasblue),maxEntry,padx=10,pady=10)
 		tkgrid(okAdjConButton,quitAdjConButton,padx=20,pady=10)
@@ -1305,7 +1315,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
                 nrcol <- numeric(1)
                 
 		selectDataFile <- function(){
-			tclvalue(dataFileTcl) <- tkgetOpenFile(filetypes ="{{ANALYZE} {.IMG .Img .img .HDR .Hdr .hdr}} {{AFNI} {.BRIK .Brik .brik .HEAD .Head .head}} {{NIFTI} {.NII .Nii .nii .HDR .Hdr .hdr}} {{All files} *}",title="Select Data")  
+			tclvalue(dataFileTcl) <- tkgetOpenFile(filetypes ="{{ANALYZE} {.IMG .Img .img .HDR .Hdr .hdr}} {{AFNI} {.BRIK .Brik .brik .HEAD .Head .head}} {{NIFTI} {.NII .Nii .nii .HDR .Hdr .hdr}} {{All files} *}",title="Select data")  
 		}
 
 		loadDataHelp <- function(){
@@ -1357,7 +1367,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				
 			if (dataType=="unknown"){
 				print("The data type is unknown !!")
-				print("Please check your stated path or press 'help'.")
+				print("Please check your path or press 'help'.")
 			}
 			
 			tclvalue(thresValTcl) <- round(quantile(extract.data(data),0.75),2)
@@ -1440,7 +1450,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		quitAdjMask <- function(){ tkdestroy(ttAdjMask) }
 
 		ttAdjMask <- tktoplevel(bg=wiasblue)
-		tkwm.title(ttAdjMask, "Adjust Mask")
+		tkwm.title(ttAdjMask, "Adjust mask")
 
 		dataFileTcl <- tclVar("")
 		data <- list()
@@ -1455,17 +1465,17 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 		adjMaskFrame7 <- tkframe(ttAdjMask,bg=wiasblue)	
 		
 
-		objFileL    <- tklabel(adjMaskFrame1,text="Load Data",bg=wiasblue,font="Arial 13 bold")	
+		objFileL    <- tklabel(adjMaskFrame1,text="Load data",bg=wiasblue,font="Arial 13 bold")	
 		objFileE1   <- tkentry(adjMaskFrame2, textvariable = dataFileTcl, width = 40, bg = "#ffffff")
     		objFileB1   <- tkbutton(adjMaskFrame2, text = "Select file", width = 15, command = selectDataFile, bg = wiaslightblue, anchor = "c")	
 		objFileLoad <- tkbutton(adjMaskFrame4, text = "Load", width = 15, command = loadDataHelp, bg = wiaslightblue)
 		helpLabel1 <- tklabel(adjMaskFrame3,text="",bg=wiasblue,width=0,font="Arial 1")
 		
-		thresLabel0 <- tklabel(adjMaskFrame5,text="Determine Threshold",bg=wiasblue,font="Arial 13 bold")	
+		thresLabel0 <- tklabel(adjMaskFrame5,text="Determine threshold",bg=wiasblue,font="Arial 13 bold")	
 		thresValTcl <- tclVar()
 		thresEntry <- tkentry(adjMaskFrame6,textvariable=thresValTcl,width=8)
 		thresLabel  <- tklabel(adjMaskFrame6,text="Threshold", bg=wiasblue,font="Arial 12 bold")
-		viewMaskButton <- tkbutton(adjMaskFrame6,text="View Mask",command=viewMaskHelp, bg=wiaslightblue)
+		viewMaskButton <- tkbutton(adjMaskFrame6,text="View mask",command=viewMaskHelp, bg=wiaslightblue)
 		okAdjMaskButton <- tkbutton(adjMaskFrame7,text="Ok",command=okAdjMask,bg=wiaslightblue)
 		quitAdjMaskButton <- tkbutton(adjMaskFrame7,text="Quit",command=quitAdjMask,bg=wiaslightblue)	
 		tkgrid(objFileL,pady = 10, padx = 10,sticky="ew")
@@ -1490,7 +1500,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 	# first step: choose slices (from current viewing direction)
 	# second step: choose file format (only if ImageMagick is installed)
 	# third step; choose filename and directory
-	# if the filename is forgiven, antoher one can be chosen
+	# if the filename is exists, antoher one can be chosen
 	extractImages <- function(){
 			if (!require(adimpro))
    				 stop("required package adimpro not found. Please install from cran.r-project.org")	
@@ -1550,7 +1560,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				tclvalue(rbFF) = ending
 			}
 
-			# check if the filename is forgiven, if it is offer rechoosing of filename
+			# check if the filename is exists, if it is offer rechoosing of filename
 			# calls writeImage
 			# is called for every slices
 			chooseFileNameExactly <- function(overwrite=FALSE,nrofChosen=1){ #nrofchosen is the position of the current processed slice in chosenSlices
@@ -1559,7 +1569,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				if (viewAxis==1) slicenr <- chosenSlices[nrofChosen]			
 				filePathFinal <- paste(filePathFinal,slicenr,sep="")
 				filePathFinal <- paste(filePathFinal,paste(".",as.character(tclvalue(rbFF)),sep=""),sep="") #.fileformat appended
-				if (overwrite == FALSE){ # check if name forgiven
+				if (overwrite == FALSE){ # check if name exists
 					pathSplitted <- unlist(strsplit(filePathFinal,""))
 					noSeparator = TRUE
 					indexSep = length(pathSplitted)							
@@ -1589,7 +1599,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 								chooseFileNameGeneral()
 								chooseFileNameExactly(FALSE,nrofChosen)
 							}
-							print("Name forgiven !!")
+							print("Name exists !!")
 							ttWarn <- tktoplevel(bg=wiasblue)
 							tkwm.title(ttWarn, "Warning")
 							framettWarn1 <- tkframe(ttWarn,bg=wiasblue)
@@ -1643,17 +1653,17 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 						if (viewAxis==2) tmp <- ttt[,chosenSlices[nrofChosen]-dt[1],]
 						if (viewAxis==1) tmp <- ttt[chosenSlices[nrofChosen],,]
                                                 rgbcolors <-col2rgb(col)/255
+                                                ncolors <- length(col)
 						ctmp <- array(0,c(dim(tmp),3))
-						ctmp[,,1] <- rgbcolors[1,trunc(tmp*511+1)]
-						ctmp[,,2] <- rgbcolors[2,trunc(tmp*511+1)]
-						ctmp[,,3] <- rgbcolors[3,trunc(tmp*511+1)]
-						tmp <- make.image(ctmp,gammatype="ITU")
+						ctmp[,,1] <- rgbcolors[1,trunc(tmp*(ncolors-1)+1)]
+						ctmp[,,2] <- rgbcolors[2,trunc(tmp*(ncolors-1)+1)]
+						ctmp[,,3] <- rgbcolors[3,trunc(tmp*(ncolors-1)+1)]
+						tmp <- make.image(ctmp,gamma=TRUE)
 					}
 				}
 				write.image(tmp,currentFileName)
 				if (nrofChosen < slicesCounter) chooseFileNameExactly(FALSE,nrofChosen+1)
 			}
-                        debug(writeImage)
 			# is called via the next button after choosing the file format
 			# determines the filename with the help of chooseFileNameGeneral and chooseFileNameExactly
 			onNext <- function(){							
@@ -1678,7 +1688,6 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				}
 				#writeImage called from chooseFileName
 			}
-
 			# is called after choosing the slices
 			# gives the user the possibility to choose the file format
 			# needs imgmagick, otherwise: file format == ppm (automatically)
@@ -1706,7 +1715,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 				
 				if (imgmagickInstalled){ # choose file format
 					ttFF = tktoplevel(bg=wiasblue)
-					tkwm.title(ttFF, "Extract Images - File format")
+					tkwm.title(ttFF, "Extract images - file format")
 			
 					frameFF1 <- tkframe(ttFF,relief="groove",borderwidth=0,bg=wiasblue)
 					frameFF2 <- tkframe(ttFF,relief="groove",borderwidth=0,bg=wiasblue)
@@ -1745,7 +1754,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			}
 			
 			ttImgSelect <- tktoplevel(bg=wiasblue) # toplevel window for the slices choice
-			tkwm.title(ttImgSelect, "Extract Images - Slices Choice")			 
+			tkwm.title(ttImgSelect, "Extract images - slice selection")			 
 
 			imgSelectFrom <- list()
 	 		viewAxis = as.integer(tclvalue(rbValue))
@@ -1806,8 +1815,8 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			# buttons
 			bottomFrame <- tkframe(ttImgSelect,bg=wiasblue)
 			next2Button <- tkbutton(bottomFrame,text="Next",command = toFileFormat,bg=wiaslightblue)
-			selAllButton <- tkbutton(bottomFrame,text="Select All",command = selectAll,bg=wiaslightblue)
-			deselAllButton <- tkbutton(bottomFrame,text="Deselect All",command = deselectAll,bg=wiaslightblue)
+			selAllButton <- tkbutton(bottomFrame,text="Select all",command = selectAll,bg=wiaslightblue)
+			deselAllButton <- tkbutton(bottomFrame,text="Deselect all",command = deselectAll,bg=wiaslightblue)
 			quitttImgButton <- tkbutton(bottomFrame,text="Quit",command = quitttImgSelect,bg=wiaslightblue)
 			
 			tkgrid(next2Button,selAllButton,deselAllButton,quitttImgButton,padx=17,pady=5)
@@ -1840,40 +1849,38 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
 			ttHelp = tktoplevel(bg=wiasblue)
 			tkwm.title(ttHelp, "Help")
 			
-			helptextIntr = "By using plot on fmridata, that is the data set, the statistical parametric map and the pvalues, 
-			\n you can view and analyze the fmri data.\n \n \n"	
-			helptextViewOpt="Viewing Options \n 
-			\n You are able to choose between coronal,sagittal and axial planes. Furthermore you can 
-			\n decide how many slices shall be selected and how many of these shown at once. If you 
-			\nchoose the number of slices shown at once smaller than the number of selected slices, there 
+			helptextIntr = "Generic function plot for objects of classes ''fmridata'' (fmri data objects), ''spm'' (statistical parametric maps) and ''fmripvalue'' \n \n \n"	
+			helptextViewOpt="Options \n 
+			\n You can choose between coronal, sagittal and axial slices. Furthermore you may 
+			\n decide how many slices shall be selected and how many of these are shown at once. If you 
+			\n choose the number of slices shown at once smaller than the number of selected slices, there 
 			\n will appear an arrow on the right side. With the help of this arrow you can go to next 
-			\npage, and the next slices will be presented. To confirm your choice on the number of slices 
-			\n and the viewing direction press the button 'Change View/Slices'. If you are not on
-			\n page one, you are able to go back to this by using the arrow on the left side. Below each
+			\n page, and the next slices will be presented. To confirm your choice on the number of slices 
+			\n and the viewing direction press the button 'Change View/Slices'. If you are not on the first
+			\n page, you can go back to this by using the arrow on the left side. Below each
 			\n slice there is a slider, which you can use to slide between the slices of the current
-			\n viewing direction. To remove the sliders press 'Hide Sliders'. By selecting 'Keep Aspect 
-			\n Ratio' the original heigth-to-width ratio is rebuilt. If this is unselected, the slice will
-			\n be plotted nearly quadratic. To view a slice of each viewing direction at the same time press
-			\n 'View 3d'.In the first row below the slices there is printed a scale, which interpolates
+			\n viewing direction. To remove the sliders press 'Hide Sliders'. By selecting 'Keep aspect 
+			\n ratio' the original heigth-to-width ratio is rebuilt. If this is unselected, the slice will
+			\n be plotted nearly quadratic. To navigate through coronal, sagittal and axial slices at the same time press
+			\n 'View 3d'. In the first row below the slices there is printed a scale, which interpolates
 			\n between the colours red(lowest value) and white(highest value) or grey(lowest value) and
-			\n white (highest value). If you have plotted the statistival parametric map, in the 
-			\nlast row there will be a slider which can be used to determine the threshold. Instead of the
-			\n threshold the time can be chosen by a slider, if you plotted the data set.
-			\n By pushing the button 'Adjust Mask' you can create an underlying mask. Therefore you can 
-			\n determine a threshold. 
-			\n If you have problems with the brightness you can use 'Adjust Contract' too lower the values
-			\n of the very big or small valued points. This will lead too a more balanced colour disrtribution. \n 
+			\n white (highest value). If you have plotted the statistical parametric map, there will be a slider in the 
+			\n last row which can be used to determine the threshold. For fmri data objects  the time can be 
+			\n chosen by a slider.
+			\n Using the button 'Adjust Mask' you can determine a threshold and create an underlying mask. 
+			\n If you have problems with the brightness you can use 'Adjust contrast'. This may lead too a 
+			\n more balanced colour distribution. \n 
 			\n"
-			helptextSave="Save Results \n 
+			helptextSave="Save results \n 
 			\n If you want to save your results the button 'Extract Images' gives you a comfortable 
-			\n possibility to do so. Fist you have to select all desired slices, To select/ deselect all
+			\n possibility to do so. First you have to select all desired slices, To select/ deselect all
 			\n slices use the corresponding button. To continue use 'Next'. If Image Magick is installed on
 			\n your system you can choose between the image types ppm, jpeg, png and tif. If not ppm will
 			\n automatically be taken. In the last step you have to choose a filename and filedirectory.
 			\n To ensure not to overwrite existing data, it will be checked that this filedirectory/
-			\nfileadress is not forgiven. If it is forgiven you will be warned, but still got the oppurti-
-			\nnity to continue. The images will now be written in your chosen directory as [chosen 
-			\nfilename][viewing direction]Slice[slicenumber].[filetype]."		
+			\n filename does not exist. If it exists a warning is issued with an option to change the filename.
+			\n The images will then be created in the chosen directory as [chosen 
+			\n filename][viewing direction]Slice[slicenumber].[filetype]."		
 			helptext = paste(paste(helptextIntr,helptextViewOpt,sep=""),helptextSave,sep="")
 			helpFrame1 = tkframe(ttHelp,bg=wiasblue)
 			helpLabel = tklabel(helpFrame1,text=helptext,font="Arial 13",bg=wiasblue)

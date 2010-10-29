@@ -20,12 +20,14 @@ fmri.gui <- function() {
 
 	# view p values in 3D
 	results3D <- function(){
-		plot(pvalue,type="3d",anatomic=extract.data(data)[,,,1])
+		cat("significance level",as.numeric(tclvalue(slevel)))
+		plot(pvalue,type="3d",anatomic=extract.data(data)[,,,1],maxpvalue=as.numeric(tclvalue(slevel)))
 	}
 	
 	# view p values as slices
 	resultsSlices <- function(){
-		plot(pvalue,anatomic=extract.data(data)[,,,1])
+		cat("significance level",as.numeric(tclvalue(slevel)))
+		plot(pvalue,anatomic=extract.data(data)[,,,1],maxpvalue=as.numeric(tclvalue(slevel)))
 	}
 
 	# view segmentation results as slices
@@ -459,7 +461,7 @@ fmri.gui <- function() {
 		rbD2 <- tkradiobutton(frame2D,bg=wiasblue)
 		tkconfigure(rbD1,variable=rbDesign,value="scans",bg=wiasblue)
 		tkconfigure(rbD2,variable=rbDesign,value="seconds",bg=wiasblue)
-		tkgrid(tklabel(frame2D,text="Design in scans or seconds?",bg = wiasblue,font="Arial 12 bold"))
+		tkgrid(tklabel(frame2D,text="Time unit (design) in scans or seconds?",bg = wiasblue,font="Arial 12 bold"))
 		tkgrid(tklabel(frame2D,text="scans ",bg = wiaslightblue,font="Arial 12"),rbD1,
 		       tklabel(frame2D,text="seconds ",bg = wiaslightblue,font="Arial 12"), rbD2, padx=10,pady=10)
 		tkgrid(frame2D,sticky="ew")	
@@ -670,6 +672,9 @@ fmri.gui <- function() {
 		
 		delta = data$delta
 		tclvalue(hMax) = round(as.numeric(10/min(delta)),2)
+		tclvalue(slevel) = 0.05
+                tkgrid(objhSignlevel,objhSignlevelE,padx=13,pady=10)
+		tkgrid(frameSigniflevel,sticky="ew");	
 
 		tkgrid(smoothChoiceL,padx=10,pady=10)
 		tkgrid(frameSmoothChoice1)
@@ -712,11 +717,14 @@ fmri.gui <- function() {
 		layoutFunction(4)
                 smoothed = FALSE
 		# calculation of the p-values and reporting about its success
-		pvalue <<-fmri.pvalue(spm)
+		pvalue <<- fmri.pvalue(spm)
 		print("p values calculated")
 	
-		# choice to view the p-values in 3d or as slices
-		tkgrid(objResultsL,objResultsB1,objResultsB2,helpButton6,padx=10,pady=10)
+		# choice to view the p-values in 3d or as slice
+#		tclvalue(slevel) = 0.05
+#                tkgrid(objhSignlevel,objhSignlevelE,padx=10,pady=10)
+#		tkgrid(frameSigniflevel,sticky="ew");	
+                tkgrid(objResultsL,objResultsB1,objResultsB2,helpButton6,padx=20,pady=10)
 		tkgrid(frameResults,sticky="ew");	
 	}
 
@@ -762,7 +770,10 @@ fmri.gui <- function() {
 		print("P values calculated")	
 		
 		# choice to view the p-values in 3d or as slices
-		tkgrid(objResultsL,objResultsB1,objResultsB2,padx=10,pady=10)
+#		tclvalue(slevel) = 0.05
+#                tkgrid(objhSignlevel,objhSignlevelE,padx=10,pady=10)
+#		tkgrid(frameSigniflevel,sticky="ew");	
+                tkgrid(objResultsL,objResultsB1,objResultsB2,padx=20,pady=10)
 		tkgrid(frameResults,sticky="ew");				
 	}
 
@@ -797,7 +808,8 @@ fmri.gui <- function() {
 		layoutFunction(4)
 			
 		# smoothing of the parametric map and reporting about its success
-		spmsegment <<- fmri.smooth(spm,hmax=as.numeric(tclvalue(hMax)), adaptation="segment")
+		cat("alpha =",as.numeric(tclvalue(slevel)),"\n")
+		spmsegment <<- fmri.smooth(spm,hmax=as.numeric(tclvalue(hMax)), adaptation="segment",alpha=as.numeric(tclvalue(slevel)))
 					
 		print("Parametric map adaptively segmented")
 	        segmented = TRUE
@@ -843,6 +855,7 @@ fmri.gui <- function() {
 		}
 		if (nrStep>=4 && currStep<=4){
 			tkgrid.forget(frameResults)			
+			tkgrid.forget(frameSigniflevel)			
 		}
 
 		nrStep <<- currStep		
@@ -1253,35 +1266,51 @@ fmri.gui <- function() {
 
 	
 	# set variables
-	helptextVec <- c("Define the design of the experiment. You can load a previously saved 
-	\n design file here, or define a new design and save it to disk. You can 
-	\n define the design in scans or seconds, giving the onset times and 
-	\n duration of the stimulus. The expected hemodynamic response will be 
-	\n created as convolution of the task indicator function with the common 
-	\n difference of two gamma functions. \n 
-	\n See fmri.stimulus() for more details.","Load the data file(s). AFNI, ANALYZE, and NIFTI are supported file 
-	\n formats and will be automatically detected. Select either the header \n or data file. To work with a series of ANALYZE files, just select the 
-	\n first file. \n 
-	\n See read.AFNI(), read.ANALYZE(), read.NIFTI() for more details.","Smoothing will only be performed on a mask of voxels with 
-	\n sufficiently large T2-values. If you want to change the threshold for 
-	\n this cutting, adjust the mask with the help of the given density plots.","Define the contrast vector for a t-contrast, if more than one 
-	\n stimulus is defined. Otherwise, the simple t-contrast is used. \n 
-	\n See fmri.lm() for more details.","Define the maximum bandwith for structural adaptive smoothing. The 
-	\n bandwidth is defined by the largest homogeneous structure in the SPM. 
-	\n Continue without smoothing if you like to perform signal detection using 
-	\n Random Field Theory on the SPM directly. \n 
-	\n See fmri.smooth() and fmri.pvalue() for more details.","You can view the pvalues in 2D and 3D. The 2D view 
+	helptextVec <- c("Specify the design of the experiment. A previously saved 
+	\n design file can be loaded, a new design description can be entered and and saved.
+	\n A design definition consists of the following specifications: 
+	\n - Interscan intervals (time between scans in sec.)
+	\n - Scans per session 
+	\n - Time unit (design), either scans or seconds, 
+	\n - Number of conditions
+	\n - Condition name(s) 
+	\n - Onset times (in time units)
+	\n - Stimulus duration (in time units)
+	\n The expected response will be created as convolution of the task indicator function
+	\n with the haemodynamic response function, here modeled as a difference of two gamma 
+	\n functions.  See fmri.stimulus() for more details.",
+	"Select file opens a file select box.
+	\n AFNI, ANALYZE, and NIFTI are supported file formats and will be automatically detected.
+	\n Select either the header \n or data file. To use a series of ANALYZE files, just
+	\n select the first file. \n 
+	\n See read.AFNI(), read.ANALYZE(), read.NIFTI() for more details.",
+	"Provide a threshold on mean intensity values to define a mask. 
+	\n The analysis will be restricted to voxel with this mask. 
+	\n Use 'View mask' provides images of mask for all slices and density plots
+	\n of intensity values for centered image cubes of varying size. These plots
+	\n are intended to assist a decision if a threshold is approriate and  
+	\n a selection a threshold.",
+	"Provide a scalar or vector defining a contrast. See fmri.lm() for more details.",
+	"Significance level for determining critical values (corrected for multiple testing) 
+	\n in hypothesis testing, see fmri.pvalue() and in case adaptive segmentation 
+	\n fmri.smooth().  Maximum bandwith is maximum radius (in voxel dimension (x)) of
+	\n local neighbourhoods for structural adaptive smoothing and segmentation. The 
+	\n bandwidth should correspond to the diameter of the largest homogeneous 
+	\n non-zero structure in the SPM. 
+	\n Continue without smoothing if you like to perform signal detection on the SPM
+	\n directly. See fmri.smooth() and fmri.pvalue() for more details.",
+	"You can view the pvalues in 2D and 3D. The 2D view 
 	\n presents to you several slices. It is possible to define the
 	\n number of slices displayed, and the direction (axial, sagittal, 
 	\n coronal). The 3D view shows you one slice of every direction. 
 	\n The slice displayed, can be chosen by a silder. ","You can quit the FMRI analysis here. It is possible to save 
-	\n the workspace to disk, to overtake the workspace to the global 
-	\n R environment or to quit without overtaking the workspace.
-	\n Overtaking the workspace may overwrite objects in your work- 
-	\nspace. Ensure, that your important objects aren't called fmriData, 
+	\n the workspace to disk, to copy the workspace into the global 
+	\n R environment or to quit without maintaining the workspace.
+	\n Exporting the workspace may overwrite objects in your work- 
+	\n space. Ensure, that your important objects aren't called fmriData, 
 	\n fmriDesignMatrix, fmriSpm, fmriSpmsmooth or fmriPvalue. To abort 
-	\n quitting press cancel.","You have got the possibility either to save the workspace to disk or to overtake 
-	\n the workspace to the global R environment. Overtaking the workspace may over- 
+	\n quitting press cancel.","You have got the possibility either to save the workspace to disk or to copy
+	\n the workspace into the global R environment. Copying the workspace may over- 
 	\n write objects in your workspace. Ensure, that your important objects aren't called 
 	\n fmriData, fmriDesignMatrix, fmriSpm, fmriSpmsmooth or fmriPvalue.")
 	wiasblue <- "#AACCDB" # colours of the gui
@@ -1305,6 +1334,7 @@ fmri.gui <- function() {
 	onsetsTc <- c()	
 	onsets <- c()			
 	hMax <- tclVar("0")
+	slevel <- tclVar("0")
 	rbDesign <- tclVar("unused")
 	dataType <- ""	
 	pvalue <- list()
@@ -1350,7 +1380,8 @@ fmri.gui <- function() {
 	frameSmoothChoice1   <- tkframe(base.aws,relief="groove",borderwidth=0,bg=wiasblue)
 	frameSmoothChoice2   <- tkframe(base.aws,relief="groove",borderwidth=0,bg=wiasblue)
 	frameSmoothChoice3 <- tkframe(base.aws,relief="groove",borderwidth=2,bg=wiasblue)
-	frameSmoothChoice4 <- tkframe(base.aws,relief="groove",borderwidth=0,bg=wiasblue)				
+	frameSmoothChoice4 <- tkframe(base.aws,relief="groove",borderwidth=0,bg=wiasblue)
+	frameSigniflevel <- tkframe(base.aws,relief="groove",borderwidth=0,bg=wiasblue)
 	intScLabel <- list()
 	nrScLabel <- list()
 	nrCoLabel <- list()	
@@ -1392,6 +1423,8 @@ fmri.gui <- function() {
 	objhMaxE <- tkentry(frameSmoothChoice2,textvariable=hMax,width=6,bg="#ffffff")
 	objButtonSmooth <- tkbutton(frameSmoothChoice2,text="Start adaptive smoothing",width=20,command=startSmoothingHelp,bg=wiaslightblue)
 	objButtonSegmentation <- tkbutton(frameSmoothChoice2,text="Start adaptive segmentation",width=20,command=startSegmentationHelp,bg=wiaslightblue)
+	objhSignlevel <- tklabel(frameSigniflevel,text="Significance level",bg=wiasblue,font="Arial 11 bold")
+	objhSignlevelE <- tkentry(frameSigniflevel,textvariable=slevel,width=6,bg="#ffffff")
 	helpButton5 <- tkbutton(frameSmoothChoice4,text="Help",width=15,command=helpFunction5,bg=wiaslightblue)		
 	helpLabel1 <- tklabel(frameData3,text="",bg=wiasblue,width=0,font="Arial 1")
 	helpLabel2 <- tklabel(frameContrast3,text="",bg=wiasblue,width=0,font="Arial 1")
