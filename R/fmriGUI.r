@@ -1144,7 +1144,7 @@ fmri.gui <- function() {
 				} else {
 				  save(spm,spmsegment,data,x,file=fileSaveHelp,compress=TRUE)
 				}
-				print(paste("Local workspace saved in",fileSaveHelp))	
+				print(paste("Local environment saved in",fileSaveHelp))	
 			}	
 			else print("Nothing to save")		
 		}
@@ -1175,9 +1175,9 @@ fmri.gui <- function() {
 		tkwm.title(ttQuit, "Quit Window")
 		quitFrame1 = tkframe(ttQuit,bg=wiasblue)
 		quitFrame2 = tkframe(ttQuit,bg=wiasblue)	
-		quitB1 = tkbutton(quitFrame1,text="Quit without maintaining local workspace",command=quitWOM,bg=wiaslightblue)
-		quitB2 = tkbutton(quitFrame1,text="Quit with maintaining local workspace",command=quitWM,bg=wiaslightblue)
-		quitB3 = tkbutton(quitFrame2,text="Export local workspace to file",command=functSave,bg=wiaslightblue)
+		quitB1 = tkbutton(quitFrame1,text="Quit without copying local environment",command=quitWOM,bg=wiaslightblue)
+		quitB2 = tkbutton(quitFrame1,text="Quit with copying local environment",command=quitWM,bg=wiaslightblue)
+		quitB3 = tkbutton(quitFrame2,text="Export local environment to file",command=functSave,bg=wiaslightblue)
 		quitB4 = tkbutton(quitFrame2,text="Cancel",command=functCancel,bg=wiaslightblue,width=15)
 		quitB5 = tkbutton(quitFrame2,text="Help",command=functHelp,bg=wiaslightblue,width=15)			
 		tkgrid(quitB1,quitB2,padx=10,pady=10)
@@ -1254,8 +1254,8 @@ fmri.gui <- function() {
 		tkwm.title(ttSave, "Save Workspace")
 		saveFrame1 = tkframe(ttSave,bg=wiasblue)
 		saveFrame2 = tkframe(ttSave,bg=wiasblue)	
-		saveB1 = tkbutton(saveFrame1,text="Overtake local workspace",command=overtakeLW, bg=wiaslightblue)
-		saveB3 = tkbutton(saveFrame1,text="Export local workspace to file",command=functSave, bg=wiaslightblue)
+		saveB1 = tkbutton(saveFrame1,text="Copy local environment to global",command=overtakeLW, bg=wiaslightblue)
+		saveB3 = tkbutton(saveFrame1,text="Export local environment to file",command=functSave, bg=wiaslightblue)
 		saveB4 = tkbutton(saveFrame2,text="Help",command=functHelp,bg=wiaslightblue,width=15)
 		saveB5 = tkbutton(saveFrame2,text="Quit",command=quitttSave,bg=wiaslightblue,width=15)			
 		tkgrid(saveB1,saveB3,padx=10,pady=10)
@@ -1267,8 +1267,8 @@ fmri.gui <- function() {
 	
 	# set variables
 	helptextVec <- c("Specify the design of the experiment. A previously saved 
-	\n design file can be loaded, a new design description can be entered and and saved.
-	\n A design definition consists of the following specifications: 
+	\n design file can be loaded, a new design description can be entered and 
+	\n and saved. A design definition consists of the following specifications: 
 	\n - Interscan intervals (time between scans in sec.)
 	\n - Scans per session 
 	\n - Time unit (design), either scans or seconds, 
@@ -1276,13 +1276,13 @@ fmri.gui <- function() {
 	\n - Condition name(s) 
 	\n - Onset times (in time units)
 	\n - Stimulus duration (in time units)
-	\n The expected response will be created as convolution of the task indicator function
-	\n with the haemodynamic response function, here modeled as a difference of two gamma 
-	\n functions.  See fmri.stimulus() for more details.",
+	\n The expected response will be created as convolution of the task indicator
+	\n function with the haemodynamic response function, here modeled as a  
+	\n difference of two gamma functions.  See fmri.stimulus() for more details.",
 	"Select file opens a file select box.
-	\n AFNI, ANALYZE, and NIFTI are supported file formats and will be automatically detected.
-	\n Select either the header \n or data file. To use a series of ANALYZE files, just
-	\n select the first file. \n 
+	\n AFNI, ANALYZE, and NIFTI are supported file formats and will be automatically 
+	\n detected. Select either the header \n or data file. To use a series of 
+	\n ANALYZE files, just select the first file. \n 
 	\n See read.AFNI(), read.ANALYZE(), read.NIFTI() for more details.",
 	"Provide a threshold on mean intensity values to define a mask. 
 	\n The analysis will be restricted to voxel with this mask. 
@@ -1297,22 +1297,23 @@ fmri.gui <- function() {
 	\n local neighbourhoods for structural adaptive smoothing and segmentation. The 
 	\n bandwidth should correspond to the diameter of the largest homogeneous 
 	\n non-zero structure in the SPM. 
-	\n Continue without smoothing if you like to perform signal detection on the SPM
-	\n directly. See fmri.smooth() and fmri.pvalue() for more details.",
+	\n Continue with voxelwise results if you like to perform signal detection on 
+	\n the SPM directly. See fmri.smooth() and fmri.pvalue() for more details.",
 	"You can view the pvalues in 2D and 3D. The 2D view 
 	\n presents to you several slices. It is possible to define the
 	\n number of slices displayed, and the direction (axial, sagittal, 
 	\n coronal). The 3D view shows you one slice of every direction. 
-	\n The slice displayed, can be chosen by a silder. ","You can quit the FMRI analysis here. It is possible to save 
-	\n the workspace to disk, to copy the workspace into the global 
-	\n R environment or to quit without maintaining the workspace.
-	\n Exporting the workspace may overwrite objects in your work- 
-	\n space. Ensure, that your important objects aren't called fmriData, 
-	\n fmriDesignMatrix, fmriSpm, fmriSpmsmooth or fmriPvalue. To abort 
-	\n quitting press cancel.","You have got the possibility either to save the workspace to disk or to copy
-	\n the workspace into the global R environment. Copying the workspace may over- 
-	\n write objects in your workspace. Ensure, that your important objects aren't called 
-	\n fmriData, fmriDesignMatrix, fmriSpm, fmriSpmsmooth or fmriPvalue.")
+	\n The slice displayed, can be chosen by a silder. ","You can quit the FMRI 
+	\n analysis here. It is possible to save the local environment to disk, to copy 
+	\n the local environment  into the global R environment or to quit without 
+	\n keeping results. Exporting the local environment may overwrite objects in 
+	\n your global environment. Ensure, that your important objects aren't called 
+	\n fmriData, fmriDesignMatrix, fmriSpm, fmriSpmsmooth or fmriPvalue. To abort 
+	\n quitting press cancel.","You have got the possibility either to save the local 
+	\n environment to disk or to copy the local environment into the global R environment.  
+	\n Copying the local environment may overwrite objects in your global environment. 
+	\n Ensure, that your important objects aren't called fmriData, fmriDesignMatrix, 
+	\n fmriSpm, fmriSpmsmooth or fmriPvalue.")
 	wiasblue <- "#AACCDB" # colours of the gui
 	wiaslightblue <- "#BBDDEC"
 	nrStep <-0	
@@ -1415,9 +1416,9 @@ fmri.gui <- function() {
 	objcontrastB<- tkbutton(frameContrast2,text="Ok",width=15,command=startEstimationHelp,bg=wiaslightblue)
 	helpButton4 <- tkbutton(frameContrast2,text="Help",width=15,command=helpFunction4,bg=wiaslightblue)	
 	objResultsL  <- tklabel(frameResults,text="View results",bg=wiasblue,font="Arial 12 bold")
-	objResultsB1 <- tkbutton(frameResults,text="Smoothing results in slices",width=21,command=resultsSlices,bg=wiaslightblue)
-	objResultsB2 <- tkbutton(frameResults,text="Smoothing results in 3D",width=21,command=results3D,bg=wiaslightblue)
-	objResultsB3 <- tkbutton(frameResults,text="Segmentation results in slices",width=21,command=resultsSegmentation,bg=wiaslightblue)
+	objResultsB1 <- tkbutton(frameResults,text="2D Visualization (slices)",width=21,command=resultsSlices,bg=wiaslightblue)
+	objResultsB2 <- tkbutton(frameResults,text="3D Visualization",width=21,command=results3D,bg=wiaslightblue)
+	objResultsB3 <- tkbutton(frameResults,text="2D Segmentation results",width=21,command=resultsSegmentation,bg=wiaslightblue)
 	helpButton6 <- tkbutton(frameResults,text="Help",width=11,command=helpFunction6,bg=wiaslightblue)		
 	objhMaxL <- tklabel(frameSmoothChoice2,text="Maximal bandwidth",bg=wiasblue,font="Arial 11 bold")
 	objhMaxE <- tkentry(frameSmoothChoice2,textvariable=hMax,width=6,bg="#ffffff")
@@ -1432,7 +1433,7 @@ fmri.gui <- function() {
 	helpLabel4 <- tklabel(frameSmoothChoice3,text="",bg=wiasblue,width=0,font="Arial 1")
 	helpLabel5 <- tklabel(frameMask3,text="",bg=wiasblue,width=0,font="Arial 1")	
 	smoothChoiceL  <- tklabel(frameSmoothChoice1,text="Adaptive Smoothing",bg=wiasblue,font="Arial 13 bold")
-	smoothChoiceB2 <- tkbutton(frameSmoothChoice4,text="Continue without adaptive smoothing",width=33,command=contWithoutHelp,bg=wiaslightblue)
+	smoothChoiceB2 <- tkbutton(frameSmoothChoice4,text="Continue with voxelwise results",width=33,command=contWithoutHelp,bg=wiaslightblue)
 				
 	if (as.numeric(tclRequire("Img",warn=FALSE))!=0){ # if possible add a little image
 		image1 <- tclVar()
