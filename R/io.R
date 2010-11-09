@@ -1242,6 +1242,7 @@ read.NIFTI <- function(filename,level=0.75,setmask=TRUE) {
               header=header)
   }
 
+  attr(z,"file") <- paste(filename, sep="")
 
   invisible(z)
 }

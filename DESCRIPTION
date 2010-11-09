@@ -11,7 +11,9 @@ Description: The package contains R-functions to perform an fmri analysis
              as described in
              K. Tabelow, J. Polzehl, H.U. Voss, and V. Spokoiny, 
              Analysing fMRI experiments with structure adaptive smoothing procedures,
-             NeuroImage, 33:55-62 (2006).
+             NeuroImage, 33:55-62 (2006) and
+             J. Polzehl, H.U. Voss, K. Tabelow, Structural adaptive segmentation
+             for statistical parametric mapping, NeuroImage, 52:515-523 (2010).
 License:     GPL (>= 2)
 Copyright:   This package is Copyright (C) 2006-2010 Weierstrass Institute for 
                                            Applied Analysis and Stochastics.
