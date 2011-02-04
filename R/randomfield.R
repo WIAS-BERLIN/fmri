@@ -22,10 +22,10 @@ pvalue <- function(z,i,j,k,rx,ry,rz,type="norm",df=4,cone = 0) {
   }
   if (type == "t") {
     rho0 <- 1 - pt(z,df)
-    gdf <- if(df<=200) gamma((df+1)/2)/gamma(df/2) else sqrt(df/2)*(1-1/(4*df)) 
+    gdf <- if(df<=100) gamma((df+1)/2)/gamma(df/2) else sqrt(df/2)*(1-1/(4*df)) 
+# avoids overflow in gamma((df+1)/2), see Handbook of mathematical functions 5.11
     onepz2df <- (1+z*z/df)^(-0.5*(df-1))
     fgdf <- gdf /(df/2)^0.5* onepz2df
-# Handbook of mathematical functions 5.11
     rho1 <- fltwo/sq2pi * onepz2df
     rho2 <- fltwo^2/sq2pi * fgdf * z
     rho3 <- fltwo^3/sq2pi * onepz2df * ((df-1)/df*z*z-1)
