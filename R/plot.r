@@ -1,12 +1,3 @@
-mri.colors <- function (n1, n2, factor=n1/(n1+n2), from=0, to=.2) {
-    colors1 <- gray((0:n1)/(n1+n2))
-    colors2 <- if(n2>0) hsv(h = seq(from,to,length=n2+1),
-                   s = seq(from = n2/(n2+factor*n1) - 1/(2 * (n2+factor*n1)), to =
-                     1/(2 * (n2+factor*n1)), length = n2+1),
-                   v = 1,
-                   gamma=1) else NULL
-    list(all=c(colors1,colors2),gray=colors1,col=colors2)
-  }
 # can be called from fmri.gui or the command line (by plot)
 # calls fmri.view2d or fmri.view3d with the fitting data
 plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
@@ -31,30 +22,6 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
 #
 #  this containes all information needed to fall back to handling fmripvalue objects 
 #
-#    if ("fmridata" %in% class(anatomic)) {
-#      img <- show.slice(pseudox, anatomic, maxpvalue = maxpvalue, slice =  slice, 
-#                        view = view, col.u, col.o, zlim.u, zlim.o)
-#      displayImage(img)
-#      return(invisible(img))
-#    } else {
-#      signal <- pseudox$pvalue
-#      signal[signal > maxpvalue] <- 1
-#      signal[signal < 1e-10] <- 1e-10
-#     signal <- -log(signal)
-#      anatomic <- scaleAnatomic(anatomic,cutOff,dim(pseudox$pvalue))
-#      scale <- range(signal,finite=TRUE)
-#      anatomic <- signalOverlay(signal,anatomic,scale)
-#      if (type == "3d" || type == "3D") {
-#        tt <- fmri.view3d(anatomic,col=mri.colors(255,255)$all,weights=pseudox$weights,
-#                          scale=scale,scalecol=mri.colors(255,255)$col,
-#                          type= "pvalue",maxpvalue=maxpvalue,pos=pos)
-#      } else {
-#        posNew <- position(anatomic)
-#        fmri.view2d(anatomic,col=mri.colors(255,255)$all,weights=pseudox$weights,
-#                    scale=scale,scalecol=mri.colors(255,255)$col,type= "pvalue",
-#                    maxpvalue=maxpvalue,position(anatomic),localx=x,inputStuff=inputStuff)
-#      }
-#    }
   } 
 #  else 
   if ("fmripvalue" %in% class(x)) {
@@ -103,7 +70,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
     if (type == "3d" || type == "3D") {
       if (spm) {
         tt <- fmri.view3d(signal$signal,col=mri.colors(255,255)$gray,weights=x$weights,
-                 scale=signal$scale,scalecol=mri.colors(255,255)$gray,type="spm",pos=pos)
+               scale=signal$scale,scalecol=mri.colors(255,255)$gray,type="spm",pos=pos)
       } else {
         quant <- qt(1-maxpvalue,
                  if(!is.null(x$df)) x$df else abs(diff(dim(attr(x, "design"))))) 
@@ -122,7 +89,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
     # re-scale signal to 0 ... 1
     if (type == "3d" || type == "3D") {
       tt <- fmri.view3d(signal$signal,col=mri.colors(255,255)$gray,weights=x$weights, 
-                 scale=signal$scale,scalecol=mri.colors(255,255)$gray, type="data",pos=pos)
+              scale=signal$scale,scalecol=mri.colors(255,255)$gray, type="data",pos=pos)
     } else {
       fmri.view2d(signal$signal,col=mri.colors(255,255)$gray, weights=x$weights,     
                   scale=signal$scale,scalecol=mri.colors(255,255)$gray,type= "data",
@@ -195,4 +162,14 @@ displayImage <- function(img, ...){
       zzz <- matrix(1:prod(dim(img)[1:2]),nrow = dim(img)[1],ncol = dim(img)[2])
       # display the image
       image(xxx, yyy, zzz, col = color, asp = 1, xlab="",ylab="", ...)
+}
+
+mri.colors <- function (n1, n2, factor=n1/(n1+n2), from=0, to=.2) {
+    colors1 <- gray((0:n1)/(n1+n2))
+    colors2 <- if(n2>0) hsv(h = seq(from,to,length=n2+1),
+                   s = seq(from = n2/(n2+factor*n1) - 1/(2 * (n2+factor*n1)), to =
+                     1/(2 * (n2+factor*n1)), length = n2+1),
+                   v = 1,
+                   gamma=1) else NULL
+    list(all=c(colors1,colors2),gray=colors1,col=colors2)
 }

@@ -187,16 +187,16 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE, minimum.sign
   if (!is.null(attr(spm, "smooth"))) {
     if (!is.null(attr(spm, "residuals"))) {
       type <- "t"
-      df <- abs(diff(dim(attr(spm, "design"))))
+      df <- spm$df 
+      if(is.null(df)) df <- abs(diff(dim(attr(spm, "design"))))
     } else {
       type <- "norm"
-      df <- abs(diff(dim(attr(spm, "design")))) # this is actually not needed, placeholder
+      df <- 1000 # this is actually not needed, placeholder
     }
   } else {
     type <- "t"
     df <- spm$df
   }
-  if (df>171) type <- "norm"
 
   if (length(dim(spm$cbeta)) < 4) {
 
