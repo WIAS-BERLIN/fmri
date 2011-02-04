@@ -214,7 +214,7 @@ fmri.pvalue <- function(spm, mode="basic", delta=NULL, na.rm=FALSE, minimum.sign
       pv <- 1-switch(type,"norm"=pnorm(stat),"t"=pt(stat,df))
       dim(pv) <- spm$dim[1:3]
       ind <- fdr(pv,alpha)
-      thresh <- min(pv[ind])
+      thresh <- min(stat[ind])
    } else {
       if ("rxyz0" %in% names(spm)) {
         rxyz0 <- c(median(spm$rxyz0[,1]),median(spm$rxyz0[,2]),median(spm$rxyz0[,3]))

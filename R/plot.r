@@ -20,93 +20,48 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
   cutOff[cutOff>1] <- 1
   if (cutOff[1] > cutOff[2]) cutOff[2] <- 1     
   inputStuff <- list(anatomic,maxpvalue,cutOff)
-  localx <- x # ;)
   if ("fmrisegment" %in% class(x)) {
-    pseudox <- list(); # we define a pseudo pvalue-object, to use all existing code
-    pseudox$pvalue <- rep(0.2, prod(x$dim[1:3]));
-    dim(pseudox$pvalue) <- x$dim[1:3]
+    pvalue <- rep(0.2, prod(x$dim[1:3]));
+    dim(pvalue) <- x$dim[1:3]
     sigrange <- quantile(x$cbeta[x$segm == 1], c(0, 0.98))
-    if (is.null(zlim.o)) zlim.o <- -log(0.05)*c(1,sigrange[2]/sigrange[1]);
-    pseudox$pvalue[x$segm == 1] <- exp(log(0.05)*x$cbeta[x$segm == 1]/sigrange[1])
-    pseudox$weights <- x$weights;
-    pseudox$header <- x$header;
-    pseudox$format <- x$format;
-    pseudox$roixa <- x$roixa;
-    pseudox$roiya <- x$roiya;
-    pseudox$roiza <- x$roiza;
-    class(pseudox) <- c("fmridata", "fmripvalue")
-    if ("fmridata" %in% class(anatomic)) {
-      img <- show.slice(pseudox, anatomic, maxpvalue = maxpvalue, slice =  slice, 
-                        view = view, col.u, col.o, zlim.u, zlim.o)
-      hex <- c(0:9, LETTERS[1:6])
-      hex <- paste(hex[(0:255)%/%16+1],hex[(0:255)%%16+1],sep="")
-      color <- paste("#",hex[img[,,1]%/%256+1],hex[img[,,2]%/%256+1],
-                     hex[img[,,3]%/%256+1],sep="")
-      xxx <- seq(1,dim(img)[1],length=dim(img)[1])
-      yyy <- seq(1,dim(img)[2],length=dim(img)[2])
-      zzz <- matrix(1:prod(dim(img)[1:2]),nrow = dim(img)[1],ncol = dim(img)[2])
-      # display the image
-      image(xxx, yyy, zzz, col = color, asp = 1, xlab="",ylab="", ...)
-      return(invisible(img))
-    } else {
-      signal <- pseudox$pvalue
-      signal[signal > maxpvalue] <- 1
-      signal[signal < 1e-10] <- 1e-10
-      signal <- -log(signal)
-      if (is.null(anatomic)) anatomic <- array(0,dim=dim(pseudox$pvalue))  
-      # re-scale anatomic to 0 ... 0.5
-      if (diff(range(anatomic)) !=0) {
-        anatomic <- 0.5 * (anatomic - range(anatomic,finite=TRUE)[1]) /
-                                  diff(range(anatomic,finite=TRUE))
-      }
-      anatomic[anatomic>cutOff[2]*0.5] <- cutOff[2]*0.5
-      anatomic[anatomic<cutOff[1]*0.5] <- cutOff[1]*0.5
-      anatomic <- anatomic - cutOff[1]*0.5
-      anatomic <- anatomic/(cutOff[2]-cutOff[1])          
-      # re-scale signal to 0.5 ... 1
-      scale <- range(signal,finite=TRUE)
-      if (diff(scale) != 0) {
-        signal <- 0.5 + 0.5 * (signal - scale[1]) / diff(scale)
-      } else if (scale[1] == 0) {
-        signal <- 1
-# changed from 0.5 to 1 
-# original setting caused signals to be displayed if there were non 
-# now the windows show no information in case of no activalion at all
-      } else {
-        signal <- 1
-      }
-      # create an overlay
-      anatomic[signal > 0.5] <- signal[signal > 0.5]
-      anatomic[is.na(anatomic)] <- 0
-      anatomic[is.infinite(anatomic)] <- 0
-      if (type == "3d" || type == "3D") {
-        tt <- fmri.view3d(anatomic,col=mri.colors(255,255)$all, weights=pseudox$weights,
-                          scale=scale,scalecol=mri.colors(255,255)$col,
-                          type= "pvalue",maxpvalue=maxpvalue,pos=pos)
-      } else {
-        dt <- dim(anatomic)
-        posNew <- c()
-        for (counter in 1:dt[1]) posNew[counter] = counter
-        for (counter in 1:dt[2]) posNew[counter+dt[1]] = counter
-        for (counter in 1:dt[3]) posNew[counter+dt[1]+dt[2]] = counter  
-        fmri.view2d(anatomic,col=mri.colors(255,255)$all,weights=pseudox$weights,
-                    scale=scale,scalecol=mri.colors(255,255)$col,type= "pvalue",
-                    maxpvalue=maxpvalue,posNew=posNew,localx=x,inputStuff=inputStuff)
-      }
-    }
-  } else if ("fmripvalue" %in% class(x)) {
+    if (is.null(zlim.o)) zlim.o <- -log(maxpvalue)*c(1,sigrange[2]/sigrange[1])
+    pvalue[x$segm == 1] <- exp(log(maxpvalue)*x$cbeta[x$segm == 1]/sigrange[1])
+    x$pvalue <- pvalue
+    class(x) <- c("fmridata", "fmripvalue")
+#
+#  this containes all information needed to fall back to handling fmripvalue objects 
+#
+#    if ("fmridata" %in% class(anatomic)) {
+#      img <- show.slice(pseudox, anatomic, maxpvalue = maxpvalue, slice =  slice, 
+#                        view = view, col.u, col.o, zlim.u, zlim.o)
+#      displayImage(img)
+#      return(invisible(img))
+#    } else {
+#      signal <- pseudox$pvalue
+#      signal[signal > maxpvalue] <- 1
+#      signal[signal < 1e-10] <- 1e-10
+#     signal <- -log(signal)
+#      anatomic <- scaleAnatomic(anatomic,cutOff,dim(pseudox$pvalue))
+#      scale <- range(signal,finite=TRUE)
+#      anatomic <- signalOverlay(signal,anatomic,scale)
+#      if (type == "3d" || type == "3D") {
+#        tt <- fmri.view3d(anatomic,col=mri.colors(255,255)$all,weights=pseudox$weights,
+#                          scale=scale,scalecol=mri.colors(255,255)$col,
+#                          type= "pvalue",maxpvalue=maxpvalue,pos=pos)
+#      } else {
+#        posNew <- position(anatomic)
+#        fmri.view2d(anatomic,col=mri.colors(255,255)$all,weights=pseudox$weights,
+#                    scale=scale,scalecol=mri.colors(255,255)$col,type= "pvalue",
+#                    maxpvalue=maxpvalue,position(anatomic),localx=x,inputStuff=inputStuff)
+#      }
+#    }
+  } 
+#  else 
+  if ("fmripvalue" %in% class(x)) {
     if ("fmridata" %in% class(anatomic)) {
       img <- show.slice(x, anatomic, maxpvalue = maxpvalue, slice =  slice, 
                         view = view, col.u, col.o, zlim.u, zlim.o)
-      hex <- c(0:9, LETTERS[1:6])
-      hex <- paste(hex[(0:255)%/%16+1],hex[(0:255)%%16+1],sep="")
-      color <- paste("#",hex[img[,,1]%/%256+1],hex[img[,,2]%/%256+1],
-                         hex[img[,,3]%/%256+1],sep="")
-      xxx <- seq(1,dim(img)[1],length=dim(img)[1])
-      yyy <- seq(1,dim(img)[2],length=dim(img)[2])
-      zzz <- matrix(1:prod(dim(img)[1:2]),nrow = dim(img)[1],ncol = dim(img)[2])
-      # display the image
-      image(xxx, yyy, zzz, col = color, asp = 1, xlab="",ylab="", ...)
+      displayImage(img, ...)
       return(invisible(img))
     } else {
       signal <- x$pvalue
@@ -116,57 +71,72 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
       cat(sum(signal<maxpvalue),"mean signal",mean(signal),"\n")
       signal[signal < 1e-10] <- 1e-10
       signal <- -log(signal)
-      if (is.null(anatomic)) anatomic <- array(0,dim=dim(x$pvalue))  
-      # re-scale anatomic to 0 ... 0.5
-      if (diff(range(anatomic)) !=0) {
-        anatomic <- 0.5 * (anatomic - range(anatomic,finite=TRUE)[1]) /
-                           diff(range(anatomic,finite=TRUE))
-      }
-      anatomic[anatomic>cutOff[2]*0.5] <- cutOff[2]*0.5
-      anatomic[anatomic<cutOff[1]*0.5] <- cutOff[1]*0.5
-      anatomic <- anatomic - cutOff[1]*0.5
-      anatomic <- anatomic/(cutOff[2]-cutOff[1])          
+      anatomic <- scaleAnatomic(anatomic,cutOff,dim(x$pvalue))
       # re-scale signal to 0.5 ... 1
-#      scale <- range(signal,finite=TRUE)
-#      if (diff(scale) != 0) {
-#        signal <- 0.5 + 0.5 * (signal - scale[1]) / diff(scale)
-#      } else if (scale[1] == 0) {
-#        signal <- 1
-# changed from 0.5 to 1 
-# original setting caused signals to be displayed if there were non 
-# now the windows show no information in case of no activalion at all
- #     } else {
- #       signal <- 1
- #     }
       scale <- c(-log(maxpvalue),max(signal[is.finite(signal)]))
-      cat("scale",scale,"\n")
-      if (diff(scale)!=0) {
-        signal <- 0.5 + 0.5 * (signal - scale[1]) / diff(scale)
-      } else {
-        signal <- 0
-      }
-      # create an overlay
-      anatomic[signal >= 0.5] <- signal[signal >= 0.5]
-      anatomic[is.na(anatomic)] <- 0
-      anatomic[is.infinite(anatomic)] <- 0
+#      cat("scale",scale,"\n")
+#      if (diff(scale)!=0) {
+#        signal <- 0.5 + 0.5 * (signal - scale[1]) / diff(scale)
+#      } else {
+#        signal <- 0
+#      }
+#      # create an overlay
+#      anatomic[signal >= 0.5] <- signal[signal >= 0.5]
+#      anatomic[is.na(anatomic)] <- 0
+#      anatomic[is.infinite(anatomic)] <- 0
+      anatomic <- signalOverlay(signal,anatomic,scale)
       if (type == "3d" || type == "3D") {
         tt <- fmri.view3d(anatomic,col=mri.colors(255,255)$all,weights=x$weights,
                           scale=scale,scalecol=mri.colors(255,255)$col,
                           type= "pvalue",maxpvalue=maxpvalue,pos=pos)
       } else {
-        dt <- dim(anatomic)
-        posNew <- c()
-        for (counter in 1:dt[1]) posNew[counter] = counter
-        for (counter in 1:dt[2]) posNew[counter+dt[1]] = counter
-        for (counter in 1:dt[3]) posNew[counter+dt[1]+dt[2]] = counter  
-        fmri.view2d(anatomic,col=mri.colors(255,255)$all,weights=x$weights,
-                    scale=scale,scalecol=mri.colors(255,255)$col,type= "pvalue",
-                    maxpvalue=maxpvalue,posNew=posNew,localx=x,inputStuff=inputStuff)
+        posNew <- position(anatomic)
+        fmri.view2d(anatomic,col=mri.colors(255,255)$all,weights=x$weights,scale=scale,
+                    scalecol=mri.colors(255,255)$col,type= "pvalue",maxpvalue=maxpvalue,
+                    posNew=position(anatomic),localx=x,inputStuff=inputStuff)
       }
     }
   } else if ("fmrispm" %in% class(x)) {
     signal <- if (spm) x$cbeta/sqrt(x$var) else x$cbeta
     # re-scale signal to 0 ... 1
+    signal <- scaleSignal(signal,cutOff)
+    if (type == "3d" || type == "3D") {
+      if (spm) {
+        tt <- fmri.view3d(signal$signal,col=mri.colors(255,255)$gray,weights=x$weights,
+                 scale=signal$scale,scalecol=mri.colors(255,255)$gray,type="spm",pos=pos)
+      } else {
+        quant <- qt(1-maxpvalue,
+                 if(!is.null(x$df)) x$df else abs(diff(dim(attr(x, "design"))))) 
+        tt <- fmri.view3d(signal$signal,sigma=sqrt(x$var),col=mri.colors(255,255)$gray,
+                 weights=x$weights,scale=signal$scale,scalecol=mri.colors(255,255)$gray, 
+                 type="spm",hrf=x$hrf, quant = quant,pos=pos)
+      } 
+    } else {
+      fmri.view2d(signal$signal,col=mri.colors(255,255)$gray,weights=x$weights,
+              scale=signal$scale,scalecol=mri.colors(255,255)$gray,type= "spm",
+              maxpvalue=maxpvalue,posNew=position(x),localx=x,inputStuff=inputStuff)
+    }
+  } else if ("fmridata" %in% class(x)) {
+    signal <- extract.data(x)
+    signal <- scaleSignal(signal,cutOff)
+    # re-scale signal to 0 ... 1
+    if (type == "3d" || type == "3D") {
+      tt <- fmri.view3d(signal$signal,col=mri.colors(255,255)$gray,weights=x$weights, 
+                 scale=signal$scale,scalecol=mri.colors(255,255)$gray, type="data",pos=pos)
+    } else {
+      fmri.view2d(signal$signal,col=mri.colors(255,255)$gray, weights=x$weights,     
+                  scale=signal$scale,scalecol=mri.colors(255,255)$gray,type= "data",
+                  maxpvalue=maxpvalue,posNew=position(x),localx=x,inputStuff=inputStuff)
+    }
+  } else {
+    cat("Sorry, no plot for this class implemented\n
+         Falling back to generic function, but this may fail!")
+    plot(x)
+  }
+  if (exists("tt")) invisible(tt)
+}
+
+scaleSignal <- function(signal,cutOff){
     scale <- range(signal,finite=TRUE)
     if (diff(scale) != 0) {
       signal <-  (signal - scale[1]) / diff(scale)
@@ -182,64 +152,47 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
       signal <- signal/(cutOff[2]-cutOff[1])  
     }    
     scale <- scale*(cutOff[2]-cutOff[1])
-    ## check !!!!
-    quant <- if (!is.null(attr(spm, "smooth"))) qnorm(1-maxpvalue) else qt(1-maxpvalue,length(x$hrf)) 
-    if (type == "3d" || type == "3D") {
-      if (spm) {
-        tt <- fmri.view3d(signal,col=mri.colors(255,255)$gray,weights=x$weights,
-                 scale=scale,scalecol=mri.colors(255,255)$gray,type="spm",pos=pos)
+    list(signal=signal,scale=scale)
+}
+signalOverlay <- function(signal,anatomic,scale){
+      if (diff(scale) != 0) {
+        signal <- 0.5 + 0.5 * (signal - scale[1]) / diff(scale)
+      } else if (scale[1] == 0) {
+        signal <- 1
       } else {
-        tt <- fmri.view3d(signal,sigma=sqrt(x$var),col=mri.colors(255,255)$gray,
-                 weights=x$weights,scale=scale,scalecol=mri.colors(255,255)$gray, 
-                 type="spm",hrf=x$hrf, quant = quant,pos=pos)
-      } 
-    } else {
-        dt <- dim(localx)
-  if (is.null(dt)) dt <- localx$dim
-  posNew <- c()
-   for (counter in 1:dt[1]) posNew[counter] = counter
-        for (counter in 1:dt[2]) posNew[counter+dt[1]] = counter
-     for (counter in 1:dt[3]) posNew[counter+dt[1]+dt[2]] = counter  
-       fmri.view2d(signal,col=mri.colors(255,255)$gray,weights=x$weights,
-                   scale=scale,scalecol=mri.colors(255,255)$gray,type= "spm",
-                   maxpvalue=maxpvalue,posNew=posNew,localx=x,inputStuff=inputStuff)
-    }
-  } else if ("fmridata" %in% class(x)) {
-    signal <- extract.data(x)
-    # re-scale signal to 0 ... 1
-    scale <- range(signal,finite=TRUE)  
-    if (diff(scale) != 0) {    
-      signal <-  (signal - scale[1]) / diff(scale)
-    } else {
-      signal <- 0
-    }
-    signal[is.na(signal)] <- 0
-    signal[is.infinite(signal)] <- 0
-    if (diff(scale) != 0){  
-      signal[signal<cutOff[1]] <- cutOff[1]
-      signal[signal>cutOff[2]] <- cutOff[2]    
-      signal <- signal - cutOff[1]
-      signal <- signal*(1/(cutOff[2]-cutOff[1]))  
-    }    
-    scale <- scale*(cutOff[2]-cutOff[1])   
-    if (type == "3d" || type == "3D") {
-      tt <- fmri.view3d(signal,col=mri.colors(255,255)$gray,weights=x$weights, 
-                 scale=scale,scalecol=mri.colors(255,255)$gray, type="data",pos=pos)
-    } else {
-      dt <- dim(localx)
-      if (is.null(dt)) dt <- localx$dim
-      posNew <- c()
-      for (counter in 1:dt[1]) posNew[counter] = counter
-      for (counter in 1:dt[2]) posNew[counter+dt[1]] = counter
-      for (counter in 1:dt[3]) posNew[counter+dt[1]+dt[2]] = counter
-      fmri.view2d(signal,col=mri.colors(255,255)$gray, weights=x$weights,     
-                  scale=scale,scalecol=mri.colors(255,255)$gray,type= "data",
-                  maxpvalue=maxpvalue,posNew=posNew,localx=x,inputStuff=inputStuff)
-    }
-  } else {
-    cat("Sorry, no plot for this class implemented\n
-         Falling back to generic function, but this may fail!")
-    plot(x)
-  }
-  if (exists("tt")) invisible(tt)
+        signal <- 1
+      }
+      # create an overlay
+      anatomic[signal > 0.5] <- signal[signal > 0.5]
+      anatomic[is.na(anatomic)] <- 0
+      anatomic[is.infinite(anatomic)] <- 0
+anatomic
+}
+scaleAnatomic <- function(anatomic,cutOff,ddim){
+      if (is.null(anatomic)) anatomic <- array(0,dim=ddim)  
+      # re-scale anatomic to 0 ... 0.5
+      if (diff(range(anatomic)) !=0) {
+        anatomic <- 0.5 * (anatomic - range(anatomic,finite=TRUE)[1]) /
+                                  diff(range(anatomic,finite=TRUE))
+      }
+      anatomic[anatomic>cutOff[2]*0.5] <- cutOff[2]*0.5
+      anatomic[anatomic<cutOff[1]*0.5] <- cutOff[1]*0.5
+      anatomic <- anatomic - cutOff[1]*0.5
+      anatomic <- anatomic/(cutOff[2]-cutOff[1])          
+}
+position <- function(obj){
+  dt <- dim(obj)
+  if(is.null(dt)) dt <- obj$dim
+  c(1:dt[1],1:dt[2],1:dt[3])
+}
+displayImage <- function(img, ...){
+      hex <- c(0:9, LETTERS[1:6])
+      hex <- paste(hex[(0:255)%/%16+1],hex[(0:255)%%16+1],sep="")
+      color <- paste("#",hex[img[,,1]%/%256+1],hex[img[,,2]%/%256+1],
+                         hex[img[,,3]%/%256+1],sep="")
+      xxx <- seq(1,dim(img)[1],length=dim(img)[1])
+      yyy <- seq(1,dim(img)[2],length=dim(img)[2])
+      zzz <- matrix(1:prod(dim(img)[1:2]),nrow = dim(img)[1],ncol = dim(img)[2])
+      # display the image
+      image(xxx, yyy, zzz, col = color, asp = 1, xlab="",ylab="", ...)
 }
