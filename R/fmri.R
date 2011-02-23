@@ -9,9 +9,6 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
     ladjust <- if ("ladjust" %in% names(list(...)))
         list(...)[["ladjust"]]
     else 1
-    fov <- if ("fov" %in% names(list(...)))
-        list(...)[["fov"]]
-    else NULL
     delta <- if ("delta" %in% names(list(...)))
         list(...)[["delta"]]
     else 0
@@ -103,7 +100,6 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
                                       ddim = spm$dim,
                                       ladjust = ladjust, 
                                       delta = delta, 
-                                      fov = fov, 
                                       alpha = alpha))
     cat("\n")
     cat("fmri.smooth: determine local smoothness\n")
