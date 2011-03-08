@@ -82,6 +82,10 @@ fmri.smooth(spm, hmax = 4, adaptation="aws",
   \item{hrf}{ Expected BOLD response for the specified effect }
 }
 \references{
+  Polzehl, J., Voss, H.U., and Tabelow, K. (2010).
+   \emph{Structural Adaptive Segmentation for Statistical Parametric Mapping},
+   NeuroImage, 52:515-523.
+
   Tabelow, K., Polzehl, J., Voss, H.U., and Spokoiny, V. (2006). 
 \emph{Analysing {fMRI}
     experiments with structure adaptive smoothing procedures},
