@@ -141,7 +141,7 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
      switch(which, "data" = {
       f <- function() {
         oldpar <- par(mar=c(3,3,0.25,0.25), mgp=c(2,1,0))
-        layout(matrix(1:2,2,1,byrow=TRUE),width=c(200),height=c(160,40))
+        layout(matrix(1:2,2,1,byrow=TRUE),widths=c(200),heights=c(160,40))
         on.exit(par(oldpar))
 # plot timeseries
         plot(ttt[pos[1],pos[2],pos[3],], xlab="Scan", ylab="BOLD signal")
@@ -157,7 +157,7 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
     }, "spm" = {
       f <- function() {
         oldpar <- par(mar=c(3,3,0.25,0.25), mgp=c(2,1,0))
-        layout(matrix(1:2,2,1,byrow=TRUE),width=c(200),height=c(160,40))
+        layout(matrix(1:2,2,1,byrow=TRUE),widths=c(200),heights=c(160,40))
         on.exit(par(oldpar))
 # draw something
         if (!is.null(sigma)) {
@@ -193,7 +193,7 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
           value <- scale[1]+2*(ttt[pos[1],pos[2],pos[3]]-0.5)*diff(scale)          
         }
         oldpar <- par(mar=c(3,3,0.25,0.25), mgp=c(2,1,0))
-        layout(matrix(1:2,2,1,byrow=TRUE),width=c(200),height=c(160,40))
+        layout(matrix(1:2,2,1,byrow=TRUE),widths=c(200),heights=c(160,40))
         on.exit(par(oldpar))
 # draw something
         plot(c(0,1),c(0,1),xaxt="n",yaxt="n",xlab="",ylab="",type="n",
@@ -1333,7 +1333,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
           ctmp[,,1] <- rgbcolors[1,trunc(tmp*(ncolors-1)+1)]
           ctmp[,,2] <- rgbcolors[2,trunc(tmp*(ncolors-1)+1)]
           ctmp[,,3] <- rgbcolors[3,trunc(tmp*(ncolors-1)+1)]
-          tmp <- make.image(ctmp,gamma=TRUE)
+          tmp <- make.image(ctmp, gammatype="ITU")
         }
       }
       write.image(tmp,currentFileName)
