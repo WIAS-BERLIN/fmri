@@ -73,11 +73,13 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
            thresh <- (as.numeric(tclvalue(posv[[5]])) - scale[1])/diff(scale)  
 # plot image
         if (length(dt) == 4) {
-          slice <- ttt[,dt[2]:1,pos[3],pos[4]]
+##          slice <- ttt[,dt[2]:1,pos[3],pos[4]]
+          slice <- ttt[,,pos[3],pos[4]]
           if (type == "spm") slice[slice<thresh] <- 0
           image(1:dt[1],1:dt[2],slice, col=col, zlim=zlim)
         } else {
-          slice <- ttt[,dt[2]:1,pos[3]]
+##          slice <- ttt[,dt[2]:1,pos[3]]
+          slice <- ttt[,,pos[3]]
           if (type == "spm") slice[slice<thresh] <- 0          
           image(1:dt[1],1:dt[2],slice, col=col, zlim=zlim)
         }
@@ -365,13 +367,17 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
          thresh <- (as.numeric(tclvalue(posvThreshold[[1]])) - scale[1])/diff(scale)
 # plot image
       if (length(dt) == 4) {
-        if (!overview) slice <- ttt[,dt[2]:1,posNew[slicenr+dt[1]+dt[2]],posTime]
-        else slice <- ttt[,dt[2]:1,slicenr,posTime]
+##        if (!overview) slice <- ttt[,dt[2]:1,posNew[slicenr+dt[1]+dt[2]],posTime]
+        if (!overview) slice <- ttt[,,posNew[slicenr+dt[1]+dt[2]],posTime]
+##        else slice <- ttt[,dt[2]:1,slicenr,posTime]
+        else slice <- ttt[,,slicenr,posTime]
         if (type == "spm") slice[slice<thresh] <- 0
         image(1:dt[1],1:dt[2],slice, col=col, zlim=zlim)
       } else {
-        if (!overview) slice <- ttt[,dt[2]:1,posNew[slicenr+dt[1]+dt[2]]]
-        else slice <- ttt[,dt[2]:1,slicenr]
+##        if (!overview) slice <- ttt[,dt[2]:1,posNew[slicenr+dt[1]+dt[2]]]
+        if (!overview) slice <- ttt[,,posNew[slicenr+dt[1]+dt[2]]]
+##        else slice <- ttt[,dt[2]:1,slicenr]
+        else slice <- ttt[,,slicenr]
         if (type == "spm") slice[slice<thresh] <- 0          
         image(1:dt[1],1:dt[2],slice, col=col, zlim=zlim)
       }
