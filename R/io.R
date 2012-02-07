@@ -891,7 +891,7 @@ read.DICOM <- function(filename,includedata=TRUE) {
       length <- readBin(con,"integer",1,4,signed=FALSE,endian=endian)
       bytes <- bytes + 4
       if (length == -1) {
-        while (TRUE) {
+	while (TRUE) {
           groupelement <- read.DICOM.groupelement(con)
           bytes <- bytes + 4
           if (groupelement == "fffe,e0dd") break
