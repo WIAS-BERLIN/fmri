@@ -225,10 +225,10 @@ fmri.lm <- function(data,z,actype="smooth",vtype="var",step=0.01,contrast=c(1),v
           zprime <- a %*% as.matrix(z)
           svdresult <- svd(zprime) # calc SVD of prewhitened design
           v <- svdresult$v
-          vt <- t(v)
-          xtx <- v %*% diag(1/svdresult$d^2) %*% vt # xtx * <estimate of varince> of prewhitened noise is variance of parameter estimate
+          vtt <- t(v)
+          xtx <- v %*% diag(1/svdresult$d^2) %*% vtt # xtx * <estimate of varince> of prewhitened noise is variance of parameter estimate
           tttprime <- ttt[indar,] %*% t(a)
-          beta[indar,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% vt # estimate parameter
+          beta[indar,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% vtt # estimate parameter
           residuals[indar,] <- tttprime - beta[indar,] %*% t(zprime) # calculate residuals
           variancepart[indar] <- t(contrast) %*% xtx %*% contrast # variance estimate
           if (length(vvector) > 1) variancepartm[,indar] <- as.vector(xtx[as.logical(vvector),as.logical(vvector)])
