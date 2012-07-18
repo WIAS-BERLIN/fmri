@@ -29,7 +29,7 @@
 
 segm3D <- function(y,weighted=TRUE,
                    sigma2=NULL,mask=NULL,hinit=NULL,hmax=NULL,
-                   ladjust=1,graph=FALSE,wghts=NULL,
+                   ladjust=1,graph=FALSE,wghts=NULL,tadj=1,
                    df=100,h0=c(0,0,0),res=NULL, resscale=NULL, 
                    ddim=NULL,delta=0,alpha=.05) {
 #
@@ -142,8 +142,8 @@ if(fwhm) h <- fwhm2bw(h)
    if (hinit>1) lambda0 <- 1e50 # that removes the stochstic term for the first step
    scorr <- numeric(3)
    total <- cumsum(1.25^(1:kstar))/sum(1.25^(1:kstar))
-   thresh <- 1
-   for(i in 10:kstar) thresh <- max(thresh,getkrval(df,ladjust,fov,i,alpha))
+   thresh <- tadj
+   for(i in 10:kstar) thresh <- max(thresh,tadj*getkrval(df,ladjust,fov,i,alpha))
 #  just to ensure monotonicity of thresh with kmax, there exist a few parameter configurations
 #  where the approximation formula does not ensure monotonicity
    cat("FOV",fov,"delta",delta,"thresh",thresh,"ladjust",ladjust,"lambda",lambda,"df",df,"\n")
