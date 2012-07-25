@@ -5,8 +5,7 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine segm3d(y,res,si2,mask,wlse,n1,n2,n3,nt,df,hakt,
      1                  lambda,theta,bi,thn,lwght,wght,swres,pval,
-     3                  segm,delta,thresh,step,fov,vq,vest0i,
-     4                  varest)
+     3                  segm,delta,thresh,fov,vq,vest0i,varest)
 C
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
@@ -21,24 +20,20 @@ C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
 C
       implicit logical (a-z)
-      integer n1,n2,n3,nt,kern,segm(n1,n2,n3),step
+      integer n1,n2,n3,nt,kern,segm(n1,n2,n3)
       logical aws,wlse,mask(n1,n2,n3)
       real*8 y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),delta,thresh,
      1      thn(n1,n2,n3),lambda,wght(2),si2(n1,n2,n3),pval(n1,n2,n3),
      1      hakt,lwght(1),thi,getlwght,swres(nt),fov,vq(n1,n2,n3),
      1      varest(n1,n2,n3),res(nt,n1,n2,n3),vest0i(n1,n2,n3),df
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
-     1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k
-      real*8 bii,swj,swjy,wj,hakt2,spf,si2j,si2i,s,vqi,
-     1       varesti,fpchisq,ti,thij,sij,z,si,swr,z1,lfov,linc,sm1,
-     2       a,b,dn
+     1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,segmi
+      real*8 bii,swj,swjy,wj,hakt2,spf,si2j,si2i,vqi,
+     1       varesti,fpchisq,ti,thij,sij,z,si,swr,z1,
+     2       a,b,dn,pvali
       external getlwght,fpchisq
       kern=1
       hakt2=hakt*hakt
-      lfov=log(fov)
-      linc=log(1.25d0)
-      s=step
-      sm1=s-1
       spf=4.d0/3.d0
       ih1=hakt
       aws=lambda.lt.1d40
@@ -71,7 +66,7 @@ C
                thi=theta(i1,i2,i3)
                si2i=vest0i(i1,i2,i3)
                varesti=varest(i1,i2,i3)
-               dn=varesti*si2i*fov
+               dn=varesti/si2i*fov
                call getdfnab(df,dn,a,b)
 C   this should be more conservative using actual variance reduction instead of theoretical
                ti=max(0.d0,abs(thi)-delta)
@@ -92,9 +87,10 @@ C   scaling of sij outside the loop
                   thn(i1,i2,i3)=0.d0
                   CYCLE
                END IF
+               segmi=segm(i1,i2,i3)
+               pvali=pval(i1,i2,i3)
                vqi=vq(i1,i2,i3)
                si2i=vest0i(i1,i2,i3)
-               varesti=varest(i1,i2,i3)
                bii=bi(i1,i2,i3)/lambda
                swj=0.d0
                swjy=0.d0
@@ -119,13 +115,18 @@ C  first stochastic term
                         IF (aws) THEN
                            thij=thi-theta(j1,j2,j3)
                            sij=thij*thij*bii
-                           if(abs(segm(i1,i2,i3)).eq.1) THEN
-                           if(segm(i1,i2,i3)*segm(j1,j2,j3).gt.0) THEN
+                           if(abs(segmi).eq.1) THEN
+                           if(segmi*segm(j1,j2,j3).gt.0) THEN
 C
 C   allow for nonadaptive smoothing if values are in the same segment
+C   since pvali << 1 adaptation is significantly reduced
 C
-                                 sij=pval(i1,i2,i3)*sij
+                                 sij=pvali*sij
                               ELSE
+C
+C   no smoothing if voxel i is classified as 1 or -1 and 
+C                   voxel i and j are in different segments
+C
                                  CYCLE
                               END IF
                            END IF
@@ -142,6 +143,9 @@ C  weighted sum of residuals
                END DO
                z=0.d0
                z1=0.d0
+C
+C   now calculate variance of estimates from smoothed residuals
+C
                DO k=1,nt
                   swr=swres(k)/swj
                   z1=z1+swr
@@ -151,17 +155,19 @@ C  weighted sum of residuals
                thn(i1,i2,i3)=thi
                z1=z1/nt
                si = (z/nt - z1*z1)
+C               si = si/nt
                varest(i1,i2,i3)=si
                bi(i1,i2,i3)=si2i/si*si2(i1,i2,i3)
-               if(segm(i1,i2,i3).ne.0) CYCLE
+               if(segmi.ne.0) CYCLE
 C   keep the detected segment
-               dn=si*si2i*fov
+               dn=si/si2i*fov
                call getdfnab(df,dn,a,b)
 C 
 C   note that a and b refer to  1/a_n and b_n/a_n
 C
 C   this should be more conservative using actual variance reduction instead of theoretical
                si=sqrt(si/vqi)
+C   thats the SD of thi
                if(a*(thi+delta)/si+b.lt.-thresh) THEN
                   segm(i1,i2,i3)=-1
                ELSE IF (a*(thi-delta)/si-b.gt.thresh) THEN

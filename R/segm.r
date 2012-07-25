@@ -1,12 +1,12 @@
-#########################################################################################################################
+###################################################################################################
 #
-#    R - function  aws3D  for vector-valued  Adaptive Weights Smoothing (AWS) in 3D
+#    R - function  segm3D  for Adaptive Weights Segmentation in 3D SPM's
 #    
-#    reduced version for qtau==1, heteroskedastic variances only, exact value for Variance reduction
+#    exact value for Variance reduction from smoothed residuals
 #
 #    emaphazises on the propagation-separation approach 
 #
-#    Copyright (C) 2005 Weierstrass-Institut fuer
+#    Copyright (C) 2010-12 Weierstrass-Institut fuer
 #                       Angewandte Analysis und Stochastik (WIAS)
 #
 #    Author:  Joerg Polzehl
@@ -68,6 +68,8 @@ if(fwhm) h <- fwhm2bw(h)
 #
 # first check arguments and initialize
 #
+   args <- match.call()
+   if(is.null(ddim)) ddim <- dim(y)
 # test dimension of data (vector of 3D) and define dimension related stuff
    d <- 3
    dy <- dim(y)
@@ -85,18 +87,11 @@ if(fwhm) h <- fwhm2bw(h)
    lkern <- 1
    skern <- 1
 # define lambda
-   lambda <- ladjust*16
+   lambda <- ladj*(exp(2.6-3.17*log(df)+8.4*log(log(df)))+16)
 # to have similar preformance compared to skern="Exp"
-   spmin <- .25 
-   spmax <- 1
    if (is.null(hinit)||hinit<1) hinit <- 1
-  
 # define hmax
    if (is.null(hmax)) hmax <- 5    # uses a maximum of about 520 points
-
-
-# define hincr
-
 # estimate variance in the gaussian case if necessary  
 # deal with homoskedastic Gaussian case by extending sigma2
    if (length(sigma2)==1) sigma2<-array(sigma2,dy[1:3]) 
@@ -112,20 +107,19 @@ if(fwhm) h <- fwhm2bw(h)
   vartheta0 <- .Fortran("ivar",as.double(residuals),
                            as.double(resscale),
                            as.logical(mask),
-                           as.integer(ddim[1]),
-                           as.integer(ddim[2]),
-                           as.integer(ddim[3]),
-                           as.integer(ddim[4]),
+                           as.integer(n1),
+                           as.integer(n2),
+                           as.integer(n3),
+                           as.integer(nt),
                            var = double(n1*n2*n3),
                            PACKAGE="fmri",DUP=FALSE)$var
    varest0 <- vartheta0
    vq <- varest0*sigma2
-# Initialize  list for bi and theta
+   plot(density(vq),main="Density of vq")
    if (is.null(wghts)) wghts <- c(1,1,1)
    hinit <- hinit/wghts[1]
    hmax <- hmax/wghts[1]
    wghts <- wghts[2:3]/wghts[1]
-#   tobj <- list(bi= rep(1,n))
    tobj <- list(bi= sigma2)
    theta <- y
    segm <- array(0,dy[1:3])
@@ -147,7 +141,6 @@ if(fwhm) h <- fwhm2bw(h)
 #  just to ensure monotonicity of thresh with kmax, there exist a few parameter configurations
 #  where the approximation formula does not ensure monotonicity
    cat("FOV",fov,"delta",delta,"thresh",thresh,"ladjust",ladjust,"lambda",lambda,"df",df,"\n")
-# run single steps to display intermediate results
    residuals <- residuals*resscale
 #
 #   need these values to compute variances 
@@ -158,7 +151,6 @@ if(fwhm) h <- fwhm2bw(h)
       cat("step",k,"bandwidth",signif(hakt,3)," ")
       dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
       hakt0 <- hakt
-      theta0 <- theta
       bi0 <- tobj$bi
       tobj <- .Fortran("segm3d",
                        as.double(y),
@@ -173,7 +165,7 @@ if(fwhm) h <- fwhm2bw(h)
                        as.double(df),
                        hakt=as.double(hakt),
                        as.double(lambda0),
-                       as.double(theta0),
+                       as.double(theta),
                        bi=as.double(bi0),
                        thnew=double(n1*n2*n3),
                        double(prod(dlw)),
@@ -183,12 +175,11 @@ if(fwhm) h <- fwhm2bw(h)
                        segm=as.integer(segm),
                        as.double(delta),
                        as.double(thresh),
-                       as.integer(k),
                        as.double(fov),
                        as.double(vq),
                        as.double(varest0),
                        varest=as.double(varest),
-                       PACKAGE="fmri",DUP=FALSE)[c("bi","thnew","hakt","segm","varest")]
+                       PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","hakt","segm","varest")]
       gc()
       theta <- array(tobj$thnew,dy[1:3]) 
       segm <- array(tobj$segm,dy[1:3])
@@ -209,11 +200,9 @@ if(fwhm) h <- fwhm2bw(h)
          cat(signif(total[k],2)*100,"%                 \r",sep="")
       }
       k <- k+1
-#  adjust lambda for the high intrinsic correlation between  neighboring estimates 
       lambda0 <- lambda
       gc()
    }
-
   z <- list(theta=theta,ni=tobj$bi,var=varest,y=y,segm=segm,
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),
             scorr=scorr,mask=mask)
