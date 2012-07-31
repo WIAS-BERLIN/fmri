@@ -45,8 +45,9 @@ segm3Dkrv <- function(dy,df,hmax=NULL,ladjust=1,beta=0,graph=FALSE,h0=c(0,0,0)) 
    n <- n1*n2*n3
    res <- array(rnorm(prod(dy)*nt),c(nt,dy))
    if(any(h0>0)) {
-      require(aws)
-      for(i in 1:dres[1]) res[i,,,] <- kernsm(res[i,,,],h0)$yhat
+#      require(aws)
+      warning("for simulating critical values we need package aws")
+#      for(i in 1:nt) res[i,,,] <- kernsm(res[i,,,],h0)@yhat
    }
 # test dimension of data (vector of 3D) and define dimension related stuff
    ddim <- dim(res)
