@@ -87,7 +87,7 @@ segm3D <- function(y,weighted=TRUE,
 # deal with homoskedastic Gaussian case by extending sigma2
    residuals <- readBin(res,"integer",prod(ddim),2)
   cat("\nfmri.smooth: first variance estimate","\n")
-  vartheta0 <- .Fortran("ivar",as.double(residuals),
+  varest0 <- .Fortran("ivar",as.double(residuals),
                            as.double(resscale),
                            as.logical(mask),
                            as.integer(n1),
@@ -96,9 +96,8 @@ segm3D <- function(y,weighted=TRUE,
                            as.integer(nt),
                            var = double(n1*n2*n3),
                            PACKAGE="fmri",DUP=FALSE)$var
-   varest0 <- vartheta0
    vq <- varest0*sigma2
-   plot(density(vq),main="Density of vq")
+#   plot(density(vq),main="Density of vq")
    if (is.null(wghts)) wghts <- c(1,1,1)
    hinit <- hinit/wghts[1]
    hmax <- hmax/wghts[1]
