@@ -152,13 +152,29 @@ C
                   z=z+swr*swr
                END DO
                thi=swjy/swj
-               thn(i1,i2,i3)=thi
                z1=z1/nt
                si = (z/nt - z1*z1)
+               if(segmi.eq.1) THEN
+                  if(thi.lt.theta(i1,i2,i3)) THEN
+                     thi = theta(i1,i2,i3)
+                  ELSE
+                     varest(i1,i2,i3)=si
+                     bi(i1,i2,i3)=si2i/si*si2(i1,i2,i3)
+                  END IF
+			   END IF	 
+               if(segmi.eq.-1) THEN
+                  if(thi.gt.theta(i1,i2,i3)) THEN
+                     thi = theta(i1,i2,i3)
+                  ELSE
+                     varest(i1,i2,i3)=si
+                     bi(i1,i2,i3)=si2i/si*si2(i1,i2,i3)
+                  END IF
+			   END IF	 
+               thn(i1,i2,i3)=thi
 C               si = si/nt
+               if(segmi.ne.0) CYCLE
                varest(i1,i2,i3)=si
                bi(i1,i2,i3)=si2i/si*si2(i1,i2,i3)
-               if(segmi.ne.0) CYCLE
 C   keep the detected segment
                dn=si/si2i*fov
                call getdfnab(df,dn,a,b)
