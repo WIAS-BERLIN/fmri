@@ -53,7 +53,8 @@ fmri.smooth(spm, hmax = 4, adaptation="aws",
   \code{adaptation} as \code{"none"} for non adaptive
   smoothing. \code{lkern} can be used for specifying the
   localization kernel. For comparison with non adaptive methods use
-  "Gaussian" (hmax given in FWHM), for better adaptation use "Plateau" or "Triangle"
+  "Gaussian" (hmax times the voxelsize in x-direction will give the FWHM bandwidth in mm), 
+  for better adaptation use "Plateau" or "Triangle"
   (default, hmax given in voxel). For \code{lkern="Plateau"} and \code{lkern="Triangle"} thresholds may be inaccurate, due to a violation of
     the Gaussian random field assumption under homogeneity. \code{lkern="Plateau"} 
     is expected to provide best results with adaptive smoothing.
