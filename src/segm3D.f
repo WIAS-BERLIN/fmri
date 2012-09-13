@@ -5,7 +5,8 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine segm3d(y,res,si2,mask,wlse,n1,n2,n3,nt,df,hakt,
      1                  lambda,theta,bi,thn,lwght,wght,swres,pval,
-     3                  segm,delta,thresh,fov,vq,vest0i,varest)
+     3                  segm,delta,thresh,fov,vq,vest0i,varest,
+     4                  restrict)
 C
 C   y        observed values of regression function
 C   n1,n2,n3    design dimensions
@@ -21,11 +22,12 @@ C   wght     scaling factor for second and third dimension (larger values shrink
 C
       implicit logical (a-z)
       integer n1,n2,n3,nt,kern,segm(n1,n2,n3)
-      logical aws,wlse,mask(n1,n2,n3)
+      logical aws,wlse,mask(n1,n2,n3),restrict
       real*8 y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),delta,thresh,
      1      thn(n1,n2,n3),lambda,wght(2),si2(n1,n2,n3),pval(n1,n2,n3),
      1      hakt,lwght(1),thi,getlwght,swres(nt),fov,vq(n1,n2,n3),
-     1      varest(n1,n2,n3),res(nt,n1,n2,n3),vest0i(n1,n2,n3),df
+     1      varest(n1,n2,n3),res(nt,n1,n2,n3),vest0i(n1,n2,n3),df,
+     1      kv(n1,n2,n3)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,segmi
       real*8 bii,swj,swjy,wj,hakt2,spf,si2j,si2i,vqi,
@@ -115,6 +117,8 @@ C  first stochastic term
                         IF (aws) THEN
                            thij=thi-theta(j1,j2,j3)
                            sij=thij*thij*bii
+                           if(restrict) THEN
+C restrict smoothing within segmented areas
                            if(abs(segmi).eq.1) THEN
                            if(segmi*segm(j1,j2,j3).gt.0) THEN
 C
@@ -130,6 +134,8 @@ C
                                  CYCLE
                               END IF
                            END IF
+                           END IF
+C endif for restrict smoothing within segmented areas
                            IF(sij.gt.1.d0) CYCLE
                         IF(sij.gt.0.25d0) wj=wj*(1.d0-spf*(sij-0.25d0))
                         END IF
@@ -154,6 +160,8 @@ C
                thi=swjy/swj
                z1=z1/nt
                si = (z/nt - z1*z1)
+               if(restrict) THEN
+C  smoothing restricted within segmented ares
                if(segmi.eq.1) THEN
                   if(thi.lt.theta(i1,i2,i3)) THEN
                      thi = theta(i1,i2,i3)
@@ -161,7 +169,7 @@ C
                      varest(i1,i2,i3)=si
                      bi(i1,i2,i3)=si2i/si*si2(i1,i2,i3)
                   END IF
-			   END IF	 
+               END IF
                if(segmi.eq.-1) THEN
                   if(thi.gt.theta(i1,i2,i3)) THEN
                      thi = theta(i1,i2,i3)
@@ -169,10 +177,12 @@ C
                      varest(i1,i2,i3)=si
                      bi(i1,i2,i3)=si2i/si*si2(i1,i2,i3)
                   END IF
-			   END IF	 
+               END IF 
+               END IF
+C  end if for smoothing restricted within segmented ares
                thn(i1,i2,i3)=thi
 C               si = si/nt
-               if(segmi.ne.0) CYCLE
+               if(restrict.and.segmi.ne.0) CYCLE
                varest(i1,i2,i3)=si
                bi(i1,i2,i3)=si2i/si*si2(i1,i2,i3)
 C   keep the detected segment
@@ -183,6 +193,7 @@ C   note that a and b refer to  1/a_n and b_n/a_n
 C
 C   this should be more conservative using actual variance reduction instead of theoretical
                si=sqrt(si/vqi)
+               kv(i1,i2,i3)=a*(thi-delta)/si-b
 C   thats the SD of thi
                if(a*(thi+delta)/si+b.lt.-thresh) THEN
                   segm(i1,i2,i3)=-1

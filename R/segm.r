@@ -31,7 +31,7 @@ segm3D <- function(y,weighted=TRUE,
                    sigma2=NULL,mask=NULL,hinit=NULL,hmax=NULL,
                    ladjust=1,graph=FALSE,wghts=NULL,
                    df=100,h0=c(0,0,0),res=NULL, resscale=NULL, 
-                   ddim=NULL,delta=0,alpha=.05) {
+                   ddim=NULL,delta=0,alpha=.05,restricted=FALSE) {
 #
 #
 #  Auxilary functions
@@ -123,6 +123,7 @@ segm3D <- function(y,weighted=TRUE,
 #  where the approximation formula does not ensure monotonicity
    cat("FOV",fov,"delta",delta,"thresh",thresh,"ladjust",ladjust,"lambda",lambda,"df",df,"\n")
    residuals <- residuals*resscale
+   kv <- array(0,dy[1:3])
 #
 #   need these values to compute variances 
 #
@@ -160,6 +161,7 @@ segm3D <- function(y,weighted=TRUE,
                        as.double(vq),
                        as.double(varest0),
                        varest=as.double(varest),
+                       as.logical(restricted),
                        PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","hakt","segm","varest")]
       gc()
       theta <- array(tobj$thnew,dy[1:3]) 

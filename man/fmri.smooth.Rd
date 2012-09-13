@@ -43,7 +43,10 @@ fmri.smooth(spm, hmax = 4, adaptation="aws",
     signal detection. It can be choosen between 0.01 and 0.2 as for
     other values we did not determine the critical values for the
     statistical tests. \code{delta} (default 0) defines the minimum
-    signal which should be detected. }
+    signal which should be detected. 
+    \code{restricted} determines if smoothing for voxel detected to be significant is restricted to use only voxel from the same segment. The 
+    default is \code{restricted=FALSE}. \code{restricted} slighty changes 
+    the behaviour under the altenative, i.e. not the interpretation of results.}
 }
 \details{
   This function performs the smoothing on the Statistical Parametric Map
