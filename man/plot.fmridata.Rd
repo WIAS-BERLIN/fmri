@@ -1,5 +1,6 @@
 \name{plot.fmridata}
 \alias{plot.fmridata}
+\alias{plot.fmrisegment}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ I/O functions }
 \description{
@@ -11,6 +12,10 @@
               slice =  1, view = "axial" ,zlim.u =
               NULL, zlim.o = NULL,col.o = heat.colors(256), col.u =
               grey(0:255/255), cutOff = c(0, 1), ...)
+\method{plot}{fmrisegment}(x, anatomic = NULL, 
+              slice =  1, view = c( "axial", "coronal", "sagittal") ,zlim.u =
+              NULL, zlim.o = NULL,col.o = c( rainbow( 64, start = 2/6, end = 4/6), rainbow( 64, start = 0, end = 1/6)), col.u =
+              grey(0:127/127), verbose = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -30,6 +35,7 @@
   \item{col.u}{ color scale for anatomical underlay, if anatomic is of "fmridata" class, default grey(0:255/255) }
   \item{col.o}{ color scale for functional overlay, if anatomic is of "fmridata" class, default heat.colors(256) }
   \item{cutOff}{ not yet documented }
+  \item{verbose}{ tell something on the progress?}
   \item{...}{ additional arguments for plot}
 }
 \details{
@@ -42,7 +48,7 @@
   is provided in the remaining space.
 
   For objects of class "fmrisegment" the smoothed signal size is shown in the 
-  activation segment.
+  activation segments (two-sided test!).
 
   If \code{type} is "3d" a 3 dimensional interactive view opens. Sliders
   to move in the data cube are given ("x", "y", "z", and "t" if class is
