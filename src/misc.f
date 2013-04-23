@@ -419,8 +419,8 @@ C   assumes that we search for a connected region in segm==.TRUE.
 C   that contains seed voxel (i1,i2,i3)
 C   result: mask == .TRUE. if voxel is connected to seed
       implicit logical (a-z)
-      integer n1,n2,n3,i1,i2,i3,ind1(1),ind2(1),ind3(1)
-      logical final,checked(1),mask(n1,n2,n3),segm(n1,n2,n3)
+      integer n1,n2,n3,i1,i2,i3,ind1(*),ind2(*),ind3(*)
+      logical final,checked(*),mask(n1,n2,n3),segm(n1,n2,n3)
       integer j1,j2,j3,k,l1,l2,l3,lind,lind0,n
 C     first find pixel close to (i1,i2) with segm(j1,j2)=0
       n=n1*n2*n3

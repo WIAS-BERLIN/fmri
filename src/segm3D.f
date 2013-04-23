@@ -25,7 +25,7 @@ C
       logical aws,wlse,mask(n1,n2,n3),restrict
       real*8 y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),delta,thresh,
      1      thn(n1,n2,n3),lambda,wght(2),si2(n1,n2,n3),pval(n1,n2,n3),
-     1      hakt,lwght(1),thi,getlwght,swres(nt),fov,vq(n1,n2,n3),
+     1      hakt,lwght(*),thi,getlwght,swres(nt),fov,vq(n1,n2,n3),
      1      varest(n1,n2,n3),res(nt,n1,n2,n3),vest0i(n1,n2,n3),df,
      1      kv(n1,n2,n3)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
