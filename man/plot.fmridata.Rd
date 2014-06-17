@@ -14,13 +14,15 @@
               grey(0:255/255), cutOff = c(0, 1), ...)
 \method{plot}{fmrisegment}(x, anatomic = NULL, 
               slice =  1, view = c( "axial", "coronal", "sagittal") ,zlim.u =
-              NULL, zlim.o = NULL,col.o = c( rainbow( 64, start = 2/6, end = 4/6), rainbow( 64, start = 0, end = 1/6)), col.u =
-              grey(0:127/127), verbose = FALSE, ...)
+              NULL, zlim.o = NULL,col.o = c( rainbow( 64, start = 2/6, end = 4/6), 
+              rainbow( 64, start = 0, end = 1/6)), 
+              col.u = grey(0:127/127), verbose = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{ object of class "fmrisegment", "fmripvalue", "fmrispm" or "fmridata" }
-  \item{anatomic}{ overlay of same dimension as the functional data, or fmridata object (if of x is fmripvalue object) }
+  \item{anatomic}{ overlay of same dimension as the functional data, or fmridata object 
+                   (if of x is fmripvalue object) }
   \item{maxpvalue}{ maximum p-value for thresholding }
   \item{spm}{ logical. if class is "fmrispm" decide whether to plot
     the t-statistics for the estimated effect (\code{spm=TRUE}) or the estimated effect

@@ -1058,7 +1058,7 @@ fmri.view2d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
     viewMask <- function(){
       ttt <- extract.data(data)
       ddim <- dim(ttt)    
-      X11(width=12,height=7)
+      dev.new(width=12,height=7)
       if (round(sqrt(ddim[3]))==sqrt(ddim[3])){
         nrrow <<- sqrt(ddim[3])
         nrcol <<- sqrt(ddim[3])  

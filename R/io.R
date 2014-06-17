@@ -1260,7 +1260,12 @@ complete.fmriHeader <- function(fmriobj){
   if (!("sessionerror" %in% names(header))) header$sessionerror <- c(0)
   if (!("regular" %in% names(header))) header$regular <- "r"
   if (!("diminfo" %in% names(header))) header$diminfo <- " "
-  if (!("dimension" %in% names(header))) {header$dimension <- rep(0,8); header$dimension <- c(length(dim(ttt)),dim(ttt))}
+  if (!("dimension" %in% names(header))) {
+    if (is.null(header$dim0)) 
+      header$dimension <- rep(0,8)
+    else
+      header$dimension <- header$dim0
+  }
   if (length(header$dimension) < 8) header$dimension[(length(header$dimension)+1):8] <- 0
   if (!("intentp1" %in% names(header))) header$intentp1 <- 0
   if (!("intentp2" %in% names(header))) header$intentp2 <- 0
