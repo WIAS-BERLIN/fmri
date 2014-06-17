@@ -1,5 +1,5 @@
 Package:     fmri
-Version:     1.5-1
+Version:     1.5-2
 Date:        2014-06-17
 Title:       Analysis of fMRI experiments
 Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
