@@ -99,10 +99,10 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
       current <- as.numeric(tclvalue(posv[[i]]))
       if (current != pos[i]) {
         pos[i] <<- current
-        tkrreplot(img[[1]])
-        tkrreplot(img[[2]])
-        tkrreplot(img[[3]])
-        if (i == 4) tkrreplot(img[[4]])
+        tkrplot::tkrreplot(img[[1]])
+        tkrplot::tkrreplot(img[[2]])
+        tkrplot::tkrreplot(img[[3]])
+        if (i == 4) tkrplot::tkrreplot(img[[4]])
         tkconfigure(label2, text=pos[i])
       }
     }
@@ -123,9 +123,9 @@ fmri.view3d <- function(ttt, sigma=NULL,type = "data", col = grey(0:255/255), ex
       current <- as.numeric(tclvalue(posv[[i]]))
       if (current != pos[i]) {
         pos[i] <<- current
-        tkrreplot(img[[1]])
-        tkrreplot(img[[2]])
-        tkrreplot(img[[3]])
+        tkrplot::tkrreplot(img[[1]])
+        tkrplot::tkrreplot(img[[2]])
+        tkrplot::tkrreplot(img[[3]])
         tkconfigure(label2, text=pos[i])
       }
     }
