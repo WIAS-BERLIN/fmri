@@ -305,7 +305,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
   gc()
 #   get variances and correlations
   cat("fmri.smooth: estimate correlations","\n")
-  lags <- c(5,5,3)
+  lags <- pmin(c(5,5,3),ddim[1:3]-1)
   scorr <- .Fortran("imcorr",as.double(residuals),
                      as.logical(mask),
                      as.integer(n3),
@@ -573,7 +573,7 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
     gc()
   }
   cat("fmri.smooth: estimate correlations","\n")
-  lags <- c(5,5,3)
+  lags <- pmin(c(5,5,3),ddim[1:3]-1)
   scorr <- .Fortran("imcorr",as.double(tobj$resnew),
                      as.logical(mask),
                      as.integer(n3),

@@ -545,10 +545,12 @@ C
          z3=z3*z3
          ih2=sqrt(hakt2-z3)/wght(1)
          DO j2=clw2-ih2,clw2+ih2
+            IF(j2.lt.1.or.j2.gt.dlw2) CYCLE
             z2=(clw2-j2)*wght(1)
             z2=z3+z2*z2
             ih1=sqrt(hakt2-z2)
             DO j1=clw1-ih1,clw1+ih1
+               IF(j1.lt.1.or.j1.gt.dlw1) CYCLE
                z1=clw1-j1
                lwght(j1,j2,j3)=lkern(kern,(z1*z1+z2)/hakt2)
             END DO
