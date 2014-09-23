@@ -4,7 +4,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
     cat("fmri.smooth: entering function\n")
     args <- sys.call()
     args <- c(spm$call,args)
-    if (!(tolower(adaptation) %in% c("none", "aws", "segment"))) {
+    if (!(tolower(adaptation) %in% c("none", "aws", "fullaws", "segment"))) {
         adaptation <- "aws"
     }
     ladjust <- if ("ladjust" %in% names(list(...)))

@@ -32,16 +32,15 @@ C
       external getlwght
       hakt2=hakt*hakt
       spf=4.d0/3.d0
-      ih1=hakt
       aws=lambda.lt.1d40
 C
 C   first calculate location weights
 C
       maxvalue=-1.d4
       minvalue=1.d4
-      ih3=hakt
-      ih2=hakt
-      ih1=hakt
+      ih3=FLOOR(hakt)
+      ih2=FLOOR(hakt)
+      ih1=FLOOR(hakt)
       n=n1*n2*n3
       dlw1=min(2*n1-1,2*ih1+1)
       dlw2=min(2*n2-1,2*ih2+1)

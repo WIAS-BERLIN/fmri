@@ -37,14 +37,13 @@ C
       kern=1
       hakt2=hakt*hakt
       spf=4.d0/3.d0
-      ih1=hakt
       aws=lambda.lt.1d40
 C
 C   first calculate location weights
 C
-      ih3=hakt/wght(2)
-      ih2=hakt/wght(1)
-      ih1=hakt
+      ih3=FLOOR(hakt/wght(2))
+      ih2=FLOOR(hakt/wght(1))
+      ih1=FLOOR(hakt)
       dlw1=min(2*n1-1,2*ih1+1)
       dlw2=min(2*n2-1,2*ih2+1)
       dlw3=min(2*n3-1,2*ih3+1)

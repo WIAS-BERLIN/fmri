@@ -17,9 +17,9 @@
 C
 C   first calculate location weights
 C
-      ih3=bw/wght(2)
-      ih2=bw/wght(1)
-      ih1=bw
+      ih3=FLOOR(bw/wght(2))
+      ih2=FLOOR(bw/wght(1))
+      ih1=FLOOR(bw)
       dlw1=2*ih1+1
       dlw2=2*ih2+1
       dlw3=2*ih3+1
@@ -31,11 +31,11 @@ C
       DO j3=1,dlw3
          z3=(clw3-j3)*wght(2)
          z3=z3*z3
-         ih2=sqrt(h2-z3)/wght(1)
+         ih2=FLOOR(sqrt(h2-z3)/wght(1))
          DO j2=clw2-ih2,clw2+ih2
             z2=(clw2-j2)*wght(1)
             z2=z3+z2*z2
-            ih1=sqrt(h2-z2)
+            ih1=FLOOR(sqrt(h2-z2))
             DO j1=clw1-ih1,clw1+ih1
                z1=clw1-j1
                z=lkern(kern,(z1*z1+z2)/h2)
@@ -67,9 +67,9 @@ C
 C
 C   first calculate location weights
 C
-      ih3=bw/wght(2)
-      ih2=bw/wght(1)
-      ih1=bw
+      ih3=FLOOR(bw/wght(2))
+      ih2=FLOOR(bw/wght(1))
+      ih1=FLOOR(bw)
       dlw1=2*ih1+1
       dlw2=2*ih2+1
       dlw3=2*ih3+1
@@ -80,11 +80,11 @@ C
       DO j3=1,dlw3
          z3=(clw3-j3)*wght(2)
          z3=z3*z3
-         ih2=sqrt(h2-z3)/wght(1)
+         ih2=FLOOR(sqrt(h2-z3)/wght(1))
          DO j2=clw2-ih2,clw2+ih2
             z2=(clw2-j2)*wght(1)
             z2=z3+z2*z2
-            ih1=sqrt(h2-z2)
+            ih1=FLOOR(sqrt(h2-z2))
             DO j1=clw1-ih1,clw1+ih1
                z1=clw1-j1
                z=lkern(kern,(z1*z1+z2)/h2)
@@ -164,7 +164,7 @@ C         z=x+(value-fw1)/(fw2-fw1)*(y-x)
       l2=lag(2)
       l3=lag(3)
       z=0.d0
-      k=0.d0
+      k=0
 C  correlation in x
       do i1=1,n1-l1
          do i2=1,n2-l2
@@ -271,7 +271,7 @@ C  correlation in x
       l2=lag(2)
       l3=lag(3)
       z=0.d0
-      k=0.d0
+      k=0
 C  correlation in x
       do i1=1,n1-l1
          do i2=1,n2-l2

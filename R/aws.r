@@ -59,6 +59,10 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
     stop("y has to be 3 or 4 dimensional")
   }
   dv <- dim(y)[d+1]
+##
+##  need time component first for efficiency in Fortran code
+##
+  y <- aperm(y,c(4,1:3)) 
   # define vwghts
   if (length(vwghts)>dv) vwghts <- vwghts[1:dv]
   dv0 <- sum(vwghts>0)
@@ -160,6 +164,11 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
     if(is.null(u)) u <- 0
   } 
   propagation <- NULL
+##
+##  determine number of cores to use
+##
+  mc.cores <- setCores(,reprt=FALSE)
+
   # run single steps to display intermediate results
   while (k<=kstar) {
       hakt0 <- gethani(1,3,lkern,1.25^(k-1),wghts,1e-4)
@@ -189,6 +198,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                      hakt=as.double(hakt),
                      as.double(lambda0),
                      as.double(theta0),
+                     as.integer(mc.cores),
                      bi=as.double(bi0),
                      thnew=double(n1*n2*n3*dv),
                      as.integer(lkern),
@@ -198,11 +208,11 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                      double(prod(dlw)),
                      as.double(wghts),
                      as.double(vwghts),
-                     double(dv),#swjy
-                     double(dv0),#thi
+                     double(dv*mc.cores),#swjy
+                     double(dv0*mc.cores),#thi
                      PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","hakt")]
     gc()
-    theta <- array(tobj$thnew,dy) 
+    theta <- array(tobj$thnew,c(dv,dy[1:3])) 
     dim(tobj$bi) <- dy[-4]
     if(testprop) {
       pobj <- .Fortran("chaws2",as.double(y),
@@ -217,6 +227,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                        hakt=as.double(hakt),
                        as.double(1e50),
                        as.double(theta0),
+                       as.integer(mc.cores),
                        bi=as.double(bi0),
                        thnew=double(n1*n2*n3*dv),
                        as.integer(lkern),
@@ -226,10 +237,10 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
 		       double(prod(dlw)),
 		       as.double(wghts),
 		       as.double(vwghts),
-		       double(dv),#swjy
-		       double(dv0),#thi
+		       double(dv*mc.cores),#swjy
+		       double(dv0*mc.cores),#thi
 		       PACKAGE="fmri",DUP=TRUE)[c("bi","thnew")]
-      ptheta <- array(pobj$thnew,dy) 
+      ptheta <- array(pobj$thnew,c(dv,dy[1:3])) 
       rm(pobj) 
       gc()
       propagation <- c(propagation,sum(abs(theta-ptheta))/sum(abs(ptheta-u)))
@@ -289,6 +300,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                      hakt=as.double(tobj$hakt),
                      as.double(lambda0),
                      as.double(theta0),
+                     as.integer(mc.cores),
                      as.double(bi0),
                      resnew=double(prod(ddim)),
                      as.integer(lkern),
@@ -298,8 +310,8 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                      double(prod(dlw)),
                      as.double(wghts),
                      as.double(vwghts),
-                     double(ddim[4]),#swjy
-                     double(dv0),#thi
+                     double(ddim[4]*mc.cores),#swjy
+                     double(dv0*mc.cores),#thi
                      PACKAGE="fmri",DUP=TRUE)$resnew
   dim(residuals) <- c(ddim[4],n1,n2,n3)
   gc()
@@ -330,7 +342,8 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                            PACKAGE="fmri",DUP=TRUE)$var
   vred <- array(vartheta/vartheta0,c(n1,n2,n3))
   vartheta <- vred/sigma2  #  sigma2 contains inverse variances
-  z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,vred0=median(vred[mask]),y=y,
+  z <- list(theta=aperm(theta,c(2:4,1)),ni=tobj$bi,var=vartheta,
+            vred=vred,vred0=median(vred[mask]),y=y,
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,
             alpha=propagation,scorr=scorr,res=residuals,mask=mask)
   #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
@@ -370,6 +383,10 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
     stop("y has to be 3 or 4 dimensional")
   }
   dv <- dim(y)[d+1]
+##
+##  need time component first for efficiency in Fortran code
+##
+  y <- aperm(y,c(4,1:3)) 
   # define vwghts
   if (length(vwghts)>dv) vwghts <- vwghts[1:dv]
   dv0 <- sum(vwghts>0)
@@ -457,6 +474,10 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
     if(is.null(u)) u <- 0
   } 
   propagation <- NULL
+##
+##  determine number of cores to use
+##
+  mc.cores <- setCores(,reprt=FALSE)
   # run single steps to display intermediate results
   residuals <- readBin(res,"integer",prod(ddim),2)*resscale
   dim(residuals) <- c(ddim[4],ddim[1:3])
@@ -487,6 +508,7 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
                      hakt=as.double(hakt),
                      as.double(lambda0),
                      as.double(theta0),
+                     as.integer(mc.cores),
                      bi=as.double(bi0),
                      resnew=double(prod(ddim)),
                      thnew=double(n1*n2*n3*dv),
@@ -497,12 +519,12 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
                      double(prod(dlw)),
                      as.double(wghts),
                      as.double(vwghts),
-                     double(dv),#swjy
-                     double(dv0),#thi
-                     double(ddim[4]),#resi
+                     double(dv*mc.cores),#swjy
+                     double(dv0*mc.cores),#thi
+                     double(ddim[4]*mc.cores),#resi
                      PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","hakt","resnew")]
     gc()
-    theta <- array(tobj$thnew,dy) 
+    theta <- array(tobj$thnew,c(dv,dy[1:3])) 
     dim(tobj$bi) <- ddim[1:3]
     tobj$bi <- tobj$bi*vadjust
 #  correcting for missing term in variance estimate from residuals, e.g. effects of design matrix
@@ -522,6 +544,7 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
                         hakt=as.double(hakt),
                         as.double(1e50),
                         as.double(theta0),
+                        as.integer(mc.cores),
                         bi=as.double(bi0),
                         resnew=double(prod(ddim)),
                         thnew=double(n1*n2*n3*dv),
@@ -532,11 +555,11 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
                         double(prod(dlw)),
                         as.double(wghts),
                         as.double(vwghts),
-                        double(dv),#swjy
-                        double(dv0),#thi
-                        double(ddim[4]),#resi
+                        double(dv*mc.cores),#swjy
+                        double(dv0*mc.cores),#thi
+                        double(ddim[4]*mc.cores),#resi
 		        PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","resnew")]
-      ptheta <- array(pobj$thnew,dy) 
+      ptheta <- array(pobj$thnew,c(dv,dy[1:3])) 
       rm(pobj) 
       gc()
       propagation <- c(propagation,sum(abs(theta-ptheta))/sum(abs(ptheta-u)))
@@ -588,7 +611,8 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
   dim(scorr) <- lags                     
   vartheta <- 1/tobj$bi
   vred <- vartheta*sigma2
-  z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,vred0=median(vred[mask]),y=y,
+  z <- list(theta=aperm(theta,c(2:4,1)),ni=tobj$bi,var=vartheta,vred=vred,
+            vred0=median(vred[mask]),y=y,
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,
             alpha=propagation,scorr=scorr,res=tobj$resnew,mask=mask)
   #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
