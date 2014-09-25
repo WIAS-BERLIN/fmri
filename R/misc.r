@@ -29,12 +29,12 @@ sofw3D <- function(bw,kern,wght){
          PACKAGE="fmri")$fw
 }
 
-fdr <- function(pval,alpha=0.05){
-n <- length(pval)
-ind <- 1:n
-oind <- order(pval)
-nind <- length(ind[pval[oind] <= ind/n*alpha])
-oind[1:nind]
+fdr <- function(pval, alpha=0.05){
+  n <- length(pval)
+  ind <- 1:n
+  oind <- order(pval)
+  nind <- length(ind[pval[oind] <= ind/n*alpha])
+  oind[1:nind]
 }
 
 Varcor.gauss<-function(h,interv = 1){
