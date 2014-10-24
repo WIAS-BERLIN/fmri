@@ -145,7 +145,7 @@ C
      2       thi(dv0,ncores),getlwght
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n,iind,jind,thrednr
-      real*8 bii,swj,swjy(dv,ncores),wj,hakt2,spf,si2j,si2i,swjv
+      real*8 bii,swj,swjy(dv,ncores),wj,hakt2,spf,si2i,swjv
       external getlwght
 !$      integer omp_get_thread_num 
 !$      external omp_get_thread_num
@@ -176,7 +176,7 @@ C$OMP& SHARED(n1,n2,n3,kern,skern,dv,dv0,aws,wlse,mask,y,theta,bi,thn,
 C$OMP& lambda,spmax,wght,si2,hakt,lwght,spmin,vwghts,thi,spf,
 C$OMP& ncores,ih1,ih2,ih3,clw1,clw2,clw3,dlw1,dlw2,dlw3,n,hakt2,swjy)
 C$OMP& PRIVATE(iind,i1,i2,i3,k,si2i,bii,swjv,swj,
-C$OMP& thrednr,j1,j2,j3,jw1,jw2,jw3,jind,wj,si2j)
+C$OMP& thrednr,j1,j2,j3,jw1,jw2,jw3,jind,wj)
 C$OMP DO SCHEDULE(GUIDED)
       DO iind=1,n
 !$         thrednr = omp_get_thread_num()+1
@@ -216,15 +216,14 @@ C  first stochastic term
                   IF(mask(jind)) CYCLE
                   wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
                   if(wj.le.0.d0) CYCLE
-                  si2j=si2(jind)
                   IF (aws) THEN
                      call awswght3(n,jind,dv0,thi(1,thrednr),
      1                    theta,vwghts,skern,spf,spmin,spmax,bii,wj)
                   END IF
                   if(wlse) THEN 
-                     wj=wj*si2j
+                     wj=wj*si2(jind)
                   ELSE
-                     swjv=swjv+wj/si2j
+                     swjv=swjv+wj/si2(jind)
                   END IF
                   swj=swj+wj
                   call daxpy(dv,wj,y(1,jind),1,swjy(1,thrednr),1)
@@ -276,8 +275,7 @@ C
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1       clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n,thrednr,iind,jind,
      2       sthrednr,rthrednr
-      real*8 bii,swj,swjy(*),wj,hakt2,spf,si2j,si2i,swjv,
-     1       sresisq,resik
+      real*8 bii,swj,swjy(*),wj,hakt2,spf,si2i,sresisq,resik
       external getlwght
 !$      integer omp_get_thread_num 
 !$      external omp_get_thread_num
@@ -311,7 +309,7 @@ C$OMP& swjy,hakt2,spf)
 C$OMP& FIRSTPRIVATE(n,n1,n2,n3,n4,dv,dv0,lambda,clw1,clw2,clw3,
 C$OMP& dlw1,dlw2,dlw3,aws,wlse)
 C$OMP& PRIVATE(iind,jind,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,k,si2i,
-C$OMP& bii,swj,swjv,wj,si2j,sresisq,thrednr,sthrednr,rthrednr,resik)
+C$OMP& bii,swj,wj,sresisq,thrednr,sthrednr,rthrednr,resik)
 C$OMP DO SCHEDULE(GUIDED)
       DO iind=1,n
 !$         thrednr = omp_get_thread_num()+1
@@ -336,7 +334,6 @@ C$OMP DO SCHEDULE(GUIDED)
          bii=bi(iind)/lambda
 C   scaling of sij outside the loop
          swj=0.d0
-         swjv=0.d0
          DO k=1,dv
             swjy(k+sthrednr)=0.d0
          END DO
@@ -360,15 +357,12 @@ C  first stochastic term
                   IF(mask(jind)) CYCLE
                   wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
                   if(wj.le.0.d0) CYCLE
-                  si2j=si2(jind)
                   IF (aws) THEN
                      call awswght3(n,jind,dv0,thi(1+sthrednr),
      1                  theta,vwghts,skern,spf,spmin,spmax,bii,wj)
                   END IF
                   if(wlse) THEN 
-                     wj=wj*si2j
-                  ELSE
-                     swjv=swjv+wj/si2j
+                     wj=wj*si2(jind)
                   END IF
                   swj=swj+wj
                   DO k=1,dv
@@ -427,7 +421,7 @@ C
      1       hakt,lwght(*),spmin,vwghts(dv0),thi(dv0,ncores),getlwght
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n,thrednr,iind,jind
-      real*8 bii,swj,swjy(dv,ncores),wj,hakt2,spf,si2j,si2i
+      real*8 bii,swj,swjy(dv,ncores),wj,hakt2,spf,si2i
       external getlwght
 !$      integer omp_get_thread_num 
 !$      external omp_get_thread_num
@@ -458,7 +452,7 @@ C$OMP& SHARED(dv,dv0,n1,n2,n3,kern,skern,ncores,aws,wlse,mask,theta,
 C$OMP& bi,y,lambda,spmax,wght,si2,thn,hakt,lwght,spmin,vwghts,thi,
 C$OMP& ih1,ih2,ih3,clw1,clw2,clw3,dlw1,dlw2,dlw3,n,swjy,hakt2,spf)
 C$OMP& PRIVATE(iind,jind,i1,i2,i3,k,si2i,bii,swj,j1,j2,j3,
-C$OMP& jw1,jw2,jw3,wj,si2j,thrednr)
+C$OMP& jw1,jw2,jw3,wj,thrednr)
 C$OMP DO SCHEDULE(GUIDED)
       DO iind=1,n
 !$         thrednr = omp_get_thread_num()+1
@@ -497,13 +491,12 @@ C  first stochastic term
                   IF(mask(jind)) CYCLE
                   wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
                   if(wj.le.0.d0) CYCLE
-                  si2j=si2(jind)
                   IF (aws) THEN
                      call awswght3(n,jind,dv0,thi(1,thrednr),
      1                    theta,vwghts,skern,spf,spmin,spmax,bii,wj)
                   END IF
                   if(wlse) THEN 
-                     wj=wj*si2j
+                     wj=wj*si2(jind)
                   END IF
                   swj=swj+wj
                   call daxpy(dv,wj,y(1,jind),1,swjy(1,thrednr),1)
