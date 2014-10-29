@@ -320,9 +320,9 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
   lags <- pmin(c(5,5,3),ddim[1:3]-1)
   scorr <- .Fortran("imcorr",as.double(residuals),
                      as.logical(mask),
-                     as.integer(n3),
-                     as.integer(n2),
                      as.integer(n1),
+                     as.integer(n2),
+                     as.integer(n3),
                      as.integer(ddim[4]),
                      scorr=double(prod(lags)),
                      as.integer(lags[1]),
@@ -599,9 +599,9 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
   lags <- pmin(c(5,5,3),ddim[1:3]-1)
   scorr <- .Fortran("imcorr",as.double(tobj$resnew),
                      as.logical(mask),
-                     as.integer(n3),
-                     as.integer(n2),
                      as.integer(n1),
+                     as.integer(n2),
+                     as.integer(n3),
                      as.integer(ddim[4]),
                      scorr=double(prod(lags)),
                      as.integer(lags[1]),
