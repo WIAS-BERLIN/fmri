@@ -27,10 +27,10 @@
 #  USA.
 #
 
-vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
+aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                    sigma2=NULL,mask=NULL,hinit=NULL,hincr=NULL,hmax=NULL,
                    ladjust=1,u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
-                   spmin=.3,h0=c(0,0,0),vwghts=1,testprop=FALSE,
+                   spmin=.3,h0=c(0,0,0),testprop=FALSE,
                    res=NULL, resscale=NULL, ddim=NULL){
 #
 #  qlambda, corrfactor adjusted for case lkern="Gaussian",skern="Plateau" only
@@ -47,25 +47,14 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
   if(is.null(res)) {
       return(warning("Please specify keep=''all'' when calling fmri.lm"))
   }
-  d <- 3
   dy <- dim(y)
   n1 <- dy[1]
   n2 <- dy[2]
   n3 <- dy[3]
   n <- n1*n2*n3
-  if (length(dy)==d) {
-    dim(y) <- dy <- c(dy,1)
-  } else if (length(dy)!=d+1) {
-    stop("y has to be 3 or 4 dimensional")
+  if (length(dy)!=3) {
+    stop("y has to be 3 dimensional")
   }
-  dv <- dim(y)[d+1]
-##
-##  need time component first for efficiency in Fortran code
-##
-  y <- aperm(y,c(4,1:3)) 
-  # define vwghts
-  if (length(vwghts)>dv) vwghts <- vwghts[1:dv]
-  dv0 <- sum(vwghts>0)
 
   # MAE
   mae <- NULL
@@ -86,7 +75,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
   if (is.null(qlambda)) qlambda <- switch(skern,.9945,.9988,.9995)
   if (qlambda<.9) warning("Inappropriate value of qlambda")
   if (qlambda<1) {
-    lambda <- ladjust*qchisq(qlambda,dv0) 
+    lambda <- ladjust*qchisq(qlambda,1) 
   } else {
     lambda <- 1e50
   }
@@ -115,7 +104,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
 
   # define hincr
   if (is.null(hincr)||hincr<=1) hincr <- 1.25
-  hincr <- hincr^(1/d)
+  hincr <- hincr^(1/3)
 
   # determine corresponding bandwidth for specified correlation
   if(is.null(h0)) h0 <- rep(0,3)
@@ -123,16 +112,16 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
   # estimate variance in the gaussian case if necessary  
   if (is.null(sigma2)) {
     sigma2 <- IQRdiff(as.vector(y))^2
-    if (any(h0>0)) sigma2<-sigma2*Varcor.gauss(h0)*Spatialvar.gauss(h0,1e-5,d)
+    if (any(h0>0)) sigma2<-sigma2*Varcor.gauss(h0)*Spatialvar.gauss(h0,1e-5,3)
     if (demo) cat("Estimated variance: ", signif(sigma2,4),"\n")
   }
-  if (length(sigma2)==1) sigma2<-array(sigma2,dy[1:3]) 
-  if(is.null(mask)) mask <- array(TRUE,dy[1:3])
+  if (length(sigma2)==1) sigma2<-array(sigma2,dy) 
+  if(is.null(mask)) mask <- array(TRUE,dy)
   mask[sigma2>=1e16] <- FALSE
 #  in these points sigma2 probably contains NA's
   # deal with homoskedastic Gaussian case by extending sigma2
   if (length(sigma2)!=n) stop("sigma2 does not have length 1 or same length as y")
-  dim(sigma2) <- dy[1:3]
+  dim(sigma2) <- dy
   lambda <- lambda*2 
   sigma2 <- 1/sigma2 #  taking the invers yields simpler formulaes 
 
@@ -175,10 +164,10 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
       hakt <- gethani(1,3,lkern,1.25^k,wghts,1e-4)
       hakt.oscale <- if(lkern==3) bw2fwhm(hakt/4) else hakt
       cat("step",k,"bandwidth",signif(hakt.oscale,3)," ")
-    dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
+    dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:3]
 #  need bandwidth in voxel for Spaialvar.gauss, h0 is in voxel
-    if (any(h0>0)) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0)/4/c(1,wghts),h0,d)/
-      Spatialvar.gauss(h0,1e-5,d)/Spatialvar.gauss(bw2fwhm(hakt0)/4/c(1,wghts),1e-5,d)
+    if (any(h0>0)) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0)/4/c(1,wghts),h0,3)/
+      Spatialvar.gauss(h0,1e-5,3)/Spatialvar.gauss(bw2fwhm(hakt0)/4/c(1,wghts),1e-5,3)
         # Correction C(h0,hakt) for spatial correlation depends on h^{(k-1)}  all bandwidth-arguments in FWHM 
     hakt0 <- hakt
     theta0 <- theta
@@ -193,27 +182,21 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                      as.integer(n1),
                      as.integer(n2),
                      as.integer(n3),
-                     as.integer(dv),
-                     as.integer(dv0),
                      hakt=as.double(hakt),
                      as.double(lambda0),
                      as.double(theta0),
-                     as.integer(mc.cores),
                      bi=as.double(bi0),
-                     thnew=double(n1*n2*n3*dv),
+                     thnew=double(n1*n2*n3),
                      as.integer(lkern),
                      as.integer(skern),
                      as.double(spmin),
                      as.double(spmax),
                      double(prod(dlw)),
                      as.double(wghts),
-                     as.double(vwghts),
-                     double(dv*mc.cores),#swjy
-                     double(dv0*mc.cores),#thi
                      PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","hakt")]
     gc()
-    theta <- array(tobj$thnew,c(dv,dy[1:3])) 
-    dim(tobj$bi) <- dy[-4]
+    theta <- array(tobj$thnew,dy) 
+    dim(tobj$bi) <- dy
     if(testprop) {
       pobj <- .Fortran("chaws2",as.double(y),
                        as.double(sigma2),
@@ -222,25 +205,19 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                        as.integer(n1),
                        as.integer(n2),
                        as.integer(n3),
-		       as.integer(dv),
-		       as.integer(dv0),
                        hakt=as.double(hakt),
                        as.double(1e50),
                        as.double(theta0),
-                       as.integer(mc.cores),
                        bi=as.double(bi0),
-                       thnew=double(n1*n2*n3*dv),
+                       thnew=double(n1*n2*n3),
                        as.integer(lkern),
 		       as.integer(skern),
 	               as.double(spmin),
 		       as.double(spmax),
 		       double(prod(dlw)),
 		       as.double(wghts),
-		       as.double(vwghts),
-		       double(dv*mc.cores),#swjy
-		       double(dv0*mc.cores),#thi
 		       PACKAGE="fmri",DUP=TRUE)[c("bi","thnew")]
-      ptheta <- array(pobj$thnew,c(dv,dy[1:3])) 
+      ptheta <- array(pobj$thnew,dy) 
       rm(pobj) 
       gc()
       propagation <- c(propagation,sum(abs(theta-ptheta))/sum(abs(ptheta-u)))
@@ -296,7 +273,6 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                      as.integer(ddim[2]),
                      as.integer(ddim[3]),
                      as.integer(ddim[4]),
-                     as.integer(dv0),
                      hakt=as.double(tobj$hakt),
                      as.double(lambda0),
                      as.double(theta0),
@@ -309,9 +285,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                      as.double(spmax),
                      double(prod(dlw)),
                      as.double(wghts),
-                     as.double(vwghts),
                      double(ddim[4]*mc.cores),#swjy
-                     double(dv0*mc.cores),#thi
                      PACKAGE="fmri",DUP=TRUE)$resnew
   dim(residuals) <- c(ddim[4],n1,n2,n3)
   gc()
@@ -342,7 +316,7 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
                            PACKAGE="fmri",DUP=TRUE)$var
   vred <- array(vartheta/vartheta0,c(n1,n2,n3))
   vartheta <- vred/sigma2  #  sigma2 contains inverse variances
-  z <- list(theta=aperm(theta,c(2:4,1)),ni=tobj$bi,var=vartheta,
+  z <- list(theta=theta,ni=tobj$bi,var=vartheta,
             vred=vred,vred0=median(vred[mask]),y=y,
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,
             alpha=propagation,scorr=scorr,res=residuals,mask=mask)
@@ -351,10 +325,10 @@ vaws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE
   invisible(z)
 }
 
-vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
+aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                    sigma2=NULL,mask=NULL,hinit=NULL,hincr=NULL,hmax=NULL,
                    ladjust=1,u=NULL,graph=FALSE,demo=FALSE,wghts=NULL,
-                   spmin=.3,vwghts=1,testprop=FALSE,
+                   spmin=.3,testprop=FALSE,
                    res=NULL, resscale=NULL, ddim=NULL) {
 #
 #  qlambda, corrfactor adjusted for case lkern="Gaussian",skern="Plateau" only
@@ -377,20 +351,9 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
   n2 <- dy[2]
   n3 <- dy[3]
   n <- n1*n2*n3
-  if (length(dy)==d) {
-    dim(y) <- dy <- c(dy,1)
-  } else if (length(dy)!=d+1) {
-    stop("y has to be 3 or 4 dimensional")
+  if (length(dy)!=3) {
+    stop("y has to be 3 dimensional")
   }
-  dv <- dim(y)[d+1]
-##
-##  need time component first for efficiency in Fortran code
-##
-  y <- aperm(y,c(4,1:3)) 
-  # define vwghts
-  if (length(vwghts)>dv) vwghts <- vwghts[1:dv]
-  dv0 <- sum(vwghts>0)
-
   # MAE
   mae <- NULL
 
@@ -410,7 +373,7 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
   if (is.null(qlambda)) qlambda <- switch(skern,.9945,.9988,.9995)
   if (qlambda<.9) warning("Inappropriate value of qlambda")
   if (qlambda<1) {
-    lambda <- qchisq(qlambda,dv0) 
+    lambda <- qchisq(qlambda,1) 
   } else {
     lambda <- 1e50
   }
@@ -439,15 +402,15 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
 
   # define hincr
   if (is.null(hincr)||hincr<=1) hincr <- 1.25
-  hincr <- hincr^(1/d)
+  hincr <- hincr^(1/3)
 
   if (length(dim(sigma2))!=3) stop("insufficient variance information for full analysis") 
-  if(is.null(mask)) mask <- array(TRUE,dy[1:3])
+  if(is.null(mask)) mask <- array(TRUE,dy)
   mask[sigma2>=1e16] <- FALSE
 #  in these points sigma2 probably contains NA's
   # deal with homoskedastic Gaussian case by extending sigma2
   if (length(sigma2)!=n) stop("sigma2 does not have length 1 or same length as y")
-  dim(sigma2) <- dy[1:3]
+  dim(sigma2) <- dy
   sigma2 <- 1/sigma2 #  taking the invers yields simpler formulaes 
 
   # demo mode should deliver graphics!
@@ -487,7 +450,7 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
       hakt <- gethani(1,3,lkern,1.25^k,wghts,1e-4)
       hakt.oscale <- if(lkern==3) bw2fwhm(hakt/4) else hakt
       cat("step",k,"bandwidth",signif(hakt.oscale,3)," ")
-    dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
+    dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:3]
     hakt0 <- hakt
     theta0 <- theta
     bi0 <- tobj$bi/(1+log(tobj$bi/sigma2))
@@ -503,28 +466,23 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
                      as.integer(n2),
                      as.integer(n3),
                      as.integer(ddim[4]),
-                     as.integer(dv),
-                     as.integer(dv0),
                      hakt=as.double(hakt),
                      as.double(lambda0),
                      as.double(theta0),
                      as.integer(mc.cores),
                      bi=as.double(bi0),
                      resnew=double(prod(ddim)),
-                     thnew=double(n1*n2*n3*dv),
+                     thnew=double(n1*n2*n3),
                      as.integer(lkern),
                      as.integer(skern),
                      as.double(spmin),
                      as.double(spmax),
                      double(prod(dlw)),
                      as.double(wghts),
-                     as.double(vwghts),
-                     double(dv*mc.cores),#swjy
-                     double(dv0*mc.cores),#thi
                      double(ddim[4]*mc.cores),#resi
                      PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","hakt","resnew")]
     gc()
-    theta <- array(tobj$thnew,c(dv,dy[1:3])) 
+    theta <- array(tobj$thnew,dy) 
     dim(tobj$bi) <- ddim[1:3]
     tobj$bi <- tobj$bi*vadjust
 #  correcting for missing term in variance estimate from residuals, e.g. effects of design matrix
@@ -539,27 +497,22 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
                         as.integer(n2),
                         as.integer(n3),
                         as.integer(ddim[4]),
-                        as.integer(dv),
-                        as.integer(dv0),
                         hakt=as.double(hakt),
                         as.double(1e50),
                         as.double(theta0),
                         as.integer(mc.cores),
                         bi=as.double(bi0),
                         resnew=double(prod(ddim)),
-                        thnew=double(n1*n2*n3*dv),
+                        thnew=double(n1*n2*n3),
                         as.integer(lkern),
                         as.integer(skern),
                         as.double(spmin),
                         as.double(spmax),
                         double(prod(dlw)),
                         as.double(wghts),
-                        as.double(vwghts),
-                        double(dv*mc.cores),#swjy
-                        double(dv0*mc.cores),#thi
                         double(ddim[4]*mc.cores),#resi
 		        PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","resnew")]
-      ptheta <- array(pobj$thnew,c(dv,dy[1:3])) 
+      ptheta <- array(pobj$thnew,dy) 
       rm(pobj) 
       gc()
       propagation <- c(propagation,sum(abs(theta-ptheta))/sum(abs(ptheta-u)))
@@ -611,7 +564,7 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
   dim(scorr) <- lags                     
   vartheta <- 1/tobj$bi
   vred <- vartheta*sigma2
-  z <- list(theta=aperm(theta,c(2:4,1)),ni=tobj$bi,var=vartheta,vred=vred,
+  z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,
             vred0=median(vred[mask]),y=y,
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,
             alpha=propagation,scorr=scorr,res=tobj$resnew,mask=mask)
@@ -619,7 +572,6 @@ vaws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=
   class(z) <- "aws.gaussian"
   invisible(z)
 }
-
 
 smooth3D <- function(y,lkern="Gaussian",weighted=FALSE,sigma2=NULL,mask=NULL,hmax=NULL,
                      wghts=NULL) {
@@ -677,6 +629,7 @@ smooth3D <- function(y,lkern="Gaussian",weighted=FALSE,sigma2=NULL,mask=NULL,hma
                      double(prod(dlw)),
                      as.double(wghts),
                      double(dv),#swjy
-                     PACKAGE="fmri",DUP=TRUE)$thnew
+                     PACKAGE="fmri",DUP=FALSE)$thnew
 array(ysmooth,dy)
 }
+

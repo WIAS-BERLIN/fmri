@@ -1,3 +1,9 @@
+2014-10-30 version 1.6.1
+  - code now assumes that spm$cbeta is a 3D array of scalars
+    simplified R- and Fortran-code
+    vaws3D and vaws3Dfull simplified and renamed to aws3D and aws3Dfull 
+  - removed unused code from function fmri.pvalue
+  - removed arg delta (latency) from function fmri.pvalue
 2014-09-25 version 1.6.0
   - rewrite of the fmri.lm(), fmri.design(), fmri.stimulus() functions
   - dropped some obsolet arguments, see documentation
