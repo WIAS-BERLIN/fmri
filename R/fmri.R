@@ -123,7 +123,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
     z <- list(cbeta = ttthat$theta, var = ttthat$var, rxyz = rxyz,
               rxyz0 = rxyz0, scorr = spm$scorr, weights = spm$weights,
               bw = bw, hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf, 
-              segm = ttthat$segm, mask = ttthat$mask, call = args)
+              segm = ttthat$segm, mask = ttthat$mask,scale=ttthat$scale,res=ttthat$residuals, call = args)
     if (adaptation == "segment") {
       class(z) <- c( "fmrisegment", "fmridata")
       z$alpha <- alpha

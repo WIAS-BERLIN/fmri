@@ -316,10 +316,13 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                            PACKAGE="fmri",DUP=TRUE)$var
   vred <- array(vartheta/vartheta0,c(n1,n2,n3))
   vartheta <- vred/sigma2  #  sigma2 contains inverse variances
+  ## "compress" the residuals
+  scale <- max(abs(range(residuals)))/32767
+  residuals <- writeBin(as.integer(residuals/scale), raw(), 2)
   z <- list(theta=theta,ni=tobj$bi,var=vartheta,
             vred=vred,vred0=median(vred[mask]),y=y,
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,
-            alpha=propagation,scorr=scorr,res=residuals,mask=mask)
+            alpha=propagation,scorr=scorr,scale=scale,res=residuals,mask=mask)
   #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
   class(z) <- "aws.gaussian"
   invisible(z)
@@ -564,10 +567,13 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
   dim(scorr) <- lags                     
   vartheta <- 1/tobj$bi
   vred <- vartheta*sigma2
+  ## "compress" the residuals
+  scale <- max(abs(range(tobj$resnew)))/32767
+  residuals <- writeBin(as.integer(tobj$resnew/scale), raw(), 2)
   z <- list(theta=theta,ni=tobj$bi,var=vartheta,vred=vred,
             vred0=median(vred[mask]),y=y,
             hmax=tobj$hakt*switch(lkern,1,1,bw2fwhm(1/4)),mae=mae,
-            alpha=propagation,scorr=scorr,res=tobj$resnew,mask=mask)
+            alpha=propagation,scorr=scorr,scale=scale,res=residuals,mask=mask)
   #   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
   class(z) <- "aws.gaussian"
   invisible(z)

@@ -429,13 +429,13 @@ fmri.lm <- function(ds,
               corrrisk, 
               method = "L-BFGS-B", 
               lower = c(.59, .59, .59), 
-              upper = c(4, 4, 4), 
+              upper = c(10, 10, 10), 
               lag = lags, 
               data = corr)$par  
   bw[bw < .6] <- 0
   dim(bw) <- c(1, 3)
-  if ((max(bw) > 2.5 ) || (corr[lags[1], 1, 1] + corr[1, lags[2], 1] + corr[1, 1, lags[3]] > 0.5))
-    warning(paste("fmri.lm: Local smoothness characterized by large bandwidth ", bw, " check residuals for structure", collapse = ","))
+  if ((max(bw) > 4 ) || (corr[lags[1], 1, 1] + corr[1, lags[2], 1] + corr[1, 1, lags[3]] > 0.5))
+    warning(paste("fmri.lm: Local smoothness characterized by large bandwidth ", bw[1], bw[2], bw[3], " check residuals for structure", collapse = ","))
   rxyz <- c(resel(1, bw[1]), resel(1, bw[2]), resel(1, bw[3]))
   dim(rxyz) <- c(1, 3)
   
