@@ -108,7 +108,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
     else {
         bw <- optim(c(2, 2, 2), corrrisk, method = "L-BFGS-B",
             lower = c(0.25, 0.25, 0.25), upper = c(20, 20, 20),
-            lag = dim(ttthat$scorr), data = ttthat$scorr)$par
+            lag = c(5,5,3), data = ttthat$scorr)$par
         bw[bw <= 0.25] <- 0
         dim(bw) <- c(1, 3)
     }
