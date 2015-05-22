@@ -7,4 +7,7 @@ export(fmri.detrend)
 export(fmri.gui)
 export(plot.fmridata)
 export(oro2fmri,fmri2oro)
+export(fmri.designG,fmri.lmePar,fmri.lme)
+import(parallel,awsMethods,nlme)
 useDynLib(fmri)
+
