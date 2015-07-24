@@ -1,3 +1,6 @@
+2015-07-24 version 1.7.1
+  - new functions on group analysis
+
 2014-10-30 version 1.6.1
   - code now assumes that spm$cbeta is a 3D array of scalars
     simplified R- and Fortran-code
