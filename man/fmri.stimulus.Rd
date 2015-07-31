@@ -6,7 +6,7 @@
   Create the expected BOLD response for a given task indicator function.
 }
 \usage{
-  fmri.stimulus(scans = 1, onsets = c(1), durations = c(1), rt = 2,
+  fmri.stimulus(scans = 1, onsets = c(1), durations = c(1), TR = 2,
                 times = FALSE, type = c("canonical", "gamma", "boxcar", "user"),
                 par = NULL, scale = 10, hrf = NULL, verbose = FALSE)
 }

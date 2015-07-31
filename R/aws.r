@@ -635,7 +635,7 @@ smooth3D <- function(y,lkern="Gaussian",weighted=FALSE,sigma2=NULL,mask=NULL,hma
                      double(prod(dlw)),
                      as.double(wghts),
                      double(dv),#swjy
-                     PACKAGE="fmri",DUP=FALSE)$thnew
+                     PACKAGE="fmri",DUP=TRUE)$thnew
 array(ysmooth,dy)
 }
 
