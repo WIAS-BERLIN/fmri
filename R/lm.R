@@ -145,7 +145,7 @@ fmri.stimulus.old <- function(scans=1 ,onsets=c(1) ,durations=c(1),
 
 
 ### create fmriDesign object (design-matrix etc.) 
-fmri.design <- function(hrf,
+fmri.design <- function(stimulus,
                         order = 2,
                         cef = NULL,
                         verbose = FALSE) {

@@ -1,11 +1,10 @@
 \name{fmri.metaPar}
 \alias{fmri.metaPar}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{
-%%  ~~function to do ... ~~
+\title{Estimation of the group map
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+Estimation of the group map using a two-stage procedure
 }
 \usage{
 fmri.metaPar(G, V, X = NULL, model = NULL, method = "REML", weighted = TRUE, mask = NULL, cluster = 2, white = 1, wghts = c(1, 1, 1))

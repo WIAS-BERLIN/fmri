@@ -1,11 +1,9 @@
 \name{fmri.lmePar}
 \alias{fmri.lmePar}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{
-%%  ~~function to do ... ~~
-}
+\title{Estimation of the group map}
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+Estimation of the group map using a linear mixed effects model
 }
 \usage{
 fmri.lmePar(bold, z, fixed = NULL, random = NULL, mask = NULL, ac = 0.3, vtype = "individual", cluster = 2, wghts = c(1, 1, 1))
