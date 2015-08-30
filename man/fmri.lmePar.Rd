@@ -1,459 +1,181 @@
 \name{fmri.lmePar}
 \alias{fmri.lmePar}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{Estimation of the group map}
+\title{ Linear Mixed-effects Model for fMRI data }
 \description{
-Estimation of the group map using a linear mixed effects model
+Group maps are directly estimated from the BOLD time series data of all subjects using \code{\link{lme()}} from R package \pkg{nlme} to fit a Linear Mixed-effects Model with temporally correlated and heteroscedastic within-subject errors. Voxel-wise regression analysis is accelerated by optional parallel processing using R package \pkg{parallel}.
 }
 \usage{
-fmri.lmePar(bold, z, fixed = NULL, random = NULL, mask = NULL, ac = 0.3, vtype = "individual", cluster = 2, wghts = c(1, 1, 1))
+fmri.lmePar(bold, z, fixed = NULL, random = NULL, mask = NULL, ac = 0.3, 
+vtype = "individual", cluster = 2, wghts = c(1, 1, 1))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{bold}{
-%%     ~~Describe \code{bold} here~~
-}
-  \item{z}{
-%%     ~~Describe \code{z} here~~
-}
-  \item{fixed}{
-%%     ~~Describe \code{fixed} here~~
-}
-  \item{random}{
-%%     ~~Describe \code{random} here~~
-}
-  \item{mask}{
-%%     ~~Describe \code{mask} here~~
-}
-  \item{ac}{
-%%     ~~Describe \code{ac} here~~
-}
-  \item{vtype}{
-%%     ~~Describe \code{vtype} here~~
-}
-  \item{cluster}{
-%%     ~~Describe \code{cluster} here~~
-}
-  \item{wghts}{
-%%     ~~Describe \code{wghts} here~~
-}
+  \item{bold}{ a large 4D-Array with the aggregated fMRI data of all subjects that were previously registered to a common brain atlas. Be careful with the assembly of this array, the order of the data sets has to be compatible with the design matrix: \code{"z"}. If not the whole brain but a region is analyzed, vectors with region-indices can be preserved by adding as attributes (e.g. \code{attr(bold, "xind") <- xind}).
+  }  
+  \item{z}{ a design matrix for a multi-subject and/or multi-session fMRI-study of class \code{"data.frame"} specifying the expected BOLD response(s) and additional components for trend and other effects. Typically a \code{\link{fmri.designG()}} object. This data frame contains all variables named in the model. There are some indispensable variables: \var{"group"}, \var{"subj"}, \var{"session"} and \var{"run"}, which define the different strata. That information will be used for setting up the residual variance structure.
+  }  
+  \item{fixed}{ optionally, a one-sided linear formula describing the fixed-effects part of the model. Default settings are: 
+  \code{fixed <- ~ 0 + hrf + session + drift1:session + drift2:session} in case of one detected group, and the same but \code{"hrf"} replaced with \code{"hrf:group"} if two group levels in \code{z} are found. Since an intercept would be a linear combination of the session factor-variable modeling session-specific intercepts, it is excluded. 
+  }  
+  \item{random}{ optionally, a one-sided formula of the form \code{~ x1 + ... + xn | g1/.../gm}, with \code{~ x1 + ... + xn} specifying the model for the random effects and \code{g1/.../gm} the grouping structure.\cr 
+  
+  Default is always the basic model without covariates, i.e. \cr 
+  \code{random <- ~ 0 + hrf|subj}  if no repeated measures in \code{z} are found (\code{nlevels(z$run)==1}),\cr 
+  \code{random <- ~ 0 + hrf|subj/session}  if repeated measures and\cr 
+  \code{random <- ~ 0 + hrf|session}  if repeated measures but one subject only. \cr 
+  In case of two independent groups:\cr 
+  \code{random <- list(subj = pdDiag(~ 0 + hrf:group))} is used.
+  }  
+  \item{mask}{ if available, a logical 3D-Array of dimensionality of the data (without time component) describing a brain mask. The computation is restricted to the selected voxels.
+  }  
+  \item{ac}{ if available, a numeric 3D-Array of dimensionality of the data (without time component) with spatially smoothed autocorrelation parameters should be used in the AR(1) models fitted in each voxel, e.g. locally estimated and smoothed AR(1)-coefficients from \code{\link{fmri.lm()}} applied to the first subject. Alternatively, a global approach with uniform value can be used. In this case enter a number between 0 and 1. Default is \code{0.3} applied to all voxels.
+  }  
+  \item{vtype}{ a character string choosing the residual variance model. If \code{"equal"}, homoscedastic variance across subjects is assumed setting weights argument in function \code{lme()} to zero, whereas \code{"individual"} allows different within-subject variances. Default method is \code{"individual"} that means subject-specific error variances using formula: \code{weights <- varIdent(form =~ 1|subj)}.
+  }  
+  \item{cluster}{ number of threads for parallel processing, which is limited to available multi-core CPUs. If you do not know your CPUs, try: \code{detectCores()} from \pkg{parallel} package. Presets are 2 threads. \code{cluster = 1} does not use \pkg{parallel} package.
+  }  
+  \item{wghts}{ a vector of length 3 specifying ratio of voxel dimensions. Isotropic voxels (e.g. MNI-space) are set as default.
+  }
 }
 \details{
 %%  ~~ If necessary, more details than the description above ~~
+\code{fmri.lmePar()} fits the configured Linear Mixed-effects Model separately at each voxel and extracts estimated BOLD contrasts, corresponding squared standard errors and degrees of freedom as well as the residuals from resulting \code{lme()} objects to produce a statistical parametric map (SPM) for the group(s). Voxel-by-voxel analysis is performed by either the function \code{\link{apply()}} or \code{\link{parApply()}} from \pkg{parallel} package, which walks through the \code{bold} array.
+
+If one group is analyzed, from each fitted model the first fixed-effects coefficient and corresponding parameters are stored in results object. This should be the first specified predictor in the fixed-effects part of the model (verify the attribute of \code{"df"} in returned object). However, in two-sample case this principle does not work. The order changes, estimated session-specific intercepts now comes first and the number of these coefficients is not fixed. Therefore in current version it has explicitly been looked for the coefficient names: \var{"hrf:group1"} and \var{"hrf:group2"}. Available functions within the \pkg{nlme} package to extract estimated values from \code{lme()} objects do not operate at contrast matrices.
+
+Spatial correlation among voxels, e.g. through the activation of nearby voxels, is ignored at this stage, but corrects for it, when random field theory define a threshold for significant activation at inference stage.
+
+It is recommended to check your model syntax and residuals choosing some distinct voxels before running the model in loop (see Example, step 1); especially for more advanced designs! Error handling default is to stop if one of the threads produces an error. When this occurs, the output will be lost from any voxel, where the model has fitted successfully.
 }
-\value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
+\value{ 
+An object of class \code{"fmrispm"} and \code{"fmridata"}, basically a list 
+with components:
+  \item{cbeta, cbeta2}{estimated BOLD contrast parameters separated for the groups 1 and 2}
+  \item{var, var2}{estimated variance of the contrast parameters separated for the groups 1 and 2}
+  \item{mask}{ brain mask }
+  \item{res, res2}{raw (integer size 2) vector containing residuals of the estimated Linear Mixed-effects Model up to scale factor \code{resscale} separated for the groups 1 and 2}
+  \item{resscale, resscale2}{\code{resscale*extract.data(object,"residuals")} are the residuals of group 1 and group 2 respectively. }
+  \item{arfactor}{autocorrelation parameters used in AR(1)-model}
+  \item{rxyz, rxyz2}{array of smoothness from estimated correlation for each voxel in resel space separated for the groups 1 and 2 (for analysis without smoothing) }
+  \item{scorr, scorr2}{array of spatial correlations with maximal lags 5, 5, 3 in x, y and z-direction separated for the groups 1 and 2 }
+  \item{bw, bw2}{vector of bandwidths (in FWHM) corresponding to the spatial correlation within the data separated for the groups 1 and 2}
+  \item{weights}{ ratio of voxel dimensions }
+  \item{dim, dim2}{dimension of the data cube and residuals separated for the groups 1 and 2}
+  \item{df, df2}{degrees of freedom for t-statistics reported in \code{lme()} objects for the extracted regression coefficients separated for the groups 1 and 2. The name of the coefficient belonging to this df-value appears as attribute.}
+  \item{subjects}{number of subjects in the study}
+  \item{subj.runs}{number of repeated measures within subjects}
+  \item{sessions}{number of total sessions that were analyzed}
+  \item{groups}{number of groups in the study}
+  \item{fixedModel}{fixed-effects model}
+  \item{randomModel}{random-effects model}
+  \item{VarModel}{assumption about the subject error variances}
+  \item{cluster}{number of threads run in parallel}
+  \item{attr(*,"design")}{design matrix for the multi-subject fMRI-study}
+  \item{attr(*,"approach")}{one-stage estimation method}
 }
 \references{
-%% ~put references to the literature/web site here ~
+Pinheiro J. and Bates D. (2000). Mixed-Effects Models in S and S-Plus. Springer.
+
+Pinheiro J., Bates D., DebRoy S., Sarkar D. and the R Core team (2014). \emph{nlme: Linear and Nonlinear Mixed Effects Models} R package version 3.1-117.
 }
-\author{
-%%  ~~who you are~~
-}
+\author{ Sibylle Dames }
 \note{
-%%  ~~further notes~~
+Maybe the computing power is insufficient to carry out a whole brain analysis. You have two opportunities: either select and analyze a certain brain area or switch to a two-stage model.
+
+\itemize{Current Limitations\cr
+The function cannot handle experimental designs with:
+\item{more than two independent groups}
+\item{more than one stimulus (task)}
+\item{paired samples with varying tasks}
+\item{user defined contrasts} }
+
 }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+  \code{\link{lme}}, \code{\link{fmri.designG}}, 
+  \code{\link{fmri.design}}, \code{\link{fmri.stimulus}}, 
+  \code{\link{fmri.metaPar}}
 }
 \examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
+## Generate some fMRI data sets: noise + stimulus
+dx <- dy <- dz <- 32
+dt <- 107
+hrf <- fmri.stimulus(dt, c(18, 48, 78), 15, 2)
+stim <- matrix(hrf, nrow= dx*dy*dz, ncol=dt, byrow=TRUE)
+mask <- array(FALSE, c(dx, dy, dz))
+mask[12:22,12:22,12:22] <- TRUE
 
-## The function is currently defined as
-function (bold, z, fixed = NULL, random = NULL, mask = NULL, 
-    ac = 0.3, vtype = "individual", cluster = 2, wghts = c(1, 
-        1, 1)) 
-{
-    t1 <- Sys.time()
-    cat("fmri.lme: entering function\n")
-    dim.spm <- dim(bold)[1:3]
-    dx <- dim(bold)[1]
-    dy <- dim(bold)[2]
-    dz <- dim(bold)[3]
-    dNt <- dim(bold)[4]
-    total0 <- dx * dy * dz
-    if (length(dim(bold)) != 4) 
-        stop("fmri.lme: Hmmmm, this does not seem to be a fMRI time series. I better stop executing! Sorry!\n")
-    if (!is.data.frame(z)) 
-        stop("fmri.lme: Something is wrong with the design matrix.")
-    if (dim(bold)[4] != dim(z)[1]) 
-        stop("fmri.lme: design matrix dimensionality does not match functional data.")
-    if ((!length(ac) == 1) && (!identical(dim(ac), dim.spm))) 
-        stop("fmri.lme: AR1-array dimensionality does not match functional data.")
-    if (is.null(mask)) {
-        mask <- array(TRUE, dim = dim.spm)
-    }
-    if (!identical(dim(mask), dim.spm)) 
-        stop("fmri.lme: mask dimensionality does not match functional data.")
-    if (sum(mask) == 0) 
-        stop("fmri.meta: your head mask is empty, nothing to do.")
-    if (!is.null(attr(bold, "xind"))) {
-        xind <- attr(bold, "xind")
-    }
-    else {
-        xind <- NULL
-    }
-    if (!is.null(attr(bold, "yind"))) {
-        yind <- attr(bold, "yind")
-    }
-    else {
-        yind <- NULL
-    }
-    if (!is.null(attr(bold, "zind"))) {
-        zind <- attr(bold, "zind")
-    }
-    else {
-        zind <- NULL
-    }
-    if (length(ac) == 1) {
-        white <- 3
-    }
-    else {
-        white <- 1
-    }
-    dim(bold) <- c(total0, dNt)
-    total <- sum(mask)
-    if ((cluster == 1) && (total > 26000)) {
-        stop("Time for this calculation takes longer than 5 hours. Please use parallelizing option.")
-    }
-    else if ((cluster == 1) && (total > 16000)) {
-        stop("Time for this calculation takes longer than 3 hours. Please use parallelizing option.")
-    }
-    bold2 <- array(0, dim = c(total, dNt + 1))
-    bold2[, 1] <- if (length(ac) == total0) 
-        ac[mask]
-    else rep(ac[1], total)
-    bold2[, -1] <- bold[mask, ]
-    rm(ac, bold)
-    gc()
-    dim <- c(dim.spm, dNt)
-    cbeta <- array(0, dim = dim.spm)
-    var <- array(1, dim = dim.spm)
-    resid <- array(1, dim = c(dNt, total0))
-    arfactor <- array(0, dim = dim.spm)
-    df <- 100
-    dim2 <- NULL
-    cbeta2 <- NULL
-    var2 <- NULL
-    resid2 <- NULL
-    df2 <- NULL
-    gr <- nlevels(z$group)
-    runs <- nlevels(z$run)
-    if (gr == 1) {
-        if (is.null(fixed)) {
-            fixed <- ~0 + hrf + session + drift1:session + drift2:session
-        }
-        fe.model <- formula(paste(c("y", as.character(fixed)), 
-            collapse = " "))
-        if (is.null(random)) {
-            if (runs == 1) {
-                random <- ~0 + hrf | subj
-                ar1 <- ~1 | subj/session
-            }
-            if (runs > 1) {
-                if (subj == 1) {
-                  random <- ~0 + hrf | session
-                  ar1 <- ~1 | session
-                }
-                else {
-                  random <- ~0 + hrf | subj/session
-                  ar1 <- ~1 | subj/session
-                }
-            }
-        }
-        else if (subj == 1) {
-            ar1 <- ~1 | session
-        }
-        else {
-            ar1 <- ~1 | subj/session
-        }
-        if (vtype == "individual") {
-            weights <- varIdent(form = ~1 | subj)
-        }
-        if (vtype == "equal") {
-            weights <- NULL
-        }
-        funcA <- function(y, z, fe.model, random, ar1, weights, 
-            dot = FALSE) {
-            z$y <- y[-1]
-            if (dot) 
-                cat(".")
-            lmm <- lme(fixed = fe.model, random = random, correlation = corAR1(value = y[1], 
-                form = ar1, fixed = TRUE), weights = weights, 
-                method = "REML", control = lmeControl(rel.tol = 1e-06, 
-                  returnObject = TRUE), data = z)
-            cbeta <- fixef(lmm)[1]
-            var <- vcov(lmm)[1, 1]
-            resid <- resid(lmm)
-            arfactor <- y[1]
-            df <- lmm$fixDF$X[1]
-            result <- c(cbeta, var, arfactor, df, resid)
-        }
-        cat("fmri.lme: calculating MFX model\n")
-        if (cluster == 1) {
-            if (total > 900) {
-                calc.time <- round(total * 23/2000, 0)
-                warning(paste("Time of calculation takes about", 
-                  calc.time, "min, better use parallelizing option.", 
-                  collapse = " "))
-            }
-            param <- apply(bold2, 1, funcA, z, fe.model, random, 
-                ar1, weights, dot = TRUE)
-        }
-        if (cluster > 1) {
-            cl <- makeCluster(cluster)
-            clusterEvalQ(cl, c(library(nlme), "funcA"))
-            param <- parApply(cl, bold2, 1, funcA, z, fe.model, 
-                random, ar1, weights)
-            stopCluster(cl)
-        }
-        cbeta[mask] <- param[1, ]
-        var[mask] <- param[2, ]
-        arfactor[mask] <- param[3, ]
-        df <- param[4, 1]
-        resid[, mask] <- param[5:(dNt + 4), ]
-        random.model <- paste(c("", as.character(random)), collapse = " ")
-        cat("fmri.lme: finished\n")
-        cat("fmri.lme: calculating spatial correlation\n")
-        lags <- c(5, 5, 3)
-        corr <- .Fortran("mcorr", as.double(resid), as.logical(mask), 
-            as.integer(dx), as.integer(dy), as.integer(dz), as.integer(dNt), 
-            scorr = double(prod(lags)), as.integer(lags[1]), 
-            as.integer(lags[2]), as.integer(lags[3]), PACKAGE = "fmri", 
-            DUP = FALSE)$scorr
-        dim(corr) <- lags
-        qscale <- range(resid)
-        scale <- max(abs(qscale))/32767
-        resid <- writeBin(as.integer(resid/scale), raw(), 2)
-        if (sum(!is.finite(corr))) {
-            warning("fmri.lme: infinite spatial correlations were found. \n              The analyzed region maybe too small. No bandwidths determinable.")
-            bw <- NULL
-            rxyz <- NULL
-        }
-        else {
-            bw <- optim(c(2, 2, 2), corrrisk, method = "L-BFGS-B", 
-                lower = c(0.25, 0.25, 0.25), upper = c(6, 6, 
-                  6), lag = lags, data = corr)$par
-            bw[bw <= 0.25] <- 0
-            dim(bw) <- c(1, 3)
-            rxyz <- c(resel(1, bw[1]), resel(1, bw[2]), resel(1, 
-                bw[3]))
-            dim(rxyz) <- c(1, 3)
-        }
-        scale2 <- NULL
-        corr2 <- NULL
-        bw2 <- NULL
-        rxyz2 <- NULL
-        dim2 <- NULL
-        cat("fmri.lme: finished\n")
-    }
-    if (gr == 2) {
-        cbeta2 <- cbeta
-        var2 <- var
-        gr.label <- levels(z$group)
-        dNt1 <- length(z$group[z$group == gr.label[1]])
-        dNt2 <- length(z$group[z$group == gr.label[2]])
-        resid <- array(1, dim = c(dNt1, total0))
-        resid2 <- array(1, dim = c(dNt2, total0))
-        df2 <- df
-        if (is.null(fixed)) {
-            fixed <- ~0 + hrf:group + session + drift1:session + 
-                drift2:session
-        }
-        fe.model <- formula(paste(c("y", as.character(fixed)), 
-            collapse = " "))
-        if (is.null(random)) {
-            if (runs == 1) {
-                random <- list(subj = pdDiag(~0 + hrf:group))
-            }
-            else if (runs > 1) {
-                stop("fmri.lme: Sorry, repeated measures for two groups are not predefined.")
-            }
-        }
-        if (vtype == "individual") {
-            weights <- varIdent(form = ~1 | subj)
-        }
-        if (vtype == "equal") {
-            weights <- NULL
-        }
-        cbeta.label <- c(paste(c("hrf:group", gr.label[1]), collapse = ""), 
-            paste(c("hrf:group", gr.label[2]), collapse = ""))
-        funcB <- function(y, z, fe.model, random, weights, cbeta.label, 
-            dot = FALSE) {
-            z$y <- y[-1]
-            if (dot) 
-                cat(".")
-            lmm <- lme(fixed = fe.model, random = random, correlation = corAR1(value = y[1], 
-                form = ~1 | subj/session, fixed = TRUE), weights = weights, 
-                method = "REML", control = lmeControl(rel.tol = 1e-06, 
-                  returnObject = TRUE), data = z)
-            cbeta1 <- fixef(lmm)[cbeta.label[1]]
-            cbeta2 <- fixef(lmm)[cbeta.label[2]]
-            var1 <- vcov(lmm)[cbeta.label[1], cbeta.label[1]]
-            var2 <- vcov(lmm)[cbeta.label[2], cbeta.label[2]]
-            resid1 <- resid(lmm)[z$group == levels(z$group)[1]]
-            resid2 <- resid(lmm)[z$group == levels(z$group)[2]]
-            arfactor <- y[1]
-            df1 <- lmm$fixDF$X[cbeta.label[1]]
-            df2 <- lmm$fixDF$X[cbeta.label[2]]
-            result <- c(cbeta1, cbeta2, var1, var2, df1, df2, 
-                arfactor, resid1, resid2)
-        }
-        cat("fmri.lme: calculating MFX model\n")
-        if (cluster == 1) {
-            if (total > 900) {
-                calc.time <- round(total * 23/2000, 0)
-                warning(paste("Time of calculation takes about", 
-                  calc.time, "min, better use parallelizing option.", 
-                  collapse = " "))
-            }
-            param <- apply(bold2, 1, funcB, z, fe.model, random, 
-                weights, cbeta.label, dot = TRUE)
-        }
-        if (cluster > 1) {
-            cl <- makeCluster(cluster)
-            clusterEvalQ(cl, c(library(nlme), "funcB"))
-            param <- parApply(cl, bold2, 1, funcB, z, fe.model, 
-                random, weights, cbeta.label)
-            stopCluster(cl)
-        }
-        cbeta[mask] <- param[1, ]
-        cbeta2[mask] <- param[2, ]
-        var[mask] <- param[3, ]
-        var2[mask] <- param[4, ]
-        df <- param[5, 1]
-        df2 <- param[6, 1]
-        arfactor[mask] <- param[7, ]
-        resid[, mask] <- param[8:(dNt1 + 7), ]
-        resid2[, mask] <- param[(8 + dNt1):(dNt2 + dNt1 + 7), 
-            ]
-        dim <- c(dim.spm, dNt1)
-        dim2 <- c(dim.spm, dNt2)
-        attr(cbeta, "coeff") <- cbeta.label[1]
-        attr(var, "var") <- cbeta.label[1]
-        attr(dim, "group label") <- gr.label[1]
-        attr(cbeta2, "coeff") <- cbeta.label[2]
-        attr(var2, "var") <- cbeta.label[2]
-        attr(dim2, "group label") <- gr.label[2]
-        random.model <- list(formula = paste(c(attr(random$subj, 
-            "formula"), " | subj"), collapse = ""), classes = class(random$subj))
-        cat("fmri.lme: finished\n")
-        cat("fmri.lme: calculating spatial correlation\n")
-        lags <- c(5, 5, 3)
-        corr <- .Fortran("mcorr", as.double(resid), as.logical(mask), 
-            as.integer(dx), as.integer(dy), as.integer(dz), as.integer(dNt1), 
-            scorr = double(prod(lags)), as.integer(lags[1]), 
-            as.integer(lags[2]), as.integer(lags[3]), PACKAGE = "fmri", 
-            DUP = FALSE)$scorr
-        dim(corr1) <- lags
-        corr2 <- .Fortran("mcorr", as.double(resid2), as.logical(mask), 
-            as.integer(dx), as.integer(dy), as.integer(dz), as.integer(dNt2), 
-            scorr = double(prod(lags)), as.integer(lags[1]), 
-            as.integer(lags[2]), as.integer(lags[3]), PACKAGE = "fmri", 
-            DUP = FALSE)$scorr
-        dim(corr2) <- lags
-        qscale <- range(resid)
-        scale <- max(abs(qscale))/32767
-        resid <- writeBin(as.integer(resid/scale), raw(), 2)
-        attr(resid, "resid") <- paste(c("res:group", gr.label[1]), 
-            collapse = "")
-        qscale2 <- range(resid2)
-        scale2 <- max(abs(qscale2))/32767
-        resid2 <- writeBin(as.integer(resid2/scale2), raw(), 
-            2)
-        attr(resid2, "resid") <- paste(c("res:group", gr.label[2]), 
-            collapse = "")
-        if (sum(!is.finite(corr))) {
-            warning("fmri.lme:  infinite spatial correlations were found.\n            The analyzed region maybe too small. No bandwidths determinable.")
-            bw <- NULL
-            rxyz <- NULL
-        }
-        else {
-            bw <- optim(c(2, 2, 2), corrrisk, method = "L-BFGS-B", 
-                lower = c(0.25, 0.25, 0.25), upper = c(6, 6, 
-                  6), lag = lags, data = corr)$par
-            bw[bw <= 0.25] <- 0
-            dim(bw) <- c(1, 3)
-            rxyz <- c(resel(1, bw[1]), resel(1, bw[2]), resel(1, 
-                bw[3]))
-            dim(rxyz) <- c(1, 3)
-        }
-        if (sum(!is.finite(corr2))) {
-            bw2 <- NULL
-            rxyz2 <- NULL
-        }
-        else {
-            bw2 <- optim(c(2, 2, 2), corrrisk, method = "L-BFGS-B", 
-                lower = c(0.25, 0.25, 0.25), upper = c(6, 6, 
-                  6), lag = lags, data = corr2)$par
-            bw2[bw2 <= 0.25] <- 0
-            dim(bw2) <- c(1, 3)
-            rxyz2 <- c(resel(1, bw2[1]), resel(1, bw2[2]), resel(1, 
-                bw2[3]))
-            dim(rxyz2) <- c(1, 3)
-        }
-        attr(scale, "resid") <- paste(c("res:group", gr.label[1]), 
-            collapse = "")
-        attr(corr, "spatial correlations:group") <- gr.label[1]
-        attr(bw, "bandwidths:group") <- gr.label[1]
-        attr(rxyz, "smoothness in resel space:group") <- gr.label[1]
-        attr(scale2, "resid") <- paste(c("res:group", gr.label[2]), 
-            collapse = "")
-        attr(corr2, "spatial correlations:group") <- gr.label[2]
-        attr(bw2, "bandwidths:group") <- gr.label[2]
-        attr(rxyz2, "smoothness in resel space:group") <- gr.label[2]
-        cat("fmri.lme: finished\n")
-    }
-    else if (gr > 2) {
-        stop("fmri.lme: Sorry, more than two groups are not planned in this version.")
-    }
-    cat("fmri.lme: exiting function\n")
-    result <- list(cbeta = cbeta, var = var, cbeta2 = cbeta2, 
-        var2 = var2, mask = mask, res = resid, resscale = scale, 
-        res2 = resid2, resscale2 = scale2, arfactor = arfactor, 
-        rxyz = rxyz, scorr = corr, rxyz2 = rxyz2, scorr2 = corr2, 
-        weights = wghts, dim = dim, dim2 = dim2, bw = bw, bw2 = bw2, 
-        df = df, df2 = df2)
-    if (!is.null(xind)) {
-        result$roixa <- min(xind)
-        result$roixe <- max(xind)
-    }
-    if (!is.null(yind)) {
-        result$roiya <- min(yind)
-        result$roiye <- max(yind)
-    }
-    if (!is.null(zind)) {
-        result$roiza <- min(zind)
-        result$roize <- max(zind)
-    }
-    result$subjects <- max(as.numeric(z$subj))
-    result$subj.runs <- max(as.numeric(z$run))
-    result$sessions <- max(as.numeric(z$session))
-    result$groups <- gr
-    result$fixedModel <- paste(c("", as.character(fixed)), collapse = " ")
-    result$randomModel <- random.model
-    result$VarModel <- vtype
-    result$cluster <- cluster
-    class(result) <- c("fmridata", "fmrispm")
-    attr(result, "design") <- z
-    attr(result, "estimator") <- "one-stage process"
-    attr(result, "white") <- white
-    attr(result, "residuals") <- !is.null(scale)
-    t2 <- Sys.time()
-    cat("time elapsed", difftime(t2, t1, units = "mins"), "mins\n")
-    invisible(result)
-  }
+ds1 <- list(ttt=writeBin(1.0*rnorm(dx*dy*dz*dt) + as.vector(5*stim), 
+            raw(), 4), mask=mask, dim=c(dx, dy, dz, dt))
+ds2 <- list(ttt=writeBin(1.7*rnorm(dx*dy*dz*dt) + as.vector(3*stim), 
+            raw(), 4), mask=mask, dim=c(dx, dy, dz, dt))
+ds3 <- list(ttt=writeBin(0.8*rnorm(dx*dy*dz*dt) + as.vector(1*stim), 
+            raw(), 4), mask=mask, dim=c(dx, dy, dz, dt))
+ds4 <- list(ttt=writeBin(1.2*rnorm(dx*dy*dz*dt) + as.vector(2*stim), 
+            raw(), 4), mask=mask, dim=c(dx, dy, dz, dt))
+class(ds1) <- class(ds2) <- class(ds3) <- class(ds4) <- "fmridata"
+
+## Construct a design matrix for a multi-subject study
+subj <- 4
+runs <- 1
+z <-fmri.designG(hrf, subj = subj, runs = runs)
+
+## Assembly of the aggregated BOLD-Array
+Bold <- array(0, dim = c(dx,dy,dz,subj*runs*dt))
+Bold[1:dx,1:dy,1:dz,1:(dt*1)] <- extract.data(ds1)
+Bold[1:dx,1:dy,1:dz,(dt*1+1):(dt*2)] <- extract.data(ds2)
+Bold[1:dx,1:dy,1:dz,(dt*2+1):(dt*3)] <- extract.data(ds3)
+Bold[1:dx,1:dy,1:dz,(dt*3+1):(dt*4)] <- extract.data(ds4)
+
+## Step 1: Check the model
+y <- Bold[16, 16, 16, ] # choose one voxel
+M1.1 <-  lme(fixed = y ~ 0 + hrf + session + drift1:session + drift2:session,
+            random = ~ 0 + hrf|subj,           
+            correlation = corAR1(value = 0.3, form = ~ 1|subj/session, fixed=TRUE),                   
+            weights = varIdent(form =~ 1|subj), 
+            method ="REML",
+            control = lmeControl(rel.tol=1e-6, returnObject = TRUE),
+            data = z)
+summary(M1.1)
+
+# Residual plots
+plot(M1.1, resid(.,type = "response") ~ scan|subj)
+qqnorm(M1.1, ~resid(.,type = "normalized")|subj, abline = c(0,1))
+
+# Testing the assumption of homoscedasticity 
+M1.2 <- update(M1.1, weights = NULL, data = z)
+anova(M1.2, M1.1) 
+
+# Model fit: observed and fitted values 
+fitted.values <- fitted(M1.1)
+plot(y[1:dt], type="l", main = "Subject 1", xlab = "scan", 
+     ylab = "BOLD-signal", ylim = c(-5,5))
+lines(fitted.values[names(fitted.values)==1],lty=1,lwd=2)
+
+plot(y[(dt+1):(2*dt)], type="l", main = "Subject 2", xlab = "scan", 
+     ylab = "BOLD-signal", ylim = c(-5,5))
+lines(fitted.values[names(fitted.values)==2],lty=1,lwd=2)
+
+plot(y[(2*dt+1):(3*dt)], type="l", main = "Subject 3", xlab = "scan", 
+     ylab = "BOLD-signal", ylim = c(-5,5))
+lines(fitted.values[names(fitted.values)==3],lty=1,lwd=2)
+
+plot(y[(3*dt+1):(4*dt)], type="l", main = "Subject 4", xlab = "scan", 
+     ylab = "BOLD-signal", ylim = c(-5,5))
+lines(fitted.values[names(fitted.values)==4],lty=1,lwd=2)
+
+## Step 2: Estimate a group map
+# without parallelizing
+spm.group1a <- fmri.lmePar(Bold, z, mask = mask, cluster = 1)
+# same with 4 parallel threads
+spm.group1b <- fmri.lmePar(Bold, z, mask = mask, cluster = 4)
+
+## Example for two independent groups
+group <- c(1,1,4,4)
+z2 <- fmri.designG(hrf, subj = subj, runs = runs, group = group)
+spm.group2 <- fmri.lmePar(Bold, z2, mask = mask, cluster = 4)
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{ regression }% at least one, from doc/KEYWORDS

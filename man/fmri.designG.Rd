@@ -1,48 +1,62 @@
 \name{fmri.designG}
 \alias{fmri.designG}
-\title{
-  Construct one-stage Group-Design-Matrix
-}
+%- Also NEED an '\alias' for EACH other topic documented here.
+\title{ Design matrix for fMRI group analysis }
 \description{
-  Construct one-stage Group-Design-Matrix 
+This function returns a design matrix for multi-subject fMRI data to fit a Linear Mixed-effects Model (one-stage procedure) with given stimuli, polynomial drift terms and a set of known population parameters.
 }
 \usage{
-fmri.designG(hrf, subj = 1, runs = 1, group = NULL, age = NULL, sex = NULL, iq = NULL)
+fmri.designG(hrf, subj = 1, runs = 1, group = NULL, age = NULL, 
+             sex = NULL, iq = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{hrf}{one or more expected BOLD response(s) for one session, 
-             typically output from fmri.stimulus(.)}
-  \item{subj}{number of subjects in the study}
-  \item{runs}{number of repeated measures within subjects}
-  \item{group}{optional group vector, length == subj}
-  \item{age}{optional vector with ages for all subjects, length(age) == subj}
-  \item{sex}{optional vector with gender for all subjects, length(sex) == subj}
-  \item{iq}{optional vector with IQ or other test scores for all subjects, length(iq) == subj}
+  \item{hrf}{ vector or matrix containing expected BOLD response(s) 
+  for one session, typically a \code{\link{fmri.stimulus}} object. }
+  \item{subj}{ number of subjects in the study. }
+  \item{runs}{ number of repeated measures within subjects. }
+  \item{group}{ optional vector to define groups. 
+  It is expected one value per subject. }
+  \item{age}{ optional vector with the ages corresponding to the subjects. 
+  It is expected one value per subject. }
+  \item{sex}{ optional vector with the gender corresponding to the subjects. 
+  It is expected one value per subject and will be later reformatted as factor. }
+  \item{iq}{ optional vector with test scores (e.g. IQ) or any other 
+  continuous covariate. It is expected one value per subject. }
 }
 \details{
-  %%  ~~ If necessary, more details than the description above ~~
+Based on the dimensionality of the \code{hrf} object, which provides the total number of scans (time-points) within each session, the entered number of subjects and repeated measures the auxiliary variables: "subj", "run", "scan" and "session" are generated as first part of the returned design matrix.
+  
+If no \code{group} argument is specified, only one population is assumed, otherwise group labels are replicated within sessions of the same subject. 
+  
+First a design matrix for a single run is created by calling: \code{x <- fmri.design(hrf, order = 2)}. Hence the polynomial drift terms are defined orthogonal to the stimuli (see \code{\link{fmri.design}}). This matrix is replicated blockwise to all sessions assuming the same experimental design for all runs. The first drift term, a column of ones, is called "drift0" and models an intercept.
+  
+If given, further subject characteristics: \var{age}, \var{gender} and results of psychometric measures such as IQ score (or any other continuous variable) are filled in the design matrix. Moreover, each of these covariates is mean centered by subtracting the overall mean (Poldrack et al., 2011).
 }
 \value{
-  The value of this function is a dataframe with the following variables
-    \item{subj}{consecutive subject number, 1 to subj}
-    \item{run}{consecutive run number within subj, 1 to run, 
-       for experiments with repeated measures}
-    \item{scan}{consecutive scan number, 1 to T, for every single experiment}
-    \item{session}{consecutive experiment number, 1 to (subj*run)}
-    \item{group}{grouping variable, default: 1 group only}
-    \item{hrf}{expected BOLD-response}
-    \item{drift0, drift1, drift2}{polynomial drift terms, orthogonal to the stimuli}
-    \item{age}{multiplied age information, if unknown: NAs}
-    \item{age_m0}{like above, but mean centered by subtracting the overall mean}
-    \item{sex}{multiplied sex information, if unknown: NAs}
-    \item{sex_m0}{like above, but mean centered by subtracting the overall mean}
-    \item{iq}{multiplied IQ information, if unknown: NAs}
-    \item{iq_m0}{like above, but mean centered by subtracting the overall mean}
+A design matrix as a data frame, which contains the following variables:
+  \item{subj}{ consecutive subject number: 1 to \code{subj} specified as factor }
+  \item{run}{ consecutive run number within the subjects: 1 to \code{runs} specified as factor }
+  \item{scan}{ consecutive scan number: 1 to T within each session }
+  \item{session}{ consecutive experiment number: 1 to \code{(subj*runs)} specified as factor }
+  \item{group}{ grouping variable specified as factor, one group by default }
+  \item{hrf, hrf2, ...}{ replicated expected BOLD-response(s) }
+  \item{drift0, drift1, drift2}{ replicated polynomial drift terms 
+    created with \code{fmri.design(hrf, order = 2)} orthogonal to the stimuli
+    given in \code{hrf} }
+  \item{age}{ replicated age information, if unknown: NAs }
+  \item{age_m0}{ like above, but mean centered by subtracting the overall mean }
+  \item{sex}{ replicated sex information specified as factor, if unknown: NAs }
+  \item{sex_m0}{ like above, but mean centered by subtracting the overall mean }
+  \item{iq}{ replicated IQ information, if unknown: NAs }
+  \item{iq_m0}{ like above, but mean centered by subtracting the overall mean }
 }
-\author{
-  Sibylle Dames
+\references{
+Polzehl, J. and Tabelow, K.(2007). \emph{fmri: A Package for Analyzing fmri Data}, R News, 7:13-17.
+  
+Poldrack, R.A., Mumford, J.A., Nichols, T.E. (2011). Handbook of Functional MRI Data Analysis. Cambridge University Press, chapter 6.2. 
 }
+\author{ Sibylle Dames }
 \seealso{
   \code{\link{fmri.stimulus}}, \code{\link{fmri.design}}, \code{\link{fmri.lmePar}}
 }
@@ -54,10 +68,9 @@ times <- c(12, 48, 84, 120, 156, 192, 228, 264)
 duration <- 24          
 tr <- 2.5
 
-## Group-Designmatrix
 hrf <- fmri.stimulus(scans, times, duration, tr, times = TRUE)
 x.group <- fmri.designG(hrf, subj = subj, runs = runs)
-
+View(x.group)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

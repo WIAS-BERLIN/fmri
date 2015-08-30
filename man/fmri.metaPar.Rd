@@ -1,241 +1,164 @@
 \name{fmri.metaPar}
 \alias{fmri.metaPar}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{Estimation of the group map
-}
+\title{ Linear Mixed-effects Meta-Analysis model for fMRI data }
 \description{
-Estimation of the group map using a two-stage procedure
+Group maps are estimated from BOLD effect estimates and their variances previously determined for each subject. The function \code{\link{rma.uni()}} from R package \pkg{metafor} is used to fit mixed-effects meta-analytic models at group level. Voxel-wise regression analysis is accelerated by optional parallel processing using R package \pkg{parallel}.
 }
 \usage{
-fmri.metaPar(G, V, X = NULL, model = NULL, method = "REML", weighted = TRUE, mask = NULL, cluster = 2, white = 1, wghts = c(1, 1, 1))
+fmri.metaPar(Cbold, Vbold, XG = NULL, model = NULL, method = "REML", weighted = TRUE, knha = FALSE, mask = NULL, cluster = 2, wghts = c(1, 1, 1))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{G}{
-%%     ~~Describe \code{G} here~~
+  \item{Cbold}{ a 4D-Array with the aggregated individual BOLD contrast estimates in standard space, e.g. all \code{cbeta} maps obtained from single-session analysis with \code{\link{fmri.lm()}} may put together. Dimensions 1 to 3 define the voxel space, dimension 4 indicates a subject. If not the whole brain but a region is analyzed, vectors with region-indices can be preserved by adding as attributes (e.g. \code{attr(Cbold, "xind") <- xind}).
 }
-  \item{V}{
-%%     ~~Describe \code{V} here~~
+  \item{Vbold}{ a 4D-Array with the aggregated variance estimates for the contrast parameters in \code{Cbold}, e.g. all \code{var} maps obtained from single-session analysis with \code{\link{fmri.lm()}} may put together. Dimensions 1 to 3 define the voxel space, dimension 4 indicates a subject.
 }
-  \item{X}{
-%%     ~~Describe \code{X} here~~
+  \item{XG}{ optionally, a group-level design matrix of class \code{"data.frame"} to include one or more moderators in the model. By default, an intercept is added to the model.
 }
-  \item{model}{
-%%     ~~Describe \code{model} here~~
+  \item{model}{ optionally, a one-sided formula of the form: \code{model <- ~ mod1 + mod2 + mod3} describing a model with moderator variables. Adding \code{"-1"} removes the intercept term.
 }
-  \item{method}{
-%%     ~~Describe \code{method} here~~
+  \item{method}{ a character string specifying whether a fixed- (method = "FE") or a random/mixed-effects model (method = "REML", default) should be fitted. Further estimators for random/mixed-effects models are available, see documentation of \code{\link{rma.uni()}} function for more details.
 }
-  \item{weighted}{
-%%     ~~Describe \code{weighted} here~~
+  \item{weighted}{ logical indicating whether weighted (\code{weighted = TRUE}, default) or unweighted estimation should be used to fit the model.
 }
-  \item{mask}{
-%%     ~~Describe \code{mask} here~~
+  \item{knha}{ logical specifying whether the method by Knapp and Hartung (2003) should be used for adjusting standard errors of the estimated coefficients (default is FALSE). The Knapp and Hartung adjustment is only meant to be used in the context of random- or mixed-effects models.
 }
-  \item{cluster}{
-%%     ~~Describe \code{cluster} here~~
+  \item{mask}{ if available, a logical 3D-Array of dimensionality of the data (without 4th subject component) describing a brain mask. The computation is restricted to the selected voxels.
 }
-  \item{white}{
-%%     ~~Describe \code{white} here~~
+  \item{cluster}{ number of threads for parallel processing, which is limited to available multi-core CPUs. If you do not know your CPUs, try: \code{detectCores()} from \pkg{parallel} package. Presets are 2 threads. \code{cluster = 1} does not use \pkg{parallel} package.
 }
-  \item{wghts}{
-%%     ~~Describe \code{wghts} here~~
+  \item{wghts}{ a vector of length 3 specifying ratio of voxel dimensions. Isotropic voxels (e.g. MNI-space) are set as default.
 }
 }
 \details{
 %%  ~~ If necessary, more details than the description above ~~
+\code{fmri.metaPar()} fits the configured linear mixed-effects meta-analytic (MEMA) model separately at each voxel and extracts the first regression coefficient (usually the overall group mean), corresponding squared standard errors and degrees of freedom as well as the residuals from resulting \code{rma.uni()} objects, to obtain a statistical parametric map (SPM) for the group. Voxel-by-voxel analysis is performed by either the function \code{\link{apply()}} or \code{\link{parApply()}} from \pkg{parallel} package, which walks through the \code{Cbold} array.
+
+This two-stage approach reduces the computational burden of fitting a full linear mixed-effects (LME) model, \code{\link{fmri.lmePar()}} would do. It assumes first level design is same across subjects and normally distributed not necessarily homogeneous within-subject errors. Warping to standard space has been done before first-stage analyses are carried out. Either no masking or a uniform brain mask should be applied at individual subject analysis level, to avoid loss of information at group level along the edges. 
+
+At the second stage, observed individual BOLD effects from each study are combined in a meta-analytic model. There is the opportunity of weighting the fMRI studies by the precision of their respective effect estimate to take account of first level residual heterogeneity (\code{weighted = TRUE}). This is how to deal with intra-subject variability. The REML estimate of cross-subject variability (tau-squared) assumes that each of these observations is drawn independently from the same Gaussian distribution. Since correlation structures cannot be modeled, multi-subject fMRI studies with repeated measures cannot be analyzed in this way. 
+
+Spatial correlation among voxels, e.g. through the activation of nearby voxels, is ignored at this stage, but corrects for it, when random field theory define a threshold for significant activation at inference stage.
+
+It is recommended to check your model syntax and residuals choosing some distinct voxels before running the model in loop (see Example). Error handling default is to stop if one of the threads produces an error. When this occurs, the output will be lost from any voxel, where the model has fitted successfully.
 }
 \value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
+An object of class \code{"fmrispm"} and \code{"fmridata"}, basically a list with components:
+  \item{beta}{estimated regression coefficients}
+  \item{se}{estimated standard errors of the coefficients}
+  \item{cbeta}{estimated BOLD contrast parameters for the group. Always the first regression coefficient is taken.}
+  \item{var}{estimated variance of the BOLD contrast parameters}
+  \item{mask}{brain mask}
+  \item{res}{raw (integer size 2) vector containing residuals of the estimated linear mixed-effects meta-analytic model up to scale factor \code{resscale}}
+  \item{resscale}{\code{resscale*extract.data(object,"residuals")} are the residuals.}
+  \item{tau2}{estimated amount of (residual) heterogeneity. Always 0 when \code{method = "FE"}.}
+  \item{rxyz}{array of smoothness from estimated correlation for each voxel in resel space (for analysis without smoothing).}
+  \item{scorr}{array of spatial correlations with maximal lags 5, 5, 3 in x, y and z-direction}
+  \item{bw}{vector of bandwidths (in FWHM) corresponding to the spatial correlation within the data}
+  \item{weights}{ratio of voxel dimensions}
+  \item{dim}{dimension of the data cube and residuals}
+  \item{df}{degrees of freedom for t-statistics, df = (n-p-1)}
+  \item{sessions}{number of observations entering the meta-analytic model, n}
+  \item{coef}{number of coefficients in the meta-analytic model (including the intercept, p+1)}
+  \item{method}{estimator used to fit the meta-analytic model. In case of "FE", it is weighted or unweighted least squares.}
+  \item{weighted}{estimation with inverse-variance weights}
+  \item{knha}{Knapp and Hartung adjustment}
+  \item{model}{meta-analytic regression model}
+  \item{cluster}{number of threads running in parallel}
+  \item{attr(*,"design")}{group-level design matrix}
+  \item{attr(*,"approach")}{two-stage estimation method}
 }
 \references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-%%  ~~who you are~~
-}
-\note{
-%%  ~~further notes~~
-}
+Chen G., Saad Z.S., Nath A.R., Beauchamp M.S., Cox R.W. (2012). FMRI group analysis combining effect estimates and their variances. NeuroImage, 60: 747-765.
 
+Knapp G. and Hartung J. (2003). Improved tests for a random effects meta-regression with a single covariate. Statistics in Medicine, 22: 2693-2710.
+
+Viechtbauer W. (2005). Bias and efficiency of meta-analytic variance estimators in the random-effects model. Journal of Educational and Behavioral Statistics, 30: 261-293.
+
+Viechtbauer W. (2010). Conducting meta-analyses in R with the metafor package. Journal of Statistical Software, 36(3): 1-48
+
+Viechtbauer W. (2015). \emph{metafor: Meta-Analysis Package for R} R package version 1.9-7.
+}
+\author{ Sibylle Dames }
+\note{
+Meta analyses tend to be less powerful for neuroimaging studies, because they only have as many degrees of freedom as number of subjects. If the number of subjects is very small, then it may be impossible to estimate the between-subject variance (tau-squared) with any precision. In this case the fixed effect model may be the only viable option. However, there is also the possibility of using a one-stage model, that includes the full time series data from all subjects and simultaneously estimates subject and group levels parameters (see \code{\link{fmri.lmePar}}). Although this approach is much more computer intensive, it has the advantage of higher degrees of freedom (> 100) at the end.
+
+\itemize{Current Limitations\cr
+The function cannot handle:
+\item{experimental designs with a within-subject (repeated measures) factor}
+\item{paired samples with varying tasks, unless the contrast of the two conditions is used as input}
+}
+}
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+  \code{\link{rma.uni}}, \code{\link{fmri.lm}}, \code{\link{fmri.lmePar}}
 }
 \examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
+## Generate some fMRI data sets: noise + stimulus
+dx <- dy <- dz <- 32
+dt <- 107
+hrf <- fmri.stimulus(dt, c(18, 48, 78), 15, 2)
+stim <- matrix(hrf, nrow= dx*dy*dz, ncol=dt, byrow=TRUE)
+mask <- array(FALSE, c(dx, dy, dz))
+mask[12:22,12:22,12:22] <- TRUE
 
-## The function is currently defined as
-function (G, V, X = NULL, model = NULL, method = "REML", weighted = TRUE, 
-    mask = NULL, cluster = 2, white = 1, wghts = c(1, 1, 1)) 
-{
-    t1 <- Sys.time()
-    cat("fmri.meta: entering function\n")
-    if (length(dim(G)) != 4) 
-        stop("fmri.meta: The first argument does not seem to be a 4D-Array.\n")
-    if (length(dim(V)) != 4) 
-        stop("fmri.meta: The second argument does not seem to be a 4D-Array.\n")
-    if (!identical(dim(G), dim(V))) 
-        stop("fmri.meta: dimensionality of the two arrays are not the same.\n")
-    if ((!is.null(X)) && (!is.data.frame(X))) 
-        stop("fmri.meta: The design matrix X is not a data frame.")
-    if (is.null(mask)) {
-        mask <- array(TRUE, dim = dim(G)[1:3])
-    }
-    if (!identical(dim(mask), dim(G)[1:3])) 
-        stop("fmri.meta: mask dimensionality does not match the data.\n")
-    if (sum(mask) == 0) 
-        stop("fmri.meta: your head mask is empty, nothing to do.\n")
-    dim.spm <- dim(G)[1:3]
-    dx <- dim(G)[1]
-    dy <- dim(G)[2]
-    dz <- dim(G)[3]
-    dk <- dim(G)[4]
-    total0 <- dx * dy * dz
-    if (!is.null(attr(G, "xind"))) {
-        xind <- attr(G, "xind")
-    }
-    else {
-        xind <- NULL
-    }
-    if (!is.null(attr(G, "yind"))) {
-        yind <- attr(G, "yind")
-    }
-    else {
-        yind <- NULL
-    }
-    if (!is.null(attr(G, "zind"))) {
-        zind <- attr(G, "zind")
-    }
-    else {
-        zind <- NULL
-    }
-    dim(G) <- c(total0, dk)
-    dim(V) <- c(total0, dk)
-    total <- sum(mask)
-    GV <- array(0, dim = c(total, 2 * dk))
-    GV[, 1:dk] <- G[mask, ]
-    GV[, (dk + 1):(2 * dk)] <- V[mask, ]
-    rm(G, V)
-    gc()
-    cbeta <- array(0, dim = dim.spm)
-    var <- array(1, dim = dim.spm)
-    resid <- array(1, dim = c(dk, total0))
-    if (is.null(X)) {
-        mods <- NULL
-    }
-    else if (is.null(model)) {
-        mods <- NULL
-    }
-    else {
-        mods = model
-    }
-    funcD <- function(y, mods, X, method, weighted, dk, dot = FALSE) {
-        g <- y[1:dk]
-        v <- y[(dk + 1):(2 * dk)]
-        if (dot) 
-            cat(".")
-        fit <- rma.uni(g, v, mods = mods, data = X, method = method, 
-            weighted = weighted, control = list(stepadj = 0.5, 
-                threshold = 0.001, maxiter = 1000))
-        cbeta <- fit$b[1]
-        var <- fit$vb[1, 1]
-        resid <- g - cbeta
-        df <- dk - dim(fit$X)[2]
-        result <- c(cbeta, var, df, resid)
-    }
-    cat("fmri.meta: calculating MEMA model\n")
-    if (cluster == 1) {
-        calc.time <- round(total * 1/11400, 0)
-        cat(paste("Time of calculation takes about", calc.time, 
-            "min.\n", collapse = " "))
-        param <- apply(GV, 1, funcD, mods, X, method, weighted, 
-            dk, dot = FALSE)
-    }
-    if (cluster > 1) {
-        cl <- makeCluster(cluster)
-        clusterEvalQ(cl, c(library(metafor), "funcD"))
-        param <- parApply(cl, GV, 1, funcD, mods, X, method, 
-            weighted, dk)
-        stopCluster(cl)
-    }
-    cbeta[mask] <- param[1, ]
-    var[mask] <- param[2, ]
-    df <- param[3, 1]
-    resid[, mask] <- param[4:(dk + 3), ]
-    cat("fmri.meta: finished\n")
-    cat("fmri.meta: calculating spatial correlation\n")
-    lags <- c(5, 5, 3)
-    corr <- .Fortran("mcorr", as.double(resid), as.logical(mask), 
-        as.integer(dx), as.integer(dy), as.integer(dz), as.integer(dk), 
-        scorr = double(prod(lags)), as.integer(lags[1]), as.integer(lags[2]), 
-        as.integer(lags[3]), PACKAGE = "fmri", DUP = FALSE)$scorr
-    dim(corr) <- lags
-    qscale <- range(resid)
-    scale <- max(abs(qscale))/32767
-    resid <- writeBin(as.integer(resid/scale), raw(), 2)
-    if (sum(!is.finite(corr))) {
-        warning("fmri.meta:  infinite spatial correlations were found.\n              The analyzed region maybe too small. No bandwidths determinable.")
-        bw <- NULL
-        rxyz <- NULL
-    }
-    else {
-        bw <- optim(c(2, 2, 2), corrrisk, method = "L-BFGS-B", 
-            lower = c(0.25, 0.25, 0.25), upper = c(6, 6, 6), 
-            lag = lags, data = corr)$par
-        bw[bw <= 0.25] <- 0
-        dim(bw) <- c(1, 3)
-        rxyz <- c(resel(1, bw[1]), resel(1, bw[2]), resel(1, 
-            bw[3]))
-        dim(rxyz) <- c(1, 3)
-    }
-    cat("fmri.meta: finished\n")
-    cat("fmri.meta: exiting function\n")
-    result <- list(cbeta = cbeta, var = var, mask = mask, res = resid, 
-        resscale = scale, rxyz = rxyz, scorr = corr, weights = wghts, 
-        dim = c(dim.spm, dk), bw = bw, df = df)
-    if (!is.null(xind)) {
-        result$roixa <- min(xind)
-        result$roixe <- max(xind)
-    }
-    if (!is.null(yind)) {
-        result$roiya <- min(yind)
-        result$roiye <- max(yind)
-    }
-    if (!is.null(zind)) {
-        result$roiza <- min(zind)
-        result$roize <- max(zind)
-    }
-    result$subjects <- dk
-    result$method <- method
-    result$weighted <- weighted
-    if (is.null(model)) {
-        result$model <- as.character("~ 1")
-    }
-    else {
-        result$model <- paste(c("", as.character(model)), collapse = " ")
-    }
-    result$cluster <- cluster
-    class(result) <- c("fmridata", "fmrispm")
-    intrcpt <- rep(1, dk)
-    attr(result, "design") <- data.frame(cbind(intrcpt, X))
-    attr(result$cbeta, "note") <- "intercept or first coefficient"
-    attr(result, "estimator") <- "two-stage process"
-    attr(result, "white") <- white
-    attr(result, "residuals") <- !is.null(scale)
-    t2 <- Sys.time()
-    cat("time elapsed", difftime(t2, t1, units = "mins"), "mins\n")
-    invisible(result)
-  }
+ds1 <- list(ttt=writeBin(1.0*rnorm(dx*dy*dz*dt) + as.vector(5*stim), 
+           raw(), 4), mask = mask, dim = c(dx, dy, dz, dt))
+ds2 <- list(ttt=writeBin(1.7*rnorm(dx*dy*dz*dt) + as.vector(3*stim), 
+           raw(), 4), mask = mask, dim = c(dx, dy, dz, dt))
+ds3 <- list(ttt=writeBin(0.8*rnorm(dx*dy*dz*dt) + as.vector(1*stim), 
+           raw(), 4), mask = mask, dim = c(dx, dy, dz, dt))
+ds4 <- list(ttt=writeBin(1.2*rnorm(dx*dy*dz*dt) + as.vector(2*stim), 
+           raw(), 4), mask = mask, dim = c(dx, dy, dz, dt))
+class(ds1) <- class(ds2) <- class(ds3) <- class(ds4) <- "fmridata"
+
+## Stage 1: single-session regression analysis
+x <- fmri.design(hrf, order=2)
+spm.sub01 <- fmri.lm(ds1, x, mask, actype = "smooth", verbose = TRUE)
+spm.sub02 <- fmri.lm(ds2, x, mask, actype = "smooth", verbose = TRUE) 
+spm.sub03 <- fmri.lm(ds3, x, mask, actype = "smooth", verbose = TRUE) 
+spm.sub04 <- fmri.lm(ds4, x, mask, actype = "smooth", verbose = TRUE) 
+
+## Store observed individual BOLD effects and their variance estimates
+subj <- 4
+Cbold <- array(0, dim = c(dx, dy, dz, subj))
+Cbold[,,,1] <- spm.sub01$cbeta
+Cbold[,,,2] <- spm.sub02$cbeta
+Cbold[,,,3] <- spm.sub03$cbeta
+Cbold[,,,4] <- spm.sub04$cbeta
+
+Vbold <- array(0, dim = c(dx, dy, dz, subj))
+Vbold[,,,1] <- spm.sub01$var
+Vbold[,,,2] <- spm.sub02$var
+Vbold[,,,3] <- spm.sub03$var
+Vbold[,,,4] <- spm.sub04$var
+
+## Stage 2: Random-effects meta-regression analysis
+## a) Check your model
+library(metafor)
+M1.1 <- rma.uni(Cbold[16,16,16, ], 
+                Vbold[16,16,16, ],
+                method = "REML",
+                weighted = TRUE,
+                knha = TRUE,
+                verbose = TRUE,
+                control = list(stepadj=0.5, maxiter=2000, threshold=0.001))
+
+# Control list contains convergence parameters later used 
+# at whole data cube. Values were adjusted to fMRI data.
+
+summary(M1.1)
+forest(M1.1)
+qqnorm(M1.1)
+
+## b) Estimate a group map
+## without parallelizing
+spm.group1a <- fmri.metaPar(Cbold, Vbold, knha = TRUE, 
+                            mask = mask, cluster = 1)
+## same with 4 parallel threads
+spm.group1b <- fmri.metaPar(Cbold, Vbold, knha = TRUE, 
+                            mask = mask, cluster = 4)
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{ regression }% at least one, from doc/KEYWORDS

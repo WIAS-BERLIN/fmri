@@ -199,6 +199,8 @@ fmri.lmePar <- function (bold,
     stop("fmri.lme: design matrix dimensionality does not match functional data.")
   if ((!length(ac)==1) && (!identical(dim(ac),dim.spm)))
     stop("fmri.lme: AR1-array dimensionality does not match functional data.")
+  if ((min(ac) < 0) || (max(ac) > 1))
+    stop("fmri.lme: AR1-coefficents out of range.")
   if (is.null(mask)) {
     mask <- array(TRUE, dim=dim.spm)
   }
@@ -236,10 +238,8 @@ fmri.lmePar <- function (bold,
   total <- sum(mask)
   
   ## insert: early termination criterion
-  if ((cluster==1) && (total > 26000)) {
-    stop("Time for this calculation takes longer than 5 hours. Please use parallelizing option.")
-  } else if ((cluster==1) && (total > 16000)) {
-    stop("Time for this calculation takes longer than 3 hours. Please use parallelizing option.") 
+  if ((cluster==1) && (total > 20000)) {
+    stop("Time for this calculation takes longer than 1 hour. Please use parallelizing option.")
   }
   
   bold2 <- array(0, dim=c(total, dNt+1))
@@ -295,7 +295,8 @@ fmri.lmePar <- function (bold,
       ar1 <- ~ 1|session
     } else {
       ar1 <- ~ 1|subj/session
-    } 
+    }
+    random.model <- paste(c("",as.character(random)),collapse = " ")
           
     # ... but subject-specific error terms still be valid, whereas
     # homoscedasticity assumption mostly not acceptable (dames: LR-tests) 
@@ -330,11 +331,6 @@ fmri.lmePar <- function (bold,
     ## voxel-by-voxel analysis
     # A) without parallelizing 
     if (cluster==1) {
-      if (total > 900) {
-        calc.time <- round(total*23/2000,0)  # ca. 23 min per 2000 voxels (dames)
-        warning(paste("Time of calculation takes about",calc.time,
-                      "min, better use parallelizing option.", collapse = " "))
-      }
       param <- apply(bold2, 1, funcA, z, fe.model, random, ar1, weights, dot = TRUE)
     } 
     
@@ -354,7 +350,6 @@ fmri.lmePar <- function (bold,
     arfactor[mask] <- param[3, ]
     df <- param[4,1]
     resid[, mask] <- param[5:(dNt+4), ]
-    random.model <- paste(c("",as.character(random)),collapse = " ")
     cat("fmri.lme: finished\n")
     
     cat("fmri.lme: calculating spatial correlation\n")
@@ -420,6 +415,9 @@ fmri.lmePar <- function (bold,
         stop("fmri.lme: Sorry, repeated measures for two groups are not predefined.")
       }
     }
+    random.model <- list(formula=paste(c(attr(random$subj, "formula"), " | subj"),
+                                       collapse = ""), classes=class(random$subj))
+    
     if (vtype=="individual") {
       weights <- varIdent(form =~ 1|subj)
     }
@@ -461,11 +459,6 @@ fmri.lmePar <- function (bold,
     ## voxel-by-voxel analysis
     # A) without parallelizing 
     if (cluster==1) {
-      if (total > 900) {
-        calc.time <- round(total*23/2000,0)  # ca. 23 min per 2000 voxels (dames)
-        warning(paste("Time of calculation takes about",calc.time,
-                      "min, better use parallelizing option.", collapse = " "))
-      }
       param <- apply(bold2, 1, funcB, z, fe.model, random, weights, 
                      cbeta.label, dot = TRUE)
     } 
@@ -497,9 +490,6 @@ fmri.lmePar <- function (bold,
     attr(cbeta2, "coeff") <- cbeta.label[2]
     attr(var2, "var") <- cbeta.label[2]   
     attr(dim2, "group label") <- gr.label[2]
-    random.model <- list(formula=paste(c(attr(random$subj, "formula"), " | subj"),
-                                 collapse = ""), 
-                   classes=class(random$subj))
     cat("fmri.lme: finished\n")
     
     cat("fmri.lme: calculating spatial correlation\n")
@@ -509,7 +499,7 @@ fmri.lmePar <- function (bold,
                       as.integer(dNt1), scorr = double(prod(lags)), as.integer(lags[1]), 
                       as.integer(lags[2]), as.integer(lags[3]), PACKAGE = "fmri", 
                       DUP = TRUE)$scorr
-    dim(corr1) <- lags
+    dim(corr) <- lags
     
     corr2 <- .Fortran("mcorr", as.double(resid2), as.logical(mask), 
                       as.integer(dx), as.integer(dy), as.integer(dz), 
@@ -588,11 +578,11 @@ fmri.lmePar <- function (bold,
                  scorr = corr,
                  rxyz2 = rxyz2, 
                  scorr2 = corr2,
+                 bw = bw,
+                 bw2 = bw2,
                  weights = wghts, 
                  dim = dim,
                  dim2 = dim2, 
-                 bw = bw,
-                 bw2 = bw2, 
                  df = df,
                  df2 = df2)
   if (!is.null(xind)) {
@@ -620,7 +610,7 @@ fmri.lmePar <- function (bold,
   
   class(result) <- c("fmridata", "fmrispm")
   attr(result, "design") <- z
-  attr(result, "estimator") <- "one-stage process"
+  attr(result, "approach") <- "one-stage process"
   attr(result, "white") <- white
   attr(result, "residuals") <- !is.null(scale)
   
@@ -629,20 +619,20 @@ fmri.lmePar <- function (bold,
   invisible(result)
 }
 
-## Estimation of the group map: SS-Approach (two-stage procedure), 
+## Estimation of the group map in a two-stage procedure, 
 ## assumption: parameter estimates for each subject are independent
 # metafor- and parallel-packages are needed
 
 # Input data:
-# G = Multi-Subject-Array of estimated BOLD-contrasts (gamma's),
+# Cbold = Multi-Subject-Array of estimated BOLD-contrasts (gamma's),
 #     dimensions 1 to 3 define the 3D voxel space, 
 #     dimension 4 counts the k pre-analyzed subjects
-#     e.g., G <- array(0, dim = c(dx,dy,dz,k))
-#          G[,,,1] <- spm.sub01$cbeta
-#          G[,,,2] <- spm.sub02$cbeta
-# V = Multi-Subject-Array of the estimated variances for the BOLD-contrasts,
-#     array dimensions equal to G
-# X = optional argument to include one or more moderators in the model, 
+#     e.g., Cbold <- array(0, dim = c(dx,dy,dz,k))
+#           Cbold[,,,1] <- spm.sub01$cbeta
+#           Cbold[,,,2] <- spm.sub02$cbeta
+# Vbold = Multi-Subject-Array of the estimated variances for the BOLD-contrasts,
+#     array dimensions equal to Cbold
+# XG = optional argument to include one or more moderators in the model, 
 #     moderators are specified by a data frame with k rows and 
 #     as many columns as there are moderator variables.
 #     The intercept is added to the model matrix by default.
@@ -655,90 +645,90 @@ fmri.lmePar <- function (bold,
 #          should be fitted
 # weighted = logical indicating whether weighted (weighted=TRUE, default) or 
 #            unweighted (FALSE) least squares should be used to fit the model.
+# knha  = logical specifying whether the method by Knapp and Hartung (2003) 
+#         should be used for adjusting standard errors (default=FALSE)
 # mask  = head mask, if available
 # cluster = number of CPU cores for parallel voxel calculating,
 #         cluster = 1 used the simple unparallelized method (very slow);
 #         if you do not know your CPUs, try: detectCores() from parallel-package
-# white = 1 (calc AC, smooth AC, calc prewhitened model; default),
-#         2 (calc AC, calc prewhitened model),
-#         3 (calc AC only); see attributes of estimated SPM for single subjects  
 # wghts = vector of length three, for isotropic voxel like being in MNI-space: 
 #         wghts = c(1,1,1) by default. you can enter other ratios. 
 
-fmri.metaPar <- function (G,
-                          V,
-                          X = NULL,
+fmri.metaPar <- function (Cbold,
+                          Vbold,
+                          XG = NULL,
                           model = NULL,
                           method = "REML",
                           weighted = TRUE,
+                          knha = FALSE,
                           mask = NULL,
                           cluster = 2,
-                          white = 1,
                           wghts = c(1,1,1)) {
   
   t1 <- Sys.time()
   cat("fmri.meta: entering function\n")
   
   ## test dimensionality of objects
-  if (length(dim(G)) != 4)
+  if (length(dim(Cbold)) != 4)
     stop("fmri.meta: The first argument does not seem to be a 4D-Array.\n")
-  if (length(dim(V)) != 4)
+  if (length(dim(Vbold)) != 4)
     stop("fmri.meta: The second argument does not seem to be a 4D-Array.\n")
-  if (!identical(dim(G),dim(V)))
+  if (!identical(dim(Cbold), dim(Vbold)))
     stop("fmri.meta: dimensionality of the two arrays are not the same.\n")
-  if ((!is.null(X)) && (!is.data.frame(X)))
-    stop("fmri.meta: The design matrix X is not a data frame.")
+  if ((!is.null(XG)) && (!is.data.frame(XG)))
+    stop("fmri.meta: The design matrix XG is not a data frame.")
   if (is.null(mask)) {
-    mask <- array(TRUE, dim=dim(G)[1:3])
+    mask <- array(TRUE, dim = dim(Cbold)[1:3])
   }
-  if (!identical(dim(mask), dim(G)[1:3]))
+  if (!identical(dim(mask), dim(Cbold)[1:3]))
     stop("fmri.meta: mask dimensionality does not match the data.\n")
   if (sum(mask)==0)
     stop("fmri.meta: your head mask is empty, nothing to do.\n")
   
   ## set dimensions
-  dim.spm <- dim(G)[1:3]
-  dx <- dim(G)[1]
-  dy <- dim(G)[2]
-  dz <- dim(G)[3]
-  dk <- dim(G)[4]
+  dim.spm <- dim(Cbold)[1:3]
+  dx <- dim(Cbold)[1]
+  dy <- dim(Cbold)[2]
+  dz <- dim(Cbold)[3]
+  dk <- dim(Cbold)[4]
   total0 <- dx*dy*dz
   
-  ## keep roi-attributes, G object will be removed
-  if (!is.null(attr(G, "xind"))) {
-    xind <- attr(G, "xind")
+  ## keep roi-attributes, Cbold object will be removed
+  if (!is.null(attr(Cbold, "xind"))) {
+    xind <- attr(Cbold, "xind")
   } else { 
     xind <- NULL
   }
-  if (!is.null(attr(G, "yind"))) {
-    yind <- attr(G, "yind")
+  if (!is.null(attr(Cbold, "yind"))) {
+    yind <- attr(Cbold, "yind")
   } else {
     yind <- NULL
   }
-  if (!is.null(attr(G, "zind"))) {
-    zind <- attr(G, "zind")
+  if (!is.null(attr(Cbold, "zind"))) {
+    zind <- attr(Cbold, "zind")
   } else {
     zind <- NULL
   }
   
   ## apply mask and merge arrays containing the level 1 outcomes 
-  dim(G) <- c(total0,dk)
-  dim(V) <- c(total0,dk)
+  dim(Cbold) <- c(total0,dk)
+  dim(Vbold) <- c(total0,dk)
   total <- sum(mask)
   
-  GV <- array(0, dim=c(total, 2*dk))
-  GV[, 1:dk] <- G[mask,]
-  GV[, (dk+1):(2*dk)] <- V[mask,]
-  rm(G, V)
+  CV <- array(0, dim=c(total, 2*dk))
+  CV[, 1:dk] <- Cbold[mask,]
+  CV[, (dk+1):(2*dk)] <- Vbold[mask,]
+  rm(Cbold, Vbold)
   gc()
   
   ## define some arrays capturing the estimated values  
   cbeta <- array(0, dim = dim.spm)
   var <- array(1, dim = dim.spm)
+  tau2 <- array(0, dim = dim.spm)
   resid <- array(1, dim = c(dk, total0))
   
   ## configure model syntax
-  if (is.null(X)) {
+  if (is.null(XG)) {
     mods <- NULL
   } else if (is.null(model)) {
     mods <- NULL
@@ -747,23 +737,26 @@ fmri.metaPar <- function (G,
   }
   
   ## internal auxiliary function: estimation of the parameters in one voxel i
-  funcD <- function(y, mods, X, method, weighted, dk, dot = FALSE) {
-    g <- y[1:dk]
+  funcD <- function(y, mods, XG, method, weighted, knha, dk, dot = FALSE) {
+    c <- y[1:dk]
     v <- y[(dk+1):(2*dk)]
     if (dot) cat(".")
-    fit <- rma.uni(g, 
+    fit <- rma.uni(c, 
                    v, 
                    mods = mods, 
-                   data = X, 
+                   data = XG, 
                    method = method, 
                    weighted = weighted,
+                   knha = knha,
                    control = list(stepadj=0.5, threshold=0.001, maxiter = 1000))
     cbeta <- fit$b[1]
-    #    se <- fit$se[1]
     var <- fit$vb[1,1]
-    resid <- g - cbeta
-    df <- dk-dim(fit$X)[2]
-    result <- c(cbeta,var,df,resid)
+    beta <- fit$b
+    se <- fit$se
+    resid <- c - cbeta
+    tau2 <- fit$tau2
+    df <- fit$k - fit$p # df=(n-p), p incl. intercept
+    result <- c(cbeta, var, tau2, df, resid, beta, se)
   }
   
   cat("fmri.meta: calculating MEMA model\n")
@@ -771,24 +764,33 @@ fmri.metaPar <- function (G,
   ## voxel-by-voxel analysis
   # A) without parallelizing 
   if (cluster==1) {
-    calc.time <- round(total*1/11400,0)  # ca. 1 min per 11400 voxels (dames)
-    cat(paste("Time of calculation takes about",calc.time,
-              "min.\n", collapse = " "))
-    param <- apply(GV, 1, funcD, mods, X, method, weighted, dk, dot = FALSE)
+    param <- apply(CV, 1, funcD, mods, XG, method, weighted, knha, 
+                   dk, dot = FALSE)
   } 
   
   # B) with parallelizing
   if (cluster > 1) {
     cl <- makeCluster(cluster)
     clusterEvalQ(cl, c(library(metafor),"funcD"))
-    param <- parApply(cl, GV, 1, funcD, mods, X, method, weighted, dk)
+    param <- parApply(cl, CV, 1, funcD, mods, XG, method, weighted, 
+                      knha, dk)
     stopCluster(cl)
   }
   
   cbeta[mask] <- param[1, ]
   var[mask] <- param[2, ]
-  df <- param[3,1]
-  resid[, mask] <- param[4:(dk+3), ]
+  tau2[mask] <- param[3,]
+  df <- param[4,1]
+  resid[, mask] <- param[5:(dk+4), ]
+  
+  p <- dk - df # number of estimated coefficients
+  beta <- array(0, dim = c(total0, p))
+  beta[mask,] <- t(param[(dk+5):(dk+4+p), ])
+  dim(beta) <- c(dim.spm, p) 
+  se <- array(1, dim = c(total0, p))
+  se[mask,] <- t(param[(dk+5+p):(dk+4+2*p), ])
+  dim(se) <- c(dim.spm, p)
+  
   cat("fmri.meta: finished\n")
   
   cat("fmri.meta: calculating spatial correlation\n")
@@ -825,16 +827,19 @@ fmri.metaPar <- function (G,
   cat("fmri.meta: finished\n")
   
   cat("fmri.meta: exiting function\n")
-  result <- list(cbeta = cbeta, 
-                 var = var, 
+  result <- list(beta = beta,
+                 se = se,                 
+                 cbeta = cbeta,
+                 var = var,
                  mask = mask,
                  res = resid, 
                  resscale = scale,
+                 tau2 = tau2,
                  rxyz = rxyz, 
                  scorr = corr,
+                 bw = bw,
                  weights = wghts, 
                  dim = c(dim.spm,dk), 
-                 bw = bw, 
                  df = df)
   if (!is.null(xind)) {
     result$roixa <- min(xind)
@@ -849,9 +854,11 @@ fmri.metaPar <- function (G,
     result$roize <- max(zind)
   }
   ## save further group study objects
-  result$subjects <- dk
+  result$sessions <- dk
+  result$coef <- p
   result$method <- method
   result$weighted <- weighted
+  result$knha <- knha
   if (is.null(model)) {
     result$model <- as.character("~ 1")
   } else {
@@ -862,10 +869,10 @@ fmri.metaPar <- function (G,
   
   class(result) <- c("fmridata", "fmrispm")
   intrcpt <- rep(1, dk)
-  attr(result, "design") <- data.frame(cbind(intrcpt, X))
+  attr(result, "design") <- data.frame(cbind(intrcpt, XG))
   attr(result$cbeta, "note") <- "intercept or first coefficient"
   attr(result, "estimator") <- "two-stage process"
-  attr(result, "white") <- white
+  attr(result, "white") <- 3 
   attr(result, "residuals") <- !is.null(scale)
   
   t2 <- Sys.time()
