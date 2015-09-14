@@ -97,68 +97,68 @@ The function cannot handle:
 }
 \examples{
 ## Generate some fMRI data sets: noise + stimulus
-dx <- dy <- dz <- 32
-dt <- 107
-hrf <- fmri.stimulus(dt, c(18, 48, 78), 15, 2)
-stim <- matrix(hrf, nrow= dx*dy*dz, ncol=dt, byrow=TRUE)
-mask <- array(FALSE, c(dx, dy, dz))
-mask[12:22,12:22,12:22] <- TRUE
+#dx <- dy <- dz <- 32
+#dt <- 107
+#hrf <- fmri.stimulus(dt, c(18, 48, 78), 15, 2)
+#stim <- matrix(hrf, nrow= dx*dy*dz, ncol=dt, byrow=TRUE)
+#mask <- array(FALSE, c(dx, dy, dz))
+#mask[12:22,12:22,12:22] <- TRUE
 
-ds1 <- list(ttt=writeBin(1.0*rnorm(dx*dy*dz*dt) + as.vector(5*stim), 
-           raw(), 4), mask = mask, dim = c(dx, dy, dz, dt))
-ds2 <- list(ttt=writeBin(1.7*rnorm(dx*dy*dz*dt) + as.vector(3*stim), 
-           raw(), 4), mask = mask, dim = c(dx, dy, dz, dt))
-ds3 <- list(ttt=writeBin(0.8*rnorm(dx*dy*dz*dt) + as.vector(1*stim), 
-           raw(), 4), mask = mask, dim = c(dx, dy, dz, dt))
-ds4 <- list(ttt=writeBin(1.2*rnorm(dx*dy*dz*dt) + as.vector(2*stim), 
-           raw(), 4), mask = mask, dim = c(dx, dy, dz, dt))
-class(ds1) <- class(ds2) <- class(ds3) <- class(ds4) <- "fmridata"
+#ds1 <- list(ttt=writeBin(1.0*rnorm(dx*dy*dz*dt) + as.vector(5*stim), 
+#           raw(), 4), mask = mask, dim = c(dx, dy, dz, dt))
+#ds2 <- list(ttt=writeBin(1.7*rnorm(dx*dy*dz*dt) + as.vector(3*stim), 
+#           raw(), 4), mask = mask, dim = c(dx, dy, dz, dt))
+#ds3 <- list(ttt=writeBin(0.8*rnorm(dx*dy*dz*dt) + as.vector(1*stim), 
+#           raw(), 4), mask = mask, dim = c(dx, dy, dz, dt))
+#ds4 <- list(ttt=writeBin(1.2*rnorm(dx*dy*dz*dt) + as.vector(2*stim), 
+#           raw(), 4), mask = mask, dim = c(dx, dy, dz, dt))
+#class(ds1) <- class(ds2) <- class(ds3) <- class(ds4) <- "fmridata"
 
 ## Stage 1: single-session regression analysis
-x <- fmri.design(hrf, order=2)
-spm.sub01 <- fmri.lm(ds1, x, mask, actype = "smooth", verbose = TRUE)
-spm.sub02 <- fmri.lm(ds2, x, mask, actype = "smooth", verbose = TRUE) 
-spm.sub03 <- fmri.lm(ds3, x, mask, actype = "smooth", verbose = TRUE) 
-spm.sub04 <- fmri.lm(ds4, x, mask, actype = "smooth", verbose = TRUE) 
+#x <- fmri.design(hrf, order=2)
+#spm.sub01 <- fmri.lm(ds1, x, mask, actype = "smooth", verbose = TRUE)
+#spm.sub02 <- fmri.lm(ds2, x, mask, actype = "smooth", verbose = TRUE) 
+#spm.sub03 <- fmri.lm(ds3, x, mask, actype = "smooth", verbose = TRUE) 
+#spm.sub04 <- fmri.lm(ds4, x, mask, actype = "smooth", verbose = TRUE) 
 
 ## Store observed individual BOLD effects and their variance estimates
-subj <- 4
-Cbold <- array(0, dim = c(dx, dy, dz, subj))
-Cbold[,,,1] <- spm.sub01$cbeta
-Cbold[,,,2] <- spm.sub02$cbeta
-Cbold[,,,3] <- spm.sub03$cbeta
-Cbold[,,,4] <- spm.sub04$cbeta
+#subj <- 4
+#Cbold <- array(0, dim = c(dx, dy, dz, subj))
+#Cbold[,,,1] <- spm.sub01$cbeta
+#Cbold[,,,2] <- spm.sub02$cbeta
+#Cbold[,,,3] <- spm.sub03$cbeta
+#Cbold[,,,4] <- spm.sub04$cbeta
 
-Vbold <- array(0, dim = c(dx, dy, dz, subj))
-Vbold[,,,1] <- spm.sub01$var
-Vbold[,,,2] <- spm.sub02$var
-Vbold[,,,3] <- spm.sub03$var
-Vbold[,,,4] <- spm.sub04$var
+#Vbold <- array(0, dim = c(dx, dy, dz, subj))
+#Vbold[,,,1] <- spm.sub01$var
+#Vbold[,,,2] <- spm.sub02$var
+#Vbold[,,,3] <- spm.sub03$var
+#Vbold[,,,4] <- spm.sub04$var
 
 ## Stage 2: Random-effects meta-regression analysis
 ## a) Check your model
-library(metafor)
-M1.1 <- rma.uni(Cbold[16,16,16, ], 
-                Vbold[16,16,16, ],
-                method = "REML",
-                weighted = TRUE,
-                knha = TRUE,
-                verbose = TRUE,
-                control = list(stepadj=0.5, maxiter=2000, threshold=0.001))
+#library(metafor)
+#M1.1 <- rma.uni(Cbold[16,16,16, ], 
+#                Vbold[16,16,16, ],
+#                method = "REML",
+#                weighted = TRUE,
+#                knha = TRUE,
+#                verbose = TRUE,
+#                control = list(stepadj=0.5, maxiter=2000, threshold=0.001))
 
 # Control list contains convergence parameters later used 
 # at whole data cube. Values were adjusted to fMRI data.
 
-summary(M1.1)
-forest(M1.1)
-qqnorm(M1.1)
+#summary(M1.1)
+#forest(M1.1)
+#qqnorm(M1.1)
 
 ## b) Estimate a group map
 ## without parallelizing
-spm.group1a <- fmri.metaPar(Cbold, Vbold, knha = TRUE, 
-                            mask = mask, cluster = 1)
+#spm.group1a <- fmri.metaPar(Cbold, Vbold, knha = TRUE, 
+#                            mask = mask, cluster = 1)
 ## same with 4 parallel threads
-spm.group1b <- fmri.metaPar(Cbold, Vbold, knha = TRUE, 
-                            mask = mask, cluster = 4)
+#spm.group1b <- fmri.metaPar(Cbold, Vbold, knha = TRUE, 
+#                            mask = mask, cluster = 4)
 }
 \keyword{ regression }% at least one, from doc/KEYWORDS

@@ -1,6 +1,6 @@
 Package:     fmri
 Version:     1.7-1
-Date:        2015-07-24
+Date:        2015-09-14
 Title:       Analysis of fMRI experiments
 Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
                     email = "tabelow@wias-berlin.de"), 
@@ -9,7 +9,7 @@ Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
              person("Brandon", "Whitcher", role = c("ctb")),
              person("Dames", "Sibylle", role = c("ctb")))
 Depends: R (>= 2.14.0), awsMethods (>= 1.0-1), nlme
-Imports:     parallel
+Imports:     parallel, metafor
 Suggests:    tcltk, tkrplot, fastICA, adimpro, oro.nifti
 Description: The package contains R-functions to perform an fmri analysis
              as described in
@@ -23,7 +23,7 @@ Description: The package contains R-functions to perform an fmri analysis
              Functional MRI Experiments in {R}: The Package {fmri}}, 
              Journal of Statistical Software, 44(11):1--21 (2011).
 License:     GPL (>= 2)
-Copyright:   This package is Copyright (C) 2006-2014 Weierstrass Institute for 
+Copyright:   This package is Copyright (C) 2006-2015 Weierstrass Institute for 
                                            Applied Analysis and Stochastics.
 URL:         http://www.wias-berlin.de/software/imaging/
 Note:        This software comes with NO warranty! It is NOT intended to be used 
