@@ -101,81 +101,80 @@ The function cannot handle experimental designs with:
 }
 \examples{
 ## Generate some fMRI data sets: noise + stimulus
-#dx <- dy <- dz <- 32
-#dt <- 107
-#hrf <- fmri.stimulus(dt, c(18, 48, 78), 15, 2)
-#stim <- matrix(hrf, nrow= dx*dy*dz, ncol=dt, byrow=TRUE)
-#mask <- array(FALSE, c(dx, dy, dz))
-#mask[12:22,12:22,12:22] <- TRUE
+dx <- dy <- dz <- 32
+dt <- 107
+hrf <- fmri.stimulus(dt, c(18, 48, 78), 15, 2)
+stim <- matrix(hrf, nrow= dx*dy*dz, ncol=dt, byrow=TRUE)
+mask <- array(FALSE, c(dx, dy, dz))
+mask[12:22,12:22,12:22] <- TRUE
 
-#ds1 <- list(ttt=writeBin(1.0*rnorm(dx*dy*dz*dt) + as.vector(5*stim), 
-#            raw(), 4), mask=mask, dim=c(dx, dy, dz, dt))
-#ds2 <- list(ttt=writeBin(1.7*rnorm(dx*dy*dz*dt) + as.vector(3*stim), 
-#            raw(), 4), mask=mask, dim=c(dx, dy, dz, dt))
-#ds3 <- list(ttt=writeBin(0.8*rnorm(dx*dy*dz*dt) + as.vector(1*stim), 
-#            raw(), 4), mask=mask, dim=c(dx, dy, dz, dt))
-#ds4 <- list(ttt=writeBin(1.2*rnorm(dx*dy*dz*dt) + as.vector(2*stim), 
-#            raw(), 4), mask=mask, dim=c(dx, dy, dz, dt))
-#class(ds1) <- class(ds2) <- class(ds3) <- class(ds4) <- "fmridata"
+ds1 <- list(ttt=writeBin(1.0*rnorm(dx*dy*dz*dt) + as.vector(5*stim), 
+            raw(), 4), mask=mask, dim=c(dx, dy, dz, dt))
+ds2 <- list(ttt=writeBin(1.7*rnorm(dx*dy*dz*dt) + as.vector(3*stim), 
+            raw(), 4), mask=mask, dim=c(dx, dy, dz, dt))
+ds3 <- list(ttt=writeBin(0.8*rnorm(dx*dy*dz*dt) + as.vector(1*stim), 
+            raw(), 4), mask=mask, dim=c(dx, dy, dz, dt))
+ds4 <- list(ttt=writeBin(1.2*rnorm(dx*dy*dz*dt) + as.vector(2*stim), 
+            raw(), 4), mask=mask, dim=c(dx, dy, dz, dt))
+class(ds1) <- class(ds2) <- class(ds3) <- class(ds4) <- "fmridata"
 
 ## Construct a design matrix for a multi-subject study
-#subj <- 4
-#runs <- 1
-#z <-fmri.designG(hrf, subj = subj, runs = runs)
+subj <- 4
+runs <- 1
+z <-fmri.designG(hrf, subj = subj, runs = runs)
 
 ## Assembly of the aggregated BOLD-Array
-#Bold <- array(0, dim = c(dx,dy,dz,subj*runs*dt))
-#Bold[1:dx,1:dy,1:dz,1:(dt*1)] <- extract.data(ds1)
-#Bold[1:dx,1:dy,1:dz,(dt*1+1):(dt*2)] <- extract.data(ds2)
-#Bold[1:dx,1:dy,1:dz,(dt*2+1):(dt*3)] <- extract.data(ds3)
-#Bold[1:dx,1:dy,1:dz,(dt*3+1):(dt*4)] <- extract.data(ds4)
+Bold <- array(0, dim = c(dx,dy,dz,subj*runs*dt))
+Bold[1:dx,1:dy,1:dz,1:(dt*1)] <- extract.data(ds1)
+Bold[1:dx,1:dy,1:dz,(dt*1+1):(dt*2)] <- extract.data(ds2)
+Bold[1:dx,1:dy,1:dz,(dt*2+1):(dt*3)] <- extract.data(ds3)
+Bold[1:dx,1:dy,1:dz,(dt*3+1):(dt*4)] <- extract.data(ds4)
 
 ## Step 1: Check the model
-#y <- Bold[16, 16, 16, ] # choose one voxel
-#M1.1 <-  lme(fixed = y ~ 0 + hrf + session + drift1:session + drift2:session,
-#            random = ~ 0 + hrf|subj,           
-#            correlation = corAR1(value = 0.3, form = ~ 1|subj/session, fixed=TRUE),                   
-#            weights = varIdent(form =~ 1|subj), 
-#            method ="REML",
-#            control = lmeControl(rel.tol=1e-6, returnObject = TRUE),
-#            data = z)
-#summary(M1.1)
+y <- Bold[16, 16, 16, ] # choose one voxel
+M1.1 <-  lme(fixed = y ~ 0 + hrf + session + drift1:session + drift2:session,
+            random = ~ 0 + hrf|subj,           
+            correlation = corAR1(value = 0.3, form = ~ 1|subj/session, fixed=TRUE),                   
+            weights = varIdent(form =~ 1|subj), 
+            method ="REML",
+            control = lmeControl(rel.tol=1e-6, returnObject = TRUE),
+            data = z)
+summary(M1.1)
 
 # Residual plots
-#plot(M1.1, resid(.,type = "response") ~ scan|subj)
-#qqnorm(M1.1, ~resid(.,type = "normalized")|subj, abline = c(0,1))
+plot(M1.1, resid(.,type = "response") ~ scan|subj)
+qqnorm(M1.1, ~resid(.,type = "normalized")|subj, abline = c(0,1))
 
 # Testing the assumption of homoscedasticity 
-#M1.2 <- update(M1.1, weights = NULL, data = z)
-#anova(M1.2, M1.1) 
+M1.2 <- update(M1.1, weights = NULL, data = z)
+anova(M1.2, M1.1) 
 
 # Model fit: observed and fitted values 
-#fitted.values <- fitted(M1.1)
-#plot(y[1:dt], type="l", main = "Subject 1", xlab = "scan", 
-#     ylab = "BOLD-signal", ylim = c(-5,5))
-#lines(fitted.values[names(fitted.values)==1],lty=1,lwd=2)
+fitted.values <- fitted(M1.1)
+plot(y[1:dt], type="l", main = "Subject 1", xlab = "scan", 
+     ylab = "BOLD-signal", ylim = c(-5,5))
+lines(fitted.values[names(fitted.values)==1],lty=1,lwd=2)
 
-#plot(y[(dt+1):(2*dt)], type="l", main = "Subject 2", xlab = "scan", 
-#     ylab = "BOLD-signal", ylim = c(-5,5))
-#lines(fitted.values[names(fitted.values)==2],lty=1,lwd=2)
+plot(y[(dt+1):(2*dt)], type="l", main = "Subject 2", xlab = "scan", 
+     ylab = "BOLD-signal", ylim = c(-5,5))
+lines(fitted.values[names(fitted.values)==2],lty=1,lwd=2)
 
-#plot(y[(2*dt+1):(3*dt)], type="l", main = "Subject 3", xlab = "scan", 
-#     ylab = "BOLD-signal", ylim = c(-5,5))
-#lines(fitted.values[names(fitted.values)==3],lty=1,lwd=2)
+plot(y[(2*dt+1):(3*dt)], type="l", main = "Subject 3", xlab = "scan", 
+     ylab = "BOLD-signal", ylim = c(-5,5))
+lines(fitted.values[names(fitted.values)==3],lty=1,lwd=2)
 
-#plot(y[(3*dt+1):(4*dt)], type="l", main = "Subject 4", xlab = "scan", 
-#     ylab = "BOLD-signal", ylim = c(-5,5))
-#lines(fitted.values[names(fitted.values)==4],lty=1,lwd=2)
+plot(y[(3*dt+1):(4*dt)], type="l", main = "Subject 4", xlab = "scan", 
+     ylab = "BOLD-signal", ylim = c(-5,5))
+lines(fitted.values[names(fitted.values)==4],lty=1,lwd=2)
 
 ## Step 2: Estimate a group map
-# without parallelizing
-#spm.group1a <- fmri.lmePar(Bold, z, mask = mask, cluster = 1)
+ without parallelizing
+spm.group1a <- fmri.lmePar(Bold, z, mask = mask, cluster = 1)
 # same with 4 parallel threads
-#spm.group1b <- fmri.lmePar(Bold, z, mask = mask, cluster = 4)
-
+spm.group1b <- fmri.lmePar(Bold, z, mask = mask, cluster = 4)
 ## Example for two independent groups
-#group <- c(1,1,4,4)
-#z2 <- fmri.designG(hrf, subj = subj, runs = runs, group = group)
-#spm.group2 <- fmri.lmePar(Bold, z2, mask = mask, cluster = 4)
+group <- c(1,1,4,4)
+z2 <- fmri.designG(hrf, subj = subj, runs = runs, group = group)
+spm.group2 <- fmri.lmePar(Bold, z2, mask = mask, cluster = 4)
 }
 \keyword{ regression }% at least one, from doc/KEYWORDS
