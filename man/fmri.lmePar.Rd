@@ -168,7 +168,7 @@ plot(y[(3*dt+1):(4*dt)], type="l", main = "Subject 4", xlab = "scan",
 lines(fitted.values[names(fitted.values)==4],lty=1,lwd=2)
 
 ## Step 2: Estimate a group map
- without parallelizing
+## without parallelizing
 spm.group1a <- fmri.lmePar(Bold, z, mask = mask, cluster = 1)
 # same with 4 parallel threads
 spm.group1b <- fmri.lmePar(Bold, z, mask = mask, cluster = 4)
