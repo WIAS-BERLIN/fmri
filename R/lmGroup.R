@@ -2,110 +2,68 @@
 
 fmri.designG <- function (hrf, 
                           subj = 1, 
-                          runs = 1, 
+                          runs = 1,
                           group = NULL,
-                          age = NULL,
-                          sex = NULL,
-                          iq = NULL)
+                          XG = NULL)
 {
   if (is.null(dim(hrf))) 
     dim(hrf) <- c(length(hrf), 1)
   stimuli <- dim(hrf)[2]
   scans <- dim(hrf)[1]
   
-  id <- c(rep(1, scans*runs))
-  if (subj > 1) {
-    for (s in 2:subj) {id<-c(id,c(rep(s*1,scans*runs)))}
-  }
-  id <- factor(id)
-  
-  run <- c(rep(1,scans))
-  if (runs > 1) {
-    for (r in 2:runs) {run<-c(run,c(rep(r*1,scans)))}
-  }
-  run <- factor(run)
-  run.g <- rep(run,subj)
-  
-  scan <- c(1:scans)
-  scan.g <- rep(scan,subj*runs)
-  
-  session <- c(rep(1, scans))
-  s <- 1
-  while (s < subj*runs) {
-    s <- s+1
-    session <- c(session,c(rep(s,scans)))
-  }
+  id <- rep(1:subj, each = scans*runs)
+  id <- factor(id)  
+  run <- rep(1:runs, times = subj, each = scans)
+  run <- factor(run)  
+  scan <- rep(1:scans, times = subj*runs)  
+  session <- rep(1:(subj*runs), each = scans)
   session <- factor(session)
   
   if (!is.null(group)) {
     if (length(group) != subj) {
-      stop("fmri.designG: Length of group vector: ",length(group), 
-           " does not match the number of subjects: " ,subj, ".")
+      stop("fmri.designG: Length of group vector (= ",length(group), 
+           ") does not match the number of subjects (= " ,subj, ").")
     } else {
-      group.g <- NULL
-      for (s in 1:subj) {group.g <- c(group.g,c(rep(group[s],scans*runs)))}
+      group.g <- rep(group, each = scans*runs)
     }
   } else {
-    group.g <- c(rep(1,scans*runs*subj))
+    group.g <- c(rep(1, scans*runs*subj))
   }
-  group.g <- factor(group.g)
-  
+  group.g <- factor(group.g)  
+ 
   hrf.list="hrf"
   if (stimuli > 1) {
-    for (s in 2:stimuli) {
-      list2<-c(paste("hrf",s,sep=""))
-      hrf.list<-c(hrf.list,list2)
-    }
+    list2 <- c(paste("hrf", 2:stimuli, sep=""))
+    hrf.list <- c(hrf.list, list2)
   }
   x <- fmri.design(hrf, order=2) # fmri-package used
-  x.g <- rep(1,subj*runs) %x% x
+  x.g <- rep(1, subj*runs) %x% x
   
   ## add population traits
-  if (!is.null(age)) {
-    if (length(age) != subj) {
-      stop("fmri.designG: Length of group vector: ",length(age), 
-           " does not match the number of subjects: " ,subj, ".")
+  if (!is.null(XG)) {
+    if (!is.data.frame(XG))
+      stop("fmri.designG: The 2nd level design matrix XG is not a data frame.")
+    if (dim(XG)[1] != subj) {
+      stop("fmri.designG: First dimension of 2nd level design matrix XG (= ",dim(XG)[1], 
+           ") does not match the number of subjects (= " ,subj, ").")
     } else {
-      age.g <- NULL
-      for (s in 1:subj) {age.g <- c(age.g,c(rep(age[s],scans*runs)))}
+      P <- XG[rep(1:nrow(XG), each = scans*runs),]
+      rownames(P) <- NULL  
     }
+    # remove duplicate entries
+    if (!is.null(P$group)) {
+      group.g <- factor(P$group)
+      P$group <- NULL
+    } 
+    x.group <- data.frame(id, run, scan, session, group.g, x.g, P)
+    colnames(x.group)<-c("subj","run","scan","session","group",
+                         hrf.list,"drift0","drift1","drift2",colnames(P))   
   } else {
-    age.g <- c(rep(NA,scans*runs*subj))
+    x.group <- data.frame(id, run, scan, session, group.g, x.g)
+    colnames(x.group)<-c("subj","run","scan","session","group",
+                         hrf.list,"drift0","drift1","drift2")  
   }
-  age.gc <- age.g - mean(age.g) # centered
-  
-  if (!is.null(sex)) {
-    if (length(sex) != subj) {
-      stop("fmri.designG: Length of group vector: ",length(sex), 
-           " does not match the number of subjects: " ,subj, ".")
-    } else {
-      sex.g <- NULL
-      for (s in 1:subj) {sex.g <- c(sex.g,c(rep(sex[s],scans*runs)))}
-    }
-  } else {
-    sex.g <- c(rep(NA,scans*runs*subj))
-  }
-  sex.gc <- sex.g - mean(sex.g) # centered
-  sex.g <- factor(sex.g)
-  
-  if (!is.null(iq)) {
-    if (length(iq) != subj) {
-      stop("fmri.designG: Length of group vector: ",length(iq), 
-           " does not match the number of subjects: " ,subj, ".")
-    } else {
-      iq.g <- NULL
-      for (s in 1:subj) {iq.g <- c(iq.g,c(rep(iq[s],scans*runs)))}
-    }
-  } else {
-    iq.g <- c(rep(NA,scans*runs*subj))
-  }
-  iq.gc <- iq.g - mean(iq.g) # centered
-  
-  x.group <- data.frame(id, run.g, scan.g, session, group.g, x.g, 
-                        age.g, age.gc, sex.g, sex.gc, iq.g, iq.gc)
-  colnames(x.group)<-c("subj","run","scan","session","group",
-                       hrf.list,"drift0","drift1","drift2",
-                       "age","age_m0","sex","sex_m0", "iq","iq_m0")  
+
   if (runs > 1) 
     warning("If not all runs within each subject were completed, please delete this rows manually!")
   x.group
@@ -117,9 +75,8 @@ fmri.designG <- function (hrf,
 # subj = number of subjects in the study
 # runs = number of repeated measures within subjects
 # group = optional group vector, length == subj
-# age = optional vector with ages for all subjects, length(age) == subj
-# sex = optional vector with gender for all subjects, length(sex) == subj
-# iq  = optional vector with IQ or other test scores for all subjects, length(iq) == subj
+# XG = optional data frame with known population parameters such as sex or ages 
+#      for all subjects, dim(XG)[1] == subj
 
 ## Output-Matrix (data.frame)
 # subj: consecutive subject number, 1 to subj
@@ -130,13 +87,7 @@ fmri.designG <- function (hrf,
 # group: grouping variable, default: 1 group only
 # hrf: expected BOLD-response
 # drift0, drift1, drift2: polynomial drift terms, orthogonal to the stimuli
-# age: multiplied age information, if unknown: NAs
-# age_m0: like above, but mean centered by subtracting the overall mean
-# sex: multiplied sex information, if unknown: NAs
-# sex_m0: like above, but mean centered by subtracting the overall mean
-# iq:  multiplied IQ information, if unknown: NAs
-# iq_m0: like above, but mean centered by subtracting the overall mean
-
+# last columns: expanded between subject factors / subject-specific covariates
 
 ## Estimation of the group map, nlme- and parallel-packages are needed
 
