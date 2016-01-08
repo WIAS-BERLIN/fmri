@@ -3,7 +3,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Linear Mixed-effects Model for fMRI data }
 \description{
-Group maps are directly estimated from the BOLD time series data of all subjects using \code{\link{lme()}} from R package \pkg{nlme} to fit a Linear Mixed-effects Model with temporally correlated and heteroscedastic within-subject errors. Voxel-wise regression analysis is accelerated by optional parallel processing using R package \pkg{parallel}.
+Group maps are directly estimated from the BOLD time series data of all subjects using \code{\link{lme}} from R package \pkg{nlme} to fit a Linear Mixed-effects Model with temporally correlated and heteroscedastic within-subject errors. Voxel-wise regression analysis is accelerated by optional parallel processing using R package \pkg{parallel}.
 }
 \usage{
 fmri.lmePar(bold, z, fixed = NULL, random = NULL, mask = NULL, ac = 0.3, 
@@ -13,7 +13,7 @@ vtype = "individual", cluster = 2, wghts = c(1, 1, 1))
 \arguments{
   \item{bold}{ a large 4D-Array with the aggregated fMRI data of all subjects that were previously registered to a common brain atlas. Be careful with the assembly of this array, the order of the data sets has to be compatible with the design matrix: \code{"z"}. If not the whole brain but a region is analyzed, vectors with region-indices can be preserved by adding as attributes (e.g. \code{attr(bold, "xind") <- xind}).
   }  
-  \item{z}{ a design matrix for a multi-subject and/or multi-session fMRI-study of class \code{"data.frame"} specifying the expected BOLD response(s) and additional components for trend and other effects. Typically a \code{\link{fmri.designG()}} object. This data frame contains all variables named in the model. There are some indispensable variables: \var{"group"}, \var{"subj"}, \var{"session"} and \var{"run"}, which define the different strata. That information will be used for setting up the residual variance structure.
+  \item{z}{ a design matrix for a multi-subject and/or multi-session fMRI-study of class \code{"data.frame"} specifying the expected BOLD response(s) and additional components for trend and other effects. Typically a \code{\link{fmri.designG}} object. This data frame contains all variables named in the model. There are some indispensable variables: \var{"group"}, \var{"subj"}, \var{"session"} and \var{"run"}, which define the different strata. That information will be used for setting up the residual variance structure.
   }  
   \item{fixed}{ optionally, a one-sided linear formula describing the fixed-effects part of the model. Default settings are: 
   \code{fixed <- ~ 0 + hrf + session + drift1:session + drift2:session} in case of one detected group, and the same but \code{"hrf"} replaced with \code{"hrf:group"} if two group levels in \code{z} are found. Since an intercept would be a linear combination of the session factor-variable modeling session-specific intercepts, it is excluded. 
@@ -29,7 +29,7 @@ vtype = "individual", cluster = 2, wghts = c(1, 1, 1))
   }  
   \item{mask}{ if available, a logical 3D-Array of dimensionality of the data (without time component) describing a brain mask. The computation is restricted to the selected voxels.
   }  
-  \item{ac}{ if available, a numeric 3D-Array of dimensionality of the data (without time component) with spatially smoothed autocorrelation parameters should be used in the AR(1) models fitted in each voxel, e.g. locally estimated and smoothed AR(1)-coefficients from \code{\link{fmri.lm()}} applied to the first subject. Alternatively, a global approach with uniform value can be used. In this case enter a number between 0 and 1. Default is \code{0.3} applied to all voxels.
+  \item{ac}{ if available, a numeric 3D-Array of dimensionality of the data (without time component) with spatially smoothed autocorrelation parameters should be used in the AR(1) models fitted in each voxel, e.g. locally estimated and smoothed AR(1)-coefficients from \code{\link{fmri.lm}} applied to the first subject. Alternatively, a global approach with uniform value can be used. In this case enter a number between 0 and 1. Default is \code{0.3} applied to all voxels.
   }  
   \item{vtype}{ a character string choosing the residual variance model. If \code{"equal"}, homoscedastic variance across subjects is assumed setting weights argument in function \code{lme()} to zero, whereas \code{"individual"} allows different within-subject variances. Default method is \code{"individual"} that means subject-specific error variances using formula: \code{weights <- varIdent(form =~ 1|subj)}.
   }  
@@ -40,7 +40,7 @@ vtype = "individual", cluster = 2, wghts = c(1, 1, 1))
 }
 \details{
 %%  ~~ If necessary, more details than the description above ~~
-\code{fmri.lmePar()} fits the configured Linear Mixed-effects Model separately at each voxel and extracts estimated BOLD contrasts, corresponding squared standard errors and degrees of freedom as well as the residuals from resulting \code{lme()} objects to produce a statistical parametric map (SPM) for the group(s). Voxel-by-voxel analysis is performed by either the function \code{\link{apply()}} or \code{\link{parApply()}} from \pkg{parallel} package, which walks through the \code{bold} array.
+\code{fmri.lmePar()} fits the configured Linear Mixed-effects Model separately at each voxel and extracts estimated BOLD contrasts, corresponding squared standard errors and degrees of freedom as well as the residuals from resulting \code{lme()} objects to produce a statistical parametric map (SPM) for the group(s). Voxel-by-voxel analysis is performed by either the function \code{\link{apply}} or \code{\link{parApply}} from \pkg{parallel} package, which walks through the \code{bold} array.
 
 If one group is analyzed, from each fitted model the first fixed-effects coefficient and corresponding parameters are stored in results object. This should be the first specified predictor in the fixed-effects part of the model (verify the attribute of \code{"df"} in returned object). However, in two-sample case this principle does not work. The order changes, estimated session-specific intercepts now comes first and the number of these coefficients is not fixed. Therefore in current version it has explicitly been looked for the coefficient names: \var{"hrf:group1"} and \var{"hrf:group2"}. Available functions within the \pkg{nlme} package to extract estimated values from \code{lme()} objects do not operate at contrast matrices.
 
