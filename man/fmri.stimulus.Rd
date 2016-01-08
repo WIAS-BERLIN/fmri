@@ -16,7 +16,7 @@
   \item{onsets}{ vector of onset times (in scans) }
   \item{durations}{ vector of duration of ON stimulus in scans or
     seconds (if \code{!is.null(times)})  }
-  \item{rt}{ time between scans in seconds (TR) }
+  \item{TR}{ time between scans in seconds (TR) }
   \item{times}{ onset times in seconds. If present \code{onsets}
     arguments is ignored. }
   \item{type}{One of \code{"canonical"}, \code{"gamma"}, \code{"boxcar"}, 
