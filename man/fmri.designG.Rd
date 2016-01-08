@@ -57,7 +57,7 @@ tr <- 2.5
 
 hrf <- fmri.stimulus(scans, times, duration, tr, times = TRUE)
 x.group <- fmri.designG(hrf, subj = subj, runs = runs)
-View(x.group)
+# View(x.group)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
