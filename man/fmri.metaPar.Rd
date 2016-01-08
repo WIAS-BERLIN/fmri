@@ -6,7 +6,9 @@
 Group maps are estimated from BOLD effect estimates and their variances previously determined for each subject. The function \code{\link{rma.uni}} from R package \pkg{metafor} is used to fit mixed-effects meta-analytic models at group level. Voxel-wise regression analysis is accelerated by optional parallel processing using R package \pkg{parallel}.
 }
 \usage{
-fmri.metaPar(Cbold, Vbold, XG = NULL, model = NULL, method = "REML", weighted = TRUE, knha = FALSE, mask = NULL, cluster = 2, wghts = c(1, 1, 1))
+fmri.metaPar(Cbold, Vbold, XG = NULL, model = NULL, method = "REML", 
+             weighted = TRUE, knha = FALSE, mask = NULL, cluster = 2, 
+             wghts = c(1, 1, 1))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

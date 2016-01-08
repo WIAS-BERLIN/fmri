@@ -6,8 +6,9 @@
 Group maps are directly estimated from the BOLD time series data of all subjects using \code{\link{lme}} from R package \pkg{nlme} to fit a Linear Mixed-effects Model with temporally correlated and heteroscedastic within-subject errors. Voxel-wise regression analysis is accelerated by optional parallel processing using R package \pkg{parallel}.
 }
 \usage{
-fmri.lmePar(bold, z, fixed = NULL, random = NULL, mask = NULL, ac = 0.3, 
-vtype = "individual", cluster = 2, wghts = c(1, 1, 1))
+fmri.lmePar(bold, z, fixed = NULL, random = NULL, mask = NULL, 
+            ac = 0.3, vtype = "individual", cluster = 2, 
+            wghts = c(1, 1, 1))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
