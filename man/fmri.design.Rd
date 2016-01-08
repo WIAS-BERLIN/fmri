@@ -7,24 +7,26 @@
   possible polynomial drift terms.
 }
 \usage{
-  fmri.design(hrf, order = 2, cef = NULL, verbose = FALSE)
+  fmri.design(stimulus, order = 2, cef = NULL, verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{hrf}{ matrix containing expected BOLD repsonse(s) for the linear model as columns}
+  \item{stimulus}{ matrix containing expected BOLD repsonse(s) for the linear model as columns}
   \item{order}{ order of the polynomial drift terms }
   \item{cef}{ confounding effects }
   \item{verbose}{ Report more if \code{TRUE} }
 }
 \details{
-  The stimuli given in \code{hrf} are used as first columns in
+  The stimuli given in \code{stimulus} are used as first columns in
   the design matrix.
 
   The order of the polynomial drift terms is given
   by \code{order}, which defaults to 2.
 
+  Confounding effects can be included in a matrix \code{cef}.
+
   The polynomials are defined orthogonal to the stimuli given in
-  \code{hrf}. 
+  \code{stimulus}. 
 }
 \value{
   design matrix of the linear model
