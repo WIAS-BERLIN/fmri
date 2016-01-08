@@ -100,7 +100,7 @@ The function cannot handle experimental designs with:
   \code{\link{fmri.metaPar}}
 }
 \examples{
-## Generate some fMRI data sets: noise + stimulus
+\dontrun{## Generate some fMRI data sets: noise + stimulus
 dx <- dy <- dz <- 32
 dt <- 107
 hrf <- fmri.stimulus(dt, c(18, 48, 78), 15, 2)
@@ -175,6 +175,6 @@ spm.group1b <- fmri.lmePar(Bold, z, mask = mask, cluster = 4)
 ## Example for two independent groups
 group <- c(1,1,4,4)
 z2 <- fmri.designG(hrf, subj = subj, runs = runs, group = group)
-spm.group2 <- fmri.lmePar(Bold, z2, mask = mask, cluster = 4)
+spm.group2 <- fmri.lmePar(Bold, z2, mask = mask, cluster = 4)}
 }
 \keyword{ regression }% at least one, from doc/KEYWORDS

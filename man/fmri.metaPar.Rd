@@ -96,7 +96,7 @@ The function cannot handle:
   \code{\link{rma.uni}}, \code{\link{fmri.lm}}, \code{\link{fmri.lmePar}}
 }
 \examples{
-## Generate some fMRI data sets: noise + stimulus
+\dontrun{## Generate some fMRI data sets: noise + stimulus
 dx <- dy <- dz <- 32
 dt <- 107
 hrf <- fmri.stimulus(dt, c(18, 48, 78), 15, 2)
@@ -159,6 +159,6 @@ spm.group1a <- fmri.metaPar(Cbold, Vbold, knha = TRUE,
                             mask = mask, cluster = 1)
 ## same with 4 parallel threads
 spm.group1b <- fmri.metaPar(Cbold, Vbold, knha = TRUE, 
-                            mask = mask, cluster = 4)
+                            mask = mask, cluster = 4)}
 }
 \keyword{ regression }% at least one, from doc/KEYWORDS
