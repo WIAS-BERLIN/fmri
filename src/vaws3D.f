@@ -3,9 +3,9 @@ C
 C   extract element of 3D array
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      real*8 function getlwght(lwght,dw1,dw2,dw3,j1,j2,j3)
+      double precision function getlwght(lwght,dw1,dw2,dw3,j1,j2,j3)
       integer dw1,dw2,dw3,j1,j2,j3
-      real*8 lwght(dw1,dw2,dw3)
+      double precision lwght(dw1,dw2,dw3)
       getlwght=lwght(j1,j2,j3)
       RETURN 
       END
@@ -20,10 +20,10 @@ C          Kern=2     Epanechnicov
 C          Kern=3     Gaussian
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      real*8 function lkern(kern,xsq)
+      double precision function lkern(kern,xsq)
       implicit logical (a-z)
       integer kern
-      real*8 xsq
+      double precision xsq
       IF (xsq.ge.1) THEN
          lkern=0.d0
       ELSE IF (kern.eq.1) THEN
@@ -54,10 +54,10 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
      1                    vwghts,skern,spf,spmin,spmax,bii,wj)
       implicit logical (a-z)
       integer n1,n2,n3,j1,j2,j3,dv0,skern
-      real*8 thi(dv0),theta(n1,n2,n3,dv0),vwghts(dv0),spf,spmin,spmax,
-     1       bii,wj,wjin
+      double precision thi(dv0),theta(n1,n2,n3,dv0),vwghts(dv0),spf,
+     1       spmin,spmax,bii,wj,wjin
       integer k
-      real*8 sij,z
+      double precision sij,z
       wjin=wj
       sij=0.d0
 C  compute distance in sij
@@ -90,8 +90,8 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
      1                    spf,spmin,spmax,bii,wj)
       implicit logical (a-z)
       integer skern
-      real*8 thi,theta,spf,spmin,spmax,bii,wj,wjin
-      real*8 sij,z
+      double precision thi,theta,spf,spmin,spmax,bii,wj,wjin
+      double precision sij,z
       wjin=wj
 C  compute distance in sij
       z=thi-theta
@@ -134,13 +134,13 @@ C
       implicit logical (a-z)
       integer n1,n2,n3,kern,skern
       logical aws,wlse,mask(*)
-      real*8 y(*),theta(*),bi(*),thn(*),lambda,spmax,
+      double precision y(*),theta(*),bi(*),thn(*),lambda,spmax,
      1       wght(2),si2(*),hakt,lwght(*),spmin,
      2       getlwght
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,clw1,
-     1        clw2,clw3,dlw1,dlw2,dlw3,k,n,iind,jind,n12,jind2,jind3,
+     1        clw2,clw3,dlw1,dlw2,dlw3,n,iind,jind,n12,jind2,jind3,
      2        a1,e1,a2,e2,a3,e3
-      real*8 bii,swj,swjy,thi,wj,hakt2,spf,si2i,swjv
+      double precision bii,swj,swjy,thi,wj,hakt2,spf,si2i,swjv
       external getlwght
       hakt2=hakt*hakt
       spf=spmax/(spmax-spmin)
@@ -278,7 +278,7 @@ C   Perform one iteration in local constant three-variate aws (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine chawsv(y,res,si2,mask,wlse,n1,n2,n3,n4,hakt,
-     1                  lambda,theta,ncores,bi,resnew,thn,kern,skern,
+     1                  lambda,theta,bi,resnew,thn,kern,skern,
      2                  spmin,spmax,lwght,wght,resi)
 C
 C   y        observed values of regression function
@@ -294,16 +294,16 @@ C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
 C
       implicit logical (a-z)
-      integer n1,n2,n3,n4,kern,skern,ncores
+      integer n1,n2,n3,n4,kern,skern
       logical aws,wlse,mask(*)
-      real*8 res(n4,*),y(*),theta(*),
+      double precision res(n4,*),y(*),theta(*),
      1       bi(*),thn(*),lambda,spmax,wght(2),
      1       si2(*),hakt,lwght(*),spmin,
      1       resi(*),getlwght,resnew(n4,*)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1       clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n,thrednr,iind,jind,
      2       rthrednr
-      real*8 bii,swj,swjy,thi,wj,hakt2,spf,si2i,sresisq,resik
+      double precision bii,swj,swjy,thi,wj,hakt2,spf,si2i,sresisq,resik
       external getlwght
 !$      integer omp_get_thread_num 
 !$      external omp_get_thread_num
@@ -330,7 +330,7 @@ C
       call rchkusr()
       thrednr = 1
 C$OMP PARALLEL DEFAULT(NONE)
-C$OMP& SHARED(kern,skern,ncores,mask,res,
+C$OMP& SHARED(kern,skern,mask,res,
 C$OMP& y,theta,bi,thn,spmax,wght,si2,hakt,lwght,spmin,
 C$OMP& resi,resnew,ih1,ih2,ih3,hakt2,spf)
 C$OMP& FIRSTPRIVATE(n,n1,n2,n3,n4,lambda,clw1,clw2,clw3,
@@ -432,12 +432,12 @@ C
       implicit logical (a-z)
       integer dv,n1,n2,n3,kern,skern,ncores
       logical aws,wlse,mask(*)
-      real*8 theta(*),bi(*),y(dv,*),
+      double precision theta(*),bi(*),y(dv,*),
      1       lambda,spmax,wght(2),si2(*),thn(dv,*),
      1       hakt,lwght(*),spmin,getlwght,swjy(dv,ncores)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n,thrednr,iind,jind
-      real*8 bii,swj,wj,hakt2,spf,si2i,thi
+      double precision bii,swj,wj,hakt2,spf,si2i,thi
       external getlwght
 !$      integer omp_get_thread_num 
 !$      external omp_get_thread_num
@@ -550,11 +550,11 @@ C
       implicit logical (a-z)
       integer n1,n2,n3,kern,dv
       logical wlse,mask(n1,n2,n3)
-      real*8 y(n1,n2,n3,dv),thn(n1,n2,n3,dv),wght(2),
+      double precision y(n1,n2,n3,dv),thn(n1,n2,n3,dv),wght(2),
      1       si2(n1,n2,n3),hakt,lwght(*),getlwght
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
-      real*8 swj,swjy(dv),wj,hakt2
+      double precision swj,swjy(dv),wj,hakt2
       external getlwght
       hakt2=hakt*hakt
 C
@@ -627,9 +627,9 @@ C
       subroutine locwghts(dlw1,dlw2,dlw3,wght,hakt2,kern,lwght)
       implicit logical (a-z)
       integer dlw1,dlw2,dlw3,kern
-      real*8 wght(2),hakt2,lwght(dlw1,dlw2,dlw3),lkern
+      double precision wght(2),hakt2,lwght(dlw1,dlw2,dlw3),lkern
       external lkern
-      real*8 z1,z2,z3
+      double precision z1,z2,z3
       integer j1,j2,j3,clw1,clw2,clw3,ih1,ih2
       clw1=(dlw1+1)/2
       clw2=(dlw2+1)/2

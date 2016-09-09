@@ -21,13 +21,13 @@ C
       implicit logical (a-z)
       integer n1,n2,n3,nt,kern
       logical aws
-      real*8 y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),df,
+      double precision y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),df,
      1       thn(n1,n2,n3),lambda,wght(2),si2(n1,n2,n3),
      1       hakt,lwght(*),thi,getlwght,swres(nt),fov,
      1       varest(n1,n2,n3),res(nt,n1,n2,n3),maxvalue,minvalue
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
-      real*8 bii,swj,swjy,wj,hakt2,spf,si2j,si2i,
+      double precision bii,swj,swjy,wj,hakt2,spf,si2j,si2i,
      1       varesti,thij,sij,z,si,swr,z1,dn,a,b
       external getlwght
       hakt2=hakt*hakt
