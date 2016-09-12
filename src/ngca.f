@@ -32,7 +32,7 @@
       dv=-s*sin(sz)
       RETURN 
       END
-      subroutine fastica(y,omega,d,n,l,ifun,t,beta,v,normv,s,omegak,
+      subroutine fastica1(y,omega,d,n,l,ifun,t,beta,v,normv,s,omegak,
      1                   delta)
       implicit logical (a-z)
       integer d,n,l,t,ifun(l)

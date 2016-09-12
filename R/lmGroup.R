@@ -234,15 +234,19 @@ fmri.lmePar <- function (bold,
         ar1 <- ~ 1|subj/session
       }
       if (runs > 1) {
-        if (subj==1) {
-          random <- ~ 0 + hrf|session
+##        if (subj==1) {
+        if (dNt==1) { 
+        ##  hope thats correct: dNt == number of subjects ???  J.
+        random <- ~ 0 + hrf|session
           ar1 <- ~ 1|session
         } else {
         random <- ~ 0 + hrf|subj/session
         ar1 <- ~ 1|subj/session
         }
       }
-    } else if (subj==1) {
+##    } else if (subj==1) {
+    } else if (dNt==1) { 
+##  hope thats correct: dNt == number of subjects ???  J.
       ar1 <- ~ 1|session
     } else {
       ar1 <- ~ 1|subj/session
@@ -308,8 +312,7 @@ fmri.lmePar <- function (bold,
     corr <- .Fortran("mcorr", as.double(resid), as.logical(mask), 
                      as.integer(dx), as.integer(dy), as.integer(dz), 
                      as.integer(dNt), scorr = double(prod(lags)), as.integer(lags[1]), 
-                     as.integer(lags[2]), as.integer(lags[3]), PACKAGE = "fmri", 
-                     DUP = TRUE)$scorr
+                     as.integer(lags[2]), as.integer(lags[3]), PACKAGE = "fmri")$scorr
     dim(corr) <- lags
     # attention: NaNs in corr
     # if analyzed brain region is too small (e.g. 1 or 2 Slices)
@@ -448,15 +451,13 @@ fmri.lmePar <- function (bold,
     corr <- .Fortran("mcorr", as.double(resid), as.logical(mask), 
                       as.integer(dx), as.integer(dy), as.integer(dz), 
                       as.integer(dNt1), scorr = double(prod(lags)), as.integer(lags[1]), 
-                      as.integer(lags[2]), as.integer(lags[3]), PACKAGE = "fmri", 
-                      DUP = TRUE)$scorr
+                      as.integer(lags[2]), as.integer(lags[3]), PACKAGE = "fmri")$scorr
     dim(corr) <- lags
     
     corr2 <- .Fortran("mcorr", as.double(resid2), as.logical(mask), 
                       as.integer(dx), as.integer(dy), as.integer(dz), 
                       as.integer(dNt2), scorr = double(prod(lags)), as.integer(lags[1]), 
-                      as.integer(lags[2]), as.integer(lags[3]), PACKAGE = "fmri", 
-                      DUP = TRUE)$scorr
+                      as.integer(lags[2]), as.integer(lags[3]), PACKAGE = "fmri")$scorr
     dim(corr2) <- lags
     # attention: NaNs in corr
     # if analyzed brain region is too small (e.g. 1 or 2 Slices)
@@ -749,8 +750,7 @@ fmri.metaPar <- function (Cbold,
   corr <- .Fortran("mcorr", as.double(resid), as.logical(mask), 
                    as.integer(dx), as.integer(dy), as.integer(dz), 
                    as.integer(dk), scorr = double(prod(lags)), as.integer(lags[1]), 
-                   as.integer(lags[2]), as.integer(lags[3]), PACKAGE = "fmri", 
-                   DUP = TRUE)$scorr
+                   as.integer(lags[2]), as.integer(lags[3]), PACKAGE = "fmri")$scorr
   dim(corr) <- lags
   # attention: NaNs in corr
   # if analyzed brain region is too small (e.g. 1 or 2 Slices)

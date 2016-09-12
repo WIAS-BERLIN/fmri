@@ -646,7 +646,7 @@ fmri.lm.old <- function(data,z,actype="smooth",vtype="var",step=0.01,contrast=c(
                             as.integer(dy[2]),
                             as.integer(dy[3]),
                             as.integer(dy[4]),
-                            PACKAGE="fmri",DUP=TRUE)$residuals
+                            PACKAGE="fmri")$residuals
       dim(residuals) <- c(dy[4],prod(dy[1:3]))
       residuals <- t(residuals)
       b <- rep(1/dy[4],length=dy[4])
@@ -688,7 +688,7 @@ fmri.lm.old <- function(data,z,actype="smooth",vtype="var",step=0.01,contrast=c(
                    as.integer(lags[1]),
                    as.integer(lags[2]),
                    as.integer(lags[3]),
-                   PACKAGE="fmri",DUP=TRUE)$scorr
+                   PACKAGE="fmri")$scorr
   dim(corr) <- lags                     
   scale <- NULL
   if(keep=="all"){

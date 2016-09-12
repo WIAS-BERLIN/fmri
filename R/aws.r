@@ -193,7 +193,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                      as.double(spmax),
                      double(prod(dlw)),
                      as.double(wghts),
-                     PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","hakt")]
+                     PACKAGE="fmri")[c("bi","thnew","hakt")]
     gc()
     theta <- array(tobj$thnew,dy) 
     dim(tobj$bi) <- dy
@@ -216,7 +216,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
 		       as.double(spmax),
 		       double(prod(dlw)),
 		       as.double(wghts),
-		       PACKAGE="fmri",DUP=TRUE)[c("bi","thnew")]
+		       PACKAGE="fmri")[c("bi","thnew")]
       ptheta <- array(pobj$thnew,dy) 
       rm(pobj) 
       gc()
@@ -263,7 +263,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                            as.integer(ddim[3]),
                            as.integer(ddim[4]),
                            var = double(n1*n2*n3),
-                           PACKAGE="fmri",DUP=TRUE)$var
+                           PACKAGE="fmri")$var
   cat("fmri.smooth: smooth the residuals","\n")
   residuals <- .Fortran("ihaws2",as.double(residuals),
                      as.double(sigma2),
@@ -286,7 +286,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                      double(prod(dlw)),
                      as.double(wghts),
                      double(ddim[4]*mc.cores),#swjy
-                     PACKAGE="fmri",DUP=TRUE)$resnew
+                     PACKAGE="fmri")$resnew
   dim(residuals) <- c(ddim[4],n1,n2,n3)
   gc()
 #   get variances and correlations
@@ -302,7 +302,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                      as.integer(lags[1]),
                      as.integer(lags[2]),
                      as.integer(lags[3]),
-                     PACKAGE="fmri",DUP=TRUE)$scorr
+                     PACKAGE="fmri")$scorr
   dim(scorr) <- lags                     
   cat("fmri.smooth: final variance estimate","\n")
   vartheta <- .Fortran("ivar",as.double(residuals),
@@ -313,7 +313,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                            as.integer(n3),
                            as.integer(ddim[4]),
                            var = double(n1*n2*n3),
-                           PACKAGE="fmri",DUP=TRUE)$var
+                           PACKAGE="fmri")$var
   vred <- array(vartheta/vartheta0,c(n1,n2,n3))
   vartheta <- vred/sigma2  #  sigma2 contains inverse variances
   ## "compress" the residuals
@@ -483,7 +483,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
                      double(prod(dlw)),
                      as.double(wghts),
                      double(ddim[4]*mc.cores),#resi
-                     PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","hakt","resnew")]
+                     PACKAGE="fmri")[c("bi","thnew","hakt","resnew")]
     gc()
     theta <- array(tobj$thnew,dy) 
     dim(tobj$bi) <- ddim[1:3]
@@ -514,7 +514,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
                         double(prod(dlw)),
                         as.double(wghts),
                         double(ddim[4]*mc.cores),#resi
-		        PACKAGE="fmri",DUP=TRUE)[c("bi","thnew","resnew")]
+		        PACKAGE="fmri")[c("bi","thnew","resnew")]
       ptheta <- array(pobj$thnew,dy) 
       rm(pobj) 
       gc()
@@ -563,7 +563,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
                      as.integer(lags[1]),
                      as.integer(lags[2]),
                      as.integer(lags[3]),
-                     PACKAGE="fmri",DUP=TRUE)$scorr
+                     PACKAGE="fmri")$scorr
   dim(scorr) <- lags                     
   vartheta <- 1/tobj$bi
   vred <- vartheta*sigma2
@@ -635,7 +635,7 @@ smooth3D <- function(y,lkern="Gaussian",weighted=FALSE,sigma2=NULL,mask=NULL,hma
                      double(prod(dlw)),
                      as.double(wghts),
                      double(dv),#swjy
-                     PACKAGE="fmri",DUP=TRUE)$thnew
+                     PACKAGE="fmri")$thnew
 array(ysmooth,dy)
 }
 
