@@ -1,7 +1,7 @@
 Package:     fmri
 Version:     1.7-2
 Date:        2016-09-09
-Title:       Analysis of fMRI experiments
+Title:       Analysis of fMRI Experiments
 Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
                     email = "tabelow@wias-berlin.de"), 
              person("Joerg", "Polzehl", role = c("aut"),
@@ -11,19 +11,19 @@ Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
 Depends: R (>= 2.14.0), awsMethods (>= 1.0-1), nlme
 Imports:     parallel, metafor, methods
 Suggests:    tcltk, tkrplot, fastICA, adimpro, oro.nifti
-Description: The package contains R-functions to perform an fmri analysis
+Description: Contains R-functions to perform an fmri analysis
              as described in
-             K. Tabelow, J. Polzehl, H.U. Voss, and V. Spokoiny, 
+             "K. Tabelow, J. Polzehl, H.U. Voss, and V. Spokoiny, 
              Analysing fMRI experiments with structure adaptive smoothing procedures,
-             NeuroImage, 33:55-62 (2006),
-             J. Polzehl, H.U. Voss, K. Tabelow, Structural adaptive segmentation
-             for statistical parametric mapping, NeuroImage, 52:515-523 (2010)
+             NeuroImage, 33:55-62 (2006)",
+             "J. Polzehl, H.U. Voss, K. Tabelow, Structural adaptive segmentation
+             for statistical parametric mapping, NeuroImage, 52:515-523 (2010)"
              and 
-             K. Tabelow, J. Polzehl, Statistical Parametric Maps for
+             "K. Tabelow, J. Polzehl, Statistical Parametric Maps for
              Functional MRI Experiments in {R}: The Package {fmri}}, 
-             Journal of Statistical Software, 44(11):1--21 (2011).
+             Journal of Statistical Software, 44(11):1--21 (2011)".
 License:     GPL (>= 2)
-Copyright:   This package is Copyright (C) 2006-2015 Weierstrass Institute for 
+Copyright:   This package is Copyright (C) 2006-2016 Weierstrass Institute for 
                                            Applied Analysis and Stochastics.
 URL:         http://www.wias-berlin.de/software/imaging/
 Note:        This software comes with NO warranty! It is NOT intended to be used 

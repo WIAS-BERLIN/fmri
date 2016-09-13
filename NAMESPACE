@@ -22,5 +22,9 @@ import(parallel,awsMethods,nlme)
   importFrom("utils", "flush.console", "setTxtProgressBar",
              "txtProgressBar")
 importFrom(metafor,rma.uni)
+S3method(plot,fmridata)
+S3method(plot,fmrisegment)
+S3method(print,fmridata)
+S3method(summary,fmridata)
 useDynLib(fmri)
 

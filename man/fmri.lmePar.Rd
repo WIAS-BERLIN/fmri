@@ -135,7 +135,7 @@ Bold[1:dx,1:dy,1:dz,(dt*3+1):(dt*4)] <- extract.data(ds4)
 y <- Bold[16, 16, 16, ] # choose one voxel
 M1.1 <-  lme(fixed = y ~ 0 + hrf + session + drift1:session + drift2:session,
             random = ~ 0 + hrf|subj,           
-            correlation = corAR1(value = 0.3, form = ~ 1|subj/session, fixed=TRUE),                   
+            correlation = corAR1(value = 0.3, form = ~ 1|subj/session, fixed=TRUE),
             weights = varIdent(form =~ 1|subj), 
             method ="REML",
             control = lmeControl(rel.tol=1e-6, returnObject = TRUE),

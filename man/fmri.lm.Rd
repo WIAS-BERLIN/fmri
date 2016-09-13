@@ -90,6 +90,7 @@
 }
 \seealso{ \code{\link{fmri.design}}, \code{\link{fmri.stimulus}} }
 \examples{
+  \dontrun{
   # Example 1
   data <- list(ttt=writeBin(rnorm(32*32*32*107), raw(), 4),
                mask=array(1, c(32, 32, 32)), dim=c(32, 32, 32, 107))
@@ -99,6 +100,7 @@
   model <- fmri.lm(data, z, verbose=TRUE)
   plot(extract.data(data)[16, 16, 16,])
   lines(extract.data(data)[16, 16, 16, ] - extract.data(model, "residuals")[16, 16, 16, ], col=2)
+  }
 }
 \keyword{ regression }% at least one, from doc/KEYWORDS
 
