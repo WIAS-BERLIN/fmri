@@ -8,6 +8,7 @@ export(fmri.gui)
 export(plot.fmridata)
 export(oro2fmri,fmri2oro)
 export(fmri.designG,fmri.lmePar,fmri.metaPar)
+export(niftiImage2fmri)
 import(parallel,awsMethods,nlme)
   importFrom("grDevices", "col2rgb", "dev.new", "gray", "grey",
              "heat.colors", "hsv", "rainbow")

@@ -1465,9 +1465,13 @@ extract.data <- function(z,what="data"){
       }
       } else { 
       if(!is.null(z$ttt)){
-      ttt <- readBin(z$ttt,"numeric",prod(z$dim),4)
-      dim(ttt) <- z$dim
-          } else {
+        if(is.null(z$datascale)){
+           ttt <- readBin(z$ttt,"numeric",prod(z$dim),4)
+        } else {
+           ttt <- readBin(z$ttt,"integer",prod(z$dim),2)*z$datascale
+        }
+        dim(ttt) <- z$dim
+        } else {
           warning("extract.data: No residuals available, returning NULL")
           ttt <- NULL
       }

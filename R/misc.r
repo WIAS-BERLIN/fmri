@@ -333,4 +333,64 @@ generate.filename <- function(prefix="", suffix="", picstart=1, numbpic=1, digit
   }
   invisible(filename)
 }
-
+##
+##  create fmri-object from nifti
+##
+niftiImage2fmri <- function(niftiobj, level=0.75, setmask=TRUE,
+                            indx=NULL,indy=NULL,indz=NULL,avoidnegs=FALSE) {
+  ## Convert niftiImage object to "fmridata" S3 object
+  ddim <- attributes(niftiobj)$dim
+  pixdim <- attributes(niftiobj)$pixdim
+  pixunits <- attributes(niftiobj)$pixunits
+  dx <- ddim[1]
+  dy <- ddim[2]
+  dz <- ddim[3]
+  dt <- ddim[4]
+  if(is.null(indx)) indx <- 1:dx
+  if(is.null(indy)) indy <- 1:dy
+  if(is.null(indz)) indz <- 1:dz
+  dx <- length(indx)
+  dy <- length(indy)
+  dz <- length(indz)
+  ddim[1:3] <- c(dx,dy,dz)
+  weights <- abs(pixdim[1:3])/min(abs(pixdim[1:3]))
+  ttt <- array(0,ddim)
+  ttt[,,,] <- niftiobj[indx,indy,indz,]
+  if(avoidnegs&any(ttt<0)){ 
+    ttt <- ttt-min(ttt)
+    warning("changed mean of data to avoid negatives")
+  }
+  mask <- array(TRUE, c(dx,dy,dz))
+  if (setmask) {
+    mask[ttt[,,,1] < quantile(ttt[,,,1], level, na.rm=TRUE)] <- FALSE
+    dim(ttt) <- c(prod(dim(ttt)[1:3]), dim(ttt)[4])
+    na <- ttt %*% rep(1, dim(ttt)[2])
+    mask[is.na(na)] <- FALSE
+    ttt[is.na(na), ] <- 0
+    dim(mask) <- c(dx, dy, dz)
+    mask <- connect.mask(mask)
+  }
+  datascale <- max(abs(ttt))/32767
+  ttt <- as.integer(ttt/datascale)
+  z <- list(ttt = writeBin(ttt, raw(), 2), 
+            format = "NIFTI",
+            delta = rep(1,3),
+            origin = NULL,
+            orient = NULL, 
+            dim = ddim,
+            dim0 = ddim,
+            datascale = datascale,
+            roixa = 1,
+            roixe = dx,
+            roiya = 1,
+            roiye = dy,
+            roiza = 1, 
+            roize = dz,
+            roit = 1,
+            weights = weights,
+            header = list(NULL),
+            mask = mask)
+  class(z) <- "fmridata"
+  attr(z, "file") <- ""
+  return(z)
+}
