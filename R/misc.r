@@ -368,7 +368,7 @@ niftiImage2fmri <- function(niftiobj, level=0.75, setmask=TRUE,
     mask[is.na(na)] <- FALSE
     ttt[is.na(na), ] <- 0
     dim(mask) <- c(dx, dy, dz)
-    mask <- connect.mask(mask)
+    mask <- connect.mask(mask)|mask
   }
   datascale <- max(abs(ttt))/32767
   ttt <- as.integer(ttt/datascale)

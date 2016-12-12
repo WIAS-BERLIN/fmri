@@ -245,6 +245,280 @@ fmri.lm <- function(ds,
                     actype = c("smooth", "noac", "ac", "accalc"),
                     contrast = c(1),
                     verbose = FALSE) {
+  ##
+  ##  should be faster and more memory efficient
+  ##
+  ## get function call as character
+  call <- as.character(as.expression(sys.call(-1)))
+  
+  if (verbose) cat("fmri.lm: entering function at", format(Sys.time()), "\n")
+  
+  ## some settings
+  actype <- match.arg(actype)
+  
+  ## extract the compressed data
+  ttt <- extract.data(ds)
+  
+  ## test dimensionality of object and design matrix
+  dy <- dim(ttt)
+  if (length(dy) != 4)
+    stop("fmri.lm: Hmmmm, this does not seem to be a fMRI time series. I better stop executing! Sorry!")
+  if (!is.matrix(z))
+    stop("fmri.lm: Something is wrong with the design matrix")
+  if (is.null(mask)) mask <- ds$mask
+  dm <- dim(mask)
+  if (length(dm) != 3)
+    stop("fmri.lm: mask is not three-dimensional array!")
+  if (any(dy[1:3] != dm))
+    stop("fmri.lm: mask dimensionality does not match functional dataset")
+  
+  ## first consider contrast vector! NO test whether it is real contrast!!
+  length(contrast) <- dim(z)[2]
+  contrast[is.na(contrast)] <- 0
+  
+  ## (X^T X)^-1
+  svdresult <- svd(z)
+  u <- svdresult$u # remember this for the determination of df
+  v <- svdresult$v # remember this for the determination of df
+  vt <- t(v)       # remember this for the determination of df
+  lambda1 <- diag(1/svdresult$d)
+  xtx <- svdresult$v %*% diag(1/svdresult$d^2) %*% t(svdresult$v)
+  ## now we have z = svdresult$u lambda1^(-1) t(svdresult$v)
+  
+  ## define some variables and make object a matrix
+  voxelcount <- prod(dy[1:3])
+  dim(ttt) <- c(voxelcount, dy[4])
+  ttt <- ttt[mask,] ## reduce to information needed
+  voxelcount0 <- dim(ttt)[1]
+  arfactor <- numeric(voxelcount0)
+  variance <- numeric(voxelcount0)
+  cxtx <- rep.int(t(contrast) %*% xtx %*% contrast, voxelcount0)
+  
+  ## calculate matrix R for bias correction in correlation coefficient
+  ## estimate (see Worsley 2005)
+  R <- diag(1, dy[4]) - svdresult$u %*% t(svdresult$u)
+  m00 <- dy[4] - dim(z)[2]
+  m01 <- 0
+  for (k in 1:dy[4]) 
+    m01 <- m01 + sum(R[k, -1] * R[k, -dy[4]])
+  m10 <- m01
+  m11 <- 0
+  for (k in 1:(dy[4]-1))
+    m11 <- m11 + sum(R[k+1, -dy[4]] * R[k, -1] + R[k+1, -1] * R[k, -dy[4]])
+  Minv <- matrix(c(m11, -m01, -m10, m00), 2, 2)/(m00 * m11 - m01 * m10) # inverse
+  
+  ## calculate the paramters and residuals for all voxels
+  beta <- ttt %*% svdresult$u %*% lambda1 %*% t(svdresult$v)
+  residuals <- ttt - beta %*% t(z)
+  
+  ## actype == "smooth" ... calc AC, smooth AC, calc prewhitened model
+  ## actype == "accalc" ... calc AC, calc prewhitened model
+  ## actype == "ac"     ... calc AC only
+  ## "accalc" is actually a special case of "smooth" (hmax=1)
+  if (actype %in% c("smooth", "accalc", "ac")) { 
+    if (verbose) {
+      cat("fmri.lm: calculating AR(1) model\n")
+#      pb <- txtProgressBar(0, voxelcount0, style = 3)
+    }
+#    for (i in (1:voxelcount0)) {
+ #     if (verbose) setTxtProgressBar(pb, i)
+  #    
+      ## calculate the coefficients of ACR(1) time series model
+  #    a0 <- residuals[i, ] %*% residuals[i, ]
+  #    a1 <- residuals[i, -1] %*% residuals[i, -dim(z)[1]]
+  #    an <- Minv %*% c(a0, a1)
+  #    if (an[1] != 0) arfactor[i] <- an[2]/an[1]
+  #  }
+    a0 <- as.vector((residuals^2)%*%rep(1,dy[4]))
+    a1 <- as.vector((residuals[, -1]*residuals[, -dim(z)[1]])%*%rep(1,dy[4]-1))
+    an <- Minv %*% rbind(a0, a1)
+    arfactor <- an[2,]/an[1,]
+    arfactor[is.na(arfactor)] <- 0
+    arfactor[arfactor >= 1] <- 0.999
+#    if (verbose) close(pb)
+    
+    if (actype == "smooth") {
+      arfactor1 <- array(0,dy[1:3])
+      arfactor1[mask] <- arfactor  
+      hmax <- 3.52
+      if (verbose) cat("fmri.lm: smoothing AR(1) parameters with (hmax):", hmax, "... ")
+      ## now smooth (if actype is such) with AWS
+      arfactor <- smooth3D(arfactor1, lkern = "Gaussian", hmax = hmax, wghts = ds$weights, mask = mask)[mask]
+      rm(arfactor1)
+      gc()
+      if (verbose) cat("done\n")
+    }
+    
+    if (actype %in% c("smooth", "accalc")) {
+      ## re- calculated the linear model with prewithened object
+      ## NOTE: sort arfactors and bin them! this combines calculation in
+      ## NOTE: voxels with similar arfactor, see Worsley
+      step <- 0.01
+      arlist <- seq(min(arfactor) - step/2, max(arfactor) + step/2,  length = diff(range(arfactor)) / step + 1)
+      if (verbose) {
+        cat("fmri.lm: re-calculating linear model with prewithened object\n")
+        pb <- txtProgressBar(0, length(arlist) - 1, style = 3)
+      }
+      for (i in 1:(length(arlist)-1)) {
+        if (verbose) setTxtProgressBar(pb, i)
+        
+        indar <- (arfactor > arlist[i]) & (arfactor <= arlist[i+1])
+        if (sum(indar) > 0) {
+          ## create prewhitening matrix
+          rho <- mean(arlist[i:(i+1)])
+          rho0 <- 1/sqrt(1 - rho^2)
+          a <- diag(c(1, rep(rho0, dy[4] - 1)) , dy[4])
+          a[col(a) == row(a) - 1] <- -rho * rho0
+          zprime <- a %*% z
+          ## calc SVD of prewhitened design
+          svdresult <- svd(zprime)
+          ## xtx * <estimate of variance> of prewhitened noise is variance of parameter estimate
+          xtx <- svdresult$v %*% diag(1/svdresult$d^2) %*% t(svdresult$v)
+          cxtx[indar] <- t(contrast) %*% xtx %*% contrast 
+          tttprime <- ttt[indar, ] %*% t(a)
+          ## estimate parameter
+          beta[indar,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% t(svdresult$v) 
+          ## calculate residuals
+          residuals[indar,] <- tttprime - beta[indar,] %*% t(zprime) 
+        }
+      }
+      rm(ttt,tttprime)
+      gc()
+      if (verbose) close(pb)
+      ##  prewhitened residuals don't have zero mean, therefore sweep mean over time from them
+      meanres <- residuals%*%rep(1/dy[4],dy[4])
+      residuals <- residuals - as.vector(meanres)
+    } 
+  }
+  variance <- apply(residuals^2, 1, sum) / (dy[4] - dim(z)[2]) * cxtx
+  residuals <- t(residuals)
+  variance[variance == 0] <- 1e20
+  
+  ## calculate contrast of parameters
+  cbeta <- beta %*% contrast
+  ##
+  ##    we now need the full arrays
+  ##
+  
+    ## re-arrange residual dimensions
+  residuals0 <- residuals
+  residuals <- matrix(0,dy[4],voxelcount)
+  residuals[,mask] <- residuals0
+  rm(residuals0)
+  gc()
+  dim(residuals) <- dy[c(4, 1:3)]    # n * vx * vy * vz
+  
+  if (verbose) cat("fmri.lm: calculating spatial correlation ... ")
+  
+  lags <- c(5, 5, 3)
+  corr <- .Fortran("mcorr",
+                   as.double(residuals),
+                   as.logical(mask),
+                   as.integer(dy[1]),
+                   as.integer(dy[2]),
+                   as.integer(dy[3]),
+                   as.integer(dy[4]),
+                   scorr = double(prod(lags)),
+                   as.integer(lags[1]),
+                   as.integer(lags[2]),
+                   as.integer(lags[3]),
+                   PACKAGE = "fmri")$scorr
+  dim(corr) <- lags                     
+  
+  ## "compress" the residuals
+  scale <- max(abs(range(residuals)))/32767
+  residuals <- writeBin(as.integer(residuals/scale), raw(), 2)
+  
+  ## determined local smoothness
+  bw <- optim(c(2, 2, 2), 
+              corrrisk, 
+              method = "L-BFGS-B", 
+              lower = c(.59, .59, .59), 
+              upper = c(10, 10, 10), 
+              lag = lags, 
+              data = corr)$par  
+  bw[bw < .6] <- 0
+  dim(bw) <- c(1, 3)
+  if ((max(bw) > 4 ) || (corr[lags[1], 1, 1] + corr[1, lags[2], 1] + corr[1, 1, lags[3]] > 0.5))
+    warning(paste("fmri.lm: Local smoothness characterized by large bandwidth ", bw[1], bw[2], bw[3], " check residuals for structure", collapse = ","))
+  rxyz <- c(resel(1, bw[1]), resel(1, bw[2]), resel(1, bw[3]))
+  dim(rxyz) <- c(1, 3)
+  
+  if (verbose) cat("done\n")
+   ## re-arrange dimensions
+  beta0 <- beta
+  beta <- matrix(0,voxelcount,dim(z)[2])
+  beta[mask,] <- beta0
+  rm(beta0)
+  dim(beta) <- c(dy[1:3], dim(z)[2]) # vx * vy * vz * p
+  cbeta0 <- cbeta
+  cbeta <- array(0,dy[1:3])
+  cbeta[mask] <- cbeta0
+  rm(cbeta0)
+  variance0 <- variance
+  variance  <- array(0,dy[1:3])
+  variance[mask] <- variance0
+  arfactor0 <- arfactor
+  arfactor  <- array(0,dy[1:3])
+  arfactor[mask] <- arfactor0
+ 
+  if (verbose) cat("fmri.lm: determining df ... ")
+  white <- switch(actype,
+                  "smooth" = 1L,
+                  "accalc" = 2L,
+                  3L)
+  cx <- u %*% lambda1 %*% vt %*% contrast
+  tau1 <- sum(cx[-1] * cx[-length(cx)]) / sum(cx * cx)
+  df <- switch(white,
+               abs(diff(dim(z))) / (1 + 2*(1 + 2 * prod(hmax/bw)^0.667)^(-1.5) * tau1^2),
+               abs(diff(dim(z))) / (1 + 2* tau1^2),
+               abs(diff(dim(z))))
+  if (verbose) cat(df, "done\n")
+  
+  ## create the result and leave the function
+  result <- list()
+  result$beta <- beta 
+  result$cbeta <- cbeta 
+  result$var <- variance 
+  result$mask <- mask 
+  result$res <- residuals 
+  result$resscale <- scale
+  result$arfactor <- arfactor 
+  result$rxyz <- rxyz 
+  result$scorr <- corr 
+  result$weights <- ds$weights 
+  result$dim <- ds$dim 
+  result$hrf <- z %*% contrast 
+  result$bw <- bw 
+  result$df <- df 
+  result$call <- args
+  result$roixa <- ds$roixa
+  result$roixe <- ds$roixe
+  result$roiya <- ds$roiya
+  result$roiye <- ds$roiye
+  result$roiza <- ds$roiza
+  result$roize <- ds$roize
+  result$roit <- ds$roit
+  result$header <- ds$header
+  result$format <- ds$format
+  result$dim0 <- ds$dim0
+  class(result) <- c("fmridata","fmrispm")
+  
+  attr(result, "file") <- attr(ds, "file")
+  attr(result, "design") <- z
+  attr(result, "white") <- white
+  attr(result, "residuals") <- !is.null(scale)
+  
+  if (verbose) cat("fmri.lm: exiting function at", format(Sys.time()), "\n")
+  
+  invisible(result)
+}
+fmri.lm.old2 <- function(ds,
+                    z,
+                    mask = NULL,
+                    actype = c("smooth", "noac", "ac", "accalc"),
+                    contrast = c(1),
+                    verbose = FALSE) {
   
   ## get function call as character
   call <- as.character(as.expression(sys.call(-1)))
