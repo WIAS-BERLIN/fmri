@@ -349,7 +349,7 @@ fmri.lm <- function(ds,
       if (verbose) cat("done\n")
     }
     
-    if (actype %in% c("smooth", "accalc")) {
+    if (actype %in% c("smooth", "ac")) {
       ## re- calculated the linear model with prewithened object
       ## NOTE: sort arfactors and bin them! this combines calculation in
       ## NOTE: voxels with similar arfactor, see Worsley
@@ -465,7 +465,7 @@ fmri.lm <- function(ds,
   if (verbose) cat("fmri.lm: determining df ... ")
   white <- switch(actype,
                   "smooth" = 1L,
-                  "accalc" = 2L,
+                  "ac" = 2L,
                   3L)
   cx <- u %*% lambda1 %*% vt %*% contrast
   tau1 <- sum(cx[-1] * cx[-length(cx)]) / sum(cx * cx)
