@@ -22,6 +22,7 @@ fmri2.stimulus <- function(scans = 1,
     onsets <- onsets*TR
     durations <- durations*TR
   }
+  slicetiming <- !is.null(sliceorder)
   if(slicetiming) {
      nslices <- length(sliceorder)
      scale <- max(scale,nslices)
@@ -53,7 +54,7 @@ fmri2.stimulus <- function(scans = 1,
   if(slicetiming){
     stimulus <- matrix(0,ceiling(scans),nslices)
     for (j in 1:nslices) for(i in 1:no)
-       stimulus[pmin(1,onsets[i]:(onsets[i]+durations[i]-1)-slicetimes[j]),j] <- 1
+       stimulus[pmax(1,onsets[i]:(onsets[i]+durations[i]-1)-slicetimes[j]),j] <- 1
   } else {
     stimulus <- rep(0, ceiling(scans))
     for (i in 1:no) stimulus[onsets[i]:(onsets[i]+durations[i]-1)] <- 1
@@ -97,10 +98,11 @@ fmri2.stimulus <- function(scans = 1,
               user = hrf(0:(ceiling(scans)-1)/scale)/shrf)
   if(slicetiming) {
      for(j in 1:nslices) {
-      stimulus[,j] <- convolve(stimulus[,j], rev(y), type="open")
+      stimulus[,j] <-
+        convolve(stimulus[,j], rev(y), type="open")[1:dim(stimulus)[1]]
+      }
       ## final operations to get BOLD at scan time
-      stimulus <- stimulus[unique((scale:scans)%/%(scale^2*TR))*scale^2*TR,]/(scale^2*TR)
-    }
+    stimulus <- stimulus[unique((scale:scans)%/%(scale^2*TR))*scale^2*TR,]/(scale^2*TR)
   } else {
      stimulus <- convolve(stimulus, rev(y), type="open")
     ## final operations to get BOLD at scan time
@@ -131,15 +133,16 @@ fmri2.design <- function(stimulus,
      }
   } else {
      slicetiming <- FALSE
-     dims <- dim(stimulus)
-     stimulus <- as.matrix(stimulus)
+     stims <- as.matrix(stimulus)
+     dims <- dim(stims)
      nstimulus <- dims[2]
      scans <- dims[1]
      nslices <- 1
+     dim(stims) <- c(dims,nslices)
   }
   if (!is.null(cef)) {
     cef <- as.matrix(cef)
-    if (dim(stimulus)[1] != dim(cef)[1])
+    if (dim(stims)[1] != dim(cef)[1])
       stop("Length of stimuli ", dim(stimulus)[1], " does not match the length of confounding effects ", dim(cef)[1])
     neffects <- dim(cef)[2]
   } else {
@@ -152,10 +155,8 @@ fmri2.design <- function(stimulus,
     dz <- c(scans, nstimulus + neffects + order + 1, nslices)
     z <- array(0, dz)
     if (verbose) cat("fmriDesign: Adding stimuli to design matrix\n")
-    z[, 1:nstimulus,] <- stimulus
-
-  ## needed to make all effects orthogonal to stimulus
-  ortho <- t(stimulus) %*% stimulus
+    z[, 1:nstimulus,] <- stims
+      ## needed to make all effects orthogonal to stimulus
 
   ## this is the mean effect
   if (verbose) cat("fmriDesign: Adding mean effect to design matrix\n")
@@ -166,6 +167,7 @@ fmri2.design <- function(stimulus,
     if (verbose) cat("fmriDesign: Adding", neffects, "confounding effect(s) to design matrix\n")
     z[, (nstimulus + 1):(nstimulus + neffects),] <- cef
     for(k in 1:nslices) {
+      ortho <- t(stims[,,k]) %*% stims[,,k]
       hz <- numeric(nstimulus)
       for (i in (nstimulus + 1):(nstimulus + neffects)) {
         for (j in 1:nstimulus) hz[j] <- z[, j,k] %*% z[, i,k]
@@ -178,6 +180,7 @@ fmri2.design <- function(stimulus,
   if (order != 0) {
     if (verbose) cat("fmriDesign: Adding polynomial trend of order", order, "to design matrix\n")
     for(k in 1:nslices) {
+      ortho <- t(stims[,,k]) %*% stims[,,k]
        hz <- numeric(nstimulus)
        for (i in (neffects + nstimulus + 2):(neffects + nstimulus + order + 1)) {
           z[, i, k] <- (1:scans)^(i - nstimulus - neffects - 1)
@@ -214,7 +217,7 @@ fmri2.lm <- function(ds,
 
   ## extract the compressed data
   ttt <- extract.data(ds)
-  slicetiming <- !is.null(slicetimes)
+  slicetiming <- !is.null(slicetiming)
   if(slicetiming){
      dz <- dim(z)
      if(length(dz) !=3 | dz[3] != dim(ttt)[3]){
@@ -235,7 +238,7 @@ fmri2.lm <- function(ds,
   if(slicetiming && dz[3]!=dy[3])
     stop("fmri.lm: Slice timing specified with inapproriate number of slices in design")
   if (is.null(mask)) mask <- ds$mask
-  dm <- dim(mask)
+    dm <- dim(mask)
   if (length(dm) != 3)
     stop("fmri.lm: mask is not three-dimensional array!")
   if (any(dy[1:3] != dm))
@@ -259,7 +262,7 @@ fmri2.lm <- function(ds,
        lambda1[,i] <- 1/svdresult$d
        xtx[,,i] <- svdresult$v %*% diag(lambda1[,i]^2) %*% t(svdresult$v)
        R <- diag(1, dy[4]) - svdresult$u %*% t(svdresult$u)
-       zinv[,,i] <- svdresult$u %*% diag(lambda1) %*% t(svdresult$v)
+       zinv[,,i] <- svdresult$u %*% diag(lambda1[,i]) %*% t(svdresult$v)
        ## calculate matrix R for bias correction in correlation coefficient
        ## estimate (see Worsley 2005)
        m00 <- dy[4] - dim(z)[2]
@@ -298,10 +301,11 @@ fmri2.lm <- function(ds,
   arfactor <- numeric(voxelcount0)
   variance <- numeric(voxelcount0)
   if(slicetiming){
-     cxtx <- matrix(0,voxelcount0,nslices)
+    beta <- matrix(0,voxelcount0,dim(zinv)[2])
+     cxtx <- matrix(0,voxelcount0)
      residuals <- ttt
      for(i in 1:nslices){
-        cxtx[,i] <- t(contrast) %*% xtx[,,i] %*% contrast
+        cxtx[inslice==i] <- t(contrast) %*% xtx[,,i] %*% contrast
         beta[inslice==i,] <- ttt[inslice==i,] %*% zinv[,,i]
         residuals[inslice==i,] <- ttt[inslice==i,] - beta[inslice==i,] %*% t(z[,,slices[i]])
      }
@@ -332,7 +336,12 @@ fmri2.lm <- function(ds,
     #  }
     a0 <- as.vector((residuals^2)%*%rep(1,dy[4]))
     a1 <- as.vector((residuals[, -1]*residuals[, -dim(z)[1]])%*%rep(1,dy[4]-1))
-    an <- Minv %*% rbind(a0, a1)
+    if(slicetiming){
+       an <- matrix(0,2,voxelcount0)
+       for(i in 1:nslices) an[,inslice==i] <- Minv[,,i] %*% rbind(a0[inslice==i], a1[inslice==i])
+    } else {
+       an <- Minv %*% rbind(a0, a1)
+  }
     arfactor <- an[2,]/an[1,]
     arfactor[is.na(arfactor)] <- 0
     arfactor[arfactor >= 1] <- 0.999
@@ -357,7 +366,7 @@ fmri2.lm <- function(ds,
       ## NOTE: sort arfactors and bin them! this combines calculation in
       ## NOTE: voxels with similar arfactor, see Worsley
       step <- 0.01
-      arlist <- seq(min(arfactor) - step/2, max(arfactor) + step/2,  length = diff(range(arfactor)) / step + 1)
+      arlist <- seq(min(arfactor) - step/2, max(arfactor) + step/2,  length = diff(range(arfactor)) / step + 2)
       if (verbose) {
         cat("fmri.lm: re-calculating linear model with prewithened object\n")
         pb <- txtProgressBar(0, length(arlist) - 1, style = 3)
@@ -420,13 +429,7 @@ fmri2.lm <- function(ds,
   ##
   ##  now calculate variances in prewhitened model
   ##
-  if(slicetiming){
-     variance <- numeric(voxelcount0)
-     for(i in 1:nslices)
-       variance[inslice==i] <- apply(residuals[inslice==i,]^2, 1, sum) / (dy[4] - dim(z)[2]) * cxtx[,,i]
-  } else {
-     variance <- apply(residuals^2, 1, sum) / (dy[4] - dim(z)[2]) * cxtx
-  }
+       variance <- apply(residuals^2, 1, sum) / (dy[4] - dim(z)[2]) * cxtx
   residuals <- t(residuals)
   variance[variance == 0] <- 1e20
 
@@ -503,6 +506,7 @@ fmri2.lm <- function(ds,
                   "smooth" = 1L,
                   "accalc" = 2L,
                   3L)
+  if(slicetiming) lambda1 <- apply(lambda1,1,mean)
   cx <- u %*% diag(lambda1) %*% vt %*% contrast
   tau1 <- sum(cx[-1] * cx[-length(cx)]) / sum(cx * cx)
   df <- switch(white,
@@ -524,7 +528,11 @@ fmri2.lm <- function(ds,
   result$scorr <- corr
   result$weights <- ds$weights
   result$dim <- ds$dim
-  result$hrf <- z %*% contrast
+  if(slicetiming){
+     hrf <- matrix(0,dim(z)[1],nslices)
+     for(i in 1:nslices) hrf[,i] <- z[,,i] %*% contrast
+     results$hrf <- hrf
+  } else result$hrf <- z %*% contrast
   result$bw <- bw
   result$df <- df
   result$call <- args
