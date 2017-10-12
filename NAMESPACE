@@ -1,6 +1,7 @@
 export(read.AFNI,read.ANALYZE,read.DICOM,read.NIFTI,extract.data,cutroi)
 export(write.AFNI,write.ANALYZE,write.NIFTI)
 export(fmri.stimulus,fmri.design,fmri.lm)
+export(fmri2.stimulus,fmri2.design,fmri2.lm)
 export(fmri.smooth,fmri.pvalue)
 export(plot.fmridata,plot.fmrisegment,summary.fmridata,print.fmridata)
 export(fmri.detrend)
@@ -28,4 +29,3 @@ S3method(plot,fmrisegment)
 S3method(print,fmridata)
 S3method(summary,fmridata)
 useDynLib(fmri)
-

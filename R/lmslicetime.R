@@ -1,3 +1,198 @@
+fmri2.stimulus <- function(scans = 1,
+                          onsets = c(1),
+                          durations = c(1),
+                          TR = 2,
+                          times = FALSE,
+                          sliceorder = NULL,
+                          type = c("canonical", "gamma", "boxcar", "user"),
+                          par = NULL,
+                          scale = 10,
+                          hrf = NULL,
+                          verbose = FALSE) {
+
+  ## match the type of HRF function to the defaults
+  type <- match.arg(type)
+  if ((type == "user") && (class(hrf) != "function"))
+    stop("HRF type is user, but specified hrf is not a function!")
+
+  ## is information for slice timing present ?
+
+  ## re-calculate design spec. from Scans to Time
+  if (!times) {
+    onsets <- onsets*TR
+    durations <- durations*TR
+  }
+  if(slicetiming) {
+     nslices <- length(sliceorder)
+     scale <- max(scale,nslices)
+     # resulution should at least reflect slice times
+     slicetimes <- (1:nslices-1)[sliceorder]/TR*scale
+  }
+  ## consider microtime
+  onsets <- onsets * scale
+  durations <- durations * scale
+  scans <- scans * TR * scale
+  TR <- TR/scale
+  slicetiming <- !is.null(sliceorder)
+  if(slicetiming) {
+     nslices <- length(sliceorder)
+     slicetimes <- ceiling((1:nslices-1)[sliceorder]/nslices*scale)
+  }
+  ## normalization constant for the user-defined to make stimuli comparable
+  if (type == "user") shrf <- sum(hrf(0:(ceiling(scans)-1)/scale))
+
+  ## basic consistency checks for design spec
+  no <- length(onsets)
+  if (length(durations) == 1) {
+    durations <- rep(durations, no)
+  } else if (length(durations) != no)  {
+    stop("Length of duration vector does not match the number of onsets!")
+  }
+
+  ## create boxcar function
+  if(slicetiming){
+    stimulus <- matrix(0,ceiling(scans),nslices)
+    for (j in 1:nslices) for(i in 1:no)
+       stimulus[pmin(1,onsets[i]:(onsets[i]+durations[i]-1)-slicetimes[j]),j] <- 1
+  } else {
+    stimulus <- rep(0, ceiling(scans))
+    for (i in 1:no) stimulus[onsets[i]:(onsets[i]+durations[i]-1)] <- 1
+  }
+  ## define some HRF
+  ## t: time in seconds
+  .canonicalHRF <- function(t, par = NULL) {
+    ttpr <- par[1] * par[3]
+    ttpu <- par[2] * par[4]
+    (t/ttpr)^par[1] * exp(-(t-ttpr)/par[3]) - par[5] * (t/ttpu)^par[2] * exp(-(t-ttpu)/par[4])
+  }
+
+  ## t: time in seconds
+  .gammaHRF <- function(t, par = NULL) {
+    th <- 0.242 * par[1]
+    1/(th*factorial(3)) * (t/th)^3 * exp(-t/th)
+  }
+
+  ## prepare parameters for HRF
+  if (type == "canonical") {
+    if (is.null(par)) par <- c(6, 12, 0.9, 0.9, 0.35)
+    if (!is.numeric(par[1:5]) || any(is.na(par[1:5]))) {
+      warning("parameter vector c(", paste(par, collapse=", "),
+              ") for canonical HRF is not numeric or has unsufficient length (<5)!\nUsing default parameters!",
+              paste(par <- c(6, 12, 0.9, 0.9, 0.35), collapse=", "))
+    }
+  } else if (type =="gamma") {
+    if (is.null(par)) par <- 4
+    if (!is.numeric(par[1])) {
+      warning("parameter ", par[1],
+              " for gamma HRF is not numeric!\nUsing default parameter!", par <- 4)
+    }
+  }
+
+  ## convolve with chosen HRF
+  if (verbose) cat("fmriStimulus: Using", type, "HRF for stimulus creation\n")
+  y <- switch(type,
+              canonical = .canonicalHRF(0:(20*scale)/scale, par)/2.885802,
+              gamma = .gammaHRF(0:(28*scale)/scale, par),
+              boxcar = scale,
+              user = hrf(0:(ceiling(scans)-1)/scale)/shrf)
+  if(slicetiming) {
+     for(j in 1:nslices) {
+      stimulus[,j] <- convolve(stimulus[,j], rev(y), type="open")
+      ## final operations to get BOLD at scan time
+      stimulus <- stimulus[unique((scale:scans)%/%(scale^2*TR))*scale^2*TR,]/(scale^2*TR)
+    }
+  } else {
+     stimulus <- convolve(stimulus, rev(y), type="open")
+    ## final operations to get BOLD at scan time
+     stimulus <- stimulus[unique((scale:scans)%/%(scale^2*TR))*scale^2*TR]/(scale^2*TR)
+  }
+  ## return mean corrected stimulus function
+  if(slicetiming) sweep(stimulus,2,apply(stimulus,2,mean),"-") else stimulus - mean(stimulus)
+}
+
+fmri2.design <- function(stimulus,
+                        order = 2,
+                        cef = NULL,
+                        verbose = FALSE) {
+
+  ## create matrices and make consistency checks
+  if(is.list(stimulus)){
+     nstimulus <- length(stimulus)
+     dims <- dim(stimulus[[1]])
+     if(!is.null(dims)){
+        slicetiming <- TRUE
+        nslices <- dims[2]
+        scans <- dims[1]
+        stims <- array(0,c(scans,nstimulus,nslices))
+        for(j in 1:nstimulus){
+           if(!all(dim(stimulus[[j]])==dims)) stop("Inconsistent dimensions in stimulus list")
+           stims[,j,] <- as.matrix(stimulus[[j]])
+        }
+     }
+  } else {
+     slicetiming <- FALSE
+     dims <- dim(stimulus)
+     stimulus <- as.matrix(stimulus)
+     nstimulus <- dims[2]
+     scans <- dims[1]
+     nslices <- 1
+  }
+  if (!is.null(cef)) {
+    cef <- as.matrix(cef)
+    if (dim(stimulus)[1] != dim(cef)[1])
+      stop("Length of stimuli ", dim(stimulus)[1], " does not match the length of confounding effects ", dim(cef)[1])
+    neffects <- dim(cef)[2]
+  } else {
+    neffects <- 0
+  }
+
+
+  ## create empty design matrix and fill first columns with Stimulus
+
+    dz <- c(scans, nstimulus + neffects + order + 1, nslices)
+    z <- array(0, dz)
+    if (verbose) cat("fmriDesign: Adding stimuli to design matrix\n")
+    z[, 1:nstimulus,] <- stimulus
+
+  ## needed to make all effects orthogonal to stimulus
+  ortho <- t(stimulus) %*% stimulus
+
+  ## this is the mean effect
+  if (verbose) cat("fmriDesign: Adding mean effect to design matrix\n")
+  z[, neffects + nstimulus + 1,] <- 1
+
+  ## now confounding effects (make orthogonal to stimuli)
+  if (neffects != 0) {
+    if (verbose) cat("fmriDesign: Adding", neffects, "confounding effect(s) to design matrix\n")
+    z[, (nstimulus + 1):(nstimulus + neffects),] <- cef
+    for(k in 1:nslices) {
+      hz <- numeric(nstimulus)
+      for (i in (nstimulus + 1):(nstimulus + neffects)) {
+        for (j in 1:nstimulus) hz[j] <- z[, j,k] %*% z[, i,k]
+          z[, i, k] <- z[, i, k] + as.vector(as.matrix(z[,1:nstimulus,k]) %*% as.vector(lm(-hz~ortho-1)$coeff))
+    }
+  }
+}
+
+  ## now the polynomial trend (make orthogonal to stimuli)
+  if (order != 0) {
+    if (verbose) cat("fmriDesign: Adding polynomial trend of order", order, "to design matrix\n")
+    for(k in 1:nslices) {
+       hz <- numeric(nstimulus)
+       for (i in (neffects + nstimulus + 2):(neffects + nstimulus + order + 1)) {
+          z[, i, k] <- (1:scans)^(i - nstimulus - neffects - 1)
+       z[, i, k] <- z[, i, k]/mean(z[,i,k])
+       for (j in 1:nstimulus) hz[j] <- z[,j,k]%*%z[,i,k]
+       z[, i,k] <- z[, i,k] + as.vector(as.matrix(z[,1:nstimulus,k]) %*% as.vector(lm(-hz~ortho-1)$coeff))
+    }
+  }
+}
+if(dim(z)[3]==1) dim(z) <- dim(z)[1:2]
+  ## thats it!
+  z
+}
+
+
 fmri2.lm <- function(ds,
          z,
          mask = NULL,
@@ -8,15 +203,15 @@ fmri2.lm <- function(ds,
   ##
   ##  should be faster and more memory efficient
   ##  if length(dim(z)) == 3 the third dimension is assumed to correspond to number of slices
-  ##  and code separade design matrices for each slice (slice timing) 
+  ##  and code separade design matrices for each slice (slice timing)
   ## get function call as character
   call <- as.character(as.expression(sys.call(-1)))
-  
+
   if (verbose) cat("fmri.lm: entering function at", format(Sys.time()), "\n")
-  
+
   ## some settings
   actype <- match.arg(actype)
-  
+
   ## extract the compressed data
   ttt <- extract.data(ds)
   slicetiming <- !is.null(slicetimes)
@@ -73,7 +268,7 @@ fmri2.lm <- function(ds,
        Minv[,,i] <- matrix(c(m11, -m01, -m01, m00), 2, 2)/(m00 * m11 - m01 * m01) # inverse
        anzslicemask <- apply(mask,3,sum)[slices]
        inslice <- rep(1:nslices,anzslicemask)
-       
+
      }
   } else {
   ## (X^T X)^-1
@@ -94,7 +289,7 @@ fmri2.lm <- function(ds,
   }
   rm(R)
   ## now we have z = svdresult$u diag(lambda1^(-1)) t(svdresult$v)
-  
+
   ## define some variables and make object a matrix
   voxelcount <- prod(dy[1:3])
   dim(ttt) <- c(voxelcount, dy[4])
@@ -116,19 +311,19 @@ fmri2.lm <- function(ds,
      residuals <- ttt - beta %*% t(z)
   }
   ## calculated the paramters and residuals for all voxels
-  
+
   ## actype == "smooth" ... calc AC, smooth AC, calc prewhitened model
   ## actype == "accalc" ... calc AC, calc prewhitened model
   ## actype == "ac"     ... calc AC only
   ## "accalc" is actually a special case of "smooth" (hmax=1)
-  if (actype %in% c("smooth", "accalc", "ac")) { 
+  if (actype %in% c("smooth", "accalc", "ac")) {
     if (verbose) {
       cat("fmri.lm: calculating AR(1) model\n")
       #      pb <- txtProgressBar(0, voxelcount0, style = 3)
     }
     #    for (i in (1:voxelcount0)) {
     #     if (verbose) setTxtProgressBar(pb, i)
-    #    
+    #
     ## calculate the coefficients of ACR(1) time series model
     #    a0 <- residuals[i, ] %*% residuals[i, ]
     #    a1 <- residuals[i, -1] %*% residuals[i, -dim(z)[1]]
@@ -142,10 +337,10 @@ fmri2.lm <- function(ds,
     arfactor[is.na(arfactor)] <- 0
     arfactor[arfactor >= 1] <- 0.999
     #    if (verbose) close(pb)
-    
+
     if (actype == "smooth") {
       arfactor1 <- array(0,dy[1:3])
-      arfactor1[mask] <- arfactor  
+      arfactor1[mask] <- arfactor
       hmax <- 3.52
       if (verbose) cat("fmri.lm: smoothing AR(1) parameters with (hmax):", hmax, "... ")
       ## now smooth (if actype is such) with AWS
@@ -183,12 +378,12 @@ fmri2.lm <- function(ds,
             svdresult <- svd(zprime)
             ## xtx * <estimate of variance> of prewhitened noise is variance of parameter estimate
             xtx <- svdresult$v %*% diag(1/svdresult$d^2) %*% t(svdresult$v)
-            cxtx[indar] <- t(contrast) %*% xtx %*% contrast 
+            cxtx[indar] <- t(contrast) %*% xtx %*% contrast
             tttprime <- ttt[indar, ] %*% t(a)
             ## estimate parameter
-            beta[indar,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% t(svdresult$v) 
+            beta[indar,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% t(svdresult$v)
             ## calculate residuals
-            residuals[indar,] <- tttprime - beta[indar,] %*% t(zprime) 
+            residuals[indar,] <- tttprime - beta[indar,] %*% t(zprime)
           }
           }
         } else {
@@ -204,12 +399,12 @@ fmri2.lm <- function(ds,
           svdresult <- svd(zprime)
           ## xtx * <estimate of variance> of prewhitened noise is variance of parameter estimate
           xtx <- svdresult$v %*% diag(1/svdresult$d^2) %*% t(svdresult$v)
-          cxtx[indar] <- t(contrast) %*% xtx %*% contrast 
+          cxtx[indar] <- t(contrast) %*% xtx %*% contrast
           tttprime <- ttt[indar, ] %*% t(a)
           ## estimate parameter
-          beta[indar,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% t(svdresult$v) 
+          beta[indar,] <- tttprime %*% svdresult$u %*% diag(1/svdresult$d) %*% t(svdresult$v)
           ## calculate residuals
-          residuals[indar,] <- tttprime - beta[indar,] %*% t(zprime) 
+          residuals[indar,] <- tttprime - beta[indar,] %*% t(zprime)
         }
         }
       }
@@ -219,28 +414,28 @@ fmri2.lm <- function(ds,
       ##  prewhitened residuals don't have zero mean, therefore sweep mean over time from them
       meanres <- residuals%*%rep(1/dy[4],dy[4])
       residuals <- residuals - as.vector(meanres)
-    } 
+    }
   }
-  
+
   ##
   ##  now calculate variances in prewhitened model
   ##
   if(slicetiming){
      variance <- numeric(voxelcount0)
-     for(i in 1:nslices) 
+     for(i in 1:nslices)
        variance[inslice==i] <- apply(residuals[inslice==i,]^2, 1, sum) / (dy[4] - dim(z)[2]) * cxtx[,,i]
   } else {
      variance <- apply(residuals^2, 1, sum) / (dy[4] - dim(z)[2]) * cxtx
   }
   residuals <- t(residuals)
   variance[variance == 0] <- 1e20
-  
+
   ## calculate contrast of parameters
   cbeta <- beta %*% contrast
   ##
   ##    we now need the full arrays
   ##
-  
+
   ## re-arrange residual dimensions
   residuals0 <- residuals
   residuals <- matrix(0,dy[4],voxelcount)
@@ -248,9 +443,9 @@ fmri2.lm <- function(ds,
   rm(residuals0)
   gc()
   dim(residuals) <- dy[c(4, 1:3)]    # n * vx * vy * vz
-  
+
   if (verbose) cat("fmri.lm: calculating spatial correlation ... ")
-  
+
   lags <- c(5, 5, 3)
   corr <- .Fortran("mcorr",
                    as.double(residuals),
@@ -264,27 +459,27 @@ fmri2.lm <- function(ds,
                    as.integer(lags[2]),
                    as.integer(lags[3]),
                    PACKAGE = "fmri")$scorr
-  dim(corr) <- lags                     
-  
+  dim(corr) <- lags
+
   ## "compress" the residuals
   scale <- max(abs(range(residuals)))/32767
   residuals <- writeBin(as.integer(residuals/scale), raw(), 2)
-  
+
   ## determined local smoothness
-  bw <- optim(c(2, 2, 2), 
-              corrrisk, 
-              method = "L-BFGS-B", 
-              lower = c(.59, .59, .59), 
-              upper = c(10, 10, 10), 
-              lag = lags, 
-              data = corr)$par  
+  bw <- optim(c(2, 2, 2),
+              corrrisk,
+              method = "L-BFGS-B",
+              lower = c(.59, .59, .59),
+              upper = c(10, 10, 10),
+              lag = lags,
+              data = corr)$par
   bw[bw < .6] <- 0
   dim(bw) <- c(1, 3)
   if ((max(bw) > 4 ) || (corr[lags[1], 1, 1] + corr[1, lags[2], 1] + corr[1, 1, lags[3]] > 0.5))
     warning(paste("fmri.lm: Local smoothness characterized by large bandwidth ", bw[1], bw[2], bw[3], " check residuals for structure", collapse = ","))
   rxyz <- c(resel(1, bw[1]), resel(1, bw[2]), resel(1, bw[3]))
   dim(rxyz) <- c(1, 3)
-  
+
   if (verbose) cat("done\n")
   ## re-arrange dimensions
   beta0 <- beta
@@ -302,7 +497,7 @@ fmri2.lm <- function(ds,
   arfactor0 <- arfactor
   arfactor  <- array(0,dy[1:3])
   arfactor[mask] <- arfactor0
-  
+
   if (verbose) cat("fmri.lm: determining df ... ")
   white <- switch(actype,
                   "smooth" = 1L,
@@ -315,23 +510,23 @@ fmri2.lm <- function(ds,
                abs(diff(dim(z)[1:2])) / (1 + 2* tau1^2),
                abs(diff(dim(z)[1:2])))
   if (verbose) cat(df, "done\n")
-  
+
   ## create the result and leave the function
   result <- list()
-  result$beta <- beta 
-  result$cbeta <- cbeta 
-  result$var <- variance 
-  result$mask <- mask 
-  result$res <- residuals 
+  result$beta <- beta
+  result$cbeta <- cbeta
+  result$var <- variance
+  result$mask <- mask
+  result$res <- residuals
   result$resscale <- scale
-  result$arfactor <- arfactor 
-  result$rxyz <- rxyz 
-  result$scorr <- corr 
-  result$weights <- ds$weights 
-  result$dim <- ds$dim 
-  result$hrf <- z %*% contrast 
-  result$bw <- bw 
-  result$df <- df 
+  result$arfactor <- arfactor
+  result$rxyz <- rxyz
+  result$scorr <- corr
+  result$weights <- ds$weights
+  result$dim <- ds$dim
+  result$hrf <- z %*% contrast
+  result$bw <- bw
+  result$df <- df
   result$call <- args
   result$roixa <- ds$roixa
   result$roixe <- ds$roixe
@@ -344,13 +539,13 @@ fmri2.lm <- function(ds,
   result$format <- ds$format
   result$dim0 <- ds$dim0
   class(result) <- c("fmridata","fmrispm")
-  
+
   attr(result, "file") <- attr(ds, "file")
   attr(result, "design") <- z
   attr(result, "white") <- white
   attr(result, "residuals") <- !is.null(scale)
-  
+
   if (verbose) cat("fmri.lm: exiting function at", format(Sys.time()), "\n")
-  
+
   invisible(result)
 }
