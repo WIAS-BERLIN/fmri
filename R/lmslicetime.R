@@ -557,3 +557,39 @@ fmri2.lm <- function(ds,
 
   invisible(result)
 }
+
+sincfilter <- function(t,x){
+   .Fortran("sincfilter",
+            as.double(t),
+            as.integer(length(t)),
+            as.double(x),
+            as.integer(length(x)),
+            ft = double(length(t)),
+            PACKAGE="fmri")$ft
+}
+
+slicetiming <- function(fmridataobj, sliceorder=NULL){
+#
+#  performs sinc interpolation for slicetiming
+#
+   data <- extract.data(fmridataobj)
+   data <- aperm(data,c(4,1:3))
+   if(is.null(sliceorder)) sliceorder <- 1:dim(data)[4]
+   if(length(sliceorder)!=dim(data)[4])
+      return(warning("Inproper length of sliceorder"))
+   sliceorder <- pmax(1,pmin(dim(data)[4],as.integer(sliceorder)))
+   newdata <- .Fortran("slicetim",
+                       as.double(data),
+                       as.integer(dim(data)[1]),
+                       as.integer(dim(data)[2]),
+                       as.integer(dim(data)[3]),
+                       as.integer(dim(data)[4]),
+                       slicetimed=double(prod(dim(data))),
+                       double(dim(data)[1]),
+                       as.integer(sliceorder),
+                       PACKAGE="fmri")$slicetimed
+    dim(newdata) <- dim(data)
+    newdata <- aperm(newdata,c(2:4,1))
+    fmridataobj$ttt <- writeBin(as.numeric(newdata), raw(), 4)
+    fmridataobj
+}
