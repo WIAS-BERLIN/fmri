@@ -14,7 +14,11 @@
 \arguments{
   \item{ds}{ Data object of class "fmridata" }
   \item{z}{ Designmatrix specifying the expected BOLD response(s)
-            and additional components for trend and other effects. }
+            and additional components for trend and other effects. This can
+            either be a matrix (in case that no slice timing is required at
+            this stage) or an 3D - array with 3rd dimension correspnding
+            to the slice number. It can be interpreted as stacked array of
+            of design matrices for the individual slices.  }
   \item{mask}{ Array of dimensionality of the data describing a (brain) mask
                the computation should be restricted to. The default is the
                mask given with the data. }
@@ -41,6 +45,13 @@
   residuals and temporal autocorrelation.
   \code{cbeta} then contains the corresponding parameter
   estimates and thus is a vector of corresponding length in each voxel.
+
+  If \code{z} is an 3-dimensional array the third component is assumed to
+  code the design matrix information for the corresponding slice, i.e.
+  design matrices to differ with respect to slice timing effects. Note that
+  if motion correction needs to be performed in preprocessing slice time
+  correction may be better carried out on the data before image registration
+  using, e.g., function \code{\link{slicetiming}}.
 
   If warning "Local smoothness characterized by large bandwidth" occurs,
   check \code{scorr} elements. If correlation drops with lag towards
@@ -85,8 +96,8 @@
   NeuroImage, 33:55-62.
 
 }
-\author{ Karsten Tabelow \email{tabelow@wias-berlin.de} }
-\note{ The argument \code{vvector} is no longer supported.
+\author{ Karsten Tabelow \email{tabelow@wias-berlin.de},
+         Joerg Polzehl \email{polzehl@wias-berlin.de}  }
 }
 \seealso{ \code{\link{fmri.design}}, \code{\link{fmri.stimulus}} }
 \examples{

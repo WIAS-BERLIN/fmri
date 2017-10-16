@@ -1,4 +1,4 @@
-fmri2.stimulus <- function(scans = 1,
+fmri.stimulus <- function(scans = 1,
                           onsets = c(1),
                           durations = c(1),
                           TR = 2,
@@ -112,7 +112,7 @@ fmri2.stimulus <- function(scans = 1,
   if(slicetiming) sweep(stimulus,2,apply(stimulus,2,mean),"-") else stimulus - mean(stimulus)
 }
 
-fmri2.design <- function(stimulus,
+fmri.design <- function(stimulus,
                         order = 2,
                         cef = NULL,
                         verbose = FALSE) {
@@ -196,12 +196,11 @@ if(dim(z)[3]==1) dim(z) <- dim(z)[1:2]
 }
 
 
-fmri2.lm <- function(ds,
+fmri.lm <- function(ds,
          z,
          mask = NULL,
          actype = c("smooth", "noac", "ac", "accalc"),
          contrast = c(1),
-         slicetiming = NULL,
          verbose = FALSE) {
   ##
   ##  should be faster and more memory efficient
@@ -217,15 +216,6 @@ fmri2.lm <- function(ds,
 
   ## extract the compressed data
   ttt <- extract.data(ds)
-  slicetiming <- !is.null(slicetiming)
-  if(slicetiming){
-     dz <- dim(z)
-     if(length(dz) !=3 | dz[3] != dim(ttt)[3]){
-        slicetiming <- FALSE
-        warning("dim(z)[3] does not match number of slices,
-                 no slice timing used")
-     }
-  }
   ## test dimensionality of object and design matrix
   dy <- dim(ttt)
   if (length(dy) != 4)
@@ -235,8 +225,11 @@ fmri2.lm <- function(ds,
   if(!(ldz%in%c(2,3)))
     stop("fmri.lm: Something is wrong with the design matrix")
   slicetiming <- ldz==3
-  if(slicetiming && dz[3]!=dy[3])
-    stop("fmri.lm: Slice timing specified with inapproriate number of slices in design")
+  if(slicetiming){
+     if(dz[3] != dim(ttt)[3]){
+       stop("fmri.lm: Slice timing requested with inapproriate number of slices in design")
+       }
+  }
   if (is.null(mask)) mask <- ds$mask
     dm <- dim(mask)
   if (length(dm) != 3)
