@@ -25,7 +25,10 @@ simclusterthr <- function(n,distr=c("norm","t"),df=100,bw=0,kern="Gaussian",
     for(i in 1:nsim){
        x <- if(distr[1]=="t") rt(n^3,df) else rnorm(n^3)
        dim(x) <- dx
-       if(bw>0) x <- kernsm(x,bw,kern=kern,unit="FWHM")@yhat
+       if(bw>0) {
+          x <- kernsm(x,bw,kern=kern,unit="FWHM")@yhat
+          x <- x/sqrt(var(x))
+        }
         for(j in 1:nq){
             mc <- min(20,max(findclusters(x,quant[j])$size))
            results[j,1:mc] <- results[j,1:mc]+1
