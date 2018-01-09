@@ -42,3 +42,78 @@ simclusterthr <- function(n,distr=c("norm","t"),df=100,bw=0,kern="Gaussian",
     }
     list(results=results/nsim,qgrid=qgrid,n=n,distr=distr[1],df=df,bw=bw,kern=kern)
 }
+getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
+   ns <- 50000
+   data <- clnorm64comp$results[,1:19,]
+   kgrid <- qnorm(clnorm64comp$qgrid)
+   nc <- 2:20
+   kv <- (param[1]+param[2]*log((alpha+1/2/ns)/(1-alpha+1/ns)))*mpredf[nc,irho]
+   kv
+      }
+
+      getalphaclust <- function(alpha,clustertable,calpha=seq(.001,.1,.001),ncmin=2){
+        ## get reference alpha for clusterthreshold with clustersizes ncmin:20
+         if(ncmin <2) ncmin <- 2
+         if(ncmin >20) ncmin <- 20
+         cta <- clustertable[,ncmin-1]
+         ca0 <- min(calpha[cta<alpha])
+         cta0 <- max(cta[cta<alpha])
+         ca1 <- max(calpha[cta>alpha])
+         cta1 <- min(cta[cta>alpha])
+         ca0+ (cta1-alpha)*(ca1-ca0)/(cta1-cta0)
+      }
+
+      fmri.cluster <- function(spm, mode="basic", na.rm=FALSE, alpha=.05, ncmin=2, minimum.signal=0){
+        args <- sys.call()
+        args <- c(spm$call,args)
+      cat("fmri.pvalue: entering function\n")
+
+      if (!("fmrispm" %in% class(spm)) ) {
+        warning("fmri.cluster: data not of class <fmrispm>. Try to proceed but strange things may happen")
+      }
+
+      if (!is.null(attr(spm, "smooth"))) {
+        if (!is.null(attr(spm, "residuals"))) {
+          type <- "t"
+          df <- spm$df
+          if(is.null(df)) df <- abs(diff(dim(attr(spm, "design"))))
+        } else {
+          type <- "norm"
+          df <- 1000 # this is actually not needed, placeholder
+        }
+      } else {
+        type <- "t"
+        df <- spm$df
+      }
+        corr <- mean(spm$scorr)
+        if(is.null(corr)) corr <- 0
+        stat <- (spm$cbeta-minimum.signal)/sqrt(spm$var)
+        dim(stat) <- prod(spm$dim[1:3])
+
+      #  clustersizes to use
+        clusters <- ncmin:20
+        data(clustertable)
+        alphaclust <- getalphaclust(alpha,clustertable,ncmin)
+        load(system.file("extdata/cluster.rda",package="fmri"))
+        irho <- as.integer(corr/0.05)+1
+        if(irho>13) {
+           error("to much spatial correlation")
+        }
+        # correct for size of multiplicity
+        n2 <- sum(spm$mask)
+        n1 <- 64^3
+        alpha <- 1-(1-alpha)^(n2/n1)
+        # this reflects the use of n2 instead of 64^3 voxel (simulation)
+        # get critical values
+        kv <- getkv0(param,mpredf=mpredfactor,irho=irho,alpha=alpha,ncmin=2)
+      # this gives a vector of kritical values corresponding to cluster sizes
+      # now adjust for distribution
+        if(type=="t") kv <- qf(pnorm(kv),df)
+        detected <- array(0,dim(spm$dim))
+        for(ic in 1:length(clusters)){
+           ttt <- findclusters(stat,kv[ic])
+           detected[ttt>clusters[ic]] <- 1
+        }
+        detected <- detected*spm$mask
+        detected
+      }
