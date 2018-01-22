@@ -1,4 +1,5 @@
       subroutine fd1(z,s2,fv,dv)
+      implicit none
       double precision z,s2,fv,dv
       double precision z2,zexp,z2s2
       z2=z*z
@@ -6,23 +7,25 @@
       zexp=exp(-z2s2/2.d0)
       fv=z*z2*zexp
       dv=z2*(3.d0-z2s2)*zexp
-      RETURN 
+      RETURN
       END
       subroutine fd2(z,s,fv,dv)
+      implicit none
       double precision z,s,fv,dv
       double precision ztanh
       ztanh=tanh(s*z)
       fv=ztanh
       dv=s*(1.d0-ztanh*ztanh)
-      RETURN 
+      RETURN
       END
       subroutine fd3(z,s,fv,dv)
+      implicit none
       double precision z,s,fv,dv
       double precision sz
       sz=s*z
       fv=sin(sz)
       dv=s*cos(sz)
-      RETURN 
+      RETURN
       END
       subroutine fd4(z,s,fv,dv)
       double precision z,s,fv,dv
@@ -30,11 +33,11 @@
       sz=s*z
       fv=cos(sz)
       dv=-s*sin(sz)
-      RETURN 
+      RETURN
       END
       subroutine fastica1(y,omega,d,n,l,ifun,t,beta,v,normv,s,omegak,
      1                   delta)
-      implicit logical (a-z)
+      implicit none
       integer d,n,l,t,ifun(l)
       double precision y(d,n),omega(d,l),v(d,l),beta(d),s(l),normv(l),
      1       omegak(d),delta
@@ -47,11 +50,11 @@
       nk=0.d0
       ninv=1.d0/n
       nbeta=0.d0
-C this is just to avoid some warnings 
+C this is just to avoid some warnings
       DO k=1,l
          sk=s(k)
          ifunk=ifun(k)
-         call dcopy(d,omega(1,k),1,omegak,1) 
+         call dcopy(d,omega(1,k),1,omegak,1)
 C         call dblepr("omega0",6,omegak,d)
          DO j=1,t
 C Start Loop t
@@ -64,13 +67,13 @@ C Start Loop t
 C    <omega_k,y_i>
 C            call dblepr("z",1,z,1)
                select case (ifunk)
-               case(1) 
+               case(1)
                   call fd1(z,sk,fw,fwd1)
-               case(2) 
+               case(2)
                   call fd2(z,sk,fw,fwd1)
-               case(3) 
+               case(3)
                   call fd3(z,sk,fw,fwd1)
-               case(4) 
+               case(4)
                   call fd4(z,sk,fw,fwd1)
                case default
                   fw=0.d0
@@ -129,7 +132,7 @@ C End Loop t
       RETURN
       END
       subroutine smtime(x,n1,n2,n3,nt,mask,h,xnew,w,lw)
-      implicit logical (a-z)
+      implicit none
       integer n1,n2,n3,nt,lw
       logical mask(n1,n2,n3)
       double precision x(n1,n2,n3,nt),xnew(n1,n2,n3,nt),w(lw),h
@@ -169,7 +172,7 @@ C  Use Epanechnikov kernel
       RETURN
       END
       subroutine smspace(x,n1,n2,n3,nt,mask,h,xnew,vext,w,lw1,lw2,lw3)
-      implicit logical (a-z)
+      implicit none
       integer n1,n2,n3,nt,lw1,lw2,lw3
       logical mask(n1,n2,n3)
       double precision x(n1,n2,n3,nt),xnew(n1,n2,n3,nt),vext(3),

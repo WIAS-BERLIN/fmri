@@ -66,7 +66,7 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
       fmri.cluster <- function(spm, mode="basic", na.rm=FALSE, alpha=.05, ncmin=2, minimum.signal=0){
         args <- sys.call()
         args <- c(spm$call,args)
-      cat("fmri.pvalue: entering function\n")
+      cat("fmri.cluster: entering function\n")
 
       if (!("fmrispm" %in% class(spm)) ) {
         warning("fmri.cluster: data not of class <fmrispm>. Try to proceed but strange things may happen")
@@ -89,6 +89,8 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
         if(is.null(corr)) corr <- 0
         stat <- (spm$cbeta-minimum.signal)/sqrt(spm$var)
         dim(stat) <- prod(spm$dim[1:3])
+        pv <- pvalue(stat,spm$dim[1],spm$dim[2],spm$dim[3],
+                  spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type=type,df=df)
 
       #  clustersizes to use
         clusters <- ncmin:20
@@ -115,5 +117,39 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
            detected[ttt>clusters[ic]] <- 1
         }
         detected <- detected*spm$mask
-        detected
+        cat("fmri.pvalue: thresholding\n")
+        mask <- rep(FALSE,length=prod(spm$dim[1:3]))
+        mask[detected] <- TRUE
+        pv[!mask] <- 1
+        dim(pv) <- spm$dim[1:3]
+
+        if (na.rm) {
+          pv[spm$var > 9e19] <- 1
+        }
+
+        cat("fmri.pvalue: exiting function\n")
+
+        z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim, hrf = spm$hrf)
+
+        class(z) <- c("fmridata","fmripvalue")
+
+        z$roixa <- spm$roixa
+        z$roixe <- spm$roixe
+        z$roiya <- spm$roiya
+        z$roiye <- spm$roiye
+        z$roiza <- spm$roiza
+        z$roize <- spm$roize
+        z$roit <- spm$roit
+        z$header <- spm$header
+        z$format <- spm$format
+        z$dim0 <- spm$dim0
+        z$args <- z$args
+
+        attr(z, "file") <- attr(spm, "file")
+        attr(z, "white") <- attr(spm, "white")
+        attr(z, "design") <- attr(spm, "design")
+          attr(z, "smooth") <- "Not smoothed"
+          attr(z, "mode") <- paste("Threshold mode: cluster",ncmin:20,"\n")
+
+        z
       }

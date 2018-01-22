@@ -98,7 +98,6 @@
 }
 \author{ Karsten Tabelow \email{tabelow@wias-berlin.de},
          Joerg Polzehl \email{polzehl@wias-berlin.de}  }
-}
 \seealso{ \code{\link{fmri.design}}, \code{\link{fmri.stimulus}} }
 \examples{
   \dontrun{

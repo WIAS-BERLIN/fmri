@@ -18,7 +18,7 @@ C   model    specifies the probablilistic model for the KL-Distance
 C   kern     specifies the location kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
 C
-      implicit logical (a-z)
+      implicit none
       integer n1,n2,n3,nt,kern
       logical aws
       double precision y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),df,
@@ -124,4 +124,3 @@ C    thats the variance of thi
 C
 C
 C
-        
