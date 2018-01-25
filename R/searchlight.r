@@ -22,21 +22,22 @@ cat("fmri.serchlight: entering function\n")
 if (!("fmrispm" %in% class(spm)) ) {
   warning("fmri.searchlight: data not of class <fmrispm>. Try to proceed but strange things may happen")
 }
-stat <- spm$beta
+stat <- spm$cbeta
 stat[stat>0] <- pmax(0,stat[stat>0]-minimum.signal)
 stat[stat<0] <- pmin(0,stat[stat<0]+minimum.signal)
 stat <- stat/sqrt(spm$var)
 dim(stat) <- dimspm <- spm$dim[1:3]
 sregion <- searchlight(radius)
-nregion <- dim(sregion,2)
-kind <- if(kind=="abs") 0 else 1
+nregion <- dim(sregion)[2]
+kind <- if(kind[1]=="abs") 0 else 1
 stat <- if(kind==0) abs(stat) else stat^2
+mask <- spm$mask
 ##
 ##  get statistics over searchlights
 ##
 stat <- .Fortran("slight",
                 as.double(stat),
-                as.logical(spm$mask),
+                as.logical(mask),
                 as.integer(dimspm[1]),
                 as.integer(dimspm[2]),
                 as.integer(dimspm[3]),
@@ -77,7 +78,7 @@ mask[stat < thresh] <- FALSE
         z$header <- spm$header
         z$format <- spm$format
         z$dim0 <- spm$dim0
-        z$args <- z$args
+        z$call <- args
         attr(z, "file") <- attr(spm, "file")
         attr(z, "white") <- attr(spm, "white")
         attr(z, "design") <- attr(spm, "design")

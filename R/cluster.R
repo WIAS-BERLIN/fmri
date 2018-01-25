@@ -43,11 +43,8 @@ simclusterthr <- function(n,distr=c("norm","t"),df=100,bw=0,kern="Gaussian",
     list(results=results/nsim,qgrid=qgrid,n=n,distr=distr[1],df=df,bw=bw,kern=kern)
 }
 getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
-   ns <- 50000
-   data <- clnorm64comp$results[,1:19,]
-   kgrid <- qnorm(clnorm64comp$qgrid)
-   nc <- 2:20
-   kv <- (param[1]+param[2]*log((alpha+1/2/ns)/(1-alpha+1/ns)))*mpredf[nc,irho]
+   nc <- ncmin:20
+   kv <- (param[1]+param[2]*log((alpha+1e-5)/(1-alpha+2e-5)))*mpredf[nc,irho]
    kv
       }
 
@@ -63,7 +60,8 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
          ca0+ (cta1-alpha)*(ca1-ca0)/(cta1-cta0)
       }
 
-      fmri.cluster <- function(spm, mode="basic", na.rm=FALSE, alpha=.05, ncmin=2, minimum.signal=0){
+      fmri.cluster <- function(spm, mode="basic", na.rm=FALSE, alpha=.05, ncmin=2,
+               minimum.signal=0){
         args <- sys.call()
         args <- c(spm$call,args)
       cat("fmri.cluster: entering function\n")
@@ -88,15 +86,14 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
         corr <- mean(spm$scorr)
         if(is.null(corr)) corr <- 0
         stat <- (spm$cbeta-minimum.signal)/sqrt(spm$var)
-        dim(stat) <- prod(spm$dim[1:3])
-        pv <- pvalue(stat,spm$dim[1],spm$dim[2],spm$dim[3],
-                  spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type=type,df=df)
+        dim(stat) <- spm$dim[1:3]
+        pv <- 1-switch(type,"norm"=pnorm(stat),"t"=pt(stat,df))
+        dim(pv) <- spm$dim[1:3]
 
       #  clustersizes to use
         clusters <- ncmin:20
-        data(clustertable)
-        alphaclust <- getalphaclust(alpha,clustertable,ncmin)
         load(system.file("extdata/cluster.rda",package="fmri"))
+        alphaclust <- getalphaclust(alpha,clustertable,ncmin)
         irho <- as.integer(corr/0.05)+1
         if(irho>13) {
            error("to much spatial correlation")
@@ -107,19 +104,20 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
         alpha <- 1-(1-alpha)^(n2/n1)
         # this reflects the use of n2 instead of 64^3 voxel (simulation)
         # get critical values
-        kv <- getkv0(param,mpredf=mpredfactor,irho=irho,alpha=alpha,ncmin=2)
+        kv <- getkv0(parcoeff,mpredf=mpredfactor,irho=irho,alpha=alpha,ncmin=2)
       # this gives a vector of kritical values corresponding to cluster sizes
       # now adjust for distribution
-        if(type=="t") kv <- qf(pnorm(kv),df)
-        detected <- array(0,dim(spm$dim))
+        if(type=="t") kv <- qt(pnorm(kv),df)
+        detected <- array(0,spm$dim[1:3])
         for(ic in 1:length(clusters)){
            ttt <- findclusters(stat,kv[ic])
-           detected[ttt>clusters[ic]] <- 1
+           detected[ttt$size>=clusters[ic]] <- 1
+           cat("inspecting cluster size",clusters[ic],"detected voxel",sum(detected),"\n")
         }
         detected <- detected*spm$mask
         cat("fmri.pvalue: thresholding\n")
         mask <- rep(FALSE,length=prod(spm$dim[1:3]))
-        mask[detected] <- TRUE
+        mask[as.logical(detected)] <- TRUE
         pv[!mask] <- 1
         dim(pv) <- spm$dim[1:3]
 
@@ -143,7 +141,7 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
         z$header <- spm$header
         z$format <- spm$format
         z$dim0 <- spm$dim0
-        z$args <- z$args
+        z$call <- args
 
         attr(z, "file") <- attr(spm, "file")
         attr(z, "white") <- attr(spm, "white")

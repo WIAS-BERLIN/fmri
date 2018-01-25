@@ -139,7 +139,7 @@ C
      2       getlwght
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,clw1,
      1        clw2,clw3,dlw1,dlw2,dlw3,n,iind,jind,n12,jind2,jind3,
-     2        a1,e1,a2,e2,a3,e3
+     2        a1,e1,a2,e2,a3,e3,k
       double precision bii,swj,swjy,thi,wj,hakt2,spf,si2i,swjv
       external getlwght
       hakt2=hakt*hakt
