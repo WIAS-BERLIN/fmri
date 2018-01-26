@@ -7,8 +7,11 @@ searchlight <- function(radius){
    indices[,apply(indices^2,2,sum)<=radius^2]
 }
 
-searchlightdistr <- function(df,nregion,kind=0,nsim=10000){
-rn <- matrix(rt(10000*nregion,df),nregion,10000)
+searchlightdistr <- function(df,nregion,kind=0,nsim=500000){
+old.seed <- .Random.seed
+set.seed(10:100)
+rn <- matrix(rt(nsim*nregion,df),nregion,nsim)
+.Random.seed <- old.seed
 rsl <- apply(if(kind==0) abs(rn) else rn^2, 2, mean)
 list(p=seq(1/(2*nsim),(2*nsim-1)/(2*nsim),length=nsim),kvalue=sort(rsl),df=df,kind=kind,nsim=nsim)
 }
@@ -17,7 +20,7 @@ fmri.searchlight <- function(spm, alpha=.05, radius, minimum.signal=0, kind=c("a
   args <- sys.call()
   args <- c(spm$call,args)
 
-cat("fmri.serchlight: entering function\n")
+cat("fmri.searchlight: entering function\n")
 
 if (!("fmrispm" %in% class(spm)) ) {
   warning("fmri.searchlight: data not of class <fmrispm>. Try to proceed but strange things may happen")
@@ -29,6 +32,7 @@ stat <- stat/sqrt(spm$var)
 dim(stat) <- dimspm <- spm$dim[1:3]
 sregion <- searchlight(radius)
 nregion <- dim(sregion)[2]
+cat("fmri.searchlight: using",kind,"size of searchlight:",nregion,"\n")
 kind <- if(kind[1]=="abs") 0 else 1
 stat <- if(kind==0) abs(stat) else stat^2
 mask <- spm$mask
@@ -49,8 +53,10 @@ stat <- .Fortran("slight",
 ##  approximate distribution of searchlight statistics
 ##  assumes t-distributed spm
 ##
+cat("fmri.searchlight: get empirical distribution of sl-statistic \n")
 distr <- searchlightdistr(spm$df,nregion,kind)
 nvoxel <- sum(mask)
+cat("fmri.searchlight: get approximate pvalues \n")
 pv <- array(1,dimspm)
 pv[mask] <- .Fortran("getslpv",
                as.double(stat[mask]),
