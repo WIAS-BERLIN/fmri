@@ -18,7 +18,7 @@ niftiImage2fmri(niftiobj, level = 0.75, setmask = TRUE, indx = NULL, indy = NULL
     quantile used in mask definition
 }
   \item{setmask}{
-    if \code{TRUE} create a brain mask   
+    if \code{TRUE} create a brain mask
 }
   \item{indx}{
     index vector for subcube definition
@@ -35,7 +35,7 @@ niftiImage2fmri(niftiobj, level = 0.75, setmask = TRUE, indx = NULL, indy = NULL
 }
 \details{
    This function can be used in connection with readNifti from package RNiftyReg
-   to read large fMRI series from nifti files. The resulting fmridata-object 
+   to read large fMRI series from nifti files. The resulting fmridata-object
    stores the image data as 2 byte integer in raw format, in contrast for the
    4 byte real used with other functions.
 }
@@ -45,7 +45,8 @@ niftiImage2fmri(niftiobj, level = 0.75, setmask = TRUE, indx = NULL, indy = NULL
 \author{ Joerg Polzehl \email{polzehl@wias-berlin.de} }
 
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+\code{\link{read.AFNI}}, \code{\link{read.DICOM}},
+\code{\link{read.ANALYZE}}, \code{\link{read.NIFTI}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

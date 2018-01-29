@@ -1,6 +1,6 @@
 export(read.AFNI,read.ANALYZE,read.DICOM,read.NIFTI,extract.data,cutroi)
 export(write.AFNI,write.ANALYZE,write.NIFTI)
-export(fmri.stimulus.old,fmri.design.old,fmri.lm.old)
+# export(fmri.stimulus.old,fmri.design.old,fmri.lm.old)
 export(fmri.stimulus,fmri.design,fmri.lm,sincfilter,slicetiming)
 export(fmri.smooth,fmri.pvalue,fmri.searchlight,fmri.cluster)
 export(plot.fmridata,plot.fmrisegment,summary.fmridata,print.fmridata)
@@ -8,7 +8,7 @@ export(fmri.detrend)
 export(fmri.gui)
 export(plot.fmridata)
 export(oro2fmri,fmri2oro)
-export(findclusters,simclusterthr)
+# export(findclusters,simclusterthr)
 export(fmri.designG,fmri.lmePar,fmri.metaPar)
 export(niftiImage2fmri)
 import(parallel,awsMethods,nlme)
@@ -21,7 +21,7 @@ import(parallel,awsMethods,nlme)
   importFrom("stats", "IQR", "convolve", "dchisq", "density", "dnorm",
              "formula", "lm", "median", "optim", "pchisq", "pnorm",
              "poly", "prcomp", "pt", "qchisq", "qt", "quantile", "rnorm",
-             "var", "vcov")
+             "rt", "var", "vcov")
   importFrom("utils", "flush.console", "setTxtProgressBar",
              "txtProgressBar")
 importFrom(metafor,rma.uni)

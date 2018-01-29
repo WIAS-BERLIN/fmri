@@ -20,26 +20,12 @@ sincfilter(t, x)
   observed time series at times \code{1:length(x)}.
 }
 }
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
 \value{
 a vector of interpolated values of the time series at time points given in
 \code{t}.
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
-}
-\references{
-%% ~put references to the literature/web site here ~
 }
 \author{
          Joerg Polzehl \email{polzehl@wias-berlin.de}
-}
-\note{
-%%  ~~further notes~~
 }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~

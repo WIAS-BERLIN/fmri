@@ -13,35 +13,6 @@ findclusters <- function(x,thresh){
     z
 }
 
-simclusterthr <- function(n,distr=c("norm","t"),df=100,bw=0,kern="Gaussian",
-    nsim=1000,seed=1,qgrid = pnorm(seq(1.4,4,.05)),filename="tempres"){
-    require(aws)
-    nq <- length(qgrid)
-    nsize <- 20
-    results <- array(0,c(nq,nsize))
-    set.seed(seed)
-    dx <- c(n,n,n)
-    quant <- if(distr[1]=="t") qt(qgrid,df) else qnorm(qgrid)
-    for(i in 1:nsim){
-       x <- if(distr[1]=="t") rt(n^3,df) else rnorm(n^3)
-       dim(x) <- dx
-       if(bw>0) {
-          x <- kernsm(x,bw,kern=kern,unit="FWHM")@yhat
-          x <- x/sqrt(var(x))
-        }
-        for(j in 1:nq){
-            mc <- min(20,max(findclusters(x,quant[j])$size))
-           results[j,1:mc] <- results[j,1:mc]+1
-        }
-        cat("Time",format(Sys.time()),"after ",i,"simulations:\n")
-        if(i%/%100*100==i) print(results[seq(1,nq,5),]/i)
-        if(i%/%1000*1000==i){
-           tmp <- list(results=results/i,qgrid=qgrid,n=n,distr=distr[1],df=df,bw=bw,kern=kern)
-           save(tmp,file=filename)
-        }
-    }
-    list(results=results/nsim,qgrid=qgrid,n=n,distr=distr[1],df=df,bw=bw,kern=kern)
-}
 getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
    nc <- ncmin:20
    kv <- (param[1]+param[2]*log((alpha+1e-5)/(1-alpha+2e-5)))*mpredf[nc,irho]
@@ -60,8 +31,7 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
          ca0+ (cta1-alpha)*(ca1-ca0)/(cta1-cta0)
       }
 
-      fmri.cluster <- function(spm, mode="basic", na.rm=FALSE, alpha=.05, ncmin=2,
-               minimum.signal=0){
+      fmri.cluster <- function(spm, alpha=.05, ncmin=2, minimum.signal=0){
         args <- sys.call()
         args <- c(spm$call,args)
       cat("fmri.cluster: entering function\n")
@@ -92,11 +62,10 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
 
       #  clustersizes to use
         clusters <- ncmin:20
-        load(system.file("extdata/cluster.rda",package="fmri"))
         alphaclust <- getalphaclust(alpha,clustertable,ncmin)
         irho <- as.integer(corr/0.05)+1
         if(irho>13) {
-           error("to much spatial correlation")
+           stop("to much spatial correlation")
         }
         # correct for size of multiplicity
         n2 <- sum(spm$mask)
@@ -120,10 +89,7 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
         mask[as.logical(detected)] <- TRUE
         pv[!mask] <- 1
         dim(pv) <- spm$dim[1:3]
-
-        if (na.rm) {
           pv[spm$var > 9e19] <- 1
-        }
 
         cat("fmri.pvalue: exiting function\n")
 

@@ -22,9 +22,7 @@ slicetiming(fmridataobj, sliceorder = NULL)
  order of lice acqisions
 }
 }
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
+
 \value{
  an object of class fmridata
 %%  ~Describe the value returned
@@ -33,17 +31,10 @@ slicetiming(fmridataobj, sliceorder = NULL)
 %%  \item{comp2 }{Description of 'comp2'}
 %% ...
 }
-\references{
-%% ~put references to the literature/web site here ~
-}
+
 \author{
 Joerg Polzehl \email{polzehl@wias-berlin.de}
 }
-\note{
-%%  ~~further notes~~
-}
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
   \code{\link{fmri.stimulus}}, \code{\link{fmri.design}},\code{\link{fmri.lm}},~~~
