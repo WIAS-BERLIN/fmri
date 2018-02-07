@@ -20,14 +20,6 @@ gethani <- function(x,y,lkern,value,wght,eps=1e-2){
          bw=double(1),
          PACKAGE="fmri")$bw
 }
-sofw3D <- function(bw,kern,wght){
-.Fortran("sofw3Df",
-         as.double(bw),
-         as.integer(kern),
-         as.double(wght),
-         fw=double(1),
-         PACKAGE="fmri")$fw
-}
 
 fdr <- function(pval, alpha=0.05){
   n <- length(pval)
@@ -44,9 +36,9 @@ Varcor.gauss<-function(h,interv = 1){
 #   in case of colored noise that was produced by smoothing with lkern and bandwidth h
 #
 #  interv allows for further discretization of the Gaussian Kernel, result depends on
-#  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
-#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
-#  discretisation into voxel) 
+#  interv for small bandwidths. interv=1  is correct for kernel smoothing,
+#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding
+#  discretisation into voxel)
 #
 #  h in FWHM
 #
@@ -62,18 +54,18 @@ Varcor.gauss<-function(h,interv = 1){
 
 Spatialvar.gauss<-function(h,h0,d,interv=1){
 #
-#   Calculates the factor of variance reduction obtained for Gaussian Kernel and bandwidth h in 
+#   Calculates the factor of variance reduction obtained for Gaussian Kernel and bandwidth h in
 #
 #   case of colored noise that was produced by smoothing with Gaussian kernel and bandwidth h0
 #
-#   Spatialvar.gauss(lkern,h,h0,d)/Spatialvar.gauss(lkern,h,1e-5,d) gives the 
-#   a factor for lambda to be used with bandwidth h 
+#   Spatialvar.gauss(lkern,h,h0,d)/Spatialvar.gauss(lkern,h,1e-5,d) gives the
+#   a factor for lambda to be used with bandwidth h
 #
 #
 #  interv allows for further discretization of the Gaussian Kernel, result depends on
-#  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
-#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
-#  discretisation into voxel) 
+#  interv for small bandwidths. interv=1  is correct for kernel smoothing,
+#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding
+#  discretisation into voxel)
 #
 #  h and h0 in FWHM
 #
@@ -132,9 +124,9 @@ Spatialvar.gauss<-function(h,h0,d,interv=1){
 get3Dh.gauss <- function(vred,vwghts,step=1.002,interv=1){
 #
 #  interv allows for further discretization of the Gaussian Kernel, result depends on
-#  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
-#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
-#  discretisation into voxel) 
+#  interv for small bandwidths. interv=1  is correct for kernel smoothing,
+#  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding
+#  discretisation into voxel)
 #
   ## NOTE this function requires hvred in fmri/R/sysdata.rda
   n <- length(vred)
@@ -148,60 +140,14 @@ get3Dh.gauss <- function(vred,vwghts,step=1.002,interv=1){
     i <- i + 1
   }
   hv[,!fixed] <- hvred[i,1]
-  
+
   invisible(t(hv))
 }
 
-gkernsm <- function(y,h=1) {
-#
-# h in SD
-#
-  grid <- function(d) {
-    d0 <- d%/%2+1
-    gd <- seq(0,1,length=d0)
-    if (2*d0==d+1) gd <- c(gd,-gd[d0:2]) else gd <- c(gd,-gd[(d0-1):2])
-    gd
-  }
-  dy <- dim(y)
-  if (is.null(dy)) dy<-length(y)
-  ldy <- length(dy)
-  if (length(h)!=ldy) h <- rep(h[1],ldy)
-  kern <- switch(ldy,dnorm(grid(dy),0,2*h/dy),
-                 outer(dnorm(grid(dy[1]),0,2*h[1]/dy[1]),
-                       dnorm(grid(dy[2]),0,2*h[2]/dy[2]),"*"),
-                 outer(outer(dnorm(grid(dy[1]),0,2*h[1]/dy[1]),
-                             dnorm(grid(dy[2]),0,2*h[2]/dy[2]),"*"),
-                       dnorm(grid(dy[3]),0,2*h[3]/dy[3]),"*"))
-  kern <- kern/sum(kern)
-  kernsq <- sum(kern^2)
-  list(gkernsm=convolve(y,kern,conj=TRUE),kernsq=kernsq)
-}
-
-get.bw.gauss <- function(corr, step = 1.001,interv=2) {
-  #  get the corresponding FWHM bandwidth for lkern and a given correlation
-  #  keep it simple result does not depend on d
-
-  #  interv allows for further discretization of the Gaussian Kernel, result depends on
-  #  interv for small bandwidths. interv=1  is correct for kernel smoothing, 
-  #  interv>>1 should be used to handle intrinsic correlation (smoothing preceeding 
-  #  discretisation into voxel)   
-  if (corr < 0.1) {
-    h <- 0
-  } else { 
-    h <- .5
-    z <- 0
-    while (z<corr) {
-      h <- h*step
-      z <- get.corr.gauss(h,interv)
-    }
-    h <- h/step
-  }
-  h
-}
 
 get.corr.gauss <- function(h,interv=1) {
     #
-    #   Calculates the correlation of 
+    #   Calculates the correlation of
     #   colored noise that was produced by smoothing with "gaussian" kernel and bandwidth h
     #   Result does not depend on d for "Gaussian" kernel !!
     #
@@ -214,58 +160,6 @@ get.corr.gauss <- function(h,interv=1) {
     sum(penl[-(1:interv)]*penl[-((dx-interv+1):dx)])/sum(penl^2)
 }
 
-correlation <- function(res,mask = array(1,dim=dim(res)[1:3])) {
-  meanpos <- function(a) mean(a[a!=0])
-  varpos <- function(a) var(a[a!=0])
-
-  dr <- dim(res)
-  if (length(dim(mask)) == 3) {
-    if (sum(dim(mask)[1:3] != dr[1:3]) == 0) {
-      mask <- rep(mask,dr[4])
-      dim(mask) <- dr
-      if (any(res*mask!=0)) {
-        vrm <- varpos(res*mask)
-        x <- meanpos(res[-1,,,]*res[-dr[1],,,]*mask[-1,,,])/vrm
-        y <- meanpos(res[,-1,,]*res[,-dr[2],,]*mask[,-1,,])/vrm
-        z <- meanpos(res[,,-1,]*res[,,-dr[3],]*mask[,,-1,])/vrm
-        c(x,y,z)
-      } else {
-        warning("Warning: did not found any non-zero residual in mask. Correlation probably wrong!")
-        c(0,0,0)
-      }
-    } else {
-      warning("Error: dimension of mask and residui matrices do not match\n")    
-    }
-  } else {
-    warning("Error: can only handle 3 dimensional arrays\n")    
-  }    
-}
-
-corrrisk <- function(bw,lag,data){
-  mean((data-thcorr3D(bw,lag))^2)
-}
-
-thcorr3D <- function(bw,lag=rep(5,3)){
-  g <- trunc(fwhm2bw(bw)*4)
-  gw1 <- dnorm(-(g[1]):g[1],0,fwhm2bw(bw[1])) 
-  gw2 <- dnorm(-(g[2]):g[2],0,fwhm2bw(bw[2]))
-  gw3 <- dnorm(-(g[3]):g[3],0,fwhm2bw(bw[3]))
-  gwght <- outer(gw1,outer(gw2,gw3,"*"),"*")
-  gwght <- gwght/sum(gwght)
-  dgw <- dim(gwght)
-  scorr <- .Fortran("thcorr",as.double(gwght),
-                    as.integer(dgw[1]),
-                    as.integer(dgw[2]),
-                    as.integer(dgw[3]),
-                    scorr=double(prod(lag)),
-                    as.integer(lag[1]),
-                    as.integer(lag[2]),
-                    as.integer(lag[3]),
-                    PACKAGE="fmri")$scorr
-  # bandwidth in FWHM in voxel units
-  dim(scorr) <- lag
-  scorr
-}
 
 connect.mask <- function(mask){
 dm <- dim(mask)
@@ -306,8 +200,8 @@ spatial.corr <- function(residuals){
                      as.integer(lags[2]),
                      as.integer(lags[3]),
                      PACKAGE="fmri")$scorr
-  dim(corr) <- lags                     
-  bw <- optim(c(2,2,2),corrrisk,method="L-BFGS-B",lower=c(.25,.25,.25),upper=c(20,20,20),lag=lags,data=corr)$par  
+  dim(corr) <- lags
+  bw <- optim(c(2,2,2),corrrisk,method="L-BFGS-B",lower=c(.25,.25,.25),upper=c(20,20,20),lag=lags,data=corr)$par
   bw[bw<=.25] <- 0
   if( (max(bw) > 2.5 ) || (corr[lags[1],1,1]+corr[1,lags[2],1]+corr[1,1,lags[3]] >0.5) ) warning(paste("Local smoothness characterized by large bandwidth ",bw," check residuals for structure",collapse=","))
   rxyz <- c(resel(1,bw[1]), resel(1,bw[2]), resel(1,bw[3]))
@@ -315,24 +209,6 @@ spatial.corr <- function(residuals){
 list(scorr=corr,bw=bw)
 }
 
-generate.filename <- function(prefix="", suffix="", picstart=1, numbpic=1, digits=3) {
-  start <- as.integer(picstart)
-  if (is.na(start)|(start<0)) stop("Illegal start number: ",picstart)
-  number <- as.integer(numbpic)
-  if (is.na(number)|(number<1)) stop("Illegal number of images: ",numbpic)
-
-  counter <- as.character(start:(start+number-1))
-  filename <- character(number)
-
-  if (digits == 0) {
-    for (i in 1:number) filename[i] <- paste(prefix,counter[i],suffix,sep="")
-  } else {
-    digits <- max(digits, nchar(counter[number]))
-
-    for (i in 1:number) filename[i] <- paste(prefix,paste(rep("0",digits-nchar(counter[i])),collapse=""),counter[i],suffix,sep="")
-  }
-  invisible(filename)
-}
 ##
 ##  create fmri-object from nifti
 ##
@@ -356,7 +232,7 @@ niftiImage2fmri <- function(niftiobj, level=0.75, setmask=TRUE,
   weights <- abs(pixdim[1:3])/min(abs(pixdim[1:3]))
   ttt <- array(0,ddim)
   ttt[,,,] <- niftiobj[indx,indy,indz,]
-  if(avoidnegs&any(ttt<0)){ 
+  if(avoidnegs&any(ttt<0)){
     ttt <- ttt-min(ttt)
     warning("changed mean of data to avoid negatives")
   }
@@ -372,11 +248,11 @@ niftiImage2fmri <- function(niftiobj, level=0.75, setmask=TRUE,
   }
   datascale <- max(abs(ttt))/32767
   ttt <- as.integer(ttt/datascale)
-  z <- list(ttt = writeBin(ttt, raw(), 2), 
+  z <- list(ttt = writeBin(ttt, raw(), 2),
             format = "NIFTI",
             delta = rep(1,3),
             origin = NULL,
-            orient = NULL, 
+            orient = NULL,
             dim = ddim,
             dim0 = ddim,
             datascale = datascale,
@@ -384,7 +260,7 @@ niftiImage2fmri <- function(niftiobj, level=0.75, setmask=TRUE,
             roixe = dx,
             roiya = 1,
             roiye = dy,
-            roiza = 1, 
+            roiza = 1,
             roize = dz,
             roit = 1,
             weights = weights,

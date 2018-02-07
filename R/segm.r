@@ -1,10 +1,10 @@
 ###################################################################################################
 #
 #    R - function  segm3D  for Adaptive Weights Segmentation in 3D SPM's
-#    
+#
 #    exact value for Variance reduction from smoothed residuals
 #
-#    emaphazises on the propagation-separation approach 
+#    emaphazises on the propagation-separation approach
 #
 #    Copyright (C) 2010-12 Weierstrass-Institut fuer
 #                       Angewandte Analysis und Stochastik (WIAS)
@@ -30,13 +30,12 @@
 segm3D <- function(y,weighted=TRUE,
                    sigma2=NULL,mask=NULL,hinit=NULL,hmax=NULL,
                    ladjust=1,graph=FALSE,wghts=NULL,
-                   df=100,h0=c(0,0,0),res=NULL, resscale=NULL, 
+                   df=100,h0=c(0,0,0),res=NULL, resscale=NULL,
                    ddim=NULL,delta=0,alpha=.05,restricted=FALSE) {
 #
 #
 #  Auxilary functions
-   IQRdiff <- function(y) IQR(diff(y))/1.908
-   getkrval <- function(df,ladj,fov,k,alpha){
+      getkrval <- function(df,ladj,fov,k,alpha){
       dfinv <- 1/df
       lfov <- log(fov)
       idffov <- dfinv*log(fov)
@@ -75,15 +74,15 @@ segm3D <- function(y,weighted=TRUE,
    if (is.null(hinit)||hinit<1) hinit <- 1
 # define hmax
    if (is.null(hmax)) hmax <- 5    # uses a maximum of about 520 points
-# estimate variance in the gaussian case if necessary  
+# estimate variance in the gaussian case if necessary
 # deal with homoskedastic Gaussian case by extending sigma2
-   if (length(sigma2)==1) sigma2<-array(sigma2,dy[1:3]) 
+   if (length(sigma2)==1) sigma2<-array(sigma2,dy[1:3])
    if (length(sigma2)!=n) stop("sigma2 does not have length 1 or same length as y")
    dim(sigma2) <- dy[1:3]
    if(is.null(mask)) mask <- array(TRUE,dy[1:3])
    mask[sigma2>=1e16] <- FALSE
 #  in these points sigma2 probably contains NA's
-   sigma2 <- 1/sigma2 #  taking the invers yields simpler formulaes 
+   sigma2 <- 1/sigma2 #  taking the invers yields simpler formulaes
 # deal with homoskedastic Gaussian case by extending sigma2
    residuals <- readBin(res,"integer",prod(ddim),2)
   cat("\nfmri.smooth: first variance estimate","\n")
@@ -110,7 +109,7 @@ segm3D <- function(y,weighted=TRUE,
    fov <- sum(mask)
    kstar <- as.integer(log(maxvol)/log(1.25))
    steps <- kstar+1
-   k <- 1 
+   k <- 1
    hakt <- hinit
    hakt0 <- hinit
    lambda0 <- lambda
@@ -125,7 +124,7 @@ segm3D <- function(y,weighted=TRUE,
    residuals <- residuals*resscale
    kv <- array(0,dy[1:3])
 #
-#   need these values to compute variances 
+#   need these values to compute variances
 #
    while (k<=kstar) {
       hakt0 <- gethani(1,10,lkern,1.25^(k-1),wghts,1e-4)
@@ -164,7 +163,7 @@ segm3D <- function(y,weighted=TRUE,
                        as.logical(restricted),
                        PACKAGE="fmri")[c("bi","thnew","hakt","segm","varest")]
       gc()
-      theta <- array(tobj$thnew,dy[1:3]) 
+      theta <- array(tobj$thnew,dy[1:3])
       segm <- array(tobj$segm,dy[1:3])
       varest <- array(tobj$varest,dy[1:3])
       dim(tobj$bi) <- dy[1:3]
@@ -192,4 +191,3 @@ segm3D <- function(y,weighted=TRUE,
   class(z) <- "aws.gaussian"
   invisible(z)
 }
-
