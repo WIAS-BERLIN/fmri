@@ -1,3 +1,4 @@
+
       subroutine ccluster(x,n1,n2,n3,z)
         implicit none
         integer :: n1,n2,n3,x(n1,n2,n3),z(n1,n2,n3)

@@ -49,38 +49,7 @@ C
 C
 C          Compute aws-weights  w_{ij}
 C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine awswghts(n1,n2,n3,j1,j2,j3,dv0,thi,theta,
-     1                    vwghts,skern,spf,spmin,spmax,bii,wj)
-      implicit none
-      integer n1,n2,n3,j1,j2,j3,dv0,skern
-      double precision thi(dv0),theta(n1,n2,n3,dv0),vwghts(dv0),spf,
-     1       spmin,spmax,bii,wj,wjin
-      integer k
-      double precision sij,z
-      wjin=wj
-      sij=0.d0
-C  compute distance in sij
-      DO k=1,dv0
-         z=thi(k)-theta(j1,j2,j3,k)
-         sij=sij+z*z*vwghts(k)
-      END DO
-      sij=bii*sij
-      IF (sij.gt.spmax) THEN
-         wj=0.d0
-      ELSE IF (skern.eq.1) THEN
-C  skern == "Plateau"
-         wj=wj*min(1.d0,1.d0-spf*(sij-spmin))
-      ELSE IF (skern.eq.2) THEN
-C  skern == "Triangle"
-         wj=wj*(1.d0-sij)
-      ELSE
-C  skern == "Exp"
-         IF (sij.gt.spmin) wj=wj*exp(-spf*(sij-spmin))
-      ENDIF
-      RETURN
-      END
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
 C
 C          Compute aws-weights  w_{ij}
