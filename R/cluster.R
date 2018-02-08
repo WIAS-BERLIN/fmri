@@ -1,13 +1,12 @@
 findclusters <- function(x,thresh){
    dx <- dim(x)
    tx <- as.integer(x>thresh)
-   z <- .Fortran("ccluster",
+   z <- .Fortran(C_ccluster,
                  size=as.integer(tx),
                  as.integer(dx[1]),
                  as.integer(dx[2]),
                  as.integer(dx[3]),
-                 clusterid=integer(prod(dx)),
-                 PACKAGE="fmri")[c("size","clusterid")]
+                 clusterid=integer(prod(dx)))[c("size","clusterid")]
     dim(z$size) <- dx
     dim(z$clusterid) <- dx
     z

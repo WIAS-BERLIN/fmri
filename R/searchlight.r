@@ -39,7 +39,7 @@ mask <- spm$mask
 ##
 ##  get statistics over searchlights
 ##
-stat <- .Fortran("slight",
+stat <- .Fortran(C_slight,
                 as.double(stat),
                 as.logical(mask),
                 as.integer(dimspm[1]),
@@ -47,8 +47,7 @@ stat <- .Fortran("slight",
                 as.integer(dimspm[3]),
                 as.integer(sregion),
                 as.integer(nregion),
-                stat=double(prod(dimspm)),
-                PACKAGE="fmri")$stat
+                stat=double(prod(dimspm)))$stat
 ##
 ##  approximate distribution of searchlight statistics
 ##  assumes t-distributed spm
@@ -58,14 +57,13 @@ distr <- searchlightdistr(spm$df,nregion,kind)
 nvoxel <- sum(mask)
 cat("fmri.searchlight: get approximate pvalues \n")
 pv <- array(1,dimspm)
-pv[mask] <- .Fortran("getslpv",
+pv[mask] <- .Fortran(C_getslpv,
                as.double(stat[mask]),
                as.integer(nvoxel),
                as.double(distr$p),
                as.double(distr$kvalue),
                as.integer(distr$nsim),
-               pvalue = double(nvoxel),
-               PACKAGE="fmri")$pvalue
+               pvalue = double(nvoxel))$pvalue
 ind <- fdr(pv[mask], alpha)
 thresh <- min(stat[mask][ind])
 mask[stat < thresh] <- FALSE

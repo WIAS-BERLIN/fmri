@@ -175,7 +175,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
     #
     #   need these values to compute variances after the last iteration
     #
-    tobj <- .Fortran("chaws2",as.double(y),
+    tobj <- .Fortran(C_chaws2,as.double(y),
                      as.double(sigma2),
                      as.logical(!mask),
                      as.logical(weighted),
@@ -192,13 +192,12 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                      as.double(spmin),
                      as.double(spmax),
                      double(prod(dlw)),
-                     as.double(wghts),
-                     PACKAGE="fmri")[c("bi","thnew","hakt")]
+                     as.double(wghts))[c("bi","thnew","hakt")]
     gc()
     theta <- array(tobj$thnew,dy) 
     dim(tobj$bi) <- dy
     if(testprop) {
-      pobj <- .Fortran("chaws2",as.double(y),
+      pobj <- .Fortran(C_chaws2,as.double(y),
                        as.double(sigma2),
                        as.logical(!mask),
                        as.logical(weighted),
@@ -215,8 +214,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
 	               as.double(spmin),
 		       as.double(spmax),
 		       double(prod(dlw)),
-		       as.double(wghts),
-		       PACKAGE="fmri")[c("bi","thnew")]
+		       as.double(wghts))[c("bi","thnew")]
       ptheta <- array(pobj$thnew,dy) 
       rm(pobj) 
       gc()
@@ -255,17 +253,16 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
   #   Now compute variance of theta and variance reduction factor (with respect to the spatially uncorrelated situation   
   residuals <- readBin(res,"integer",prod(ddim),2)
   cat("\nfmri.smooth: first variance estimate","\n")
-  vartheta0 <- .Fortran("ivar",as.double(residuals),
+  vartheta0 <- .Fortran(C_ivar,as.double(residuals),
                            as.double(resscale),
                            as.logical(mask),
                            as.integer(ddim[1]),
                            as.integer(ddim[2]),
                            as.integer(ddim[3]),
                            as.integer(ddim[4]),
-                           var = double(n1*n2*n3),
-                           PACKAGE="fmri")$var
+                           var = double(n1*n2*n3))$var
   cat("fmri.smooth: smooth the residuals","\n")
-  residuals <- .Fortran("ihaws2",as.double(residuals),
+  residuals <- .Fortran(C_ihaws2,as.double(residuals),
                      as.double(sigma2),
                      as.logical(!mask),
                      as.logical(weighted),
@@ -285,14 +282,13 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                      as.double(spmax),
                      double(prod(dlw)),
                      as.double(wghts),
-                     double(ddim[4]*mc.cores),#swjy
-                     PACKAGE="fmri")$resnew
+                     double(ddim[4]*mc.cores))$resnew
   dim(residuals) <- c(ddim[4],n1,n2,n3)
   gc()
 #   get variances and correlations
   cat("fmri.smooth: estimate correlations","\n")
   lags <- pmin(c(5,5,3),ddim[1:3]-1)
-  scorr <- .Fortran("imcorr",as.double(residuals),
+  scorr <- .Fortran(C_imcorr,as.double(residuals),
                      as.logical(mask),
                      as.integer(n1),
                      as.integer(n2),
@@ -301,19 +297,17 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                      scorr=double(prod(lags)),
                      as.integer(lags[1]),
                      as.integer(lags[2]),
-                     as.integer(lags[3]),
-                     PACKAGE="fmri")$scorr
+                     as.integer(lags[3]))$scorr
   dim(scorr) <- lags                     
   cat("fmri.smooth: final variance estimate","\n")
-  vartheta <- .Fortran("ivar",as.double(residuals),
+  vartheta <- .Fortran(C_ivar,as.double(residuals),
                            as.double(resscale),
                            as.logical(mask),
                            as.integer(n1),
                            as.integer(n2),
                            as.integer(n3),
                            as.integer(ddim[4]),
-                           var = double(n1*n2*n3),
-                           PACKAGE="fmri")$var
+                           var = double(n1*n2*n3))$var
   vred <- array(vartheta/vartheta0,c(n1,n2,n3))
   vartheta <- vred/sigma2  #  sigma2 contains inverse variances
   ## "compress" the residuals
@@ -460,7 +454,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
     #
     #   need these values to compute variances after the last iteration
     #
-    tobj <- .Fortran("chawsv",as.double(y),
+    tobj <- .Fortran(C_chawsv,as.double(y),
                      as.double(residuals),
                      as.double(sigma2),
                      as.logical(!mask),
@@ -482,8 +476,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
                      as.double(spmax),
                      double(prod(dlw)),
                      as.double(wghts),
-                     double(ddim[4]*mc.cores),#resi
-                     PACKAGE="fmri")[c("bi","thnew","hakt","resnew")]
+                     double(ddim[4]*mc.cores))[c("bi","thnew","hakt","resnew")]
     gc()
     theta <- array(tobj$thnew,dy) 
     dim(tobj$bi) <- ddim[1:3]
@@ -491,7 +484,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
 #  correcting for missing term in variance estimate from residuals, e.g. effects of design matrix
 #  now contains 1/var(thetahat)
     if(testprop) {
-      pobj <- .Fortran("chawsv",as.double(y),
+      pobj <- .Fortran(C_chawsv,as.double(y),
                         as.double(residuals),
                         as.double(sigma2),
                         as.logical(!mask),
@@ -513,8 +506,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
                         as.double(spmax),
                         double(prod(dlw)),
                         as.double(wghts),
-                        double(ddim[4]*mc.cores),#resi
-		        PACKAGE="fmri")[c("bi","thnew","resnew")]
+                        double(ddim[4]*mc.cores))[c("bi","thnew","resnew")]
       ptheta <- array(pobj$thnew,dy) 
       rm(pobj) 
       gc()
@@ -541,19 +533,13 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
      }
     if (demo) readline("Press return")
     k <- k+1
-#  adjust lambda for the high intrinsic correlation between  neighboring estimates 
-#    quot <- .Fortran("ni2var",as.double(hakt),
-#                              as.integer(lkern),
-#                              as.double(wghts),
-#                              quot=double(1))$quot
-#    cat("ni/var",quot,"\n")
                               
     lambda0 <- if(k<=length(ladjust)) ladjust[k]*lambda else ladjust*lambda#/quot
     gc()
   }
   cat("fmri.smooth: estimate correlations","\n")
   lags <- pmin(c(5,5,3),ddim[1:3]-1)
-  scorr <- .Fortran("imcorr",as.double(tobj$resnew),
+  scorr <- .Fortran(C_imcorr,as.double(tobj$resnew),
                      as.logical(mask),
                      as.integer(n1),
                      as.integer(n2),
@@ -562,8 +548,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
                      scorr=double(prod(lags)),
                      as.integer(lags[1]),
                      as.integer(lags[2]),
-                     as.integer(lags[3]),
-                     PACKAGE="fmri")$scorr
+                     as.integer(lags[3]))$scorr
   dim(scorr) <- lags                     
   vartheta <- 1/tobj$bi
   vred <- vartheta*sigma2
@@ -620,7 +605,7 @@ smooth3D <- function(y,lkern="Gaussian",weighted=FALSE,sigma2=NULL,mask=NULL,hma
   hmax <- hmax/wghts[1]
   wghts <- (wghts[2:3]/wghts[1])
     dlw <- (2*trunc(hmax/c(1,wghts))+1)[1:d]
-    ysmooth <- .Fortran("smooth3d",
+    ysmooth <- .Fortran(C_smooth3d,
                      as.double(y),
                      as.double(sigma2),
                      as.logical(!mask),
@@ -634,8 +619,7 @@ smooth3D <- function(y,lkern="Gaussian",weighted=FALSE,sigma2=NULL,mask=NULL,hma
                      as.integer(lkern),
                      double(prod(dlw)),
                      as.double(wghts),
-                     double(dv),#swjy
-                     PACKAGE="fmri")$thnew
+                     double(dv))$thnew
 array(ysmooth,dy)
 }
 

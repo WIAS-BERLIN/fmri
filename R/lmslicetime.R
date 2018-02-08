@@ -443,7 +443,7 @@ fmri.lm <- function(ds,
   if (verbose) cat("fmri.lm: calculating spatial correlation ... ")
 
   lags <- c(5, 5, 3)
-  corr <- .Fortran("mcorr",
+  corr <- .Fortran(C_mcorr,
                    as.double(residuals),
                    as.logical(mask),
                    as.integer(dy[1]),
@@ -453,8 +453,7 @@ fmri.lm <- function(ds,
                    scorr = double(prod(lags)),
                    as.integer(lags[1]),
                    as.integer(lags[2]),
-                   as.integer(lags[3]),
-                   PACKAGE = "fmri")$scorr
+                   as.integer(lags[3]))$scorr
   dim(corr) <- lags
 
   ## "compress" the residuals
@@ -552,13 +551,12 @@ fmri.lm <- function(ds,
 }
 
 sincfilter <- function(t,x){
-   .Fortran("sincfilter",
+   .Fortran(C_sincfilter,
             as.double(t),
             as.integer(length(t)),
             as.double(x),
             as.integer(length(x)),
-            ft = double(length(t)),
-            PACKAGE="fmri")$ft
+            ft = double(length(t)))$ft
 }
 
 slicetiming <- function(fmridataobj, sliceorder=NULL){
@@ -571,7 +569,7 @@ slicetiming <- function(fmridataobj, sliceorder=NULL){
    if(length(sliceorder)!=dim(data)[4])
       return(warning("Inproper length of sliceorder"))
    sliceorder <- pmax(1,pmin(dim(data)[4],as.integer(sliceorder)))
-   newdata <- .Fortran("slicetim",
+   newdata <- .Fortran(C_slicetim,
                        as.double(data),
                        as.integer(dim(data)[1]),
                        as.integer(dim(data)[2]),
@@ -579,8 +577,7 @@ slicetiming <- function(fmridataobj, sliceorder=NULL){
                        as.integer(dim(data)[4]),
                        slicetimed=double(prod(dim(data))),
                        double(dim(data)[1]),
-                       as.integer(sliceorder),
-                       PACKAGE="fmri")$slicetimed
+                       as.integer(sliceorder))$slicetimed
     dim(newdata) <- dim(data)
     newdata <- aperm(newdata,c(2:4,1))
     fmridataobj$ttt <- writeBin(as.numeric(newdata), raw(), 4)

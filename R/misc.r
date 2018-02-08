@@ -2,23 +2,21 @@ fwhm2bw <- function(hfwhm) hfwhm/sqrt(8*log(2))
 bw2fwhm <- function(h) h*sqrt(8*log(2))
 
 getvofh <- function(bw,lkern,wght){
-.Fortran("getvofh",
+.Fortran(C_getvofh,
          as.double(bw),
          as.integer(lkern),
          as.double(wght),
-         vol=double(1),
-         PACKAGE="fmri")$vol
+         vol=double(1))$vol
 }
 gethani <- function(x,y,lkern,value,wght,eps=1e-2){
-.Fortran("gethani",
+.Fortran(C_gethani,
          as.double(x),
          as.double(y),
          as.integer(lkern),
          as.double(value),
          as.double(wght),
          as.double(eps),
-         bw=double(1),
-         PACKAGE="fmri")$bw
+         bw=double(1))$bw
 }
 
 fdr <- function(pval, alpha=0.05){
@@ -167,7 +165,7 @@ n1 <- dm[1]
 n2 <- dm[2]
 n3 <- dm[3]
 n <- n1*n2*n3
-mask1 <- .Fortran("lconnect",
+mask1 <- .Fortran(C_lconnect,
                  as.logical(mask),
                  as.integer(n1),
                  as.integer(n2),
@@ -179,8 +177,7 @@ mask1 <- .Fortran("lconnect",
                  integer(n),
                  integer(n),
                  logical(n),
-                 mask=logical(n),
-                 PACKAGE="fmri")$mask
+                 mask=logical(n))$mask
 dim(mask1) <- dm
 mask1
 }
@@ -189,7 +186,7 @@ spatial.corr <- function(residuals){
   lags <- c(5,5,3)
   dy <- dim(residuals)
   mask <- array(TRUE,dy[2:4])
-  corr <- .Fortran("mcorr",as.double(residuals),
+  corr <- .Fortran(C_mcorr,as.double(residuals),
                      as.logical(mask),
                      as.integer(dy[2]),
                      as.integer(dy[3]),
@@ -198,8 +195,7 @@ spatial.corr <- function(residuals){
                      scorr=double(prod(lags)),
                      as.integer(lags[1]),
                      as.integer(lags[2]),
-                     as.integer(lags[3]),
-                     PACKAGE="fmri")$scorr
+                     as.integer(lags[3]))$scorr
   dim(corr) <- lags
   bw <- optim(c(2,2,2),corrrisk,method="L-BFGS-B",lower=c(.25,.25,.25),upper=c(20,20,20),lag=lags,data=corr)$par
   bw[bw<=.25] <- 0

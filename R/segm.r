@@ -86,17 +86,15 @@ segm3D <- function(y,weighted=TRUE,
 # deal with homoskedastic Gaussian case by extending sigma2
    residuals <- readBin(res,"integer",prod(ddim),2)
   cat("\nfmri.smooth: first variance estimate","\n")
-  varest0 <- .Fortran("ivar",as.double(residuals),
+  varest0 <- .Fortran(C_ivar,as.double(residuals),
                            as.double(resscale),
                            as.logical(mask),
                            as.integer(n1),
                            as.integer(n2),
                            as.integer(n3),
                            as.integer(nt),
-                           var = double(n1*n2*n3),
-                           PACKAGE="fmri")$var
+                           var = double(n1*n2*n3))$var
    vq <- varest0*sigma2
-#   plot(density(vq),main="Density of vq")
    if (is.null(wghts)) wghts <- c(1,1,1)
    hinit <- hinit/wghts[1]
    hmax <- hmax/wghts[1]
@@ -133,7 +131,7 @@ segm3D <- function(y,weighted=TRUE,
       dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
       hakt0 <- hakt
       bi0 <- tobj$bi
-      tobj <- .Fortran("segm3d",
+      tobj <- .Fortran(C_segm3d,
                        as.double(y),
                        as.double(residuals),
                        as.double(sigma2),
@@ -160,8 +158,7 @@ segm3D <- function(y,weighted=TRUE,
                        as.double(vq),
                        as.double(varest0),
                        varest=as.double(varest),
-                       as.logical(restricted),
-                       PACKAGE="fmri")[c("bi","thnew","hakt","segm","varest")]
+                       as.logical(restricted))[c("bi","thnew","hakt","segm","varest")]
       gc()
       theta <- array(tobj$thnew,dy[1:3])
       segm <- array(tobj$segm,dy[1:3])
