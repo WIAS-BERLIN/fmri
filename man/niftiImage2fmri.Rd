@@ -4,10 +4,12 @@
 \title{Create fmridata object from niftiImage
 }
 \description{
-Transforms a niftiImage (created by readNifti from package RNiftyReg) into an object with class fmridata
+Transforms a niftiImage (created by readNifti from package RNiftyReg) into
+an object with class fmridata
 }
 \usage{
-niftiImage2fmri(niftiobj, level = 0.75, setmask = TRUE, indx = NULL, indy = NULL, indz = NULL, avoidnegs = FALSE)
+niftiImage2fmri(niftiobj, level = 0.75, setmask = TRUE, indx = NULL,
+   indy = NULL, indz = NULL, avoidnegs = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

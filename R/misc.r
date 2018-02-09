@@ -158,6 +158,31 @@ get.corr.gauss <- function(h,interv=1) {
     sum(penl[-(1:interv)]*penl[-((dx-interv+1):dx)])/sum(penl^2)
 }
 
+corrrisk <- function(bw,lag,data){
+  mean((data-thcorr3D(bw,lag))^2)
+}
+
+thcorr3D <- function(bw,lag=rep(5,3)){
+  g <- trunc(fwhm2bw(bw)*4)
+  gw1 <- dnorm(-(g[1]):g[1],0,fwhm2bw(bw[1]))
+  gw2 <- dnorm(-(g[2]):g[2],0,fwhm2bw(bw[2]))
+  gw3 <- dnorm(-(g[3]):g[3],0,fwhm2bw(bw[3]))
+  gwght <- outer(gw1,outer(gw2,gw3,"*"),"*")
+  gwght <- gwght/sum(gwght)
+  dgw <- dim(gwght)
+  scorr <- .Fortran("thcorr",as.double(gwght),
+                    as.integer(dgw[1]),
+                    as.integer(dgw[2]),
+                    as.integer(dgw[3]),
+                    scorr=double(prod(lag)),
+                    as.integer(lag[1]),
+                    as.integer(lag[2]),
+                    as.integer(lag[3]),
+                    PACKAGE="fmri")$scorr
+  # bandwidth in FWHM in voxel units
+  dim(scorr) <- lag
+  scorr
+}
 
 connect.mask <- function(mask){
 dm <- dim(mask)

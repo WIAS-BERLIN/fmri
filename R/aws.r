@@ -1,10 +1,10 @@
 #########################################################################################################################
 #
 #    R - function  aws3D  for vector-valued  Adaptive Weights Smoothing (AWS) in 3D
-#    
+#
 #    reduced version for qtau==1, heteroskedastic variances only, exact value for Variance reduction
 #
-#    emaphazises on the propagation-separation approach 
+#    emaphazises on the propagation-separation approach
 #
 #    Copyright (C) 2005 Weierstrass-Institut fuer
 #                       Angewandte Analysis und Stochastik (WIAS)
@@ -75,14 +75,14 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
   if (is.null(qlambda)) qlambda <- switch(skern,.9945,.9988,.9995)
   if (qlambda<.9) warning("Inappropriate value of qlambda")
   if (qlambda<1) {
-    lambda <- ladjust*qchisq(qlambda,1) 
+    lambda <- ladjust*qchisq(qlambda,1)
   } else {
     lambda <- 1e50
   }
   if(skern%in%c(1,2)) {
     # to have similar preformance compared to skern="Exp"
     lambda <- 4/3*lambda
-    if(skern==1) if(is.null(spmin)) spmin <- .3 
+    if(skern==1) if(is.null(spmin)) spmin <- .3
     spmax <- 1
   } else {
       spmin <- 0
@@ -90,7 +90,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
   }
   # set hinit and hincr if not provided
   if (is.null(hinit)||hinit<1) hinit <- 1
-  
+
   # define hmax
   if (is.null(hmax)) hmax <- 5    # uses a maximum of about 520 points
 
@@ -109,25 +109,25 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
   # determine corresponding bandwidth for specified correlation
   if(is.null(h0)) h0 <- rep(0,3)
 
-  # estimate variance in the gaussian case if necessary  
+  # estimate variance in the gaussian case if necessary
   if (is.null(sigma2)) {
     sigma2 <- IQRdiff(as.vector(y))^2
     if (any(h0>0)) sigma2<-sigma2*Varcor.gauss(h0)*Spatialvar.gauss(h0,1e-5,3)
     if (demo) cat("Estimated variance: ", signif(sigma2,4),"\n")
   }
-  if (length(sigma2)==1) sigma2<-array(sigma2,dy) 
+  if (length(sigma2)==1) sigma2<-array(sigma2,dy)
   if(is.null(mask)) mask <- array(TRUE,dy)
   mask[sigma2>=1e16] <- FALSE
 #  in these points sigma2 probably contains NA's
   # deal with homoskedastic Gaussian case by extending sigma2
   if (length(sigma2)!=n) stop("sigma2 does not have length 1 or same length as y")
   dim(sigma2) <- dy
-  lambda <- lambda*2 
-  sigma2 <- 1/sigma2 #  taking the invers yields simpler formulaes 
+  lambda <- lambda*2
+  sigma2 <- 1/sigma2 #  taking the invers yields simpler formulaes
 
   # demo mode should deliver graphics!
   if (demo && !graph) graph <- TRUE
-  
+
   # Initialize  list for bi and theta
   if (is.null(wghts)) wghts <- c(1,1,1)
   hinit <- hinit/wghts[1]
@@ -138,11 +138,11 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
   maxvol <- getvofh(hmax,lkern,wghts)
   kstar <- as.integer(log(maxvol)/log(1.25))
   steps <- kstar+1
-  
+
   if(qlambda < 1) k <- 1 else k <- kstar
   hakt <- hinit
   hakt0 <- hinit
-  lambda0 <- lambda 
+  lambda0 <- lambda
   if (hinit>1) lambda0 <- 1e50 # that removes the stochstic term for the first step
   scorr <- numeric(3)
   if(h0[1]>0) scorr[1] <-  get.corr.gauss(h0[1],2)
@@ -151,7 +151,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
   total <- cumsum(1.25^(1:kstar))/sum(1.25^(1:kstar))
   if(testprop) {
     if(is.null(u)) u <- 0
-  } 
+  }
   propagation <- NULL
 ##
 ##  determine number of cores to use
@@ -168,7 +168,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
 #  need bandwidth in voxel for Spaialvar.gauss, h0 is in voxel
     if (any(h0>0)) lambda0 <- lambda0 * Spatialvar.gauss(bw2fwhm(hakt0)/4/c(1,wghts),h0,3)/
       Spatialvar.gauss(h0,1e-5,3)/Spatialvar.gauss(bw2fwhm(hakt0)/4/c(1,wghts),1e-5,3)
-        # Correction C(h0,hakt) for spatial correlation depends on h^{(k-1)}  all bandwidth-arguments in FWHM 
+        # Correction C(h0,hakt) for spatial correlation depends on h^{(k-1)}  all bandwidth-arguments in FWHM
     hakt0 <- hakt
     theta0 <- theta
     bi0 <- tobj$bi
@@ -194,7 +194,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                      double(prod(dlw)),
                      as.double(wghts))[c("bi","thnew","hakt")]
     gc()
-    theta <- array(tobj$thnew,dy) 
+    theta <- array(tobj$thnew,dy)
     dim(tobj$bi) <- dy
     if(testprop) {
       pobj <- .Fortran(C_chaws2,as.double(y),
@@ -215,8 +215,8 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
 		       as.double(spmax),
 		       double(prod(dlw)),
 		       as.double(wghts))[c("bi","thnew")]
-      ptheta <- array(pobj$thnew,dy) 
-      rm(pobj) 
+      ptheta <- array(pobj$thnew,dy)
+      rm(pobj)
       gc()
       propagation <- c(propagation,sum(abs(theta-ptheta))/sum(abs(ptheta-u)))
       cat("Propagation with alpha=",max(propagation),"\n")
@@ -241,16 +241,16 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
      }
     if (demo) readline("Press return")
     k <- k+1
-#  adjust lambda for the high intrinsic correlation between  neighboring estimates 
+#  adjust lambda for the high intrinsic correlation between  neighboring estimates
     c1 <- (prod(h0+1))^(1/3)
     c1 <- 2.7214286 - 3.9476190*c1 + 1.6928571*c1*c1 - 0.1666667*c1*c1*c1
     x <- (prod(1.25^(k-1)/c(1,wghts)))^(1/3)
     scorrfactor <- (c1+x)/(c1*prod(h0+1)+x)
-    lambda0 <- lambda*scorrfactor 
+    lambda0 <- lambda*scorrfactor
     gc()
   }
 
-  #   Now compute variance of theta and variance reduction factor (with respect to the spatially uncorrelated situation   
+  #   Now compute variance of theta and variance reduction factor (with respect to the spatially uncorrelated situation
   residuals <- readBin(res,"integer",prod(ddim),2)
   cat("\nfmri.smooth: first variance estimate","\n")
   vartheta0 <- .Fortran(C_ivar,as.double(residuals),
@@ -298,7 +298,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
                      as.integer(lags[1]),
                      as.integer(lags[2]),
                      as.integer(lags[3]))$scorr
-  dim(scorr) <- lags                     
+  dim(scorr) <- lags
   cat("fmri.smooth: final variance estimate","\n")
   vartheta <- .Fortran(C_ivar,as.double(residuals),
                            as.double(resscale),
@@ -370,14 +370,14 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
   if (is.null(qlambda)) qlambda <- switch(skern,.9945,.9988,.9995)
   if (qlambda<.9) warning("Inappropriate value of qlambda")
   if (qlambda<1) {
-    lambda <- qchisq(qlambda,1) 
+    lambda <- qchisq(qlambda,1)
   } else {
     lambda <- 1e50
   }
   if(skern%in%c(1,2)) {
     # to have similar preformance compared to skern="Exp"
     lambda <- 4/3*lambda
-    if(skern==1) if(is.null(spmin)) spmin <- .3 
+    if(skern==1) if(is.null(spmin)) spmin <- .3
     spmax <- 1
   } else {
       spmin <- 0
@@ -385,7 +385,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
   }
   # set hinit and hincr if not provided
   if (is.null(hinit)||hinit<1) hinit <- 1
-  
+
   # define hmax
   if (is.null(hmax)) hmax <- 5    # uses a maximum of about 520 points
 
@@ -401,18 +401,18 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
   if (is.null(hincr)||hincr<=1) hincr <- 1.25
   hincr <- hincr^(1/3)
 
-  if (length(dim(sigma2))!=3) stop("insufficient variance information for full analysis") 
+  if (length(dim(sigma2))!=3) stop("insufficient variance information for full analysis")
   if(is.null(mask)) mask <- array(TRUE,dy)
   mask[sigma2>=1e16] <- FALSE
 #  in these points sigma2 probably contains NA's
   # deal with homoskedastic Gaussian case by extending sigma2
   if (length(sigma2)!=n) stop("sigma2 does not have length 1 or same length as y")
   dim(sigma2) <- dy
-  sigma2 <- 1/sigma2 #  taking the invers yields simpler formulaes 
+  sigma2 <- 1/sigma2 #  taking the invers yields simpler formulaes
 
   # demo mode should deliver graphics!
   if (demo && !graph) graph <- TRUE
-  
+
   # Initialize  list for bi and theta
   if (is.null(wghts)) wghts <- c(1,1,1)
   hinit <- hinit/wghts[1]
@@ -423,16 +423,16 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
   maxvol <- getvofh(hmax,lkern,wghts)
   kstar <- as.integer(log(maxvol)/log(1.25))
   steps <- kstar+1
-  
+
   if(qlambda < 1) k <- 1 else k <- kstar
   hakt <- hinit
   hakt0 <- hinit
-  lambda0 <- lambda 
+  lambda0 <- lambda
   if (hinit>1) lambda0 <- 1e50 # that removes the stochstic term for the first step
   total <- cumsum(1.25^(1:kstar))/sum(1.25^(1:kstar))
   if(testprop) {
     if(is.null(u)) u <- 0
-  } 
+  }
   propagation <- NULL
 ##
 ##  determine number of cores to use
@@ -466,7 +466,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
                      hakt=as.double(hakt),
                      as.double(lambda0),
                      as.double(theta0),
-                     as.integer(mc.cores),
+#                     as.integer(mc.cores),
                      bi=as.double(bi0),
                      resnew=double(prod(ddim)),
                      thnew=double(n1*n2*n3),
@@ -478,7 +478,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
                      as.double(wghts),
                      double(ddim[4]*mc.cores))[c("bi","thnew","hakt","resnew")]
     gc()
-    theta <- array(tobj$thnew,dy) 
+    theta <- array(tobj$thnew,dy)
     dim(tobj$bi) <- ddim[1:3]
     tobj$bi <- tobj$bi*vadjust
 #  correcting for missing term in variance estimate from residuals, e.g. effects of design matrix
@@ -496,7 +496,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
                         hakt=as.double(hakt),
                         as.double(1e50),
                         as.double(theta0),
-                        as.integer(mc.cores),
+  #                      as.integer(mc.cores),
                         bi=as.double(bi0),
                         resnew=double(prod(ddim)),
                         thnew=double(n1*n2*n3),
@@ -507,8 +507,8 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
                         double(prod(dlw)),
                         as.double(wghts),
                         double(ddim[4]*mc.cores))[c("bi","thnew","resnew")]
-      ptheta <- array(pobj$thnew,dy) 
-      rm(pobj) 
+      ptheta <- array(pobj$thnew,dy)
+      rm(pobj)
       gc()
       propagation <- c(propagation,sum(abs(theta-ptheta))/sum(abs(ptheta-u)))
       cat("Propagation with alpha=",max(propagation),"\n")
@@ -533,7 +533,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
      }
     if (demo) readline("Press return")
     k <- k+1
-                              
+
     lambda0 <- if(k<=length(ladjust)) ladjust[k]*lambda else ladjust*lambda#/quot
     gc()
   }
@@ -549,7 +549,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
                      as.integer(lags[1]),
                      as.integer(lags[2]),
                      as.integer(lags[3]))$scorr
-  dim(scorr) <- lags                     
+  dim(scorr) <- lags
   vartheta <- 1/tobj$bi
   vred <- vartheta*sigma2
   ## "compress" the residuals
@@ -622,4 +622,3 @@ smooth3D <- function(y,lkern="Gaussian",weighted=FALSE,sigma2=NULL,mask=NULL,hma
                      double(dv))$thnew
 array(ysmooth,dy)
 }
-

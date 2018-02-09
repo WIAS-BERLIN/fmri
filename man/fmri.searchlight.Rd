@@ -8,7 +8,8 @@
   Detection of activated regions using searchlights.
 }
 \usage{
-fmri.searchlight(spm, alpha = 0.05, radius, minimum.signal = 0, kind = c("abs", "squared"))
+fmri.searchlight(spm, alpha = 0.05, radius, minimum.signal = 0,
+   kind = c("abs", "squared"))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
