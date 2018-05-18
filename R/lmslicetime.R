@@ -523,7 +523,7 @@ fmri.lm <- function(ds,
   if(slicetiming){
      hrf <- matrix(0,dim(z)[1],nslices)
      for(i in 1:nslices) hrf[,i] <- z[,,i] %*% contrast
-     results$hrf <- hrf
+     result$hrf <- hrf
   } else result$hrf <- z %*% contrast
   result$bw <- bw
   result$df <- df
@@ -550,13 +550,14 @@ fmri.lm <- function(ds,
   invisible(result)
 }
 
-sincfilter <- function(t,x){
+sincfilter <- function(t,x,wr=8){
    .Fortran(C_sincfilter,
             as.double(t),
             as.integer(length(t)),
             as.double(x),
             as.integer(length(x)),
-            ft = double(length(t)))$ft
+            ft = double(length(t)),
+            as.integer(wr))$ft
 }
 
 slicetiming <- function(fmridataobj, sliceorder=NULL){

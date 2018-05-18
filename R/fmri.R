@@ -163,7 +163,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
     invisible(z)
 }
 
-fmri.pvalue <- function(spm, mode="basic", na.rm=FALSE, minimum.signal=0, alpha=0.05 ) {
+fmri.pvalue <- function(spm, mode="basic", na.rm=FALSE, minimum.signal=0, alpha=0.05, symmetric=FALSE ) {
     args <- sys.call()
     args <- c(spm$call,args)
   cat("fmri.pvalue: entering function\n")

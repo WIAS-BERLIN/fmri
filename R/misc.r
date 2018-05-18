@@ -170,7 +170,7 @@ thcorr3D <- function(bw,lag=rep(5,3)){
   gwght <- outer(gw1,outer(gw2,gw3,"*"),"*")
   gwght <- gwght/sum(gwght)
   dgw <- dim(gwght)
-  scorr <- .Fortran("thcorr",as.double(gwght),
+  scorr <- .Fortran(C_thcorr,as.double(gwght),
                     as.integer(dgw[1]),
                     as.integer(dgw[2]),
                     as.integer(dgw[3]),
