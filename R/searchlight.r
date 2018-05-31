@@ -7,12 +7,42 @@ searchlight <- function(radius){
    indices[,apply(indices^2,2,sum)<=radius^2]
 }
 
-searchlightdistr <- function(df,nregion,kind=0,nsim=500000){
+searchlightdistr.old <- function(df,nregion,kind=0,nsim=500000){
 old.seed <- .Random.seed
 set.seed(10:100)
 rn <- matrix(rt(nsim*nregion,df),nregion,nsim)
 .Random.seed <- old.seed
 rsl <- apply(if(kind==0) abs(rn) else rn^2, 2, mean)
+list(p=seq(1/(2*nsim),(2*nsim-1)/(2*nsim),length=nsim),kvalue=sort(rsl),df=df,kind=kind,nsim=nsim)
+}
+
+searchlightdistr <- function(spm,radius,kind=0,sdim=c(200,200,200)){
+old.seed <- .Random.seed
+set.seed(10:100)
+df <- spm$df
+bw <- spm$bw
+nsim <- prod(sdim)
+rn <- array(rt(nsim,df),sdim)
+if(any(bw>0)){
+# emulate correlation structure in spm
+   require(aws)
+    sdrn <- sd(rn)
+    rn <- kernsm(rn, h=bw, unit="FWHM")@yhat
+    rn <- rn*sdrn/sd(rn)
+}
+rn <- if(kind==0) abs(rn) else rn^2
+sregion <- searchlight(radius)
+nregion <- dim(sregion)[2]
+mask <- array(TRUE,sdim)
+rsl <- .Fortran(C_slight,
+                as.double(rn),
+                as.logical(mask),
+                as.integer(sdim[1]),
+                as.integer(sdim[2]),
+                as.integer(sdim[3]),
+                as.integer(sregion),
+                as.integer(nregion),
+                stat=double(nsim))$stat
 list(p=seq(1/(2*nsim),(2*nsim-1)/(2*nsim),length=nsim),kvalue=sort(rsl),df=df,kind=kind,nsim=nsim)
 }
 
@@ -29,13 +59,14 @@ stat <- spm$cbeta
 stat[stat>0] <- pmax(0,stat[stat>0]-minimum.signal)
 stat[stat<0] <- pmin(0,stat[stat<0]+minimum.signal)
 stat <- stat/sqrt(spm$var)
+mask <- spm$mask
+stat[!mask] <- 0
 dim(stat) <- dimspm <- spm$dim[1:3]
 sregion <- searchlight(radius)
 nregion <- dim(sregion)[2]
 cat("fmri.searchlight: using",kind,"size of searchlight:",nregion,"\n")
 kind <- if(kind[1]=="abs") 0 else 1
 stat <- if(kind==0) abs(stat) else stat^2
-mask <- spm$mask
 ##
 ##  get statistics over searchlights
 ##
@@ -53,7 +84,8 @@ stat <- .Fortran(C_slight,
 ##  assumes t-distributed spm
 ##
 cat("fmri.searchlight: get empirical distribution of sl-statistic \n")
-distr <- searchlightdistr(spm$df,nregion,kind)
+# distr <- searchlightdistr.old(spm$df,nregion,kind)
+distr <- searchlightdistr(spm,radius,kind)
 nvoxel <- sum(mask)
 cat("fmri.searchlight: get approximate pvalues \n")
 pv <- array(1,dimspm)

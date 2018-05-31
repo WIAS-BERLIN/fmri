@@ -1,6 +1,7 @@
 findclusters <- function(x,thresh){
    dx <- dim(x)
    tx <- as.integer(x>thresh)
+   tx[is.na(tx)] <- 0
    z <- .Fortran(C_ccluster,
                  size=as.integer(tx),
                  as.integer(dx[1]),
@@ -18,14 +19,15 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
    kv
       }
 
-      getalphaclust <- function(alpha,clustertable,calpha=seq(.001,.1,.001),ncmin=2){
+      getalphaclust <- function(alpha,clustertable,ncmin=2){
         ## get reference alpha for clusterthreshold with clustersizes ncmin:20
+         calpha <- seq(.001,.1,.001)
          if(ncmin <2) ncmin <- 2
          if(ncmin >20) ncmin <- 20
          cta <- clustertable[,ncmin-1]
-         ca0 <- min(calpha[cta<alpha])
+         ca0 <- max(calpha[calpha<alpha])
          cta0 <- max(cta[cta<alpha])
-         ca1 <- max(calpha[cta>alpha])
+         ca1 <- min(calpha[calpha>alpha])
          cta1 <- min(cta[cta>alpha])
          ca0+ (cta1-alpha)*(ca1-ca0)/(cta1-cta0)
       }

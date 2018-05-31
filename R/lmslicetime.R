@@ -156,24 +156,14 @@ fmri.design <- function(stimulus,
     z <- array(0, dz)
     if (verbose) cat("fmriDesign: Adding stimuli to design matrix\n")
     z[, 1:nstimulus,] <- stims
-      ## needed to make all effects orthogonal to stimulus
 
   ## this is the mean effect
   if (verbose) cat("fmriDesign: Adding mean effect to design matrix\n")
   z[, neffects + nstimulus + 1,] <- 1
-
-  ## now confounding effects (make orthogonal to stimuli)
+  ## now confounding effects
   if (neffects != 0) {
     if (verbose) cat("fmriDesign: Adding", neffects, "confounding effect(s) to design matrix\n")
     z[, (nstimulus + 1):(nstimulus + neffects),] <- cef
-    for(k in 1:nslices) {
-      ortho <- t(stims[,,k]) %*% stims[,,k]
-      hz <- numeric(nstimulus)
-      for (i in (nstimulus + 1):(nstimulus + neffects)) {
-        for (j in 1:nstimulus) hz[j] <- z[, j,k] %*% z[, i,k]
-          z[, i, k] <- z[, i, k] + as.vector(as.matrix(z[,1:nstimulus,k]) %*% as.vector(lm(-hz~ortho-1)$coeff))
-    }
-  }
 }
 
   ## now the polynomial trend (make orthogonal to stimuli)
@@ -185,9 +175,7 @@ fmri.design <- function(stimulus,
        for (i in (neffects + nstimulus + 2):(neffects + nstimulus + order + 1)) {
           z[, i, k] <- (1:scans)^(i - nstimulus - neffects - 1)
        z[, i, k] <- z[, i, k]/mean(z[,i,k])
-       for (j in 1:nstimulus) hz[j] <- z[,j,k]%*%z[,i,k]
-       z[, i,k] <- z[, i,k] + as.vector(as.matrix(z[,1:nstimulus,k]) %*% as.vector(lm(-hz~ortho-1)$coeff))
-    }
+  }
   }
 }
 if(dim(z)[3]==1) dim(z) <- dim(z)[1:2]

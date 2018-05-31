@@ -4,7 +4,7 @@
 #include <Rinternals.h> // for SEXP
 #include <R_ext/RS.h>
 
-void F77_NAME(ccluster)(double* x, int* n1, int* n2, int* n3, double* z);
+void F77_NAME(ccluster)(int* x, int* n1, int* n2, int* n3, int* z);
 void F77_NAME(chaws2)(double* y, double* si2, int* mask, int* wlse, int* n1,
                       int* n2, int* n3, double* hakt, double* lambda,
                       double* theta, double* bi, double* thn, int* kern, int* skern,
@@ -52,8 +52,8 @@ void F77_NAME(sofw3df)(double* bw, int* kern, double* wght, double* fw);
 void F77_NAME(thcorr)(double* w, int* n1, int* n2, int* n3, double* corr,
                       int* l1, int* l2, int* l3);
 
-static R_NativePrimitiveArgType ccluster_t[]={REALSXP, INTSXP, INTSXP,
-    INTSXP, REALSXP};
+static R_NativePrimitiveArgType ccluster_t[]={INTSXP, INTSXP, INTSXP,
+    INTSXP, INTSXP};
 static R_NativePrimitiveArgType chaws2_t[]={REALSXP, REALSXP, LGLSXP,
     LGLSXP, INTSXP, INTSXP, INTSXP, REALSXP, REALSXP, REALSXP, REALSXP,
     REALSXP, INTSXP, INTSXP, REALSXP, REALSXP, REALSXP, REALSXP};
