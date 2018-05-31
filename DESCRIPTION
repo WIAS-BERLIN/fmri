@@ -9,7 +9,7 @@ Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
              person("Brandon", "Whitcher", role = c("ctb")),
              person("Dames", "Sibylle", role = c("ctb")))
 Depends: R (>= 3.2.0), awsMethods (>= 1.0-1), nlme
-Imports:     parallel, metafor, methods
+Imports:     parallel, metafor, methods, aws
 Suggests:    tcltk, tkrplot, fastICA, adimpro, oro.nifti
 LazyData: true
 Description: Contains R-functions to perform an fMRI analysis as described in

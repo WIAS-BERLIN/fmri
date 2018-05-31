@@ -9,7 +9,7 @@ Performs sinc interpolation for a equidistant time series \code{x}
 to times \code{t}.
 }
 \usage{
-sincfilter(t, x)
+sincfilter(t, x, wr=8)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -19,6 +19,9 @@ sincfilter(t, x)
   \item{x}{
   observed time series at times \code{1:length(x)}.
 }
+ \item{wr}{
+  determines truncation of series expansion
+ }
 }
 \value{
 a vector of interpolated values of the time series at time points given in

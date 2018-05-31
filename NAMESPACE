@@ -20,10 +20,11 @@ import(parallel,awsMethods,nlme)
   importFrom("stats", "IQR", "convolve", "dchisq", "density", "dnorm",
              "formula", "lm", "median", "optim", "pchisq", "pnorm",
              "poly", "prcomp", "pt", "qchisq", "qt", "quantile", "rnorm",
-             "rt", "var", "vcov")
+             "rt", "var", "vcov","sd")
   importFrom("utils", "flush.console", "setTxtProgressBar",
              "txtProgressBar")
 importFrom(metafor,rma.uni)
+importFrom(aws, kernsm)
 S3method(plot,fmridata)
 S3method(plot,fmrisegment)
 S3method(print,fmridata)

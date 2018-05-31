@@ -25,7 +25,6 @@ nsim <- prod(sdim)
 rn <- array(rt(nsim,df),sdim)
 if(any(bw>0)){
 # emulate correlation structure in spm
-   require(aws)
     sdrn <- sd(rn)
     rn <- kernsm(rn, h=bw, unit="FWHM")@yhat
     rn <- rn*sdrn/sd(rn)
