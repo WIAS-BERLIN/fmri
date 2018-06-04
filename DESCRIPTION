@@ -1,6 +1,6 @@
 Package:     fmri
-Version:     1.8-1
-Date:        2018-02-09
+Version:     1.8-2
+Date:        2018-06-04
 Title:       Analysis of fMRI Experiments
 Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
                     email = "tabelow@wias-berlin.de"),
