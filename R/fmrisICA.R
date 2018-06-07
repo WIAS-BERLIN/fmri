@@ -1,12 +1,15 @@
 fmri.sICA <- function(data, mask=NULL, ncomp=20,
                alg.typ=c("parallel","deflation"),
                fun=c("logcosh","exp"), alpha=1, detrend=TRUE,
-               degree=2, nuisance= NULL, smooth=TRUE,
-               bw=8, unit=c("SD","FWHM")){
+               degree=2, nuisance= NULL, ssmooth=TRUE, tsmooth=TRUE, bwt=4,
+               bws=8, unit=c("FWHM","SD")){
   if(detrend) data <- fmri.detrend(data,degree,nuisance)
-  bwvoxel <- if(length(data$header$pixdim)>4)
-        bw/data$header$pixdim[2:4] else bw
-  if(smooth) data <- smooth.fmridata(data,bwvoxel,unit)
+  bwvoxel <- if(length(data$header$pixdim)>=4)
+        bws/data$header$pixdim[2:4] else bws
+  bwtime <- if(length(data$header$pixdim)>=5)
+        bwst/data$header$pixdim[5] else bwt
+  if(ssmooth) data <- smooth.fmridata(data,bwvoxel,unit)
+  if(tsmooth) data <- smooth.fmridata(data,bwtime,unit,what="temporal")
   cat("Computing independent components with fastICA \n")
   ttt <- extract.data(data)
   if(is.null(mask)) mask <- data$mask
@@ -21,7 +24,7 @@ fmri.sICA <- function(data, mask=NULL, ncomp=20,
   cimgs[mask,] <- fsica$S
   dim(cimgs) <- c(ddim,ncomp)
   list(scomp=cimgs,X=fsica$X,k=fsica$K,W=fsica$W,A=fsica$A,
-       mask=mask,pixdim=data$header$pixdim[2:4])
+       mask=mask,voxdim=data$header$pixdim[2:4],TR=data$header$pixdim[5])
   }
 
 ICAfingerprint <- function(icaobj,nbin=256,plot=FALSE){
@@ -52,18 +55,19 @@ ICAfingerprint <- function(icaobj,nbin=256,plot=FALSE){
       scompi <- icaobj$scomp[,,,i]
       scompi <- abs(scompi-mean(scompi))/sdcompi
       z <- findclusters(scompi,2.5)
-      icafp[4,i] <- sum(z$size>270/prod(icaobj$pixdim))/nvox
+      icafp[4,i] <- sum(z$size>270/prod(icaobj$voxdim))/nvox
       icafp[5,i] <- abs(sum(tcomp[i,-1]*tcomp[i,-ntime]))/sum(tcomp[i,]^2)*ntime/(ntime-1)
       z <- hist(tcomp[i,],nbin,plot=FALSE)$counts
       z <- z[z>0]/sum(z)
       icafp[6,i] <- -sum(z*log(z,2))
       z <- spectrum(tcomp[i,],plot=FALSE)
       ns <- length(z$freq)
-      ind1 <- (1:ns)[z$freq<=.008]
-      ind2 <- (1:ns)[z$freq>.008&z$freq<=.02]
-      ind3 <- (1:ns)[z$freq>.02&z$freq<=.05]
-      ind4 <- (1:ns)[z$freq>.05&z$freq<=.1]
-      ind5 <- (1:ns)[z$freq>.1&z$freq<=.25]
+      zfreq <- z$freq/icaobj$TR
+      ind1 <- (1:ns)[zfreq<=.008]
+      ind2 <- (1:ns)[zfreq>.008&zfreq<=.02]
+      ind3 <- (1:ns)[zfreq>.02&zfreq<=.05]
+      ind4 <- (1:ns)[zfreq>.05&zfreq<=.1]
+      ind5 <- (1:ns)[zfreq>.1&zfreq<=.25]
       sumsp <- sum(z$spec)
       icafp[7,i] <- sum(z$spec[ind1])/sumsp
       icafp[8,i] <- sum(z$spec[ind2])/sumsp

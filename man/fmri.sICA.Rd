@@ -4,20 +4,26 @@
 \title{Spacial ICA for fmri data}
 \description{ Uses fastICA to perform spatial ICA on fMRI data.}
 \usage{
-fmri.detrend(data, mask=NULL, ncomp=20, detrend=TRUE,
-               degree=2, nuisance= NULL, smooth=TRUE,
-               bw=8, unit=c("SD","FWHM"))
+fmri.detrend(data, mask=NULL, ncomp=20,
+  alg.typ=c("parallel","deflation"), fun=c("logcosh","exp"),
+  alpha=1, detrend=TRUE, degree=2, nuisance= NULL, ssmooth=TRUE,
+  tsmooth=TRUE, bwt=4, bws=8, unit=c("FWHM","SD"))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{data}{ fMRI dataset of class ''\code{fmridata}'' }
   \item{mask}{ Brain mask, if \code{NULL} then \code{data$mask} is used. }
   \item{ncomp}{Number of ICA components to compute.}
-  \item{detrend}{Trend removal to be performed ?}
+  \item{alg.type}{Alg. to be used in \code{fastICA}.}
+  \item{fun}{Test functions to be used in \code{fastICA}.}
+  \item{alpha}{Scale parameter in test functions, see \code{fastICA}.}
+  \item{detrend}{Trend removal (polynomial)}
   \item{degree}{degree of polynomial trend}
   \item{nuisance}{ Matrix of additional nuisance parameters to regress against. }
-  \item{smooth}{ Should spatial smoothing be used for variance reduction}
-  \item{bw}{Bandwidth for Gaussian kernel}
+  \item{ssmooth}{ Should spatial smoothing be used for variance reduction}
+  \item{tsmooth}{ Should temporal smoothing be be applied}
+  \item{bws}{Bandwidth for spatial Gaussian kernel}
+  \item{bwt}{Bandwidth for temporal Gaussian kernel}
   \item{unit}{Unit of bandwidth, either standard deviation (SD) of Full Width Half Maximum (FWHM).}
 }
 \details{
@@ -35,6 +41,7 @@ The components of the result are related as \code{XKW=scomp[mask,]} and \code{X=
   \item{W}{estimated un-mixing matrix}
   \item{A}{estimated mixing matrix}
   \item{mask}{Brain mask}
+  \item{pixdim}
 }
 \author{ Joerg Polzehl \email{polzehl@wias-berlin.de} }
 \seealso{ \code{\link{fastICA::fastICA}} }

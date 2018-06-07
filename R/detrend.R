@@ -35,7 +35,7 @@ fmri.detrend <- function(data,degree=1,nuisance=NULL,accoef=0) {
   invisible(data)
 }
 
-smooth.fmridata <- function(data,bw=0,unit=c("SD","FWHM")){
+smooth.fmridata <- function(data,bw=0,unit=c("SD","FWHM"),what="spatial"){
   if (!class(data) == "fmridata") {
     warning("smooth.fmridata: data not of class <fmridata>. Try to proceed but strange things may happen")
   }
@@ -45,9 +45,22 @@ smooth.fmridata <- function(data,bw=0,unit=c("SD","FWHM")){
     stop("Hmmmm, this does not seem to be a fMRI time series. I better stop executing! Sorry!\n")
   }
   cat("Start spatial smoothing \n")
+  if(what=="spatial"){
   for(i in 1:dimttt[4]){
      ttt[,,,i] <- aws::kernsm(ttt[,,,i],h=bw,unit=unit)@yhat
   }
+  }
+  if(what=="temporal"){
+    if(unit=="FWHM") bw=bw2fwhm(bw)
+    span <- as.integer(5*bw)
+    wghts <- dnorm(0:span,0,bw)
+    tttn <- ttt*w[1]
+    for(i in 1:span){
+       tttn[,,,-(1:i)] <- tttn[,,,-(1:i)] + tttn[,,,-(n+1-1:i)]*w[i]
+       tttn[,,,-(n+1-1:i)] <- tttn[,,,-(n+1-1:i)] + tttn[,,,-(1:i)]*w[i]
+    }
+    ttt <- tttn/(2*sum(w)-w[1])
+}
   cat("Finished spatial smoothing \n")
   data$ttt <- writeBin(as.numeric(ttt),raw(),4)
   invisible(data)
