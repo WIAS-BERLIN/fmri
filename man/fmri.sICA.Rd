@@ -33,7 +33,7 @@ spatially smoothed using a Gaussian kernel with specified bandwidth.
 ICA components are the estimated using fastICA based on data within brain mask.
 The components of the result are related as \code{XKW=scomp[mask,]} and \code{X=scomp[mask,]*A}.
 }
-\value{
+\value{object of class ''\code{fmriICA}''
   list with components
   \item{scomp}{4D array with ICA component images. Last index varies over components. }
   \item{X}{pre-processed data matrix}
@@ -41,10 +41,11 @@ The components of the result are related as \code{XKW=scomp[mask,]} and \code{X=
   \item{W}{estimated un-mixing matrix}
   \item{A}{estimated mixing matrix}
   \item{mask}{Brain mask}
-  \item{pixdim}
+  \item{pixdim}{voxelsize}
+  \item{TR}{Repetition Time (TR)}
 }
 \author{ Joerg Polzehl \email{polzehl@wias-berlin.de} }
-\seealso{ \code{\link{fastICA::fastICA}} }
+\seealso{\code{\link{plot.fmriICA}},\code{\link{ICAfingerprint}}, \code{\link{fastICA::fastICA}} }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ "multivariate" }

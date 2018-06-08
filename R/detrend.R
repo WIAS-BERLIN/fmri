@@ -44,24 +44,26 @@ smooth.fmridata <- function(data,bw=0,unit=c("SD","FWHM"),what="spatial"){
   if (length(dimttt) != 4) {
     stop("Hmmmm, this does not seem to be a fMRI time series. I better stop executing! Sorry!\n")
   }
-  cat("Start spatial smoothing \n")
   if(what=="spatial"){
+    cat("Start spatial smoothing \n")
   for(i in 1:dimttt[4]){
      ttt[,,,i] <- aws::kernsm(ttt[,,,i],h=bw,unit=unit)@yhat
   }
   }
   if(what=="temporal"){
+    cat("Start temporal smoothing \n")
+    n <- dimttt[4]
     if(unit=="FWHM") bw=bw2fwhm(bw)
     span <- as.integer(5*bw)
     wghts <- dnorm(0:span,0,bw)
-    tttn <- ttt*w[1]
+    tttn <- ttt*wghts[1]
     for(i in 1:span){
-       tttn[,,,-(1:i)] <- tttn[,,,-(1:i)] + tttn[,,,-(n+1-1:i)]*w[i]
-       tttn[,,,-(n+1-1:i)] <- tttn[,,,-(n+1-1:i)] + tttn[,,,-(1:i)]*w[i]
+       tttn[,,,-(1:i)] <- tttn[,,,-(1:i)] + tttn[,,,-(n+1-1:i)]*wghts[i]
+       tttn[,,,-(n+1-1:i)] <- tttn[,,,-(n+1-1:i)] + tttn[,,,-(1:i)]*wghts[i]
     }
-    ttt <- tttn/(2*sum(w)-w[1])
+    ttt <- tttn/(2*sum(wghts)-wghts[1])
 }
-  cat("Finished spatial smoothing \n")
+  cat("Finished smoothing \n")
   data$ttt <- writeBin(as.numeric(ttt),raw(),4)
   invisible(data)
 }

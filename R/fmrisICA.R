@@ -7,7 +7,7 @@ fmri.sICA <- function(data, mask=NULL, ncomp=20,
   bwvoxel <- if(length(data$header$pixdim)>=4)
         bws/data$header$pixdim[2:4] else bws
   bwtime <- if(length(data$header$pixdim)>=5)
-        bwst/data$header$pixdim[5] else bwt
+        bwt/data$header$pixdim[5] else bwt
   if(ssmooth) data <- smooth.fmridata(data,bwvoxel,unit)
   if(tsmooth) data <- smooth.fmridata(data,bwtime,unit,what="temporal")
   cat("Computing independent components with fastICA \n")
@@ -15,6 +15,7 @@ fmri.sICA <- function(data, mask=NULL, ncomp=20,
   if(is.null(mask)) mask <- data$mask
   if(!is.logical(mask)) mask <- as.logical(mask)
   ddim <- data$dim[1:3]
+  dim(mask) <- ddim
   dim(ttt) <- c(prod(ddim),dim(ttt)[4])
   ttt0 <- ttt[mask,]
   fsica <- fastICA::fastICA(ttt0,n.comp=ncomp,
@@ -23,8 +24,10 @@ fmri.sICA <- function(data, mask=NULL, ncomp=20,
   cimgs <- array(0,c(prod(ddim),ncomp))
   cimgs[mask,] <- fsica$S
   dim(cimgs) <- c(ddim,ncomp)
-  list(scomp=cimgs,X=fsica$X,k=fsica$K,W=fsica$W,A=fsica$A,
+  z <- list(scomp=cimgs,X=fsica$X,k=fsica$K,W=fsica$W,A=fsica$A,
        mask=mask,voxdim=data$header$pixdim[2:4],TR=data$header$pixdim[5])
+  class(z) <- "fmriICA"
+  z
   }
 
 ICAfingerprint <- function(icaobj,nbin=256,plot=FALSE){
@@ -88,5 +91,76 @@ ICAfingerprint <- function(icaobj,nbin=256,plot=FALSE){
    icafp[7:11,] <- sweep(icafp[7:11,],2,apply(icafp[7:11,],2,max),"/")
    icafp[7:11,] <- sweep(icafp[7:11,],1,apply(icafp[7:11,],1,max),"/")
    if(plot) stars(t(icafp),key.xpd=NA)
-   invisible(t(icafp))
+   icaobj$fingerprint <- t(icafp)
+   invisible(icaobj)
+}
+
+plot.fmriICA <- function(icaobj,comp=1,center=NULL,thresh=1.5){
+#
+#  in Anlehnung an Martini et al PNAS 2007
+#
+   ddim <- dim(icaobj$scomp)
+   nt <- dim(icaobj$A)[2]
+   ncomp <- ddim[4]
+   if(is.null(center)) center <- (ddim[1:3]+1)%/%2
+   if(!mask[center[1],center[2],center[3]]) stop("Plese specify center within brain mask\n")
+   if(is.null(icaobj$fingerprint)) icaobj <- ICAfingerprint(icaobj)
+   n1 <- ddim[1]
+   n2 <- ddim[2]
+   n3 <- ddim[3]
+   scomp <- icaobj$scomp[,,,comp]
+   scomp[!icaobj$mask] <- 0
+   indx <- (1:n1)[apply(icaobj$mask,1,any)]
+   indy <- (1:n2)[apply(icaobj$mask,2,any)]
+   indz <- (1:n3)[apply(icaobj$mask,3,any)]
+   scomp <- scomp[indx,indy,indz]
+   n1 <- length(indx)
+   n2 <- length(indy)
+   n3 <- length(indz)
+   center[1] <- (1:n1)[indx==center[1]]
+   center[2] <- (1:n2)[indy==center[2]]
+   center[3] <- (1:n3)[indz==center[3]]
+   n23 <- max(n2,n3)
+   wh <- 2*n1+n2+n2/8 + n23/1.5
+   wv <- n23 + n23/2
+   mat <- matrix(c(1,1,7,
+                   2,2,7,
+                   3,3,8,
+                   4,5,8,
+                   6,6,8),3,5)
+   layout(mat,widths=c(n1,n1,n2,n2/8,n23/1.5)/wh,
+              heights=c(n23/2,n23/2,n23/2)/wv)
+  par(mar=c(3,3,3,.1),mgp=c(2,1,0))
+   scompp <- scompn <- scomp
+   scompp[scomp < thresh] <- NA
+   scompn[scomp > -thresh] <- NA
+   rs <- range(scomp,-thresh,thresh)
+   rsp <- c(thresh,rs[2])
+   rsn <- c(rs[1],-thresh)
+   rs <- c(-thresh,thresh)
+   image(indx,indy,scomp[,,center[3]],zlim=rs,col=grey(0:255/255),asp=TRUE)
+   title(paste("Component",comp,"axial"))
+   image(indx,indy,scompp[,,center[3]],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
+   image(indx,indy,scompn[,,center[3]],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
+   image(indx,indz,scomp[,center[2],],zlim=rs,col=grey(0:255/255),asp=TRUE)
+   title(paste("Component",comp,"coronal"))
+   image(indx,indz,scompp[,center[2],],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
+   image(indx,indz,scompn[,center[2],],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
+   image(indy,indz,scomp[center[1],,],zlim=rs,col=grey(0:255/255),asp=TRUE)
+   title(paste("Component",comp,"sattigal"))
+   image(indy,indz,scompp[center[1],,],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
+   image(indy,indz,scompn[center[1],,],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
+   scalep <- seq(1.5,max(scomp,1.5),.1)
+   scalen <- seq(min(scomp,-1.5),-1.5,.1)
+   scalep <- t(matrix(scalep,length(scalep),10))
+   scalen <- t(matrix(scalen,length(scalen),10))
+   image(1:10,scalep[1,],scalep,col=heat.colors(256),xaxt="n",xlab="",ylab="signal")
+   image(1:10,scalen[1,],scalen,col=rainbow(256,start=.4,end=.7)[256:1],xaxt="n",xlab="",ylab="signal")
+   stars(rbind(icaobj$fingerprint[comp,],rep(0,11)),ncol=1,scale=FALSE,
+   labels=c(paste("comp",comp),""),key.loc=c(2.3,2.2))
+   title("IC fingerprint")
+   plot((1:nt)*icaobj$TR,icaobj$A[comp,],xlab="time(s)",ylab="signal",type="l",main="Time series")
+   cspectr <- spectrum(icaobj$A[comp,],plot=FALSE)
+   plot(cspectr$freq/TR,cspectr$spec,xlab="frequency(Hz)",ylab="spectral density",type="l",main="Spectral density")
+   invisible(NULL)
 }
