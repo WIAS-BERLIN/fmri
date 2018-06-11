@@ -50,7 +50,7 @@ Joerg Polzehl \email{polzehl@wias-berlin.de}
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link{fmri.sICA}}, \code{\link{plot.fmriICA}}, \code{\link{fastICA::fastICA}}
+\code{\link{fmri.sICA}}, \code{\link{plot.fmriICA}}, \code{\link[fastICA]{fastICA}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

@@ -10,7 +10,6 @@ fmri.sICA <- function(data, mask=NULL, ncomp=20,
         bwt/data$header$pixdim[5] else bwt
   if(ssmooth) data <- smooth.fmridata(data,bwvoxel,unit)
   if(tsmooth) data <- smooth.fmridata(data,bwtime,unit,what="temporal")
-  cat("Computing independent components with fastICA \n")
   ttt <- extract.data(data)
   if(is.null(mask)) mask <- data$mask
   if(!is.logical(mask)) mask <- as.logical(mask)
@@ -18,6 +17,10 @@ fmri.sICA <- function(data, mask=NULL, ncomp=20,
   dim(mask) <- ddim
   dim(ttt) <- c(prod(ddim),dim(ttt)[4])
   ttt0 <- ttt[mask,]
+  if(!requireNamespace("fastICA",quietly=TRUE)){
+     stop("package fastICA needed for this functionality, please install")
+  }
+  cat("Computing independent components with fastICA \n")
   fsica <- fastICA::fastICA(ttt0,n.comp=ncomp,
        alg.typ=alg.typ, fun=fun, alpha=alpha, method="C",
        maxit=500, tol=1e-5)
@@ -97,25 +100,25 @@ ICAfingerprint <- function(icaobj,nbin=256,plot=FALSE){
    invisible(icaobj)
 }
 
-plot.fmriICA <- function(icaobj,comp=1,center=NULL,thresh=1.5){
+plot.fmriICA <- function(x,comp=1,center=NULL,thresh=1.5,...){
 #
 #  in Anlehnung an Martini et al PNAS 2007
 #
-   ddim <- dim(icaobj$scomp)
-   nt <- dim(icaobj$A)[2]
+   ddim <- dim(x$scomp)
+   nt <- dim(x$A)[2]
    ncomp <- ddim[4]
    if(is.null(center)) center <- (ddim[1:3]+1)%/%2
-   mask <- icaobj$mask
+   mask <- x$mask
    if(!mask[center[1],center[2],center[3]]) stop("Plese specify center within brain mask\n")
-   if(is.null(icaobj$fingerprint)) icaobj <- ICAfingerprint(icaobj)
+   if(is.null(x$fingerprint)) x <- ICAfingerprint(x)
    n1 <- ddim[1]
    n2 <- ddim[2]
    n3 <- ddim[3]
-   scomp <- icaobj$scomp[,,,comp]
-   scomp[!icaobj$mask] <- 0
-   indx <- (1:n1)[apply(icaobj$mask,1,any)]
-   indy <- (1:n2)[apply(icaobj$mask,2,any)]
-   indz <- (1:n3)[apply(icaobj$mask,3,any)]
+   scomp <- x$scomp[,,,comp]
+   scomp[!x$mask] <- 0
+   indx <- (1:n1)[apply(x$mask,1,any)]
+   indy <- (1:n2)[apply(x$mask,2,any)]
+   indz <- (1:n3)[apply(x$mask,3,any)]
    scomp <- scomp[indx,indy,indz]
    n1 <- length(indx)
    n2 <- length(indy)
@@ -153,22 +156,22 @@ plot.fmriICA <- function(icaobj,comp=1,center=NULL,thresh=1.5){
    title(paste("Component",comp,"sattigal"))
    image(indy,indz,scompp[center[1],,],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
    image(indy,indz,scompn[center[1],,],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
-   scalep <- seq(1.5,max(scomp,1.5),.1)
-   scalen <- seq(min(scomp,-1.5),-1.5,.1)
+   scalep <- seq(thresh,max(scomp,thresh),.1)
+   scalen <- seq(min(scomp,-thresh),-thresh,.1)
    scalep <- t(matrix(scalep,length(scalep),10))
    scalen <- t(matrix(scalen,length(scalen),10))
    image(1:10,scalep[1,],scalep,col=heat.colors(256),xaxt="n",xlab="",ylab="signal")
    image(1:10,scalen[1,],scalen,col=rainbow(256,start=.4,end=.7)[256:1],xaxt="n",xlab="",ylab="signal")
-   stars(rbind(icaobj$fingerprint[comp,],rep(0,11)),ncol=1,scale=FALSE,
+   stars(rbind(x$fingerprint[comp,],rep(0,11)),ncol=1,scale=FALSE,
    labels=c(paste("comp",comp),""),key.loc=c(2.3,2.2))
    title("IC fingerprint")
-   plot((1:nt)*icaobj$TR,icaobj$A[comp,],xlab="time(s)",ylab="signal",type="l",main="Time series")
-   cspectr <- spectrum(icaobj$A[comp,],plot=FALSE)
-   plot(cspectr$freq/TR,cspectr$spec,xlab="frequency(Hz)",ylab="spectral density",type="l",main="Spectral density")
+   plot((1:nt)*x$TR,x$A[comp,],xlab="time(s)",ylab="signal",type="l",main="Time series")
+   cspectr <- spectrum(x$A[comp,],plot=FALSE)
+   plot(cspectr$freq/x$TR,cspectr$spec,xlab="frequency(Hz)",ylab="spectral density",type="l",main="Spectral density")
    invisible(NULL)
 }
 
-fmri.sgroupICA <- function(icaobjlist,lambda=1,thresh=.25){
+fmri.sgroupICA <- function(icaobjlist,thresh=.75,minsize=2){
    nobj <- length(icaobjlist)
    ddim <- dim(icaobjlist[[1]]$scomp)
    ncomp <- 0
@@ -187,7 +190,7 @@ fmri.sgroupICA <- function(icaobjlist,lambda=1,thresh=.25){
    dim(scompall) <- c(prod(ddim[1:3]),ncomp)
    scompall <- scompall[icaobjlist[[1]]$mask,]
    CCs <- cor(scompall)
-   SM <- lambda*abs(CCs)
+   SM <- (1+CCs)/2
    dim(SM) <- dim(CCs)
    DM <- sqrt(1-SM)
    dim(DM) <- dim(CCs)
@@ -202,10 +205,78 @@ fmri.sgroupICA <- function(icaobjlist,lambda=1,thresh=.25){
       cluster[cluster==hdm$merge[i,1]] <- i
       cluster[cluster==hdm$merge[i,2]] <- i
    }
-   cl <- unique(cluster)
-   icacomp <- array(0,c(ddim[1:3],length(cl)))
+   cl <- sort(unique(cluster))
+   cl <- cl[cl>0]
+   icacomp <- array(0,c(prod(ddim[1:3]),length(cl)))
+   size <- numeric(length(cl))
    for(i in 1:length(cl)){
-       icacomp[,,,i] <- apply(scompall[,,,cluster==cl[i]],1:3,mean)
+       icacomp[icaobjlist[[1]]$mask,i] <- apply(scompall[,cluster==cl[i],drop=FALSE],1,mean)
+       size[i] <- sum(cluster==cl[i])
    }
-   list(icacomp=icacomp,cluster=cluster,hdm=hdm)
+   ind <- size>minsize
+   cl <- cl[ind]
+   size <- size[ind]
+   icacomp <- icacomp[,ind]
+   dim(icacomp) <- c(ddim[1:3],length(cl))
+   z<-list(icacomp=icacomp,cluster=cluster,hdm=hdm,cl=cl,size=size)
+   class(z) <- "fmrigroupICA"
+   invisible(z)
+}
+
+plot.fmrigroupICA <- function(x,comp=1,center=NULL,thresh=1.5,...){
+ddim <- dim(x$icacomp)
+oind <- order(x$size,decreasing=TRUE)
+size <- x$size[oind[comp]]
+scomp <- x$icacomp[,,,oind[comp]]
+if(is.null(center)) center <- (ddim[1:3]+1)%/%2
+mask <- scomp!=0
+if(!mask[center[1],center[2],center[3]]) stop("Plese specify center within brain mask\n")
+n1 <- ddim[1]
+n2 <- ddim[2]
+n3 <- ddim[3]
+indx <- (1:n1)[apply(mask,1,any)]
+indy <- (1:n2)[apply(mask,2,any)]
+indz <- (1:n3)[apply(mask,3,any)]
+scomp <- scomp[indx,indy,indz]
+n1 <- length(indx)
+n2 <- length(indy)
+n3 <- length(indz)
+center[1] <- (1:n1)[indx==center[1]]
+center[2] <- (1:n2)[indy==center[2]]
+center[3] <- (1:n3)[indz==center[3]]
+n23 <- max(n2,n3)
+wh <- 2*n1+n2+n2/8
+mat <- matrix(c(1,1,
+                2,2,
+                3,3,
+                4,5),2,4)
+layout(mat,widths=c(n1,n1,n2,n2/8,n23)/wh,
+           heights=c(1/2,1/2))
+par(mar=c(3,3,3,.1),mgp=c(2,1,0))
+scompp <- scompn <- scomp
+scompp[scomp < thresh] <- NA
+scompn[scomp > -thresh] <- NA
+rs <- range(scomp,-thresh,thresh)
+rsp <- c(thresh,rs[2])
+rsn <- c(rs[1],-thresh)
+rs <- c(-thresh,thresh)
+image(indx,indy,scomp[,,center[3]],zlim=rs,col=grey(0:255/255),asp=TRUE)
+title(paste("Component",comp,"size",size,"axial"))
+image(indx,indy,scompp[,,center[3]],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
+image(indx,indy,scompn[,,center[3]],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
+image(indx,indz,scomp[,center[2],],zlim=rs,col=grey(0:255/255),asp=TRUE)
+title(paste("Component",comp,"size",size,"coronal"))
+image(indx,indz,scompp[,center[2],],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
+image(indx,indz,scompn[,center[2],],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
+image(indy,indz,scomp[center[1],,],zlim=rs,col=grey(0:255/255),asp=TRUE)
+title(paste("Component",comp,"size",size,"sattigal"))
+image(indy,indz,scompp[center[1],,],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
+image(indy,indz,scompn[center[1],,],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
+scalep <- seq(thresh,max(scomp,thresh),.1)
+scalen <- seq(min(scomp,-thresh),-thresh,.1)
+scalep <- t(matrix(scalep,length(scalep),10))
+scalen <- t(matrix(scalen,length(scalen),10))
+image(1:10,scalep[1,],scalep,col=heat.colors(256),xaxt="n",xlab="",ylab="signal")
+image(1:10,scalen[1,],scalen,col=rainbow(256,start=.4,end=.7)[256:1],xaxt="n",xlab="",ylab="signal")
+invisible(NULL)
 }

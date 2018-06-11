@@ -4,7 +4,7 @@
 \title{Spacial ICA for fmri data}
 \description{ Uses fastICA to perform spatial ICA on fMRI data.}
 \usage{
-fmri.detrend(data, mask=NULL, ncomp=20,
+fmri.sICA(data, mask=NULL, ncomp=20,
   alg.typ=c("parallel","deflation"), fun=c("logcosh","exp"),
   alpha=1, detrend=TRUE, degree=2, nuisance= NULL, ssmooth=TRUE,
   tsmooth=TRUE, bwt=4, bws=8, unit=c("FWHM","SD"))
@@ -14,7 +14,7 @@ fmri.detrend(data, mask=NULL, ncomp=20,
   \item{data}{ fMRI dataset of class ''\code{fmridata}'' }
   \item{mask}{ Brain mask, if \code{NULL} then \code{data$mask} is used. }
   \item{ncomp}{Number of ICA components to compute.}
-  \item{alg.type}{Alg. to be used in \code{fastICA}.}
+  \item{alg.typ}{Alg. to be used in \code{fastICA}.}
   \item{fun}{Test functions to be used in \code{fastICA}.}
   \item{alpha}{Scale parameter in test functions, see \code{fastICA}.}
   \item{detrend}{Trend removal (polynomial)}
@@ -45,7 +45,7 @@ The components of the result are related as \code{XKW=scomp[mask,]} and \code{X=
   \item{TR}{Repetition Time (TR)}
 }
 \author{ Joerg Polzehl \email{polzehl@wias-berlin.de} }
-\seealso{\code{\link{plot.fmriICA}},\code{\link{ICAfingerprint}}, \code{\link{fastICA::fastICA}} }
+\seealso{\code{\link{plot.fmriICA}},\code{\link{ICAfingerprint}}, \code{\link[fastICA]{fastICA}} }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ "multivariate" }

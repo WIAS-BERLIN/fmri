@@ -4,7 +4,7 @@
         integer :: n1,n2,n3,x(n1,n2,n3),z(n1,n2,n3)
 C   x - cluster size, initially 1 if above threshold, zero else
 C   z - cluster number
-        integer :: i1,i2,i3,k,l,nk,nl,j1,j2,j3
+        integer :: i1,i2,i3,k,l,nk,nl
 C initialize
         k=0
         DO i1 = 1,n1
