@@ -86,6 +86,8 @@ ICAfingerprint <- function(icaobj,nbin=256,plot=FALSE){
    icafp[2,] <- icafp[2,]/max(icafp[2,])
    icafp[3,] <- log(icafp[3,]+1)
    icafp[3,] <- icafp[3,]/max(icafp[3,])
+   icafp[4,] <- icafp[4,]/max(icafp[4,])
+   icafp[5,] <- icafp[5,]/max(icafp[5,])
    icafp[6,] <- log(icafp[6,]+1)
    icafp[6,] <- icafp[6,]/max(icafp[6,])
    icafp[7:11,] <- sweep(icafp[7:11,],2,apply(icafp[7:11,],2,max),"/")
@@ -103,6 +105,7 @@ plot.fmriICA <- function(icaobj,comp=1,center=NULL,thresh=1.5){
    nt <- dim(icaobj$A)[2]
    ncomp <- ddim[4]
    if(is.null(center)) center <- (ddim[1:3]+1)%/%2
+   mask <- icaobj$mask
    if(!mask[center[1],center[2],center[3]]) stop("Plese specify center within brain mask\n")
    if(is.null(icaobj$fingerprint)) icaobj <- ICAfingerprint(icaobj)
    n1 <- ddim[1]
@@ -163,4 +166,46 @@ plot.fmriICA <- function(icaobj,comp=1,center=NULL,thresh=1.5){
    cspectr <- spectrum(icaobj$A[comp,],plot=FALSE)
    plot(cspectr$freq/TR,cspectr$spec,xlab="frequency(Hz)",ylab="spectral density",type="l",main="Spectral density")
    invisible(NULL)
+}
+
+fmri.sgroupICA <- function(icaobjlist,lambda=1,thresh=.25){
+   nobj <- length(icaobjlist)
+   ddim <- dim(icaobjlist[[1]]$scomp)
+   ncomp <- 0
+   for(i in 1:nobj){
+      ncomp <- ncomp + dim(icaobjlist[[i]]$A)[1]
+   }
+   scompall <- array(0,c(ddim[1:3],ncomp))
+   label <- rep(0,ncomp)
+   last <- 0
+   for(i in 1:nobj){
+      nci <- dim(icaobjlist[[i]]$A)[1]
+      label[last+1:nci] <- i
+      scompall[,,,last+1:nci] <- icaobjlist[[i]]$scomp
+      last <- last+nci
+   }
+   dim(scompall) <- c(prod(ddim[1:3]),ncomp)
+   scompall <- scompall[icaobjlist[[1]]$mask,]
+   CCs <- cor(scompall)
+   SM <- lambda*abs(CCs)
+   dim(SM) <- dim(CCs)
+   DM <- sqrt(1-SM)
+   dim(DM) <- dim(CCs)
+   DM[outer(label,label,"==")] <- 1
+   DM <- as.dist(DM)
+# we will be using hclust with complete linkage so that components
+# from same runs / subjects will not be in the same cluster
+   hdm <- hclust(DM)
+   nsteps <- sum(hdm$height<thresh)
+   cluster <- -(1:ncomp)
+   for(i in 1:nsteps){
+      cluster[cluster==hdm$merge[i,1]] <- i
+      cluster[cluster==hdm$merge[i,2]] <- i
+   }
+   cl <- unique(cluster)
+   icacomp <- array(0,c(ddim[1:3],length(cl)))
+   for(i in 1:length(cl)){
+       icacomp[,,,i] <- apply(scompall[,,,cluster==cl[i]],1:3,mean)
+   }
+   list(icacomp=icacomp,cluster=cluster,hdm=hdm)
 }
