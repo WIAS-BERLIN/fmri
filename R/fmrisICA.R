@@ -104,6 +104,7 @@ plot.fmriICA <- function(x,comp=1,center=NULL,thresh=1.5,...){
 #
 #  in Anlehnung an Martini et al PNAS 2007
 #
+oldpar <- par()
    ddim <- dim(x$scomp)
    nt <- dim(x$A)[2]
    ncomp <- ddim[4]
@@ -168,6 +169,7 @@ plot.fmriICA <- function(x,comp=1,center=NULL,thresh=1.5,...){
    plot((1:nt)*x$TR,x$A[comp,],xlab="time(s)",ylab="signal",type="l",main="Time series")
    cspectr <- spectrum(x$A[comp,],plot=FALSE)
    plot(cspectr$freq/x$TR,cspectr$spec,xlab="frequency(Hz)",ylab="spectral density",type="l",main="Spectral density")
+   par(oldpar)
    invisible(NULL)
 }
 
@@ -190,7 +192,7 @@ fmri.sgroupICA <- function(icaobjlist,thresh=.75,minsize=2){
    dim(scompall) <- c(prod(ddim[1:3]),ncomp)
    scompall <- scompall[icaobjlist[[1]]$mask,]
    CCs <- cor(scompall)
-   SM <- (1+CCs)/2
+   SM <- abs(CCs)
    dim(SM) <- dim(CCs)
    DM <- sqrt(1-SM)
    dim(DM) <- dim(CCs)
@@ -201,7 +203,10 @@ fmri.sgroupICA <- function(icaobjlist,thresh=.75,minsize=2){
    hdm <- hclust(DM)
    nsteps <- sum(hdm$height<thresh)
    cluster <- -(1:ncomp)
+   height <- rep(0,ncomp)
    for(i in 1:nsteps){
+     height[cluster==hdm$merge[i,1]] <- hdm$height[i]
+     height[cluster==hdm$merge[i,2]] <- hdm$height[i]
       cluster[cluster==hdm$merge[i,1]] <- i
       cluster[cluster==hdm$merge[i,2]] <- i
    }
@@ -210,20 +215,24 @@ fmri.sgroupICA <- function(icaobjlist,thresh=.75,minsize=2){
    icacomp <- array(0,c(prod(ddim[1:3]),length(cl)))
    size <- numeric(length(cl))
    for(i in 1:length(cl)){
-       icacomp[icaobjlist[[1]]$mask,i] <- apply(scompall[,cluster==cl[i],drop=FALSE],1,mean)
-       size[i] <- sum(cluster==cl[i])
+       ind <- (1:ncomp)[cluster==cl[i]]
+       csign <- sign(CCs[ind[1],ind])
+       sizei <- length(ind)
+       icacomp[icaobjlist[[1]]$mask,i] <- scompall[,ind]%*%csign/sizei
+       size[i] <- sizei
    }
-   ind <- size>minsize
+   ind <- size>=minsize
    cl <- cl[ind]
    size <- size[ind]
    icacomp <- icacomp[,ind]
    dim(icacomp) <- c(ddim[1:3],length(cl))
-   z<-list(icacomp=icacomp,cluster=cluster,hdm=hdm,cl=cl,size=size)
+   z<-list(icacomp=icacomp,cluster=cluster,height=height,hdm=hdm,cl=cl,size=size)
    class(z) <- "fmrigroupICA"
    invisible(z)
 }
 
 plot.fmrigroupICA <- function(x,comp=1,center=NULL,thresh=1.5,...){
+oldpar <- par()
 ddim <- dim(x$icacomp)
 oind <- order(x$size,decreasing=TRUE)
 size <- x$size[oind[comp]]
@@ -278,5 +287,6 @@ scalep <- t(matrix(scalep,length(scalep),10))
 scalen <- t(matrix(scalen,length(scalen),10))
 image(1:10,scalep[1,],scalep,col=heat.colors(256),xaxt="n",xlab="",ylab="signal")
 image(1:10,scalen[1,],scalen,col=rainbow(256,start=.4,end=.7)[256:1],xaxt="n",xlab="",ylab="signal")
+par(oldpar)
 invisible(NULL)
 }
