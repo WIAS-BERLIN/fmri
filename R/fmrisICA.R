@@ -21,6 +21,7 @@ fmri.sICA <- function(data, mask=NULL, ncomp=20,
      stop("package fastICA needed for this functionality, please install")
   }
   cat("Computing independent components with fastICA \n")
+  set.seed(1)
   fsica <- fastICA::fastICA(ttt0,n.comp=ncomp,
        alg.typ=alg.typ, fun=fun, alpha=alpha, method="C",
        maxit=500, tol=1e-5)

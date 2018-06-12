@@ -44,6 +44,8 @@ An object of class ''\code{fmrigroupICA}'' with components
   \item{size}{Size of selected clusters}
   \item{cl}{Number of selected clusters}
   \item{cluster}{Cluster membership corresponding to \code{thresh}.}
+  \item{height}{Distance value at which the cluster was createt.
+  Elements correspond to elements of cluster.}
   \item{hdm}{Object returned by function \code{\link[stats]{hclust}}.}
 }
 \references{
