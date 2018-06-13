@@ -109,14 +109,25 @@ oldpar <- par()
    ddim <- dim(x$scomp)
    nt <- dim(x$A)[2]
    ncomp <- ddim[4]
-   if(is.null(center)) center <- (ddim[1:3]+1)%/%2
-   mask <- x$mask
+   # use neurological view convention
+   scomp <- x$scomp[,,,comp]
+   if(is.null(center)){
+   # select orthographic view with maximum information
+      z <- abs(scomp)
+      z[z<thresh] <- 0
+      center <- rep(0,3)
+      zs <- apply(z,1,sum)
+      center[1] <- (1:ddim[1])[zs==max(zs)][1]
+      zs <- apply(z,2,sum)
+      center[2] <- (1:ddim[2])[zs==max(zs)][1]
+      zs <- apply(z,3,sum)
+      center[3] <- (1:ddim[3])[zs==max(zs)][1]
+   }
    if(!mask[center[1],center[2],center[3]]) stop("Plese specify center within brain mask\n")
    if(is.null(x$fingerprint)) x <- ICAfingerprint(x)
    n1 <- ddim[1]
    n2 <- ddim[2]
    n3 <- ddim[3]
-   scomp <- x$scomp[,,,comp]
    scomp[!x$mask] <- 0
    indx <- (1:n1)[apply(x$mask,1,any)]
    indy <- (1:n2)[apply(x$mask,2,any)]
@@ -136,7 +147,7 @@ oldpar <- par()
                    3,3,8,
                    4,5,8,
                    6,6,8),3,5)
-   layout(mat,widths=c(n1,n1,n2,n2/8,n23/1.5)/wh,
+   layout(mat,widths=c(n2,n1,n1,n2/8,n23/1.5)/wh,
               heights=c(n23/2,n23/2,n23/2)/wv)
   par(mar=c(3,3,3,.1),mgp=c(2,1,0))
    scompp <- scompn <- scomp
@@ -146,18 +157,24 @@ oldpar <- par()
    rsp <- c(thresh,rs[2])
    rsn <- c(rs[1],-thresh)
    rs <- c(-thresh,thresh)
-   image(indx,indy,scomp[,,center[3]],zlim=rs,col=grey(0:255/255),asp=TRUE)
-   title(paste("Component",comp,"axial"))
-   image(indx,indy,scompp[,,center[3]],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
-   image(indx,indy,scompn[,,center[3]],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
+   image(-indy[n2:1],indz,scomp[center[1],n2:1,],zlim=rs,col=grey(0:255/255),asp=TRUE)
+   title(paste("Component",comp,"sattigal"))
+   lines(-indy[c(1,n2)],rep(indz[center[3]],2),col=2)
+   lines(rep(-indy[center[2]],2),indz[c(1,n3)],col=2)
+   image(-indy[n2:1],indz,scompp[center[1],n2:1,],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
+   image(-indy[n2:1],indz,scompn[center[1],n2:1,],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
    image(indx,indz,scomp[,center[2],],zlim=rs,col=grey(0:255/255),asp=TRUE)
    title(paste("Component",comp,"coronal"))
+   lines(indx[c(1,n1)],rep(indz[center[3]],2),col=2)
+   lines(rep(indx[center[1]],2),indz[c(1,n3)],col=2)
    image(indx,indz,scompp[,center[2],],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
    image(indx,indz,scompn[,center[2],],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
-   image(indy,indz,scomp[center[1],,],zlim=rs,col=grey(0:255/255),asp=TRUE)
-   title(paste("Component",comp,"sattigal"))
-   image(indy,indz,scompp[center[1],,],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
-   image(indy,indz,scompn[center[1],,],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
+   image(indx,indy,scomp[,,center[3]],zlim=rs,col=grey(0:255/255),asp=TRUE)
+   title(paste("Component",comp,"axial"))
+   lines(indx[c(1,n1)],rep(indy[center[2]],2),col=2)
+   lines(rep(indx[center[1]],2),indy[c(1,n2)],col=2)
+   image(indx,indy,scompp[,,center[3]],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
+   image(indx,indy,scompn[,,center[3]],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
    scalep <- seq(thresh,max(scomp,thresh),.1)
    scalen <- seq(min(scomp,-thresh),-thresh,.1)
    scalep <- t(matrix(scalep,length(scalep),10))
@@ -238,7 +255,18 @@ ddim <- dim(x$icacomp)
 oind <- order(x$size,decreasing=TRUE)
 size <- x$size[oind[comp]]
 scomp <- x$icacomp[,,,oind[comp]]
-if(is.null(center)) center <- (ddim[1:3]+1)%/%2
+if(is.null(center)){
+# select orthographic view with maximum information
+   z <- abs(scomp)
+   z[z<thresh] <- 0
+   center <- rep(0,3)
+   zs <- apply(z,1,sum)
+   center[1] <- (1:ddim[1])[zs==max(zs)][1]
+   zs <- apply(z,2,sum)
+   center[2] <- (1:ddim[2])[zs==max(zs)][1]
+   zs <- apply(z,3,sum)
+   center[3] <- (1:ddim[3])[zs==max(zs)][1]
+}
 mask <- scomp!=0
 if(!mask[center[1],center[2],center[3]]) stop("Plese specify center within brain mask\n")
 n1 <- ddim[1]
@@ -260,7 +288,7 @@ mat <- matrix(c(1,1,
                 2,2,
                 3,3,
                 4,5),2,4)
-layout(mat,widths=c(n1,n1,n2,n2/8,n23)/wh,
+layout(mat,widths=c(n2,n1,n1,n2/8,n23)/wh,
            heights=c(1/2,1/2))
 par(mar=c(3,3,3,.1),mgp=c(2,1,0))
 scompp <- scompn <- scomp
@@ -270,18 +298,24 @@ rs <- range(scomp,-thresh,thresh)
 rsp <- c(thresh,rs[2])
 rsn <- c(rs[1],-thresh)
 rs <- c(-thresh,thresh)
-image(indx,indy,scomp[,,center[3]],zlim=rs,col=grey(0:255/255),asp=TRUE)
-title(paste("Component",comp,"size",size,"axial"))
-image(indx,indy,scompp[,,center[3]],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
-image(indx,indy,scompn[,,center[3]],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
+image(-indy[n2:1],indz,scomp[center[1],n2:1,],zlim=rs,col=grey(0:255/255),asp=TRUE,xlab="-yind")
+title(paste("Component",comp,"size",size,"sattigal"))
+lines(-indy[c(1,n2)],rep(indz[center[3]],2),col=2)
+lines(rep(-indy[center[2]],2),indz[c(1,n3)],col=2)
+image(-indy[n2:1],indz,scompp[center[1],n2:1,],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
+image(-indy[n2:1],indz,scompn[center[1],n2:1,],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
 image(indx,indz,scomp[,center[2],],zlim=rs,col=grey(0:255/255),asp=TRUE)
 title(paste("Component",comp,"size",size,"coronal"))
+lines(indx[c(1,n1)],rep(indz[center[3]],2),col=2)
+lines(rep(indx[center[1]],2),indz[c(1,n3)],col=2)
 image(indx,indz,scompp[,center[2],],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
 image(indx,indz,scompn[,center[2],],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
-image(indy,indz,scomp[center[1],,],zlim=rs,col=grey(0:255/255),asp=TRUE)
-title(paste("Component",comp,"size",size,"sattigal"))
-image(indy,indz,scompp[center[1],,],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
-image(indy,indz,scompn[center[1],,],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
+image(indx,indy,scomp[,,center[3]],zlim=rs,col=grey(0:255/255),asp=TRUE)
+title(paste("Component",comp,"size",size,"axial"))
+lines(indx[c(1,n1)],rep(indy[center[2]],2),col=2)
+lines(rep(indx[center[1]],2),indy[c(1,n2)],col=2)
+image(indx,indy,scompp[,,center[3]],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
+image(indx,indy,scompn[,,center[3]],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
 scalep <- seq(thresh,max(scomp,thresh),.1)
 scalen <- seq(min(scomp,-thresh),-thresh,.1)
 scalep <- t(matrix(scalep,length(scalep),10))
