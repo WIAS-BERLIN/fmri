@@ -197,6 +197,138 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
   if (exists("tt")) invisible(tt)
 }
 
+plot.fmripvalue <- function(x, template=NULL, mask=NULL, alpha=.05, 
+                            view=c("axial","coronal","sagittal","orthographic"), slices=NULL, ncol=1, nrow=1, center=NULL, ...){
+  # check arguments
+  if(!view%in%c("axial","coronal","sagittal","orthographic")) stop("view needs to be 'axial', 'coronal', 'sagittal' or 'orthographic'")
+  pvalue <- x$pvalue
+  ddim <- dim(pvalue)
+  if(is.null(template)) template <- pvalue
+  if(any(ddim!=dim(template))) stop("template dimension does not match")
+  if(is.null(mask)) mask <- array(TRUE,dim(pvalue))
+  if(any(ddim!=dim(mask))) stop("mask dimension does not match")
+  pvalue[pvalue>=alpha] <- NA
+  pvalue[!mask] <- NA
+  lpvalue <- -log(pvalue)
+  if(view!="orthographic"&is.null(slices)){
+    nslice <- ncol*nrow
+    slices <- switch(view,
+                     "sagittal"=sort(order(apply(lpvalue,1,sum,na.rm=TRUE),decreasing=TRUE)[1:nslice]),
+                     "coronal"=sort(order(apply(lpvalue,2,sum,na.rm=TRUE),decreasing=TRUE)[1:nslice]),
+                     "axial"=sort(order(apply(lpvalue,3,sum,na.rm=TRUE),decreasing=TRUE)[1:nslice]))
+  }
+  if(view=="orthographic"&is.null(center)){
+    center <- c(order(apply(lpvalue,1,sum,na.rm=TRUE),decreasing=TRUE)[1],
+                order(apply(lpvalue,2,sum,na.rm=TRUE),decreasing=TRUE)[1],
+                order(apply(lpvalue,3,sum,na.rm=TRUE),decreasing=TRUE)[1])
+    if(!mask[center[1],center[2],center[3]]) stop("Please specify center within brain mask\n")
+  }
+  n1 <- ddim[1]
+  n2 <- ddim[2]
+  n3 <- ddim[3]
+  indx <- (1:n1)[apply(mask,1,any)]
+  indy <- (1:n2)[apply(mask,2,any)]
+  indz <- (1:n3)[apply(mask,3,any)]
+  pvalue <- pvalue[indx,indy,indz]
+  lpvalue <- lpvalue[indx,indy,indz]
+  rlp <- range(lpvalue,na.rm=TRUE)
+  template <- template[indx,indy,indz]
+  n1 <- length(indx)
+  n2 <- length(indy)
+  n3 <- length(indz)
+  if(view=="orthographic"){
+    center[1] <- (1:n1)[indx==center[1]]
+    center[2] <- (1:n2)[indy==center[2]]
+    center[3] <- (1:n3)[indz==center[3]]
+  } else {
+    slices <- switch(view,
+                     "sagittal"=slices[slices<=max(indx)],
+                     "coronal"=slices[slices<=max(indy)],
+                     "axial"=slices[slices<=max(indz)]
+    )
+    slices <- switch(view,
+                     "sagittal"=slices-min(indx)+1,
+                     "coronal"=slices-min(indy)+1,
+                     "axial"=slices-min(indz)+1
+    )
+    nrow <- ceiling(nslice/ncol)
+  }
+  oldpar <- par(mar=c(2.5,2.5,2.5,.1),mgp=c(1.5,.75,0))
+  if(view=="orthographic"){
+    n23 <- max(n2,n3)
+    wh <- 2*n1+n2+n2/8
+    mat <- matrix(c(1,2,3,4),1,4)
+    layout(mat,widths=c(n2,n1,n1,n2/8,n23/1.5)/wh,
+           heights=1)
+    image(-indy[n2:1],indz,template[center[1],n2:1,],col=grey(0:255/255),asp=TRUE,xlab="-yind")
+    title("sagittal")
+    lines(-indy[c(1,n2)],rep(indz[center[3]],2),col=2)
+    lines(rep(-indy[center[2]],2),indz[c(1,n3)],col=2)
+    image(-indy[n2:1],indz,lpvalue[center[1],n2:1,],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
+    image(indx,indz,template[,center[2],],col=grey(0:255/255),asp=TRUE)
+    title("coronal")
+    lines(indx[c(1,n1)],rep(indz[center[3]],2),col=2)
+    lines(rep(indx[center[1]],2),indz[c(1,n3)],col=2)
+    image(indx,indz,lpvalue[,center[2],],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
+    image(indx,indy,template[,,center[3]],col=grey(0:255/255),asp=TRUE)
+    title("axial")
+    lines(indx[c(1,n1)],rep(indy[center[2]],2),col=2)
+    lines(rep(indx[center[1]],2),indy[c(1,n2)],col=2)
+    image(indx,indy,lpvalue[,,center[3]],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
+    scalep <- seq(rlp[1],rlp[2],length=256)
+    scalep <- t(matrix(scalep,length(scalep),10))
+    image(1:10,scalep[1,],scalep,col=heat.colors(256),xaxt="n",xlab="",ylab="-log(pvalue)")
+  } else {
+    mat <- matrix(0,nrow,ncol+1)
+    for(i in 1:nrow){
+      mat[i,1:ncol] <- (i-1)*(ncol+1)+1:ncol
+      mat[i,ncol+1] <- i*(ncol+1)
+    } 
+    if(view=="sagittal"){
+      widths <- c(rep(n2,ncol),n2/6)
+      heights <- rep(n3,nrow)
+    }
+    if(view=="coronal"){
+      widths <- c(rep(n1,ncol),n1/6)
+      heights <- rep(n3,nrow)
+    }
+    if(view=="axial"){
+      widths <- c(rep(n1,ncol),n1/6)
+      heights <- rep(n2,nrow)
+    }
+    widths <- widths/sum(widths)
+    heights <- heights/sum(heights)
+    layout(mat,widths=widths,heights=heights)
+    for(i in 1:nrow){
+      for(j in 1:ncol){
+        k <- (i-1)*ncol + j
+        if(k>nslice) break
+        if(view=="sagittal"){
+          image(-indy[n2:1],indz,template[slices[k],n2:1,],col=grey(0:255/255),asp=TRUE,xlab="-yind")
+          title(paste("sagittal slice",indx[slices[k]]))
+          image(-indy[n2:1],indz,lpvalue[slices[k],n2:1,],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
+        }
+        if(view=="coronal"){
+          image(indx,indz,template[,slices[k],],col=grey(0:255/255),asp=TRUE)
+          title(paste("coronal slice",indy[slices[k]]))
+          image(indx,indz,lpvalue[,slices[k],],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
+        }
+        if(view=="axial"){
+          image(indx,indy,template[,,slices[k]],col=grey(0:255/255),asp=TRUE)
+          title(paste("axial slice", indz[slices[k]]))
+          image(indx,indy,lpvalue[,,slices[k]],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
+        }
+      }
+      scalep <- seq(rlp[1],rlp[2],length=256)
+      scalep <- t(matrix(scalep,length(scalep),10))
+      image(1:10,scalep[1,],scalep,col=heat.colors(256),xaxt="n",xlab="",ylab="-log(pvalue)")
+    }
+    if(k>nslice) break
+  }
+  invisible(list(slices=slices,center=center))
+}
+
+
 scaleSignal <- function(signal,cutOff){
     scale <- range(signal,finite=TRUE)
     if (diff(scale) != 0) {

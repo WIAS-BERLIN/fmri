@@ -102,7 +102,7 @@ mask[stat < thresh] <- FALSE
     pv[!mask] <- 1
     z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim,
             hrf = spm$hrf)
-        class(z) <- c("fmridata", "fmripvalue")
+        class(z) <- c("fmripvalue")
         z$roixa <- spm$roixa
         z$roixe <- spm$roixe
         z$roiya <- spm$roiya

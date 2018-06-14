@@ -226,7 +226,7 @@ fmri.pvalue <- function(spm, mode="basic", na.rm=FALSE, minimum.signal=0, alpha=
 
   z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim, hrf = spm$hrf)
 
-  class(z) <- c("fmridata","fmripvalue")
+  class(z) <- c("fmripvalue")
 
   z$roixa <- spm$roixa
   z$roixe <- spm$roixe

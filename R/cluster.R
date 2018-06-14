@@ -96,7 +96,7 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
 
         z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim, hrf = spm$hrf)
 
-        class(z) <- c("fmridata","fmripvalue")
+        class(z) <- c("fmripvalue")
 
         z$roixa <- spm$roixa
         z$roixe <- spm$roixe

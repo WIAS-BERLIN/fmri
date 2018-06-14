@@ -105,7 +105,6 @@ plot.fmriICA <- function(x,comp=1,center=NULL,thresh=1.5,...){
 #
 #  in Anlehnung an Martini et al PNAS 2007
 #
-oldpar <- par()
    ddim <- dim(x$scomp)
    nt <- dim(x$A)[2]
    ncomp <- ddim[4]
@@ -123,7 +122,7 @@ oldpar <- par()
       zs <- apply(z,3,sum)
       center[3] <- (1:ddim[3])[zs==max(zs)][1]
    }
-   if(!mask[center[1],center[2],center[3]]) stop("Plese specify center within brain mask\n")
+   if(!mask[center[1],center[2],center[3]]) stop("Please specify center within brain mask\n")
    if(is.null(x$fingerprint)) x <- ICAfingerprint(x)
    n1 <- ddim[1]
    n2 <- ddim[2]
@@ -149,7 +148,7 @@ oldpar <- par()
                    6,6,8),3,5)
    layout(mat,widths=c(n2,n1,n1,n2/8,n23/1.5)/wh,
               heights=c(n23/2,n23/2,n23/2)/wv)
-  par(mar=c(3,3,3,.1),mgp=c(2,1,0))
+   oldpar <- par(mar=c(2.5,2.5,2.5,.1),mgp=c(1.5,.75,0))
    scompp <- scompn <- scomp
    scompp[scomp < thresh] <- NA
    scompn[scomp > -thresh] <- NA
@@ -158,7 +157,7 @@ oldpar <- par()
    rsn <- c(rs[1],-thresh)
    rs <- c(-thresh,thresh)
    image(-indy[n2:1],indz,scomp[center[1],n2:1,],zlim=rs,col=grey(0:255/255),asp=TRUE)
-   title(paste("Component",comp,"sattigal"))
+   title(paste("Component",comp,"sagittal"))
    lines(-indy[c(1,n2)],rep(indz[center[3]],2),col=2)
    lines(rep(-indy[center[2]],2),indz[c(1,n3)],col=2)
    image(-indy[n2:1],indz,scompp[center[1],n2:1,],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
@@ -175,8 +174,8 @@ oldpar <- par()
    lines(rep(indx[center[1]],2),indy[c(1,n2)],col=2)
    image(indx,indy,scompp[,,center[3]],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
    image(indx,indy,scompn[,,center[3]],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
-   scalep <- seq(thresh,max(scomp,thresh),.1)
-   scalen <- seq(min(scomp,-thresh),-thresh,.1)
+   scalep <- seq(thresh,max(scomp,thresh),length=256)
+   scalen <- seq(min(scomp,-thresh),-thresh,length=256)
    scalep <- t(matrix(scalep,length(scalep),10))
    scalen <- t(matrix(scalen,length(scalen),10))
    image(1:10,scalep[1,],scalep,col=heat.colors(256),xaxt="n",xlab="",ylab="signal")
@@ -250,7 +249,6 @@ fmri.sgroupICA <- function(icaobjlist,thresh=.75,minsize=2){
 }
 
 plot.fmrigroupICA <- function(x,comp=1,center=NULL,thresh=1.5,...){
-oldpar <- par()
 ddim <- dim(x$icacomp)
 oind <- order(x$size,decreasing=TRUE)
 size <- x$size[oind[comp]]
@@ -268,7 +266,7 @@ if(is.null(center)){
    center[3] <- (1:ddim[3])[zs==max(zs)][1]
 }
 mask <- scomp!=0
-if(!mask[center[1],center[2],center[3]]) stop("Plese specify center within brain mask\n")
+if(!mask[center[1],center[2],center[3]]) stop("Please specify center within brain mask\n")
 n1 <- ddim[1]
 n2 <- ddim[2]
 n3 <- ddim[3]
@@ -290,7 +288,7 @@ mat <- matrix(c(1,1,
                 4,5),2,4)
 layout(mat,widths=c(n2,n1,n1,n2/8,n23)/wh,
            heights=c(1/2,1/2))
-par(mar=c(3,3,3,.1),mgp=c(2,1,0))
+oldpar <- par(mar=c(2.5,2.5,2.5,.1),mgp=c(1.5,.75,0))
 scompp <- scompn <- scomp
 scompp[scomp < thresh] <- NA
 scompn[scomp > -thresh] <- NA
@@ -299,7 +297,7 @@ rsp <- c(thresh,rs[2])
 rsn <- c(rs[1],-thresh)
 rs <- c(-thresh,thresh)
 image(-indy[n2:1],indz,scomp[center[1],n2:1,],zlim=rs,col=grey(0:255/255),asp=TRUE,xlab="-yind")
-title(paste("Component",comp,"size",size,"sattigal"))
+title(paste("Component",comp,"size",size,"sagittal"))
 lines(-indy[c(1,n2)],rep(indz[center[3]],2),col=2)
 lines(rep(-indy[center[2]],2),indz[c(1,n3)],col=2)
 image(-indy[n2:1],indz,scompp[center[1],n2:1,],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
@@ -316,8 +314,8 @@ lines(indx[c(1,n1)],rep(indy[center[2]],2),col=2)
 lines(rep(indx[center[1]],2),indy[c(1,n2)],col=2)
 image(indx,indy,scompp[,,center[3]],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
 image(indx,indy,scompn[,,center[3]],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
-scalep <- seq(thresh,max(scomp,thresh),.1)
-scalen <- seq(min(scomp,-thresh),-thresh,.1)
+scalep <- seq(thresh,max(scomp,thresh),length=256)
+scalen <- seq(min(scomp,-thresh),-thresh,length=256)
 scalep <- t(matrix(scalep,length(scalep),10))
 scalen <- t(matrix(scalen,length(scalen),10))
 image(1:10,scalep[1,],scalep,col=heat.colors(256),xaxt="n",xlab="",ylab="signal")
