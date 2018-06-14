@@ -1,30 +1,30 @@
-plot.fmrisegment <- function(x, 
-		                      anatomic = NULL, 
-							  slice = 1, 
+plot.fmrisegment <- function(x,
+		                      anatomic = NULL,
+							  slice = 1,
 							  view = c( "axial", "coronal", "sagittal"),
-							  zlim.u = NULL, 
-							  zlim.o = NULL, 
-							  col.o = c( rainbow( 64, start = 2/6, end = 4/6), rainbow( 64, start = 0, end = 1/6)), 
+							  zlim.u = NULL,
+							  zlim.o = NULL,
+							  col.o = c( rainbow( 64, start = 2/6, end = 4/6), rainbow( 64, start = 0, end = 1/6)),
 		                      col.u = grey(0:127/127),
 							  verbose = FALSE,
 							  ...) {
-						
+
    if (verbose) cat( "plot.fmrisegment: entering function\n")
    view <- match.arg(view)
-   
+
    if (is.null(anatomic)) anatomic <- array( 0, dim = x$dim[1:3])
-  
+
    if ("fmridata" %in% class(anatomic)) {
 
 	   if (verbose) cat( "plot.fmrisegment: calculate exact overlay\n")
 	   img <- show.segmentslice(x, anatomic, slice =  slice, view = view, col.u = col.u, col.o = col.o, zlim.u, zlim.o)
-	   
+
    } else {
 	   if ( any(dim(anatomic) != dim(x$cbeta))) {
 		   stop( "dimension of anatomic does not match overlay data!")
 	   } else {
-		   
-		   if (verbose) cat( "plot.fmrisegment: perform simple overlay\n") 
+
+		   if (verbose) cat( "plot.fmrisegment: perform simple overlay\n")
 		   ## select correct overlay slice according to view
 		   if (view == "axial") {
 			   imgdata.o <- x$cbeta[ , , slice]
@@ -41,8 +41,8 @@ plot.fmrisegment <- function(x,
 			   imgdata.o[ x$segm[ slice, , ] == 0] <- NA ## no significant voxel
 			   imgdata.u <- anatomic[ slice, , ]
 			   aspect <- x$delta[3]/x$delta[2]
-		   } 
-		   
+		   }
+
 		   ## user defined data limits to scale the image contrast
 		   ## not sure whether this is what the user wants
 		   if (any(!is.na(imgdata.o))) {
@@ -65,20 +65,20 @@ plot.fmrisegment <- function(x,
 			   imgdata.u[imgdata.u > zlim.u[2]] <- zlim.u[2]
 			   imgdata.u[imgdata.u < zlim.u[1]] <- zlim.u[1]
 		   }
-		   
+
 		   ## create the break points for the color scale
 		   if (any(!is.na(imgdata.o))) {
 			   zlim.o <- quantile( abs(imgdata.o), c( 0, 0.9, 1), na.rm = TRUE)
 			   breaks.o <- c( -zlim.o[3], seq( -zlim.o[2], -zlim.o[1], length = 63), 0, seq( zlim.o[1], zlim.o[2], length = 63), zlim.o[3])
 		   }
 		   breaks.u <- seq( zlim.u[1], zlim.u[2], length = 129)
-		   
-		   ## plot the image 
+
+		   ## plot the image
 		   graphics::image(1:dim(imgdata.u)[1], 1:dim(imgdata.u)[2], imgdata.u, col = col.u, asp = aspect, axes = FALSE, xlab = "",	ylab = "")
 		   if (any(!is.na(imgdata.o))) {
 			   graphics::image(1:dim(imgdata.o)[1], 1:dim(imgdata.o)[2], imgdata.o, asp = aspect, col = col.o, breaks = breaks.o, add = TRUE)
 		   }
-		   
+
 		   ## finally create img for adimpro
 		   img <- array(0, dim = c( dim(imgdata.u), 3))
 		   for (i in 1:dim(imgdata.u)[1]) {
@@ -94,33 +94,33 @@ plot.fmrisegment <- function(x,
 				   }
 			   }
 		   }
-		   
-	   }	  
+
+	   }
    }
-		
+
    if (verbose) cat( "plot.fmrisegment: exiting function\n")
    return(invisible(img))
-   
+
 }
 
 # can be called from fmri.gui or the command line (by plot)
 # calls fmri.view2d or fmri.view3d with the fitting data
 plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
                           pos = c(-1,-1,-1), type="slice", slice =  1, view = "axial",
-                          zlim.u = NULL, zlim.o = NULL, col.o = heat.colors(256), 
+                          zlim.u = NULL, zlim.o = NULL, col.o = heat.colors(256),
                           col.u = grey(0:255/255), cutOff = c(0,1),...) {
-  if(!requireNamespace("tcltk",quietly=TRUE)) 
+  if(!requireNamespace("tcltk",quietly=TRUE))
       stop("package tcltk not found. Please install from cran.r-project.org")
   if (!requireNamespace("tkrplot",quietly=TRUE))
-      stop("package tkrplot not found. Please install from cran.r-project.org")  
+      stop("package tkrplot not found. Please install from cran.r-project.org")
   cutOff[cutOff<0] <- 0
   cutOff[cutOff>1] <- 1
-  if (cutOff[1] > cutOff[2]) cutOff[2] <- 1     
+  if (cutOff[1] > cutOff[2]) cutOff[2] <- 1
   inputStuff <- list(anatomic,maxpvalue,cutOff)
 
   if ("fmripvalue" %in% class(x)) {
     if ("fmridata" %in% class(anatomic)) {
-      img <- show.slice(x, anatomic, maxpvalue = maxpvalue, slice =  slice, 
+      img <- show.slice(x, anatomic, maxpvalue = maxpvalue, slice =  slice,
                         view = view, col.u, col.o, zlim.u, zlim.o)
       displayImage(img, ...)
       return(invisible(img))
@@ -167,11 +167,11 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
                scale=signal$scale,scalecol=mri.colors(255,255)$gray,type="spm",pos=pos)
       } else {
         quant <- qt(1-maxpvalue,
-                 if(!is.null(x$df)) x$df else abs(diff(dim(attr(x, "design"))))) 
+                 if(!is.null(x$df)) x$df else abs(diff(dim(attr(x, "design")))))
         tt <- fmri.view3d(signal$signal,sigma=sqrt(x$var),col=mri.colors(255,255)$gray,
-                 weights=x$weights,scale=signal$scale,scalecol=mri.colors(255,255)$gray, 
+                 weights=x$weights,scale=signal$scale,scalecol=mri.colors(255,255)$gray,
                  type="spm",hrf=x$hrf, quant = quant,pos=pos)
-      } 
+      }
     } else {
       fmri.view2d(signal$signal,col=mri.colors(255,255)$gray,weights=x$weights,
               scale=signal$scale,scalecol=mri.colors(255,255)$gray,type= "spm",
@@ -182,10 +182,10 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
     signal <- scaleSignal(signal,cutOff)
     # re-scale signal to 0 ... 1
     if (type == "3d" || type == "3D") {
-      tt <- fmri.view3d(signal$signal,col=mri.colors(255,255)$gray,weights=x$weights, 
+      tt <- fmri.view3d(signal$signal,col=mri.colors(255,255)$gray,weights=x$weights,
               scale=signal$scale,scalecol=mri.colors(255,255)$gray, type="data",pos=pos)
     } else {
-      fmri.view2d(signal$signal,col=mri.colors(255,255)$gray, weights=x$weights,     
+      fmri.view2d(signal$signal,col=mri.colors(255,255)$gray, weights=x$weights,
                   scale=signal$scale,scalecol=mri.colors(255,255)$gray,type= "data",
                   maxpvalue=maxpvalue,posNew=position(x),localx=x,inputStuff=inputStuff)
     }
@@ -197,7 +197,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
   if (exists("tt")) invisible(tt)
 }
 
-plot.fmripvalue <- function(x, template=NULL, mask=NULL, alpha=.05, 
+plot.fmripvalue <- function(x, template=NULL, mask=NULL, alpha=.05,
                             view=c("axial","coronal","sagittal","orthographic"), slices=NULL, ncol=1, nrow=1, center=NULL, ...){
   # check arguments
   if(!view%in%c("axial","coronal","sagittal","orthographic")) stop("view needs to be 'axial', 'coronal', 'sagittal' or 'orthographic'")
@@ -209,6 +209,7 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL, alpha=.05,
   if(any(ddim!=dim(mask))) stop("mask dimension does not match")
   pvalue[pvalue>=alpha] <- NA
   pvalue[!mask] <- NA
+	pvalue[pvalue<1e-10] <- 1e-10
   lpvalue <- -log(pvalue)
   if(view!="orthographic"&is.null(slices)){
     nslice <- ncol*nrow
@@ -251,6 +252,7 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL, alpha=.05,
                      "coronal"=slices-min(indy)+1,
                      "axial"=slices-min(indz)+1
     )
+		nslice <- length(slices)
     nrow <- ceiling(nslice/ncol)
   }
   oldpar <- par(mar=c(2.5,2.5,2.5,.1),mgp=c(1.5,.75,0))
@@ -283,7 +285,7 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL, alpha=.05,
     for(i in 1:nrow){
       mat[i,1:ncol] <- (i-1)*(ncol+1)+1:ncol
       mat[i,ncol+1] <- i*(ncol+1)
-    } 
+    }
     if(view=="sagittal"){
       widths <- c(rep(n2,ncol),n2/6)
       heights <- rep(n3,nrow)
@@ -338,12 +340,12 @@ scaleSignal <- function(signal,cutOff){
     }
     signal[is.na(signal)] <- 0
     signal[is.infinite(signal)] <- 0
-    if (diff(scale) != 0){  
+    if (diff(scale) != 0){
       signal[signal<cutOff[1]] <- cutOff[1]
-      signal[signal>cutOff[2]] <- cutOff[2]    
+      signal[signal>cutOff[2]] <- cutOff[2]
       signal <- signal - cutOff[1]
-      signal <- signal/(cutOff[2]-cutOff[1])  
-    }    
+      signal <- signal/(cutOff[2]-cutOff[1])
+    }
     scale <- scale*(cutOff[2]-cutOff[1])
     list(signal=signal,scale=scale)
 }
@@ -362,7 +364,7 @@ signalOverlay <- function(signal,anatomic,scale){
 anatomic
 }
 scaleAnatomic <- function(anatomic,cutOff,ddim){
-      if (is.null(anatomic)) anatomic <- array(0,dim=ddim)  
+      if (is.null(anatomic)) anatomic <- array(0,dim=ddim)
       # re-scale anatomic to 0 ... 0.5
       if (diff(range(anatomic)) !=0) {
         anatomic <- 0.5 * (anatomic - range(anatomic,finite=TRUE)[1]) /
@@ -371,7 +373,7 @@ scaleAnatomic <- function(anatomic,cutOff,ddim){
       anatomic[anatomic>cutOff[2]*0.5] <- cutOff[2]*0.5
       anatomic[anatomic<cutOff[1]*0.5] <- cutOff[1]*0.5
       anatomic <- anatomic - cutOff[1]*0.5
-      anatomic <- anatomic/(cutOff[2]-cutOff[1])          
+      anatomic <- anatomic/(cutOff[2]-cutOff[1])
 }
 position <- function(obj){
   dt <- dim(obj)

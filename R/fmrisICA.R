@@ -156,7 +156,7 @@ plot.fmriICA <- function(x,comp=1,center=NULL,thresh=1.5,...){
    rsp <- c(thresh,rs[2])
    rsn <- c(rs[1],-thresh)
    rs <- c(-thresh,thresh)
-   image(-indy[n2:1],indz,scomp[center[1],n2:1,],zlim=rs,col=grey(0:255/255),asp=TRUE)
+   image(-indy[n2:1],indz,scomp[center[1],n2:1,],zlim=rs,col=grey(0:255/255),asp=TRUE,xlab="-yind")
    title(paste("Component",comp,"sagittal"))
    lines(-indy[c(1,n2)],rep(indz[center[3]],2),col=2)
    lines(rep(-indy[center[2]],2),indz[c(1,n3)],col=2)

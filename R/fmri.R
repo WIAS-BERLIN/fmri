@@ -221,7 +221,8 @@ fmri.pvalue <- function(spm, mode="basic", na.rm=FALSE, minimum.signal=0, alpha=
   if (na.rm) {
     pv[spm$var > 9e19] <- 1
   }
-
+  pv[pv<1e-10] <- 1e-10
+  # avoid extremely small values
   cat("fmri.pvalue: exiting function\n")
 
   z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim, hrf = spm$hrf)
