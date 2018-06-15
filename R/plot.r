@@ -255,12 +255,12 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL, alpha=.05,
 		nslice <- length(slices)
     nrow <- ceiling(nslice/ncol)
   }
-  oldpar <- par(mar=c(2.5,2.5,2.5,.1),mgp=c(1.5,.75,0))
+  oldpar <- par(mar=c(2.5,2.5,2.5,.1),mgp=c(1.5,.5,0))
   if(view=="orthographic"){
-    n23 <- max(n2,n3)
-    wh <- 2*n1+n2+n2/8
+		n12 <- max(n1,n2)
+    wh <- 2*n1+n2+n12/8
     mat <- matrix(c(1,2,3,4),1,4)
-    layout(mat,widths=c(n2,n1,n1,n2/8,n23/1.5)/wh,
+    layout(mat,widths=c(n2,n1,n1,n12/8)/wh,
            heights=1)
     image(-indy[n2:1],indz,template[center[1],n2:1,],col=grey(0:255/255),asp=TRUE,xlab="-yind")
     title("sagittal")
@@ -287,15 +287,15 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL, alpha=.05,
       mat[i,ncol+1] <- i*(ncol+1)
     }
     if(view=="sagittal"){
-      widths <- c(rep(n2,ncol),n2/6)
+      widths <- c(rep(n2,ncol),n2/max(1,10-ncol))
       heights <- rep(n3,nrow)
     }
     if(view=="coronal"){
-      widths <- c(rep(n1,ncol),n1/6)
+      widths <- c(rep(n1,ncol),n1/max(1,10-ncol))
       heights <- rep(n3,nrow)
     }
     if(view=="axial"){
-      widths <- c(rep(n1,ncol),n1/6)
+      widths <- c(rep(n1,ncol),n1/max(1,10-ncol))
       heights <- rep(n2,nrow)
     }
     widths <- widths/sum(widths)
