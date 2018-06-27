@@ -7,7 +7,7 @@
 \description{ Visualize objects created by function \code{fmri.pvalue}
 }
 \usage{
-plot.fmripvalue(x, template = NULL, mask = NULL, alpha = 0.05,
+plot.fmripvalue(x, template = NULL, mask = NULL,
       view = c("axial", "coronal", "sagittal", "orthographic"),
       slices = NULL, ncol = 1, nrow = 1, center = NULL, ...)
 }
@@ -22,9 +22,6 @@ plot.fmripvalue(x, template = NULL, mask = NULL, alpha = 0.05,
 }
   \item{mask}{
    optional brain mask
-}
-  \item{alpha}{
-   significance level (threshold for pvalues)
 }
   \item{view}{
    Either 'orthographic' or one of 'axial', 'coronal' or 'sagittal'
@@ -62,9 +59,6 @@ Joerg Polzehl \email{polzehl@wias-berlin.de}
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\note{
-%%  ~~further notes~~
-}
 \code{\link{fmri.pvalue}}, ~~~
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

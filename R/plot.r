@@ -197,11 +197,12 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
   if (exists("tt")) invisible(tt)
 }
 
-plot.fmripvalue <- function(x, template=NULL, mask=NULL, alpha=.05,
+plot.fmripvalue <- function(x, template=NULL, mask=NULL,
                             view=c("axial","coronal","sagittal","orthographic"), slices=NULL, ncol=1, nrow=1, center=NULL, ...){
   # check arguments
   if(!view%in%c("axial","coronal","sagittal","orthographic")) stop("view needs to be 'axial', 'coronal', 'sagittal' or 'orthographic'")
   pvalue <- x$pvalue
+	alpha <- x$alpha
   ddim <- dim(pvalue)
   if(is.null(template)) template <- pvalue
   if(any(ddim!=dim(template))) stop("template dimension does not match")

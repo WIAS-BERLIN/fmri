@@ -189,7 +189,14 @@ fmri.pvalue <- function(spm, mode="basic", na.rm=FALSE, minimum.signal=0, alpha=
     stat <- (spm$cbeta-minimum.signal)/sqrt(spm$var)
     dim(stat) <- prod(spm$dim[1:3])
     cat("fmri.pvalue: calculate treshold and p-value method:",mode,"\n")
-    if (mode == "local") {
+    if (mode == "voxelwise"){
+      pv <- switch(type, "norm" = pnorm(-stat), "t" = pt(-stat,df))
+      thresh <- switch(type, "norm" = qnorm(1-alpha), "t" = qt(1-alpha,df))
+    } else if (mode == "Bonferroni"){
+      pv <- switch(type, "norm" = pnorm(-stat), "t" = pt(-stat,df))
+      alpha <- alpha/sum(spm$mask)
+      thresh <- switch(type, "norm" = qnorm(1-alpha), "t" = qt(1-alpha,df))
+    } else if (mode == "local") {
       thresh <- threshold(0.2,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type=type,df=df)
       pv <- pvalue(stat,spm$dim[1],spm$dim[2],spm$dim[3],spm$rxyz[,1],spm$rxyz[,2],spm$rxyz[,3],type=type,df=df)
     } else if (mode == "global") {
@@ -198,9 +205,11 @@ fmri.pvalue <- function(spm, mode="basic", na.rm=FALSE, minimum.signal=0, alpha=
       pv <- pvalue(stat,spm$dim[1],spm$dim[2],spm$dim[3],rxyz[1],rxyz[2],rxyz[3],type=type,df=df)
      } else if (mode == "FDR") {
       pv <- 1-switch(type,"norm"=pnorm(stat),"t"=pt(stat,df))
-      dim(pv) <- spm$dim[1:3]
-      ind <- fdr(pv,alpha)
-      thresh <- min(stat[ind])
+      ind <- fdr(pv[spm$mask],alpha)
+      # restrict to voxel in brain mask
+      thresh <- min(stat[spm$mask][ind])
+      alpha <- max(pv[spm$mask][ind])
+      # thats what needed for scale info in plot.fmripvalue
    } else {
       if ("rxyz0" %in% names(spm)) {
         rxyz0 <- c(median(spm$rxyz0[,1]),median(spm$rxyz0[,2]),median(spm$rxyz0[,3]))
@@ -215,11 +224,11 @@ fmri.pvalue <- function(spm, mode="basic", na.rm=FALSE, minimum.signal=0, alpha=
   mask <- rep(TRUE,length=prod(spm$dim[1:3]))
   mask[stat < thresh] <- FALSE
   mask <- mask&spm$mask
-  pv[!mask] <- 1
+  pv[!mask] <- NA
   dim(pv) <- spm$dim[1:3]
 
   if (na.rm) {
-    pv[spm$var > 9e19] <- 1
+    pv[spm$var > 9e19] <- NA
   }
   pv[pv<1e-10] <- 1e-10
   # avoid extremely small values
@@ -240,7 +249,8 @@ fmri.pvalue <- function(spm, mode="basic", na.rm=FALSE, minimum.signal=0, alpha=
   z$format <- spm$format
   z$dim0 <- spm$dim0
   z$call <- args
-
+  z$alpha <- alpha
+  z$thresh <- thresh
   attr(z, "file") <- attr(spm, "file")
   attr(z, "white") <- attr(spm, "white")
   attr(z, "design") <- attr(spm, "design")

@@ -88,13 +88,13 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
         cat("fmri.pvalue: thresholding\n")
         mask <- rep(FALSE,length=prod(spm$dim[1:3]))
         mask[as.logical(detected)] <- TRUE
-        pv[!mask] <- 1
+        pv[!mask] <- NA
         dim(pv) <- spm$dim[1:3]
           pv[spm$var > 9e19] <- 1
 
         cat("fmri.pvalue: exiting function\n")
 
-        z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim, hrf = spm$hrf)
+        z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim, hrf = spm$hrf, alpha=alpha)
 
         class(z) <- c("fmripvalue")
 

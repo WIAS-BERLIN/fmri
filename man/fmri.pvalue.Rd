@@ -31,7 +31,13 @@ fmri.pvalue(spm, mode="basic", na.rm=FALSE, minimum.signal = 0, alpha= 0.05)
   used.
 
   The parameter \code{mode} allows for different kinds of p-value
-  calculation. "basic" corresponds to a global definition of the
+  calculation. \code{mode="voxelwise"} refers to voxelwise tests while
+  \code{mode="Bonferroni"} adjusts the significance level for multiple testing.
+  An alternative is \code{mode="FDR"} specifying signal detection by False
+  Discovery Rate (FDR) with proportion of false positives level specified by \code{alpha}.
+  The other choices apply results on excursion sets of random fields
+  (Worsley 1994, Adler 2003) for smoothed SPM's.
+  "basic" corresponds to a global definition of the
   resel counts based on the amount of smoothness achieved by an equivalent
   Gaussian filter. The propagation condition ensures, that under the
   hypothesis
@@ -44,14 +50,15 @@ fmri.pvalue(spm, mode="basic", na.rm=FALSE, minimum.signal = 0, alpha= 0.05)
   adaptive smoothing. In contrast to "basic", "global" takes a global
   median to adjust for the randomness of the weighting scheme generated
   by adaptive smoothing. "global" and "local" are more conservative than
-  "basic", that is, they generate sligthly larger p-values.
-  The alternative is \code{mode="FDR"} specifying signal detection by False Discovery Rate (FDR) with significance level specified by \code{alpha}.}
+  "basic", that is, they generate sligthly larger p-values.}
 \value{
   Object with class attributes "fmripvalue" and "fmridata"
   \item{pvalue}{ p-value. use with \code{\link{plot}} for thresholding.}
   \item{weights}{ voxelsize ratio }
   \item{dim}{ data dimension }
   \item{hrf}{ expected BOLD response for contrast (single stimulus only)}
+  \item{alpha}{maximal pvalue as scale information}
+  \item{thresh}{actual threshold used}
 }
 \references{
   Polzehl, J. and Tabelow, K. (2007)
