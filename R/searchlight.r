@@ -99,7 +99,7 @@ ind <- fdr(pv[mask], alpha)
 thresh <- min(stat[mask][ind])
 mask[stat < thresh] <- FALSE
     mask <- mask & spm$mask
-    pv[!mask] <- 1
+    pv[!mask] <- NA
     z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim,
             hrf = spm$hrf)
         class(z) <- c("fmripvalue")

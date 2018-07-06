@@ -263,21 +263,21 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
     mat <- matrix(c(1,2,3,4),1,4)
     layout(mat,widths=c(n2,n1,n1,n12/8)/wh,
            heights=1)
-    image(-indy[n2:1],indz,template[center[1],n2:1,],col=grey(0:255/255),asp=TRUE,xlab="-yind")
+    image(-indy[n2:1]*pdim[2],indz*pdim[3],template[center[1],n2:1,],col=grey(0:255/255),asp=TRUE,xlab="-yind")
     title("sagittal")
-    lines(-indy[c(1,n2)],rep(indz[center[3]],2),col=2)
-    lines(rep(-indy[center[2]],2),indz[c(1,n3)],col=2)
-    image(-indy[n2:1],indz,lpvalue[center[1],n2:1,],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
-    image(indx,indz,template[,center[2],],col=grey(0:255/255),asp=TRUE)
+    lines(-indy[c(1,n2)]*pdim[2],rep(indz[center[3]]*pdim[3],2),col=2)
+    lines(rep(-indy[center[2]]*pdim[2],2),indz[c(1,n3)]*pdim[3],col=2)
+    image(-indy[n2:1]*pdim[2],indz*pdim[3],lpvalue[center[1],n2:1,],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
+    image(indx*pdim[1],indz*pdim[3],template[,center[2],],col=grey(0:255/255),asp=TRUE)
     title("coronal")
-    lines(indx[c(1,n1)],rep(indz[center[3]],2),col=2)
-    lines(rep(indx[center[1]],2),indz[c(1,n3)],col=2)
-    image(indx,indz,lpvalue[,center[2],],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
-    image(indx,indy,template[,,center[3]],col=grey(0:255/255),asp=TRUE)
+    lines(indx[c(1,n1)]*pdim[1],rep(indz[center[3]]*pdim[3],2),col=2)
+    lines(rep(indx[center[1]]*pdim[1],2),indz[c(1,n3)]*pdim[3],col=2)
+    image(indx*pdim[1],indz*pdim[3],lpvalue[,center[2],],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
+    image(indx*pdim[1],indy*pdim[2],template[,,center[3]],col=grey(0:255/255),asp=TRUE)
     title("axial")
-    lines(indx[c(1,n1)],rep(indy[center[2]],2),col=2)
-    lines(rep(indx[center[1]],2),indy[c(1,n2)],col=2)
-    image(indx,indy,lpvalue[,,center[3]],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
+    lines(indx[c(1,n1)]*pdim[1],rep(indy[center[2]]*pdim[2],2),col=2)
+    lines(rep(indx[center[1]]*pdim[1],2),indy[c(1,n2)]*pdim[2],col=2)
+    image(indx*pdim[1],indy*pdim[2],lpvalue[,,center[3]],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
     scalep <- seq(rlp[1],rlp[2],length=256)
     scalep <- t(matrix(scalep,length(scalep),10))
     image(1:10,scalep[1,],scalep,col=heat.colors(256),xaxt="n",xlab="",ylab="-log(pvalue)")
@@ -307,19 +307,19 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
         k <- (i-1)*ncol + j
         if(k>nslice) break
         if(view=="sagittal"){
-          image(-indy[n2:1],indz,template[slices[k],n2:1,],col=grey(0:255/255),asp=TRUE,xlab="-yind")
+          image(-indy[n2:1]*pdim[2],indz*pdim[3],template[slices[k],n2:1,],col=grey(0:255/255),asp=TRUE,xlab="-yind")
           title(paste("sagittal slice",indx[slices[k]]))
-          image(-indy[n2:1],indz,lpvalue[slices[k],n2:1,],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
+          image(-indy[n2:1]*pdim[2],indz*pdim[3],lpvalue[slices[k],n2:1,],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
         }
         if(view=="coronal"){
-          image(indx,indz,template[,slices[k],],col=grey(0:255/255),asp=TRUE)
+          image(indx*pdim[1],indz*pdim[3],template[,slices[k],],col=grey(0:255/255),asp=TRUE)
           title(paste("coronal slice",indy[slices[k]]))
-          image(indx,indz,lpvalue[,slices[k],],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
+          image(indx*pdim[1],indz*pdim[3],lpvalue[,slices[k],],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
         }
         if(view=="axial"){
-          image(indx,indy,template[,,slices[k]],col=grey(0:255/255),asp=TRUE)
+          image(indx*pdim[1],indy*pdim[2],template[,,slices[k]],col=grey(0:255/255),asp=TRUE)
           title(paste("axial slice", indz[slices[k]]))
-          image(indx,indy,lpvalue[,,slices[k]],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
+          image(indx*pdim[1],indy*pdim[2],lpvalue[,,slices[k]],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
         }
       }
       scalep <- seq(rlp[1],rlp[2],length=256)
