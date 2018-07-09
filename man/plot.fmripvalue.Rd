@@ -17,8 +17,8 @@ plot.fmripvalue(x, template = NULL, mask = NULL,
    object of class 'fmripvalue'
 }
   \item{template}{
-   Anatomical image of same resolution as pvalue map in x$pvalue.
-   Needs to registered to the fMRI data set
+   Anatomical image of same origin and direction
+   as pvalue map in x$pvalue.
 }
   \item{mask}{
    optional brain mask
@@ -49,8 +49,8 @@ plot.fmripvalue(x, template = NULL, mask = NULL,
 }
 \value{
 list with components
-\item{comp1 }{slices}
-\item{comp2 }{center}
+\item{comp1 }{slices, numbers refer to spm}
+\item{comp2 }{center, numbers refer to spm}
 }
 \author{
 Joerg Polzehl \email{polzehl@wias-berlin.de}
