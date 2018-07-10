@@ -377,6 +377,92 @@ if(sformcode==1){
   }
   list(ixT1=ixT1, iyT1=iyT1, izT1=izT1, ixspm=ixspm, iyspm=iyspm, izspm=izspm, pixdim=pdim)
 }
+q2rot <- function(b,c,d){
+   a <- sqrt(1-b^2-c^2-d^2)
+   rot <- matrix(c(a^2+b^2-c^2-d^2, 2*b*c-2*a*d, 2*b*d+2*a*c,
+                   2*b*c+2*a*d, a^2-b^2+c^2-d^2, 2*c*d-2*a*b,
+                   2*b*d-2*a*c, 2*c*d+2*a*b, a^2-b^2-c^2+d^2),3,3)
+   rot
+}
+
+getAlignedCoords <- function(img1,img2){
+#
+#  compute indices of closest representants
+#
+   if(class(img1)=="nifti"){
+      scode1 <- img1@sform_code
+      qcode1 <- img1@qform_code
+      if(qcode1>0){
+         rot1 <- q2rot(img1@quatern_b,img1@quatern_c,img1@quatern_d)
+         pixdim1 <- img1@pixdim[2:4]*c(1,1,img1@pixdim[1])
+         offset1 <- c(img1@qoffset_x,img1@qoffset_y,img1@qoffset_z)
+      } else if(scode1>0){
+         aff1 <- rbind(img1@srow_x,img1@srow_y,img1@srow_z)
+      } else {
+         stop("img1: need method 2 or 3 in nifti")
+      }
+      dim1 <- img1@dim_[2:4]
+   } else if(class(img1)%in%c("fmripvalue","fmrisegment")) {
+      hdr <- img1$header
+      scode1 <- hdr$sformcode
+      qcode1 <- hdr$qformcode
+      if(qcode1>0){
+         rot1 <- q2rot(hdr$quaternb,hdr$quaternc,hdr$quaternd)
+         pixdim1 <- hdr$pixdim[2:4]*c(1,1,hdr$pixdim[1])
+         offset1 <- c(hdr$qoffsetx,hdr$qoffsety,hdr$qoffsetz)
+      } else if(scode1>0){
+         aff1 <- rbind(hdr$srowx,hdr$srowy,hdr$srowz)
+         pixdim2 <- img2@pixdim[2:4]
+         rot2 <- aff2[,1:3]/pixdim2
+         offset2 <- aff2[,4]
+      } else {
+         stop("img1: need method 2 or 3 in nifti")
+      }
+      dim1 <- img1$dim[1:3]
+   } else {
+      stop("can't handle img1")
+   }
+   if(class(img2)=="nifti"){
+      scode2 <- img2@sform_code
+      qcode2 <- img2@qform_code
+      if(qcode2>0){
+         rot2 <- q2rot(img2@quatern_b,img2@quatern_c,img2@quatern_d)
+         pixdim2 <- img2@pixdim[2:4]*c(1,1,img2@pixdim[1])
+         offset2 <- c(img2@qoffset_x,img2@qoffset_y,img2@qoffset_z)
+      } else if(scode2>0){
+         aff2 <- rbind(img2@srow_x,img2@srow_y,img2@srow_z)
+         pixdim2 <- img2@pixdim[2:4]
+         rot2 <- aff2[,1:3]/pixdim2
+         offset2 <- aff2[,4]
+      } else {
+         stop("img2: need method 2 or 3 in nifti")
+      }
+      dim2 <- img2@dim_[2:4]
+   } else {
+      stop("img2: need method 2 or 3 in nifti")
+   }
+   # test for compatible rotation matrices
+      rot12 <- t(rot1)%*%rot2
+      pdq <- pixdim2/pixdim1
+      if(any(rot12!=diag(diag(rot12)))) stop("incompatible rotation matrices:
+         slices are not parallel")
+      T1x <- rot12[1,1]*(1:dim2[1]-1)*pdq[1]+c(rot1[,1]%*%((offset2-offset1)/pixdim1))+1
+      T1y <- rot12[2,2]*(1:dim2[2]-1)*pdq[2]+c(rot1[,2]%*%((offset2-offset1)/pixdim1))+1
+      T1z <- rot12[3,3]*(1:dim2[3]-1)*pdq[3]+c(rot1[,3]%*%((offset2-offset1)/pixdim1))+1
+      # restrict to slice indices of img1
+      ixT1 <- pmax(1,pmin(dim1[1],round(T1x)))
+      iyT1 <- pmax(1,pmin(dim1[2],round(T1y)))
+      izT1 <- pmax(1,pmin(dim1[3],round(T1z)))
+      spmx <- rot12[1,1]*(1:dim1[1]-1)/pdq[1]-c(rot2[,1]%*%((offset2-offset1)/pixdim2))+1
+      spmy <- rot12[2,2]*(1:dim1[2]-1)/pdq[2]-c(rot2[,2]%*%((offset2-offset1)/pixdim2))+1
+      spmz <- rot12[3,3]*(1:dim1[3]-1)/pdq[3]-c(rot2[,3]%*%((offset2-offset1)/pixdim2))+1
+      # restrict to slice indices of img2
+      ixspm <- pmax(1,pmin(dim2[1],round(spmx)))
+      iyspm <- pmax(1,pmin(dim2[2],round(spmy)))
+      izspm <- pmax(1,pmin(dim2[3],round(spmz)))
+      list(ixT1=ixT1, iyT1=iyT1, izT1=izT1, ixspm=ixspm, iyspm=iyspm, izspm=izspm, pixdim=abs(pixdim1))
+}
+
 
 plot.fmripvalue <- function(x, template=NULL, mask=NULL,
                              view=c("axial","coronal","sagittal","orthographic"), slices=NULL, ncol=1, nrow=1, center=NULL, ...){
