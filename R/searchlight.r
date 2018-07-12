@@ -101,7 +101,7 @@ mask[stat < thresh] <- FALSE
     mask <- mask & spm$mask
     pv[!mask] <- NA
     z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim,
-            hrf = spm$hrf)
+            hrf = spm$hrf, mask = spm$mask)
         class(z) <- c("fmripvalue")
         z$roixa <- spm$roixa
         z$roixe <- spm$roixe

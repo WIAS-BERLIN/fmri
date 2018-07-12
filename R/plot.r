@@ -450,29 +450,30 @@ getAlignedCoords <- function(img1,img2){
       T1y <- rot12[2,2]*(1:dim2[2]-1)*pdq[2]+c(rot1[,2]%*%((offset2-offset1)/pixdim1))+1
       T1z <- rot12[3,3]*(1:dim2[3]-1)*pdq[3]+c(rot1[,3]%*%((offset2-offset1)/pixdim1))+1
       # restrict to slice indices of img1
-      ixT1 <- pmax(1,pmin(dim1[1],round(T1x)))
-      iyT1 <- pmax(1,pmin(dim1[2],round(T1y)))
-      izT1 <- pmax(1,pmin(dim1[3],round(T1z)))
+      ixspm <- pmax(1,pmin(dim1[1],round(T1x)))
+      iyspm <- pmax(1,pmin(dim1[2],round(T1y)))
+      izspm <- pmax(1,pmin(dim1[3],round(T1z)))
       spmx <- rot12[1,1]*(1:dim1[1]-1)/pdq[1]-c(rot2[,1]%*%((offset2-offset1)/pixdim2))+1
       spmy <- rot12[2,2]*(1:dim1[2]-1)/pdq[2]-c(rot2[,2]%*%((offset2-offset1)/pixdim2))+1
       spmz <- rot12[3,3]*(1:dim1[3]-1)/pdq[3]-c(rot2[,3]%*%((offset2-offset1)/pixdim2))+1
       # restrict to slice indices of img2
-      ixspm <- pmax(1,pmin(dim2[1],round(spmx)))
-      iyspm <- pmax(1,pmin(dim2[2],round(spmy)))
-      izspm <- pmax(1,pmin(dim2[3],round(spmz)))
-      list(ixT1=ixT1, iyT1=iyT1, izT1=izT1, ixspm=ixspm, iyspm=iyspm, izspm=izspm, pixdim=abs(pixdim1))
+      ixT1 <- pmax(1,pmin(dim2[1],round(spmx)))
+      iyT1 <- pmax(1,pmin(dim2[2],round(spmy)))
+      izT1 <- pmax(1,pmin(dim2[3],round(spmz)))
+      list(ixT1=ixT1, iyT1=iyT1, izT1=izT1, ixspm=ixspm, iyspm=iyspm, izspm=izspm, pixdim=abs(pixdim2))
 }
 
 
 plot.fmripvalue <- function(x, template=NULL, mask=NULL,
-                             view=c("axial","coronal","sagittal","orthographic"), slices=NULL, ncol=1, nrow=1, center=NULL, ...){
+                             view=c("axial","coronal","sagittal","orthographic"),
+														 slices=NULL, ncol=1, nrow=1, center=NULL, ...){
   # check arguments
   if(!view%in%c("axial","coronal","sagittal","orthographic")) stop("view needs to be 'axial', 'coronal', 'sagittal' or 'orthographic'")
   pvalue <- x$pvalue
   alpha <- x$alpha
   ddim <- dim(pvalue)
   if(is.null(template)) template <- x$pvalue
-  if(is.null(mask)) mask <- array(TRUE,dim(pvalue))
+  if(is.null(mask)) mask <- if(is.null(x$mask)) array(TRUE,dim(pvalue)) else x$mask
   if(any(ddim!=dim(mask))) stop("mask dimension does not match")
   pvalue[pvalue>=alpha] <- NA
   pvalue[!mask] <- NA
@@ -530,6 +531,7 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
   n2 <- length(indy)
   n3 <- length(indz)
   if(view=="orthographic"){
+		center0 <- center
     center[1] <- (1:n1)[indx==center[1]]
     center[2] <- (1:n2)[indy==center[2]]
     center[3] <- (1:n3)[indz==center[3]]
@@ -553,18 +555,21 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
     wh <- 2*n1+n2+n12/8
     mat <- matrix(c(1,2,3,4),1,4)
     layout(mat,widths=c(n2,n1,n1,n12/8)/wh,heights=1)
-    image(-indy[n2:1]*pdim[2],indz*pdim[3],template[center[1],n2:1,],col=grey(0:255/255),asp=TRUE,xlab="-yind")
-    title("sagittal")
+    image(-indy[n2:1]*pdim[2],indz*pdim[3],template[center[1],n2:1,],
+			col=grey(0:255/255),asp=TRUE,xlab="-y (mm)",ylab="z (mm)")
+    title(paste("sagittal",signif(center0[1]*pdim[1],3),"mm"))
     lines(-indy[c(1,n2)]*pdim[2],rep(indz[center[3]]*pdim[3],2),col=2)
     lines(rep(-indy[center[2]]*pdim[2],2),indz[c(1,n3)]*pdim[3],col=2)
     image(-indy[n2:1]*pdim[2],indz*pdim[3],lpvalue[center[1],n2:1,],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
-    image(indx*pdim[1],indz*pdim[3],template[,center[2],],col=grey(0:255/255),asp=TRUE)
-    title("coronal")
+    image(indx*pdim[1],indz*pdim[3],template[,center[2],],
+			col=grey(0:255/255),asp=TRUE,xlab="x (mm)",ylab="z (mm)")
+    title(paste("coronal",signif(center0[2]*pdim[2],3),"mm"))
     lines(indx[c(1,n1)]*pdim[1],rep(indz[center[3]]*pdim[3],2),col=2)
     lines(rep(indx[center[1]]*pdim[1],2),indz[c(1,n3)]*pdim[3],col=2)
     image(indx*pdim[1],indz*pdim[3],lpvalue[,center[2],],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
-    image(indx*pdim[1],indy*pdim[2],template[,,center[3]],col=grey(0:255/255),asp=TRUE)
-    title("axial")
+    image(indx*pdim[1],indy*pdim[2],template[,,center[3]],
+			col=grey(0:255/255),asp=TRUE,xlab="x (mm)",ylab="y (mm)")
+    title(paste("axial",signif(center0[3]*pdim[3],3),"mm"))
     lines(indx[c(1,n1)]*pdim[1],rep(indy[center[2]]*pdim[2],2),col=2)
     lines(rep(indx[center[1]]*pdim[1],2),indy[c(1,n2)]*pdim[2],col=2)
     image(indx*pdim[1],indy*pdim[2],lpvalue[,,center[3]],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
@@ -597,18 +602,21 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
         k <- (i-1)*ncol + j
         if(k>nslice) break
         if(view=="sagittal"){
-          image(-indy[n2:1]*pdim[2],indz*pdim[3],template[slices[k],n2:1,],col=grey(0:255/255),asp=TRUE,xlab="-yind")
-          title(paste("sagittal slice",indx[slices[k]]))
+          image(-indy[n2:1]*pdim[2],indz*pdim[3],template[slices[k],n2:1,],
+						  col=grey(0:255/255),asp=TRUE,xlab="-y (mm)",ylab="z (mm)")
+          title(paste("sagittal slice",signif(indx[slices[k]]*pdim[1],3),"mm"))
           image(-indy[n2:1]*pdim[2],indz*pdim[3],lpvalue[slices[k],n2:1,],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
         }
         if(view=="coronal"){
-          image(indx*pdim[1],indz*pdim[3],template[,slices[k],],col=grey(0:255/255),asp=TRUE)
-          title(paste("coronal slice",indy[slices[k]]))
+          image(indx*pdim[1],indz*pdim[3],template[,slices[k],],
+						col=grey(0:255/255),asp=TRUE,xlab="x (mm)",ylab="z (mm)")
+          title(paste("coronal slice",signif(indy[slices[k]]*pdim[2],3),"mm"))
           image(indx*pdim[1],indz*pdim[3],lpvalue[,slices[k],],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
         }
         if(view=="axial"){
-          image(indx*pdim[1],indy*pdim[2],template[,,slices[k]],col=grey(0:255/255),asp=TRUE)
-          title(paste("axial slice", indz[slices[k]]))
+          image(indx*pdim[1],indy*pdim[2],template[,,slices[k]],
+						col=grey(0:255/255),asp=TRUE, xlab="x (mm)", ylab="y (mm)")
+          title(paste("axial slice", signif(indz[slices[k]]*pdim[3],3),"mm"))
           image(indx*pdim[1],indy*pdim[2],lpvalue[,,slices[k]],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
         }
       }

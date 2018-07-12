@@ -94,7 +94,8 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
 
         cat("fmri.pvalue: exiting function\n")
 
-        z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim, hrf = spm$hrf, alpha=alpha)
+        z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim,
+                  hrf = spm$hrf, alpha=alpha, mask = spm$mask)
 
         class(z) <- c("fmripvalue")
 

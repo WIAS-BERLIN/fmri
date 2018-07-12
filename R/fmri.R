@@ -234,7 +234,7 @@ fmri.pvalue <- function(spm, mode="basic", na.rm=FALSE, minimum.signal=0, alpha=
   # avoid extremely small values
   cat("fmri.pvalue: exiting function\n")
 
-  z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim, hrf = spm$hrf)
+  z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim, hrf = spm$hrf, mask = spm$mask)
 
   class(z) <- c("fmripvalue")
 
