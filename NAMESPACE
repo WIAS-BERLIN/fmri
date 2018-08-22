@@ -8,6 +8,7 @@ export(fmri.detrend,fmri.sICA,ICAfingerprint,plot.fmriICA,fmri.sgroupICA,
        plot.fmrigroupICA)
 export(plot.fmridata, plot.fmripvalue)
 export(oro2fmri,fmri2oro)
+export(gen_fmridata)
 # export(findclusters,simclusterthr)
 export(fmri.designG,fmri.lmePar,fmri.metaPar)
 export(niftiImage2fmri)
