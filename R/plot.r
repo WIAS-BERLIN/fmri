@@ -203,6 +203,7 @@ plot.fmripvalue.old <- function(x, template=NULL, mask=NULL,
   if(!view%in%c("axial","coronal","sagittal","orthographic")) stop("view needs to be 'axial', 'coronal', 'sagittal' or 'orthographic'")
   pvalue <- x$pvalue
 	alpha <- x$alpha
+	hdr = x$header
   ddim <- dim(pvalue)
   if(is.null(template)) template <- pvalue
   if(any(ddim!=dim(template))) stop("template dimension does not match")
@@ -258,6 +259,11 @@ plot.fmripvalue.old <- function(x, template=NULL, mask=NULL,
   }
   oldpar <- par(mar=c(2.5,2.5,2.5,.1),mgp=c(1.5,.5,0))
   if(view=="orthographic"){
+    pdim <- hdr$pixdim[2:4]
+    if (is.null(pdim)) {
+      warning("pixdim is not found, making all 1")
+      pdim = rep(1, 8)
+    }
 		n12 <- max(n1,n2)
     wh <- 2*n1+n2+n12/8
     mat <- matrix(c(1,2,3,4),1,4)
