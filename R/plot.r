@@ -326,7 +326,7 @@ plot.fmripvalue.old <- function(x, template=NULL, mask=NULL,
       scalep <- t(matrix(scalep,length(scalep),10))
       image(1:10,scalep[1,],scalep,col=heat.colors(256),xaxt="n",xlab="",ylab="-log(pvalue)")
     }
-    if(k>nslice) break
+    # if(k>nslice) break
   }
   invisible(list(slices=slices,center=center))
 }
@@ -468,6 +468,7 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
                              view=c("axial","coronal","sagittal","orthographic"),
 														 slices=NULL, ncol=1, nrow=1, center=NULL, ...){
   # check arguments
+  view = match.arg(view)
   if(!view%in%c("axial","coronal","sagittal","orthographic")) stop("view needs to be 'axial', 'coronal', 'sagittal' or 'orthographic'")
   pvalue <- x$pvalue
   alpha <- x$alpha
@@ -478,6 +479,9 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
   pvalue[pvalue>=alpha] <- NA
   pvalue[!mask] <- NA
   pvalue[pvalue<1e-10] <- 1e-10
+  if (all(is.na(pvalue))) {
+    stop("No p-values below alpha")
+  }
   lpvalue <- -log(pvalue)
   if(view!="orthographic"&is.null(slices)){
     nslice <- ncol*nrow
@@ -494,16 +498,19 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
   }
 	slices0 <- slices
 	center0 <- center
-  if(is.nifti(template)){
+  # if(is.nifti(template)){
+	if (is(template, "nifti")) {
       indaligned <- getAlignedCoords(x,template)
   } else {
       if(all(ddim==dim(template))){
       indaligned <- list(ixT1=1:ddim[1], iyT1=1:ddim[2], izT1=1:ddim[3],
-                         ixspm=1:ddim[1], iyspm=1:ddim[2], izspm=1:ddim[3], pixdim=x$header$pixdim[2:4])
+                         ixspm=1:ddim[1], iyspm=1:ddim[2], izspm=1:ddim[3], 
+                         pixdim=x$header$pixdim[2:4])
       } else {
         stop("incompatible template")
       }
   }
+	
   pvalue <- pvalue[indaligned$ixspm,indaligned$iyspm,indaligned$izspm]
   lpvalue <- lpvalue[indaligned$ixspm,indaligned$iyspm,indaligned$izspm]
   mask <- mask[indaligned$ixspm,indaligned$iyspm,indaligned$izspm]
@@ -516,6 +523,10 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
                    "axial"=indaligned$izT1[slices])
   }
   pdim <- indaligned$pixdim
+  if (is.null(pdim)) {
+    warning("pixdim is not found, making all 1")
+    pdim = rep(1, 8)
+  }
   ddim <- dim(pvalue)
   n1 <- ddim[1]
   n2 <- ddim[2]
@@ -527,6 +538,7 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
   lpvalue <- lpvalue[indx,indy,indz]
   rlp <- range(lpvalue,na.rm=TRUE)
   template <- template[indx,indy,indz]
+  rtemp = range(template, na.rm = TRUE)
   n1 <- length(indx)
   n2 <- length(indy)
   n3 <- length(indz)
@@ -613,9 +625,10 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
           title(paste("coronal slice",signif(indy[slices[k]]*pdim[2],3),"mm"))
           image(indx*pdim[1],indz*pdim[3],lpvalue[,slices[k],],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
         }
-        if(view=="axial"){
+        if(view == "axial"){
           image(indx*pdim[1],indy*pdim[2],template[,,slices[k]],
-						col=grey(0:255/255),asp=TRUE, xlab="x (mm)", ylab="y (mm)")
+                zlim = rtemp,
+                col=grey(0:255/255),asp=TRUE, xlab="x (mm)", ylab="y (mm)")
           title(paste("axial slice", signif(indz[slices[k]]*pdim[3],3),"mm"))
           image(indx*pdim[1],indy*pdim[2],lpvalue[,,slices[k]],zlim=rlp,add=TRUE,col=heat.colors(256),asp=TRUE)
         }
@@ -624,7 +637,7 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
       scalep <- t(matrix(scalep,length(scalep),10))
       image(1:10,scalep[1,],scalep,col=heat.colors(256),xaxt="n",xlab="",ylab="-log(pvalue)")
     }
-    if(k>nslice) break
+    # if(k>nslice) break
   }
   invisible(list(slices=slices0,center=center0))
 }

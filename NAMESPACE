@@ -17,8 +17,8 @@ import(parallel,awsMethods,nlme)
   importFrom("graphics", "image", "layout", "legend", "lines", "par",
              "plot", "polygon", "text", "title", "hist", "stars")
   importFrom("methods", "getClassDef", "getValidity", "slot",
-             "slotNames")
-  importFrom("stats", "IQR", "convolve", "dchisq", "density", "dnorm",
+             "slotNames", "is")
+  importFrom("stats", "IQR", "convolve", "dchisq", "density", "dnorm", "qnorm",
              "formula", "lm", "median", "optim", "pchisq", "pnorm",
              "poly", "prcomp", "pt", "qchisq", "qt", "quantile", "rnorm", "cor",
              "rt", "var", "vcov", "sd", "spectrum", "dist", "as.dist", "hclust")
