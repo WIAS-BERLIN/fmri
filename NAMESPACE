@@ -8,6 +8,7 @@ export(fmri.detrend,fmri.sICA,ICAfingerprint,plot.fmriICA,fmri.sgroupICA,
        plot.fmrigroupICA)
 export(plot.fmridata, plot.fmripvalue)
 export(oro2fmri,fmri2oro)
+export(gen_fmridata)
 # export(findclusters,simclusterthr)
 export(fmri.designG,fmri.lmePar,fmri.metaPar)
 export(niftiImage2fmri)
@@ -17,8 +18,8 @@ import(parallel,awsMethods,nlme)
   importFrom("graphics", "image", "layout", "legend", "lines", "par",
              "plot", "polygon", "text", "title", "hist", "stars")
   importFrom("methods", "getClassDef", "getValidity", "slot",
-             "slotNames")
-  importFrom("stats", "IQR", "convolve", "dchisq", "density", "dnorm",
+             "slotNames", "is")
+  importFrom("stats", "IQR", "convolve", "dchisq", "density", "dnorm", "qnorm",
              "formula", "lm", "median", "optim", "pchisq", "pnorm",
              "poly", "prcomp", "pt", "qchisq", "qt", "quantile", "rnorm", "cor",
              "rt", "var", "vcov", "sd", "spectrum", "dist", "as.dist", "hclust")
