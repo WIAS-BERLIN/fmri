@@ -105,7 +105,8 @@ plot.fmriICA <- function(x,comp=1,center=NULL,thresh=1.5,...){
 #
 #  in Anlehnung an Martini et al PNAS 2007
 #
-   ddim <- dim(x$scomp)
+  mask = x$mask
+  ddim <- dim(x$scomp)
    nt <- dim(x$A)[2]
    ncomp <- ddim[4]
    # use neurological view convention
