@@ -68,7 +68,7 @@
   \item{varm}{covariance matrix of the parameters given by \code{vvector}}
   \item{res}{raw (integer size 2) vector containing residuals of the estimated linear model
              up to scale factor resscale.}
-  \item{resscale}{\code{resscale*extract.data(object,"residuals")} are the residuals. }
+  \item{resscale}{\code{resscale*extractData(object,"residuals")} are the residuals. }
   \item{dim}{dimension of the data cube and residuals}
   \item{arfactor}{estimated autocorrelation parameter}
   \item{rxyz}{array of smoothness from estimated correlation for each
@@ -108,8 +108,8 @@
   hrf <- fmri.stimulus(107, c(18, 48, 78), 15, 2)
   z <- fmri.design(hrf,2)
   model <- fmri.lm(data, z, verbose=TRUE)
-  plot(extract.data(data)[16, 16, 16,])
-  lines(extract.data(data)[16, 16, 16, ] - extract.data(model, "residuals")[16, 16, 16, ], col=2)
+  plot(extractData(data)[16, 16, 16,])
+  lines(extractData(data)[16, 16, 16, ] - extractData(model, "residuals")[16, 16, 16, ], col=2)
   }
 }
 \keyword{ regression }% at least one, from doc/KEYWORDS

@@ -1457,7 +1457,7 @@ write.NIFTI <- function(ttt, header=NULL, filename) {
   close(con)
 }
 
-extract.data <- function(z,what="data"){
+extractData <- function(z,what="data"){
   if (what=="residuals") {
       if(!is.null(z$resscale)){
           ttt <- readBin(z$res,"integer",prod(z$dim),2)*z$resscale
