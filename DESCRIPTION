@@ -1,6 +1,6 @@
 Package: fmri
-Version: 1.8-3
-Date: 2018-06-04
+Version: 1.8-4
+Date: 2019-02-20
 Title: Analysis of fMRI Experiments
 Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
                     email = "tabelow@wias-berlin.de"),
@@ -17,7 +17,7 @@ Description: Contains R-functions to perform an fMRI analysis as described in
              Polzehl et al. (2010) <DOI:10.1016/j.neuroimage.2010.04.241>,
              Tabelow and Polzehl (2011) <DOI:10.18637/jss.v044.i11>.
 License: GPL (>= 2)
-Copyright: This package is Copyright (C) 2006-2018 Weierstrass Institute for
+Copyright: This package is Copyright (C) 2006-2019 Weierstrass Institute for
                                            Applied Analysis and Stochastics.
 URL: http://www.wias-berlin.de/software/imaging/
 Note: This software comes with NO warranty! It is NOT intended to be used
