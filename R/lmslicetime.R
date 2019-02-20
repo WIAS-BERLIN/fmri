@@ -203,7 +203,7 @@ fmri.lm <- function(ds,
   actype <- match.arg(actype)
 
   ## extract the compressed data
-  ttt <- extract.data(ds)
+  ttt <- extractData(ds)
   ## test dimensionality of object and design matrix
   dy <- dim(ttt)
   if (length(dy) != 4)
@@ -552,7 +552,7 @@ slicetiming <- function(fmridataobj, sliceorder=NULL){
 #
 #  performs sinc interpolation for slicetiming
 #
-   data <- extract.data(fmridataobj)
+   data <- extractData(fmridataobj)
    data <- aperm(data,c(4,1:3))
    if(is.null(sliceorder)) sliceorder <- 1:dim(data)[4]
    if(length(sliceorder)!=dim(data)[4])

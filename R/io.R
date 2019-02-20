@@ -1463,7 +1463,7 @@ extractData <- function(z,what="data"){
           ttt <- readBin(z$res,"integer",prod(z$dim),2)*z$resscale
           dim(ttt) <- z$dim[c(4,1:3)]
           } else {
-          warning("extract.data: No residuals available, returning NULL")
+          warning("extractData: No residuals available, returning NULL")
           ttt <- NULL
       }
       } else {
@@ -1475,7 +1475,7 @@ extractData <- function(z,what="data"){
         }
         dim(ttt) <- z$dim
         } else {
-          warning("extract.data: No residuals available, returning NULL")
+          warning("extractData: No residuals available, returning NULL")
           ttt <- NULL
       }
       }

@@ -10,7 +10,7 @@ fmri.sICA <- function(data, mask=NULL, ncomp=20,
         bwt/data$header$pixdim[5] else bwt
   if(ssmooth) data <- smooth.fmridata(data,bwvoxel,unit)
   if(tsmooth) data <- smooth.fmridata(data,bwtime,unit,what="temporal")
-  ttt <- extract.data(data)
+  ttt <- extractData(data)
   if(is.null(mask)) mask <- data$mask
   if(!is.logical(mask)) mask <- as.logical(mask)
   ddim <- data$dim[1:3]
