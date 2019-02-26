@@ -233,7 +233,7 @@ list(scorr=corr,bw=bw)
 ##
 ##  create fmri-object from nifti
 ##
-niftiImage2fmri <- function(niftiobj, level=0.75, setmask=TRUE,
+niftiImage2fmri <- function(niftiobj, level=0.75, mask=NULL, setmask=TRUE,
                             indx=NULL,indy=NULL,indz=NULL,avoidnegs=FALSE) {
   ## Convert niftiImage object to "fmridata" S3 object
   ddim <- attributes(niftiobj)$dim
@@ -257,15 +257,15 @@ niftiImage2fmri <- function(niftiobj, level=0.75, setmask=TRUE,
     ttt <- ttt-min(ttt)
     warning("changed mean of data to avoid negatives")
   }
-  mask <- array(TRUE, c(dx,dy,dz))
+  mask0 <- array(TRUE, c(dx,dy,dz))
   if (setmask) {
-    mask[ttt[,,,1] < quantile(ttt[,,,1], level, na.rm=TRUE)] <- FALSE
+    mask0[ttt[,,,1] < quantile(ttt[,,,1], level, na.rm=TRUE)] <- FALSE
     dim(ttt) <- c(prod(dim(ttt)[1:3]), dim(ttt)[4])
     na <- ttt %*% rep(1, dim(ttt)[2])
-    mask[is.na(na)] <- FALSE
+    mask0[is.na(na)] <- FALSE
     ttt[is.na(na), ] <- 0
-    dim(mask) <- c(dx, dy, dz)
-    mask <- connect.mask(mask)|mask
+    dim(mask0) <- c(dx, dy, dz)
+    mask0 <- connect.mask(mask0)|mask0
   }
   datascale <- max(abs(ttt))/32767
   ttt <- as.integer(ttt/datascale)
@@ -286,8 +286,16 @@ niftiImage2fmri <- function(niftiobj, level=0.75, setmask=TRUE,
             roit = 1,
             weights = weights,
             header = list(NULL),
-            mask = mask)
+            mask = mask0)
   class(z) <- "fmridata"
   attr(z, "file") <- ""
+  if(!is.null(mask)) z <- setmask(z,mask)
   return(z)
+}
+
+setmask <- function(fmriobj, mask){
+   if(class(fmriobj)!="fmridata") stop("setmask 1st argument needs to be of class fmridata\n")
+   if(!is.array(mask)) stop("setmask 2nd argument needs to be an array\n")
+   if(any(fmriobj$dim[1:3]!=dim(mask))) stop("setmask incompatible dimensions of arguments\n")
+   fmriobj$mask <- mask
 }

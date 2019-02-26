@@ -8,7 +8,7 @@ Transforms a niftiImage (created by readNifti from package RNiftyReg) into
 an object with class fmridata
 }
 \usage{
-niftiImage2fmri(niftiobj, level = 0.75, setmask = TRUE, indx = NULL,
+niftiImage2fmri(niftiobj, level = 0.75, mask=NULL, setmask = TRUE, indx = NULL,
    indy = NULL, indz = NULL, avoidnegs = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -19,6 +19,8 @@ niftiImage2fmri(niftiobj, level = 0.75, setmask = TRUE, indx = NULL,
   \item{level}{
     quantile used in mask definition
 }
+\item{mask}{array or nifti-object containing the mask. If set this replaces
+the mask defined by argument level.}
   \item{setmask}{
     if \code{TRUE} create a brain mask
 }

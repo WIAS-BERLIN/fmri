@@ -7,7 +7,7 @@
 \description{ Visualize objects created by function \code{fmri.pvalue}
 }
 \usage{
-plot.fmripvalue(x, template = NULL, mask = NULL,
+\method{plot}{fmripvalue}(x, template = NULL, mask = NULL,
       view = c("axial", "coronal", "sagittal", "orthographic"),
       slices = NULL, ncol = 1, nrow = 1, center = NULL, ...)
 }
@@ -43,9 +43,6 @@ plot.fmripvalue(x, template = NULL, mask = NULL,
   \item{\dots}{
   additional parameters (not evaluated)
 }
-}
-\details{
-%%  ~~ If necessary, more details than the description above ~~
 }
 \value{
 list with components

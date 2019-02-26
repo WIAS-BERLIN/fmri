@@ -178,7 +178,7 @@ plot.fmridata <- function(x, anatomic = NULL , maxpvalue = 0.05, spm = TRUE,
               maxpvalue=maxpvalue,posNew=position(x),localx=x,inputStuff=inputStuff)
     }
   } else if ("fmridata" %in% class(x)) {
-    signal <- extract.data(x)
+    signal <- extractData(x)
     signal <- scaleSignal(signal,cutOff)
     # re-scale signal to 0 ... 1
     if (type == "3d" || type == "3D") {
@@ -510,13 +510,13 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
   } else {
       if(all(ddim==dim(template))){
       indaligned <- list(ixT1=1:ddim[1], iyT1=1:ddim[2], izT1=1:ddim[3],
-                         ixspm=1:ddim[1], iyspm=1:ddim[2], izspm=1:ddim[3], 
+                         ixspm=1:ddim[1], iyspm=1:ddim[2], izspm=1:ddim[3],
                          pixdim=x$header$pixdim[2:4])
       } else {
         stop("incompatible template")
       }
   }
-	
+
   pvalue <- pvalue[indaligned$ixspm,indaligned$iyspm,indaligned$izspm]
   lpvalue <- lpvalue[indaligned$ixspm,indaligned$iyspm,indaligned$izspm]
   mask <- mask[indaligned$ixspm,indaligned$iyspm,indaligned$izspm]

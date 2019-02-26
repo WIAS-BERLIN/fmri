@@ -121,3 +121,28 @@ mask[stat < thresh] <- FALSE
         attr(z, "mode") <- paste("Threshold: searchlight radius=",radius, "\n")
         z
     }
+
+getSearchlightPattern <- function(spm, voxel, radius){
+   if(!"fmrispm"%in%class(spm)) stop("getSearchlightPattern: first argument needs to be an SPM")
+   if(!is.logical(voxel)) stop("getSearchlightPattern: second argument needs to be a voxel mask")
+   if(any(dim(voxel)!=spm$dim[1:3])) stop("getSearchlightPattern: Incompatible dimensions")
+   if(!is.numeric(radius) ||radius < 1) stop("getSearchlightPattern: illegal radius")
+   beta <- spm$cbeta
+   ddim <- dim(beta)
+   sregion <- searchlight(radius)
+   nsl <- dim(sregion)[2]
+   nb <- ddim[4]
+   nvox <- sum(voxel)
+   z <- .Fortran(C_extrpatt,
+                 as.double(spm$beta),
+                 as.logical(voxel),
+                 as.integer(ddim[1]),
+                 as.integer(ddim[2]),
+                 as.integer(ddim[3]),
+                 as.integer(ddim[4]),
+                 as.integer(sregion),
+                 as.integer(nsl),
+         pattern=double(nb*nsl*nvox),
+                 as.integer(nvox))$pattern
+   invisible(array(z,c(nb,nsl,nvox)))
+}

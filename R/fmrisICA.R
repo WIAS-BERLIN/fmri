@@ -10,7 +10,7 @@ fmri.sICA <- function(data, mask=NULL, ncomp=20,
         bwt/data$header$pixdim[5] else bwt
   if(ssmooth) data <- smooth.fmridata(data,bwvoxel,unit)
   if(tsmooth) data <- smooth.fmridata(data,bwtime,unit,what="temporal")
-  ttt <- extract.data(data)
+  ttt <- extractData(data)
   if(is.null(mask)) mask <- data$mask
   if(!is.logical(mask)) mask <- as.logical(mask)
   ddim <- data$dim[1:3]
@@ -157,19 +157,22 @@ plot.fmriICA <- function(x,comp=1,center=NULL,thresh=1.5,...){
    rsp <- c(thresh,rs[2])
    rsn <- c(rs[1],-thresh)
    rs <- c(-thresh,thresh)
-   image(-indy[n2:1],indz,scomp[center[1],n2:1,],zlim=rs,col=grey(0:255/255),asp=TRUE,xlab="-yind")
+   indx <- indx*x$voxdim[1]
+   indy <- indy*x$voxdim[2]
+   indz <- indz*x$voxdim[3]
+   image(-indy[n2:1],indz,scomp[center[1],n2:1,],zlim=rs,col=grey(0:255/255),asp=TRUE,xlab="-y (mm)", ylab="z (mm)")
    title(paste("Component",comp,"sagittal"))
    lines(-indy[c(1,n2)],rep(indz[center[3]],2),col=2)
    lines(rep(-indy[center[2]],2),indz[c(1,n3)],col=2)
    image(-indy[n2:1],indz,scompp[center[1],n2:1,],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
    image(-indy[n2:1],indz,scompn[center[1],n2:1,],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
-   image(indx,indz,scomp[,center[2],],zlim=rs,col=grey(0:255/255),asp=TRUE)
+   image(indx,indz,scomp[,center[2],],zlim=rs,col=grey(0:255/255),asp=TRUE, xlab="x (mm)", ylab="z (mm)")
    title(paste("Component",comp,"coronal"))
    lines(indx[c(1,n1)],rep(indz[center[3]],2),col=2)
    lines(rep(indx[center[1]],2),indz[c(1,n3)],col=2)
    image(indx,indz,scompp[,center[2],],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
    image(indx,indz,scompn[,center[2],],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
-   image(indx,indy,scomp[,,center[3]],zlim=rs,col=grey(0:255/255),asp=TRUE)
+   image(indx,indy,scomp[,,center[3]],zlim=rs,col=grey(0:255/255),asp=TRUE, xlab="x (mm)", ylab="y (mm)")
    title(paste("Component",comp,"axial"))
    lines(indx[c(1,n1)],rep(indy[center[2]],2),col=2)
    lines(rep(indx[center[1]],2),indy[c(1,n2)],col=2)
@@ -194,6 +197,7 @@ plot.fmriICA <- function(x,comp=1,center=NULL,thresh=1.5,...){
 fmri.sgroupICA <- function(icaobjlist,thresh=.75,minsize=2){
    nobj <- length(icaobjlist)
    ddim <- dim(icaobjlist[[1]]$scomp)
+   voxdim <- icaobjlist[[1]]$voxdim
    ncomp <- 0
    for(i in 1:nobj){
       ncomp <- ncomp + dim(icaobjlist[[i]]$A)[1]
@@ -244,7 +248,8 @@ fmri.sgroupICA <- function(icaobjlist,thresh=.75,minsize=2){
    size <- size[ind]
    icacomp <- icacomp[,ind]
    dim(icacomp) <- c(ddim[1:3],length(cl))
-   z<-list(icacomp=icacomp,cluster=cluster,height=height,hdm=hdm,cl=cl,size=size)
+   z<-list(icacomp=icacomp, cluster=cluster, height=height, hdm=hdm, cl=cl,
+           size=size, voxdim=voxdim)
    class(z) <- "fmrigroupICA"
    invisible(z)
 }
@@ -297,19 +302,22 @@ rs <- range(scomp,-thresh,thresh)
 rsp <- c(thresh,rs[2])
 rsn <- c(rs[1],-thresh)
 rs <- c(-thresh,thresh)
-image(-indy[n2:1],indz,scomp[center[1],n2:1,],zlim=rs,col=grey(0:255/255),asp=TRUE,xlab="-yind")
+indx <- indx*x$voxdim[1]
+indy <- indy*x$voxdim[2]
+indz <- indz*x$voxdim[3]
+image(-indy[n2:1],indz,scomp[center[1],n2:1,],zlim=rs,col=grey(0:255/255),asp=TRUE,xlab="-y (mm)",ylab="z (mm)")
 title(paste("Component",comp,"size",size,"sagittal"))
 lines(-indy[c(1,n2)],rep(indz[center[3]],2),col=2)
 lines(rep(-indy[center[2]],2),indz[c(1,n3)],col=2)
 image(-indy[n2:1],indz,scompp[center[1],n2:1,],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
 image(-indy[n2:1],indz,scompn[center[1],n2:1,],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
-image(indx,indz,scomp[,center[2],],zlim=rs,col=grey(0:255/255),asp=TRUE)
+image(indx,indz,scomp[,center[2],],zlim=rs,col=grey(0:255/255),asp=TRUE,xlab="x (mm)",ylab="z (mm)")
 title(paste("Component",comp,"size",size,"coronal"))
 lines(indx[c(1,n1)],rep(indz[center[3]],2),col=2)
 lines(rep(indx[center[1]],2),indz[c(1,n3)],col=2)
 image(indx,indz,scompp[,center[2],],zlim=rsp,add=TRUE,col=heat.colors(256),asp=TRUE)
 image(indx,indz,scompn[,center[2],],zlim=rsn,add=TRUE,col=rainbow(256,start=.4,end=.7)[256:1],asp=TRUE)
-image(indx,indy,scomp[,,center[3]],zlim=rs,col=grey(0:255/255),asp=TRUE)
+image(indx,indy,scomp[,,center[3]],zlim=rs,col=grey(0:255/255),asp=TRUE,xlab="x (mm)",ylab="y                (mm)")
 title(paste("Component",comp,"size",size,"axial"))
 lines(indx[c(1,n1)],rep(indy[center[2]],2),col=2)
 lines(rep(indx[center[1]],2),indy[c(1,n2)],col=2)

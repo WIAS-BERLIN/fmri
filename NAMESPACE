@@ -1,8 +1,9 @@
 useDynLib(fmri, .registration = TRUE, .fixes = "C_")
-export(read.AFNI,read.ANALYZE,read.DICOM,read.NIFTI,extract.data,cutroi)
+export(read.AFNI,read.ANALYZE,read.DICOM,read.NIFTI,extractData,cutroi,setmask)
 export(write.AFNI,write.ANALYZE,write.NIFTI)
 export(fmri.stimulus,fmri.design,fmri.lm,sincfilter,slicetiming)
 export(fmri.smooth,fmri.pvalue,fmri.searchlight,fmri.cluster)
+export(getSearchlightPattern)
 export(plot.fmridata,plot.fmrisegment,summary.fmridata,print.fmridata)
 export(fmri.detrend,fmri.sICA,ICAfingerprint,plot.fmriICA,fmri.sgroupICA,
        plot.fmrigroupICA)
