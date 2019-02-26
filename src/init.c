@@ -14,6 +14,8 @@ void F77_NAME(chawsv)(double* y, double* res, double* si2, int* mask, int* wlse,
                       double* lambda, double* theta, double* bi, double* resnew,
                       double* thn, int* kern, int* skern, double* spmin,
                       double* spmax, double* lwght, double* wght, double* resi);
+void F77_NAME(extrpatt)(double* beta, int* voxel, int* n1, int* n2, int* n3,
+                      int* nb, int* sl, int* nsl, double* pattern, int* nvox);
 void F77_NAME(gethani)(double* x, double* y, int* kern, double* value,
                        double* wght, double* eps, double* bw);
 void F77_NAME(getslpv)(double* stat, int* n, double* p, double* kv, int* nsim,
@@ -61,6 +63,8 @@ static R_NativePrimitiveArgType chawsv_t[]={REALSXP, REALSXP, REALSXP,
     LGLSXP, LGLSXP, INTSXP, INTSXP, INTSXP, INTSXP, REALSXP, REALSXP,
     REALSXP, REALSXP, REALSXP, REALSXP, INTSXP, INTSXP, REALSXP,
     REALSXP, REALSXP, REALSXP, REALSXP};
+static R_NativePrimitiveArgType extrpatt_t[]={REALSXP, LGLSXP, INTSXP,
+    INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, REALSXP, INTSXP};
 static R_NativePrimitiveArgType gethani_t[]={REALSXP, REALSXP, INTSXP,
     REALSXP, REALSXP, REALSXP, REALSXP};
 static R_NativePrimitiveArgType getslpv_t[]={REALSXP, INTSXP, REALSXP,
@@ -101,6 +105,7 @@ static const R_FortranMethodDef fmethods[] = {
             {"ccluster", (DL_FUNC) &ccluster_ ,5 , ccluster_t},
             {"chaws2", (DL_FUNC) &chaws2_ ,18, chaws2_t},
             {"chawsv", (DL_FUNC) &chawsv_ ,22, chawsv_t},
+            {"extrpatt", (DL_FUNC) &extrpatt_ ,10, extrpatt_t},
             {"gethani", (DL_FUNC) &gethani_ ,7, gethani_t},
             {"getslpv", (DL_FUNC) &getslpv_ ,6, getslpv_t},
             {"getvofh", (DL_FUNC) &getvofh_ ,4, getvofh_t},
