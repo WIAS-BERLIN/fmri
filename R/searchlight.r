@@ -123,7 +123,7 @@ mask[stat < thresh] <- FALSE
     }
 
 getSearchlightPattern <- function(spm, voxel, radius){
-   if(!"fmrispm"%in%class(smp)) stop("getSearchlightPattern: first argument needs to be an SPM")
+   if(!"fmrispm"%in%class(spm)) stop("getSearchlightPattern: first argument needs to be an SPM")
    if(!is.logical(voxel)) stop("getSearchlightPattern: second argument needs to be a voxel mask")
    if(any(dim(voxel)!=spm$dim[1:3])) stop("getSearchlightPattern: Incompatible dimensions")
    if(!is.numeric(radius) ||radius < 1) stop("getSearchlightPattern: illegal radius")
