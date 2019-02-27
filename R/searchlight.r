@@ -127,11 +127,12 @@ getSearchlightPattern <- function(spm, voxel, radius){
    if(!is.logical(voxel)) stop("getSearchlightPattern: second argument needs to be a voxel mask")
    if(any(dim(voxel)!=spm$dim[1:3])) stop("getSearchlightPattern: Incompatible dimensions")
    if(!is.numeric(radius) ||radius < 1) stop("getSearchlightPattern: illegal radius")
-   beta <- spm$cbeta
+   beta <- spm$beta
    ddim <- dim(beta)
    sregion <- searchlight(radius)
    nsl <- dim(sregion)[2]
    nb <- ddim[4]
+   if(any(is.na(voxel))) voxel[is.na(voxel)] <- FALSE
    nvox <- sum(voxel)
    z <- .Fortran(C_extrpatt,
                  as.double(spm$beta),
