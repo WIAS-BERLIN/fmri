@@ -1,8 +1,8 @@
       function sinc(x)
         implicit none
-        real*8 :: sinc
-        real*8 :: x, xpi
-        real*8, parameter :: pi = acos(-1d0)
+        double precision :: sinc
+        double precision :: x, xpi
+        double precision, parameter :: pi = acos(-1d0)
         xpi = x*pi
         sinc = 1.d0
         if(x /= 0) sinc = sin(xpi)/xpi
@@ -11,21 +11,21 @@
       subroutine sincfilter(t,nt,x,nx,ft,wr)
         implicit none
         integer :: nt, nx, wr
-        real*8 :: t(nt), x(nx), ft(nt), meanx, minx, maxx
-        real*8 :: sinc
+        double precision :: t(nt), x(nx), ft(nt), meanx, minx, maxx
+        double precision :: sinc
         integer :: i, j, wrm1
-        real*8 :: y
+        double precision :: y
         external sinc
         wrm1 = wr-1
         meanx = 0.d0
         minx = x(1)
         maxx = minx
-        DO i = 1, nt
+        DO i = 1, nx
            meanx = meanx + x(i)
            minx = min(x(i),minx)
            maxx = max(x(i),maxx)
         END DO
-        meanx = meanx/nt
+        meanx = meanx/nx
         DO i = 1, nt
            y=0.d0
            DO j = 0, wrm1
@@ -48,9 +48,9 @@
       subroutine slicetim(x,nt,n1,n2,n3,y,t,sliceord)
         implicit none
         integer :: n1,n2,n3,nt,sliceord(n3)
-        real*8 :: x(nt,n1,n2,n3), y(nt,n1,n2,n3), t(nt)
+        double precision :: x(nt,n1,n2,n3), y(nt,n1,n2,n3), t(nt)
         integer :: i1,i2,i3,it,wr
-        real*8 :: rn3,dt
+        double precision :: rn3,dt
         wr=8
         rn3 = n3
         DO i3=1,n3
