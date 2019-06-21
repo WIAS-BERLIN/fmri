@@ -433,7 +433,7 @@ fmri.lm <- function(ds,
   lags <- c(5, 5, 3)
   corr <- .Fortran(C_mcorr,
                    as.double(residuals),
-                   as.logical(mask),
+                   as.integer(mask),
                    as.integer(dy[1]),
                    as.integer(dy[2]),
                    as.integer(dy[3]),
