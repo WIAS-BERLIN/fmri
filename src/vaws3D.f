@@ -101,8 +101,8 @@ C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
 C
       implicit none
-      integer n1,n2,n3,kern,skern
-      logical aws,wlse,mask(*)
+      integer n1,n2,n3,kern,skern,wlse,mask(*)
+      logical aws
       double precision y(*),theta(*),bi(*),thn(*),lambda,spmax,
      1       wght(2),si2(*),hakt,lwght(*),spmin,
      2       getlwght
@@ -153,7 +153,8 @@ C$OMP DO SCHEDULE(GUIDED)
          i2=mod((iind-i1)/n1+1,n2)
          if(i2.eq.0) i2=n2
          i3=(iind-i1-(i2-1)*n1)/n12+1
-         if(mask(iind)) THEN
+         if(mask(iind).ne.0) THEN
+C        if(mask(iind)) THEN
             thn(iind)=0.d0
             CYCLE
          END IF
@@ -211,7 +212,7 @@ C  first stochastic term
                   j1=jw1-clw1+i1
 C                  if(j1.lt.1.or.j1.gt.n1) CYCLE
                   jind=j1+jind2
-                  IF(mask(jind)) CYCLE
+                  IF(mask(jind).ne.0) CYCLE
                   wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
                   if(wj.le.0.d0) CYCLE
                   IF (aws) THEN
@@ -219,7 +220,7 @@ C                  if(j1.lt.1.or.j1.gt.n1) CYCLE
      1                             skern,spf,spmin,spmax,bii,wj)
                      if(wj.le.0.d0) CYCLE
                   END IF
-                  if(wlse) THEN
+                  if(wlse.ne.0) THEN
                      wj=wj*si2(jind)
                   ELSE
                      swjv=swjv+wj/si2(jind)
@@ -230,7 +231,7 @@ C                  if(j1.lt.1.or.j1.gt.n1) CYCLE
             END DO
          END DO
          thn(iind)=swjy/swj
-         IF(wlse) THEN
+         IF(wlse.ne.0) THEN
             bi(iind)=swj
          ELSE
             bi(iind)=swj*swj/swjv
@@ -263,8 +264,8 @@ C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
 C
       implicit none
-      integer n1,n2,n3,n4,kern,skern
-      logical aws,wlse,mask(*)
+      integer n1,n2,n3,n4,kern,skern,wlse,mask(*)
+      logical aws
       double precision res(n4,*),y(*),theta(*),
      1       bi(*),thn(*),lambda,spmax,wght(2),
      1       si2(*),hakt,lwght(*),spmin,
@@ -315,7 +316,7 @@ C$OMP DO SCHEDULE(GUIDED)
          i2=mod((iind-i1)/n1+1,n2)
          if(i2.eq.0) i2=n2
          i3=(iind-i1-(i2-1)*n1)/n1/n2+1
-         if(mask(iind)) THEN
+         if(mask(iind).ne.0) THEN
                thn(iind)=0.d0
             DO k=1,n4
                resnew(k,iind)=0.d0
@@ -343,7 +344,7 @@ C  first stochastic term
                   j1=jw1-clw1+i1
                   if(j1.lt.1.or.j1.gt.n1) CYCLE
                   jind=j1+n1*(j2-1)+n1*n2*(j3-1)
-                  IF(mask(jind)) CYCLE
+                  IF(mask(jind).ne.0) CYCLE
                   wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
                   if(wj.le.0.d0) CYCLE
                   IF (aws) THEN
@@ -351,7 +352,7 @@ C  first stochastic term
      1                             skern,spf,spmin,spmax,bii,wj)
                      if(wj.le.0.d0) CYCLE
                   END IF
-                  if(wlse) THEN
+                  if(wlse.ne.0) THEN
                      wj=wj*si2(jind)
                   END IF
                   swj=swj+wj
@@ -399,8 +400,8 @@ C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
 C
       implicit none
-      integer dv,n1,n2,n3,kern,skern,ncores
-      logical aws,wlse,mask(*)
+      integer dv,n1,n2,n3,kern,skern,ncores,wlse,mask(*)
+      logical aws
       double precision theta(*),bi(*),y(dv,*),
      1       lambda,spmax,wght(2),si2(*),thn(dv,*),
      1       hakt,lwght(*),spmin,getlwght,swjy(dv,ncores)
@@ -446,7 +447,7 @@ C$OMP DO SCHEDULE(GUIDED)
          i2=mod((iind-i1)/n1+1,n2)
          if(i2.eq.0) i2=n2
          i3=(iind-i1-(i2-1)*n1)/n1/n2+1
-         if(mask(iind)) THEN
+         if(mask(iind).ne.0) THEN
             DO k=1,dv
                thn(k,iind)=0.d0
             END DO
@@ -471,7 +472,7 @@ C  first stochastic term
                   j1=jw1-clw1+i1
                   if(j1.lt.1.or.j1.gt.n1) CYCLE
                   jind=j1+n1*(j2-1)+n1*n2*(j3-1)
-                  IF(mask(jind)) CYCLE
+                  IF(mask(jind).ne.0) CYCLE
                   wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
                   if(wj.le.0.d0) CYCLE
                   IF (aws) THEN
@@ -479,7 +480,7 @@ C  first stochastic term
      1                             skern,spf,spmin,spmax,bii,wj)
                      if(wj.le.0.d0) CYCLE
                   END IF
-                  if(wlse) THEN
+                  if(wlse.ne.0) THEN
                      wj=wj*si2(jind)
                   END IF
                   swj=swj+wj
@@ -517,8 +518,7 @@ C   spmax    specifies the truncation point of the stochastic kernel
 C   wght     scaling factor for second and third dimension (larger values shrink)
 C
       implicit none
-      integer n1,n2,n3,kern,dv
-      logical wlse,mask(n1,n2,n3)
+      integer n1,n2,n3,kern,dv,wlse,mask(n1,n2,n3)
       double precision y(n1,n2,n3,dv),thn(n1,n2,n3,dv),wght(2),
      1       si2(n1,n2,n3),hakt,lwght(*),getlwght
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
@@ -547,7 +547,7 @@ C
       DO i3=1,n3
          DO i2=1,n2
             DO i1=1,n1
-               if(mask(i1,i2,i3)) THEN
+               if(mask(i1,i2,i3).ne.0) THEN
                   DO k=1,dv
                      thn(i1,i2,i3,k)=0.d0
                   END DO
@@ -568,10 +568,10 @@ C   scaling of sij outside the loop
 C  first stochastic term
                         j1=jw1-clw1+i1
                         if(j1.lt.1.or.j1.gt.n1) CYCLE
-                        IF(mask(j1,j2,j3)) CYCLE
+                        IF(mask(j1,j2,j3).ne.0) CYCLE
                         wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
                         if(wj.le.0.d0) CYCLE
-                        if(wlse) THEN
+                        if(wlse.ne.0) THEN
                            wj=wj*si2(j1,j2,j3)
                         END IF
                         swj=swj+wj

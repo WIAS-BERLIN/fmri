@@ -22,7 +22,8 @@ C   wght     scaling factor for second and third dimension (larger values shrink
 C
       implicit none
       integer n1,n2,n3,nt,kern,segm(n1,n2,n3)
-      logical aws,wlse,mask(n1,n2,n3),restrict
+      logical aws
+      integer wlse,mask(n1,n2,n3),restrict
       double precision y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),delta,
      1      thn(n1,n2,n3),lambda,wght(2),si2(n1,n2,n3),pval(n1,n2,n3),
      1      hakt,lwght(*),thi,getlwght,swres(nt),fov,vq(n1,n2,n3),
@@ -59,7 +60,7 @@ C
       DO i3=1,n3
          DO i2=1,n2
             DO i1=1,n1
-               if(mask(i1,i2,i3)) THEN
+               if(mask(i1,i2,i3).ne.0) THEN
                   thn(i1,i2,i3)=0.d0
                   CYCLE
                END IF
@@ -84,7 +85,7 @@ C   scaling of sij outside the loop
       DO i3=1,n3
          DO i2=1,n2
             DO i1=1,n1
-               if(mask(i1,i2,i3)) THEN
+               if(mask(i1,i2,i3).ne.0) THEN
                   thn(i1,i2,i3)=0.d0
                   CYCLE
                END IF
@@ -109,14 +110,14 @@ C   scaling of sij outside the loop
 C  first stochastic term
                         j1=jw1-clw1+i1
                         if(j1.lt.1.or.j1.gt.n1) CYCLE
-                        IF(mask(j1,j2,j3)) CYCLE
+                        IF(mask(j1,j2,j3).ne.0) CYCLE
                         wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
                         if(wj.le.0.d0) CYCLE
                         si2j=si2(j1,j2,j3)
                         IF (aws) THEN
                            thij=thi-theta(j1,j2,j3)
                            sij=thij*thij*bii
-                           if(restrict) THEN
+                           if(restrict.ne.0) THEN
 C restrict smoothing within segmented areas
                            if(abs(segmi).eq.1) THEN
                            if(segmi*segm(j1,j2,j3).gt.0) THEN
@@ -138,7 +139,7 @@ C endif for restrict smoothing within segmented areas
                            IF(sij.gt.1.d0) CYCLE
                         IF(sij.gt.0.25d0) wj=wj*(1.d0-spf*(sij-0.25d0))
                         END IF
-                        if(wlse)  wj=wj*si2j
+                        if(wlse.ne.0)  wj=wj*si2j
                         swj=swj+wj
                         swjy=swjy+wj*y(j1,j2,j3)
 C  weighted sum of residuals
@@ -159,7 +160,7 @@ C
                thi=swjy/swj
                z1=z1/nt
                si = (z/nt - z1*z1)
-               if(restrict) THEN
+               if(restrict.ne.0) THEN
 C  smoothing restricted within segmented ares
                if(segmi.eq.1) THEN
                   if(thi.lt.theta(i1,i2,i3)) THEN
@@ -181,7 +182,7 @@ C  smoothing restricted within segmented ares
 C  end if for smoothing restricted within segmented ares
                thn(i1,i2,i3)=thi
 C               si = si/nt
-               if(restrict.and.segmi.ne.0) CYCLE
+               if(restrict*segmi.ne.0) CYCLE
                varest(i1,i2,i3)=si
                bi(i1,i2,i3)=si2i/si*si2(i1,i2,i3)
 C   keep the detected segment
