@@ -5,6 +5,19 @@ sudo: false
 cache: packages
 warnings_are_errors: true
 
+addons:
+  apt:
+    packages:
+    - tcl8.5-dev
+    - tk8.5-dev
+
+r_binary_packages:
+  - rgl
+  - tcltk
+
+services:
+  - xvfb
+
 env:
   global: 
     - RGL_USE_NULL=TRUE
