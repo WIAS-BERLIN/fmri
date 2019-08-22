@@ -13,7 +13,6 @@ addons:
 
 r_binary_packages:
   - rgl
-  - tcltk
 
 services:
   - xvfb
