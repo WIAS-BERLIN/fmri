@@ -13,8 +13,7 @@ addons:
     - libcurl4-openssl-dev
     - libxml2-dev       
     - libfftw3-dev
-    - libgsl0-dev
-    - libgsl0ldbl
+    - libgsl-dev
 
 r_binary_packages:
   - rgl
