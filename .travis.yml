@@ -4,3 +4,31 @@ language: R
 sudo: false
 cache: packages
 warnings_are_errors: true
+
+addons:
+  apt:
+    packages:
+    - tcl8.5-dev
+    - tk8.5-dev
+    - libcurl4-openssl-dev
+    - libxml2-dev       
+    - libfftw3-dev
+    - libgsl2
+
+r_binary_packages:
+  - rgl
+
+services:
+  - xvfb
+
+env:
+  global: 
+    - RGL_USE_NULL=TRUE
+    - DISPLAY=:99.0
+
+before_install:
+  - fname=travis_helpers.sh
+  - wget -O ${fname} http://bit.ly/travis_helpers
+  - cat ${fname}; source ${fname}; rm ${fname}  
+  - export rver=`r_version`; echo $rver ;
+  - gsl_install 2.1 || true ; # now checking version    
