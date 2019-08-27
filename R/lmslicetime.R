@@ -220,6 +220,8 @@ fmri.lm <- function(ds,
   }
   if (is.null(mask)) mask <- ds$mask
     dm <- dim(mask)
+    mask <- array(as.logical(mask),dm)
+## mask needs to be logical for index operations
   if (length(dm) != 3)
     stop("fmri.lm: mask is not three-dimensional array!")
   if (any(dy[1:3] != dm))

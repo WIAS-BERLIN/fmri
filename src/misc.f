@@ -144,7 +144,11 @@ C         if (.not.(mask(i1,i2,i3).and.mask(i1+l1,i2+l2,i3+l3))) CYCLE
             enddo
          enddo
       enddo
-      scorr=z/k
+      if(k.ne.0) then
+        scorr=z/k
+      ELSE
+        scorr=0.d0
+      END IF
       return
       end
       subroutine sweepm(res,mask,n1,n2,n3,nv)
@@ -251,7 +255,11 @@ C  correlation in x
             enddo
          enddo
       enddo
-      scorr=z/k
+      if(k.ne.0) THEN
+         scorr=z/k
+      ELSE
+        scorr=0.d0
+      END IF
       return
       end
       subroutine imcorr(res,mask,n1,n2,n3,nv,scorr,l1,l2,l3)
