@@ -36,6 +36,7 @@ segm3D <- function(y,weighted=TRUE,
 #
 #  Auxilary functions
       getkrval <- function(df,ladj,fov,k,alpha){
+#  define threshold for segmantation
       dfinv <- 1/df
       lfov <- log(fov)
       idffov <- dfinv*log(fov)

@@ -344,7 +344,7 @@ C  correlation in x
 
       subroutine ivar(res,resscale,mask,n1,n2,n3,nv,var)
 C
-C   compute variance estimates !!! (not the inverse)
+C   compute variance estimates from residuals in spm !!! (not the inverse)
 C
       implicit none
       integer n1,n2,n3,nv

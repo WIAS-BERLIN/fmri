@@ -1,6 +1,8 @@
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
-C   Perform one iteration in local constant three-variate aws (gridded)
+C   Perform one iteration in local constant three-variate segmentation
+C   for fmri data
+C   called in segm3D file (segm.r)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine segm3d(y,res,si2,mask,wlse,n1,n2,n3,nt,df,hakt,
@@ -9,16 +11,30 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
      4                  restrict)
 C
 C   y        observed values of regression function
+C   res      residuals (scaled with spm$resscale)
+C   si2      variance estimate^{-1} (1/arg to function segm3D)
+C   mask     brain mask
+C   wlse     (arg weighted to function segm3D)
 C   n1,n2,n3    design dimensions
+C   nt       length of fmri series
+C   df       degrees of freedom for estimates in spm (skalar)
 C   hakt     actual bandwidth
-C   lambda   lambda or lambda*sigma2 for Gaussian models
+C   lambda   lambda (for t(,df))
 C   theta    estimates from last step   (input)
-C   bi       \sum  Wi   (output)
-C   ai       \sum  Wi Y     (output)
-C   model    specifies the probablilistic model for the KL-Distance
-C   kern     specifies the location kernel
-C   spmax    specifies the truncation point of the stochastic kernel
-C   wght     scaling factor for second and third dimension (larger values shrink)
+C   bi       \sum  Wi (wi depends on si2 in case of wlse)  (output)
+C   thn      new estimates (output)
+C   lwght    array for non-adaptive weights (auxiliary)
+C   wght     rations of voxel dimensions
+C   swres    vector for sum_j(w_{ij} res_j) (auxiliary)
+C   pval     array of p-values  (auxiliary for penalized smoothing within segments)
+C   segm     array of segment assignments (output)
+C   delta    half width for hypothesis (input)
+C   thresh   threshold for local test in segment assignments
+C   fov      sum(mask) (input)
+C   vq       array of rescaled variance varesti/si2 (input)
+C   vest0i   array of residual variances (input)
+C   varest   array of smoothed residual variances (input)
+C   restrict penalize smoothing within segments (using pval)
 C
       implicit none
       integer n1,n2,n3,nt,kern,segm(n1,n2,n3)
