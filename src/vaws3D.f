@@ -88,17 +88,22 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
      1                  theta,bi,thn,kern,skern,spmin,spmax,
      2                  lwght,wght)
 C
-C   y        observed values of regression function
+C   y        3D parameter map
+C   si2      variance estimate^{-1} (1/arg to function segm3D)
+C   mask     brain mask
+C   wlse     (arg weighted to function segm3D)
 C   n1,n2,n3    design dimensions
 C   hakt     actual bandwidth
-C   lambda   lambda or lambda*sigma2 for Gaussian models
+C   lambda   lambda
 C   theta    estimates from last step   (input)
-C   bi       \sum  Wi   (output)
-C   ai       \sum  Wi Y     (output)
-C   model    specifies the probablilistic model for the KL-Distance
-C   kern     specifies the location kernel
-C   spmax    specifies the truncation point of the stochastic kernel
-C   wght     scaling factor for second and third dimension (larger values shrink)
+C   bi       \sum  Wi (wi depends on si2 in case of wlse)  (output)
+C   thn      new estimates (output)
+C   kern     indicator for K_{loc}
+C   skern    indicator for K_{st}
+C   spmin    shape parameter for plateo kernel  (skern=1)
+C   spmax    shape parameter for kernel K_{st}  (skern=1,2)
+C   lwght    array for non-adaptive weights (auxiliary)
+C   wght     rations of voxel dimensions
 C
       implicit none
       integer n1,n2,n3,kern,skern,wlse,mask(*)
@@ -251,17 +256,25 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
      1                  lambda,theta,bi,resnew,thn,kern,skern,
      2                  spmin,spmax,lwght,wght,resi)
 C
-C   y        observed values of regression function
-C   n1,n2,n3    design dimensions
+C   y        3D array (estimated spm)
+C   res      residual array (4D)
+C   si2      variance estimate^{-1} (1/arg to function segm3D)
+C   mask     brain mask
+C   wlse     (arg weighted to function segm3D)
+C   n1,n2,n3,n4    design dimensions
 C   hakt     actual bandwidth
-C   lambda   lambda or lambda*sigma2 for Gaussian models
+C   lambda   lambda
 C   theta    estimates from last step   (input)
-C   bi       \sum  Wi   (output)
-C   ai       \sum  Wi Y     (output)
-C   model    specifies the probablilistic model for the KL-Distance
-C   kern     specifies the location kernel
-C   spmax    specifies the truncation point of the stochastic kernel
-C   wght     scaling factor for second and third dimension (larger values shrink)
+C   bi       \sum  Wi (wi depends on si2 in case of wlse)  (output)
+C   resnew   smoothed residuals (output)
+C   thn      new estimates (output)
+C   kern     indicator for K_{loc}
+C   skern    indicator for K_{st}
+C   spmin    shape parameter for plateo kernel  (skern=1)
+C   spmax    shape parameter for kernel K_{st}  (skern=1,2)
+C   lwght    array for non-adaptive weights (auxiliary)
+C   wght     rations of voxel dimensions
+C   resi     auxilary array
 C
       implicit none
       integer n1,n2,n3,n4,kern,skern,wlse,mask(*)
@@ -388,16 +401,25 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
      1                  theta,ncores,bi,thn,kern,skern,spmin,spmax,
      2                  lwght,wght,swjy)
 C
-C   y        observed values of regression function
+C   y        values of residuals
+C   si2      variance estimate^{-1} (1/arg to function segm3D)
+C   mask     brain mask
+C   wlse     (arg weighted to function segm3D)
 C   n1,n2,n3    design dimensions
+C   dv       length of fMRI time serien
 C   hakt     actual bandwidth
-C   lambda   lambda or lambda*sigma2 for Gaussian models
+C   lambda   lambda
 C   theta    estimates from last step   (input)
-C   bi       \sum  Wi       (input)
-C   model    specifies the probablilistic model for the KL-Distance
-C   kern     specifies the location kernel
-C   spmax    specifies the truncation point of the stochastic kernel
-C   wght     scaling factor for second and third dimension (larger values shrink)
+C   ncores   number of cores used in openMP
+C   bi       \sum  Wi (wi depends on si2 in case of wlse)  (output)
+C   thn      new estimates (output)
+C   kern     indicator for K_{loc}
+C   skern    indicator for K_{st}
+C   spmin    shape parameter for plateo kernel  (skern=1)
+C   spmax    shape parameter for kernel K_{st}  (skern=1,2)
+C   lwght    array for non-adaptive weights (auxiliary)
+C   wght     rations of voxel dimensions
+C   swjy     auxilary array
 C
       implicit none
       integer dv,n1,n2,n3,kern,skern,ncores,wlse,mask(*)
@@ -499,7 +521,7 @@ C$OMP FLUSH(thn)
       END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
-C   Perform one iteration in local constant three-variate aws (gridded)
+C   Perform 3D smoothing on a grid (gridded)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine smooth3d(y,si2,mask,wlse,n1,n2,n3,dv,hakt,
