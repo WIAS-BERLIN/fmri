@@ -1,14 +1,3 @@
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C
-C   extract element of 3D array
-C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      double precision function getlwght(lwght,dw1,dw2,dw3,j1,j2,j3)
-      integer dw1,dw2,dw3,j1,j2,j3
-      double precision lwght(dw1,dw2,dw3)
-      getlwght=lwght(j1,j2,j3)
-      RETURN
-      END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
 C
@@ -109,13 +98,11 @@ C
       integer n1,n2,n3,kern,skern,wlse,mask(*)
       logical aws
       double precision y(*),theta(*),bi(*),thn(*),lambda,spmax,
-     1       wght(2),si2(*),hakt,lwght(*),spmin,
-     2       getlwght
+     1       wght(2),si2(*),hakt,lwght(*),spmin
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,clw1,
      1        clw2,clw3,dlw1,dlw2,dlw3,n,iind,jind,n12,jind2,jind3,
-     2        a1,e1,a2,e2,a3,e3,k
+     2        a1,e1,a2,e2,a3,e3,k,dlw12
       double precision bii,swj,swjy,thi,wj,hakt2,spf,si2i,swjv
-      external getlwght
       hakt2=hakt*hakt
       spf=spmax/(spmax-spmin)
       aws=lambda.lt.1d40
@@ -130,6 +117,7 @@ C
       dlw1=min(2*n1-1,2*ih1+1)
       dlw2=min(2*n2-1,2*ih2+1)
       dlw3=min(2*n3-1,2*ih3+1)
+      dlw12=dlw1*dlw2
       clw1=(dlw1+1)/2
       clw2=(dlw2+1)/2
       clw3=(dlw3+1)/2
@@ -146,7 +134,7 @@ C
       call rchkusr()
 C$OMP PARALLEL DEFAULT(NONE)
 C$OMP& SHARED(n1,n2,n3,kern,skern,aws,wlse,mask,y,theta,bi,thn,
-C$OMP& lambda,spmax,wght,si2,hakt,lwght,spmin,spf,
+C$OMP& lambda,spmax,wght,si2,hakt,lwght,spmin,spf,dlw12,
 C$OMP& ih1,ih2,ih3,clw1,clw2,clw3,dlw1,dlw2,dlw3,n,hakt2,n12)
 C$OMP& FIRSTPRIVATE(a1,e1,a2,e2,a3,e3)
 C$OMP& PRIVATE(iind,i1,i2,i3,k,si2i,bii,swjv,swj,thi,swjy,
@@ -218,7 +206,7 @@ C  first stochastic term
 C                  if(j1.lt.1.or.j1.gt.n1) CYCLE
                   jind=j1+jind2
                   IF(mask(jind).ne.0) CYCLE
-                  wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
+                  wj=lwght(jw1+(jw2-1)*dlw1+(jw3-1)*dlw12)
                   if(wj.le.0.d0) CYCLE
                   IF (aws) THEN
                      call awswght3(thi,theta(jind),
@@ -279,15 +267,11 @@ C
       implicit none
       integer n1,n2,n3,n4,kern,skern,wlse,mask(*)
       logical aws
-      double precision res(n4,*),y(*),theta(*),
-     1       bi(*),thn(*),lambda,spmax,wght(2),
-     1       si2(*),hakt,lwght(*),spmin,
-     1       resi(*),getlwght,resnew(n4,*)
-      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
-     1       clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n,thrednr,iind,jind,
-     2       rthrednr
+      double precision res(n4,*),y(*),theta(*),bi(*),thn(*),lambda,
+     1   spmax,wght(2),si2(*),hakt,lwght(*),spmin,resi(*),resnew(n4,*)
+      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,clw1,clw2,clw3,
+     1   dlw1,dlw2,dlw3,k,n,thrednr,iind,jind,rthrednr,dlw12
       double precision bii,swj,swjy,thi,wj,hakt2,spf,si2i,sresisq,resik
-      external getlwght
 !$      integer omp_get_thread_num
 !$      external omp_get_thread_num
       hakt2=hakt*hakt
@@ -303,6 +287,7 @@ C
       dlw1=min(2*n1-1,2*ih1+1)
       dlw2=min(2*n2-1,2*ih2+1)
       dlw3=min(2*n3-1,2*ih3+1)
+      dlw12=dlw1*dlw2
       clw1=(dlw1+1)/2
       clw2=(dlw2+1)/2
       clw3=(dlw3+1)/2
@@ -315,7 +300,7 @@ C
 C$OMP PARALLEL DEFAULT(NONE)
 C$OMP& SHARED(kern,skern,mask,res,
 C$OMP& y,theta,bi,thn,spmax,wght,si2,hakt,lwght,spmin,
-C$OMP& resi,resnew,ih1,ih2,ih3,hakt2,spf)
+C$OMP& resi,resnew,ih1,ih2,ih3,hakt2,spf,dlw12)
 C$OMP& FIRSTPRIVATE(n,n1,n2,n3,n4,lambda,clw1,clw2,clw3,
 C$OMP& dlw1,dlw2,dlw3,aws,wlse)
 C$OMP& PRIVATE(iind,jind,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,k,si2i,
@@ -358,7 +343,7 @@ C  first stochastic term
                   if(j1.lt.1.or.j1.gt.n1) CYCLE
                   jind=j1+n1*(j2-1)+n1*n2*(j3-1)
                   IF(mask(jind).ne.0) CYCLE
-                  wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
+                  wj=lwght(jw1+(jw2-1)*dlw1+(jw3-1)*dlw12)
                   if(wj.le.0.d0) CYCLE
                   IF (aws) THEN
                      call awswght3(thi,theta(jind),
@@ -426,11 +411,10 @@ C
       logical aws
       double precision theta(*),bi(*),y(dv,*),
      1       lambda,spmax,wght(2),si2(*),thn(dv,*),
-     1       hakt,lwght(*),spmin,getlwght,swjy(dv,ncores)
-      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
+     1       hakt,lwght(*),spmin,swjy(dv,ncores)
+      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,dlw12,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n,thrednr,iind,jind
       double precision bii,swj,wj,hakt2,spf,si2i,thi
-      external getlwght
 !$      integer omp_get_thread_num
 !$      external omp_get_thread_num
       hakt2=hakt*hakt
@@ -446,6 +430,7 @@ C
       dlw1=min(2*n1-1,2*ih1+1)
       dlw2=min(2*n2-1,2*ih2+1)
       dlw3=min(2*n3-1,2*ih3+1)
+      dlw12=dlw1*dlw2
       clw1=(dlw1+1)/2
       clw2=(dlw2+1)/2
       clw3=(dlw3+1)/2
@@ -457,7 +442,7 @@ C
       thrednr = 1
 C$OMP PARALLEL DEFAULT(NONE)
 C$OMP& SHARED(dv,n1,n2,n3,kern,skern,ncores,aws,wlse,mask,theta,
-C$OMP& bi,y,lambda,spmax,wght,si2,thn,hakt,lwght,spmin,
+C$OMP& bi,y,lambda,spmax,wght,si2,thn,hakt,lwght,spmin,dlw12,
 C$OMP& ih1,ih2,ih3,clw1,clw2,clw3,dlw1,dlw2,dlw3,n,swjy,hakt2,spf)
 C$OMP& PRIVATE(iind,jind,i1,i2,i3,k,si2i,bii,swj,j1,j2,j3,thi,
 C$OMP& jw1,jw2,jw3,wj,thrednr)
@@ -495,7 +480,7 @@ C  first stochastic term
                   if(j1.lt.1.or.j1.gt.n1) CYCLE
                   jind=j1+n1*(j2-1)+n1*n2*(j3-1)
                   IF(mask(jind).ne.0) CYCLE
-                  wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
+                  wj=lwght(jw1+(jw2-1)*dlw1+(jw3-1)*dlw12)
                   if(wj.le.0.d0) CYCLE
                   IF (aws) THEN
                      call awswght3(thi,theta(jind),
@@ -542,11 +527,10 @@ C
       implicit none
       integer n1,n2,n3,kern,dv,wlse,mask(n1,n2,n3)
       double precision y(n1,n2,n3,dv),thn(n1,n2,n3,dv),wght(2),
-     1       si2(n1,n2,n3),hakt,lwght(*),getlwght
+     1       si2(n1,n2,n3),hakt,lwght(*)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
-     1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n
+     1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,n,dlw12
       double precision swj,swjy(dv),wj,hakt2
-      external getlwght
       hakt2=hakt*hakt
 C
 C   first calculate location weights
@@ -558,6 +542,7 @@ C
       dlw1=min(2*n1-1,2*ih1+1)
       dlw2=min(2*n2-1,2*ih2+1)
       dlw3=min(2*n3-1,2*ih3+1)
+      dlw12=dlw1*dlw2
       clw1=(dlw1+1)/2
       clw2=(dlw2+1)/2
       clw3=(dlw3+1)/2
@@ -591,7 +576,7 @@ C  first stochastic term
                         j1=jw1-clw1+i1
                         if(j1.lt.1.or.j1.gt.n1) CYCLE
                         IF(mask(j1,j2,j3).ne.0) CYCLE
-                        wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
+                        wj=lwght(jw1+(jw2-1)*dlw1+(jw3-1)*dlw12)
                         if(wj.le.0.d0) CYCLE
                         if(wlse.ne.0) THEN
                            wj=wj*si2(j1,j2,j3)

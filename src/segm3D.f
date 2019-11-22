@@ -42,15 +42,15 @@ C
       integer wlse,mask(n1,n2,n3),restrict
       double precision y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),delta,
      1      thn(n1,n2,n3),lambda,wght(2),si2(n1,n2,n3),pval(n1,n2,n3),
-     1      hakt,lwght(*),thi,getlwght,swres(nt),fov,vq(n1,n2,n3),
+     1      hakt,lwght(*),thi,swres(nt),fov,vq(n1,n2,n3),
      1      varest(n1,n2,n3),res(nt,n1,n2,n3),vest0i(n1,n2,n3),df,
      1      thresh,kv(n1,n2,n3)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
-     1        clw1,clw2,clw3,dlw1,dlw2,dlw3,k,segmi
+     1        clw1,clw2,clw3,dlw1,dlw2,dlw3,dlw12,k,segmi
       double precision bii,swj,swjy,wj,hakt2,spf,si2j,si2i,vqi,
      1       varesti,fpchisq,ti,thij,sij,z,si,swr,z1,
      2       a,b,dn,pvali
-      external getlwght,fpchisq
+      external fpchisq
       kern=1
       hakt2=hakt*hakt
       spf=4.d0/3.d0
@@ -64,6 +64,7 @@ C
       dlw1=min(2*n1-1,2*ih1+1)
       dlw2=min(2*n2-1,2*ih2+1)
       dlw3=min(2*n3-1,2*ih3+1)
+      dlw12=dlw1*dlw2
       clw1=(dlw1+1)/2
       clw2=(dlw2+1)/2
       clw3=(dlw3+1)/2
@@ -127,7 +128,7 @@ C  first stochastic term
                         j1=jw1-clw1+i1
                         if(j1.lt.1.or.j1.gt.n1) CYCLE
                         IF(mask(j1,j2,j3).ne.0) CYCLE
-                        wj=getlwght(lwght,dlw1,dlw2,dlw3,jw1,jw2,jw3)
+                        wj=lwght(jw1+(jw2-1)*dlw1+(jw3-1)*dlw12)
                         if(wj.le.0.d0) CYCLE
                         si2j=si2(j1,j2,j3)
                         IF (aws) THEN

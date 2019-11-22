@@ -87,14 +87,7 @@ segm3D <- function(y,weighted=TRUE,
 # deal with homoskedastic Gaussian case by extending sigma2
    residuals <- readBin(res,"integer",prod(ddim),2)
   cat("\nfmri.smooth: first variance estimate","\n")
-  varest0 <- .Fortran(C_ivar,as.double(residuals),
-                           as.double(resscale),
-                           as.integer(mask),
-                           as.integer(n1),
-                           as.integer(n2),
-                           as.integer(n3),
-                           as.integer(nt),
-                           var = double(n1*n2*n3))$var
+  varest0 <- aws::residualVariance(residuals, mask, resscale)
    vq <- varest0*sigma2
    if (is.null(wghts)) wghts <- c(1,1,1)
    hinit <- hinit/wghts[1]

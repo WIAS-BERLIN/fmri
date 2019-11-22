@@ -253,15 +253,8 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
   #   Now compute variance of theta and variance reduction factor (with respect to the spatially uncorrelated situation
   residuals <- readBin(res,"integer",prod(ddim),2)
   cat("\nfmri.smooth: first variance estimate","\n")
-  vartheta0 <- .Fortran(C_ivar,as.double(residuals),
-                           as.double(resscale),
-                           as.integer(mask),
-                           as.integer(ddim[1]),
-                           as.integer(ddim[2]),
-                           as.integer(ddim[3]),
-                           as.integer(ddim[4]),
-                           var = double(n1*n2*n3))$var
-  cat("fmri.smooth: smooth the residuals","\n")
+  vartheta0 <- aws::residualVariance(residuals, mask, resscale)
+    cat("fmri.smooth: smooth the residuals","\n")
   residuals <- .Fortran(C_ihaws2,as.double(residuals),
                      as.double(sigma2),
                      as.integer(!mask),
@@ -288,26 +281,9 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
 #   get variances and correlations
   cat("fmri.smooth: estimate correlations","\n")
   lags <- pmin(c(5,5,3),ddim[1:3]-1)
-  scorr <- .Fortran(C_imcorr,as.double(residuals),
-                     as.integer(mask),
-                     as.integer(n1),
-                     as.integer(n2),
-                     as.integer(n3),
-                     as.integer(ddim[4]),
-                     scorr=double(prod(lags)),
-                     as.integer(lags[1]),
-                     as.integer(lags[2]),
-                     as.integer(lags[3]))$scorr
-  dim(scorr) <- lags
+  scorr <- aws::residualSpatialCorr(residuals,mask,lags)
   cat("fmri.smooth: final variance estimate","\n")
-  vartheta <- .Fortran(C_ivar,as.double(residuals),
-                           as.double(resscale),
-                           as.integer(mask),
-                           as.integer(n1),
-                           as.integer(n2),
-                           as.integer(n3),
-                           as.integer(ddim[4]),
-                           var = double(n1*n2*n3))$var
+  vartheta <- aws::residualVariance(residuals, mask, resscale)
   vred <- array(vartheta/vartheta0,c(n1,n2,n3))
   vartheta <- vred/sigma2  #  sigma2 contains inverse variances
   ## "compress" the residuals
@@ -539,18 +515,8 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
   }
   cat("fmri.smooth: estimate correlations","\n")
   lags <- pmin(c(5,5,3),ddim[1:3]-1)
-  scorr <- .Fortran(C_imcorr,as.double(tobj$resnew),
-                     as.integer(mask),
-                     as.integer(n1),
-                     as.integer(n2),
-                     as.integer(n3),
-                     as.integer(ddim[4]),
-                     scorr=double(prod(lags)),
-                     as.integer(lags[1]),
-                     as.integer(lags[2]),
-                     as.integer(lags[3]))$scorr
-  dim(scorr) <- lags
-  vartheta <- 1/tobj$bi
+  scorr <- aws::residualSpatialCorr(tobj$resnew,mask,lags)
+    vartheta <- 1/tobj$bi
   vred <- vartheta*sigma2
   ## "compress" the residuals
   scale <- max(abs(range(tobj$resnew)))/32767

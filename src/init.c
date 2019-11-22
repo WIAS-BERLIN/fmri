@@ -26,14 +26,8 @@ void F77_NAME(ihaws2)(double* y, double* si2, int* mask, int* wlse, int* n1,
                       double* theta, int* ncores, double* bi, double* thn,
                       int* kern, int* skern, double* spmin, double* spmax,
                       double* lwght, double* wght, double* swjy);
-void F77_NAME(imcorr)(double* res, int* mask, int* n1, int* n2, int* n3, int* nv,
-                      double* scorr, int* l1, int* l2, int* l3);
-void F77_NAME(ivar)(double* res, double* resscale, int* mask, int* n1, int* n2,
-                    int* n3, int* nv, double* var);
 void F77_NAME(lconnect)(int* segm, int* n1, int* n2, int* n3, int* i1, int* i2, int* i3,
                         int* ind1, int* ind2, int* ind3, int* checked, int* mask);
-void F77_NAME(mcorr)(double* res, int* mask, int* n1, int* n2, int* n3, int* nv,
-                     double* scorr, int* l1, int* l2, int* l3);
 void F77_NAME(mean3d)(double* res, int* n1, int* n2, int* n3, int* nv, double* mres);
 void F77_NAME(segm3d)(double* y, double* res, double* si2, int* mask,
                       int* wlse, int* n1, int* n2, int* n3, int* nt, double* df,
@@ -73,14 +67,8 @@ static R_NativePrimitiveArgType getvofh_t[]={REALSXP, INTSXP, REALSXP, REALSXP};
 static R_NativePrimitiveArgType ihaws2_t[]={REALSXP, REALSXP, INTSXP, INTSXP,
     INTSXP, INTSXP, INTSXP, INTSXP, REALSXP, REALSXP, REALSXP, INTSXP, REALSXP,
     REALSXP, INTSXP, INTSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP};
-static R_NativePrimitiveArgType imcorr_t[]={REALSXP, INTSXP, INTSXP, INTSXP,
-    INTSXP, INTSXP, REALSXP, INTSXP, INTSXP, INTSXP};
-static R_NativePrimitiveArgType ivar_t[]={REALSXP, REALSXP, INTSXP, INTSXP,
-    INTSXP, INTSXP, INTSXP, REALSXP};
 static R_NativePrimitiveArgType lconnect_t[]={INTSXP, INTSXP, INTSXP, INTSXP,
     INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP};
-static R_NativePrimitiveArgType mcorr_t[]={REALSXP, INTSXP, INTSXP, INTSXP,
-    INTSXP, INTSXP, REALSXP, INTSXP, INTSXP, INTSXP};
 static R_NativePrimitiveArgType mean3d_t[]={REALSXP, INTSXP, INTSXP,
     INTSXP, INTSXP, REALSXP };
 static R_NativePrimitiveArgType segm3d_t[]={REALSXP, REALSXP, REALSXP, INTSXP,
@@ -110,10 +98,7 @@ static const R_FortranMethodDef fmethods[] = {
             {"getslpv", (DL_FUNC) &getslpv_ ,6, getslpv_t},
             {"getvofh", (DL_FUNC) &getvofh_ ,4, getvofh_t},
             {"ihaws2", (DL_FUNC) &ihaws2_ ,21, ihaws2_t},
-            {"imcorr", (DL_FUNC) &imcorr_ ,10, imcorr_t},
-            {"ivar", (DL_FUNC) &ivar_ ,8, ivar_t},
             {"lconnect", (DL_FUNC) &lconnect_ ,12, lconnect_t},
-            {"mcorr", (DL_FUNC) &mcorr_ ,10, mcorr_t},
             {"mean3d", (DL_FUNC) &mean3d_ ,6, mean3d_t},
             {"segm3d", (DL_FUNC) &segm3d_ ,27, segm3d_t},
             {"sincfilter", (DL_FUNC) &sincfilter_ ,6, sincfilter_t},
