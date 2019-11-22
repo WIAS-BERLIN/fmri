@@ -135,7 +135,7 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
   wghts <- (wghts[2:3]/wghts[1])
   tobj <- list(bi= rep(1,n))
   theta <- y
-  maxvol <- getvofh(hmax,lkern,wghts)
+  maxvol <- aws::getvofh(hmax,lkern,wghts)
   kstar <- as.integer(log(maxvol)/log(1.25))
   steps <- kstar+1
 
@@ -160,8 +160,8 @@ aws3D <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=TRUE,
 
   # run single steps to display intermediate results
   while (k<=kstar) {
-      hakt0 <- gethani(1,3,lkern,1.25^(k-1),wghts,1e-4)
-      hakt <- gethani(1,3,lkern,1.25^k,wghts,1e-4)
+      hakt0 <- aws::gethani(1,3,lkern,1.25^(k-1),wghts,1e-4)
+      hakt <- aws::gethani(1,3,lkern,1.25^k,wghts,1e-4)
       hakt.oscale <- if(lkern==3) bw2fwhm(hakt/4) else hakt
       cat("step",k,"bandwidth",signif(hakt.oscale,3)," ")
     dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:3]
@@ -396,7 +396,7 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
   wghts <- (wghts[2:3]/wghts[1])
   tobj <- list(bi= sigma2)
   theta <- y
-  maxvol <- getvofh(hmax,lkern,wghts)
+  maxvol <- aws::getvofh(hmax,lkern,wghts)
   kstar <- as.integer(log(maxvol)/log(1.25))
   steps <- kstar+1
 
@@ -419,8 +419,8 @@ aws3Dfull <- function(y,qlambda=NULL,lkern="Gaussian",skern="Plateau",weighted=T
   dim(residuals) <- c(ddim[4],ddim[1:3])
   vadjust <- apply(residuals,2:4,var)*sigma2
   while (k<=kstar) {
-      hakt0 <- gethani(1,3,lkern,1.25^(k-1),wghts,1e-4)
-      hakt <- gethani(1,3,lkern,1.25^k,wghts,1e-4)
+      hakt0 <- aws::gethani(1,3,lkern,1.25^(k-1),wghts,1e-4)
+      hakt <- aws::gethani(1,3,lkern,1.25^k,wghts,1e-4)
       hakt.oscale <- if(lkern==3) bw2fwhm(hakt/4) else hakt
       cat("step",k,"bandwidth",signif(hakt.oscale,3)," ")
     dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:3]

@@ -44,7 +44,6 @@ void F77_NAME(slight)(double* stat, int* mask, int* n1, int* n2, int* n3,
 void F77_NAME(smooth3d)(double* y, double* si2, int* mask, int* wlse, int* n1,
                         int* n2, int* n3, int* dv, double* hakt, double* thn,
                         int* kern, double* lwght, double* wght, double* swjy);
-void F77_NAME(sofw3df)(double* bw, int* kern, double* wght, double* fw);
 void F77_NAME(thcorr)(double* w, int* n1, int* n2, int* n3, double* corr,
                       int* l1, int* l2, int* l3);
 
@@ -84,7 +83,6 @@ static R_NativePrimitiveArgType slight_t[]={REALSXP, INTSXP, INTSXP, INTSXP,
 static R_NativePrimitiveArgType smooth3d_t[]={REALSXP, REALSXP, INTSXP, INTSXP,
     INTSXP, INTSXP, INTSXP, INTSXP, REALSXP, REALSXP, INTSXP, REALSXP, REALSXP,
     REALSXP};
-static R_NativePrimitiveArgType sofw3df_t[]={REALSXP, INTSXP, REALSXP, REALSXP};
 static R_NativePrimitiveArgType thcorr_t[]={REALSXP, INTSXP, INTSXP, INTSXP,
     REALSXP, INTSXP, INTSXP, INTSXP};
 
@@ -105,7 +103,6 @@ static const R_FortranMethodDef fmethods[] = {
             {"slicetim", (DL_FUNC) &slicetim_ ,8, slicetim_t},
             {"slight", (DL_FUNC) &slight_ ,8, slight_t},
             {"smooth3d", (DL_FUNC) &smooth3d_ ,14, smooth3d_t},
-            {"sofw3df", (DL_FUNC) &sofw3df_ ,4, sofw3df_t},
             {"thcorr", (DL_FUNC) &thcorr_ ,8, thcorr_t},
            {NULL, NULL, 0,NULL}
 };

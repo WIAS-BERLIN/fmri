@@ -97,7 +97,7 @@ segm3D <- function(y,weighted=TRUE,
    theta <- y
    segm <- array(0,dy[1:3])
    varest <- varest0
-   maxvol <- getvofh(hmax,lkern,wghts)
+   maxvol <- aws::getvofh(hmax,lkern,wghts)
    fov <- sum(mask)
    kstar <- as.integer(log(maxvol)/log(1.25))
    steps <- kstar+1
@@ -119,8 +119,8 @@ segm3D <- function(y,weighted=TRUE,
 #   need these values to compute variances
 #
    while (k<=kstar) {
-      hakt0 <- gethani(1,10,lkern,1.25^(k-1),wghts,1e-4)
-      hakt <- gethani(1,10,lkern,1.25^k,wghts,1e-4)
+      hakt0 <- aws::gethani(1,10,lkern,1.25^(k-1),wghts,1e-4)
+      hakt <- aws::gethani(1,10,lkern,1.25^k,wghts,1e-4)
       cat("step",k,"bandwidth",signif(hakt,3)," ")
       dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
       hakt0 <- hakt
