@@ -43,8 +43,21 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
         bw <- spm$bw
     }
     cat("fmri.smooth: smoothing the Statistical Parametric Map\n")
+#
+#   only employ voxel within mask
+#
+    mask <- spm$mask
+    if(is.null(mask)) mask <- array(TRUE,spm$dim)
+# reduce data entries to contain only voxel within mask
+    if(is.null(spm$maskOnly)|!spm$maskOnly) spm <- condensefMRI(spm)
+    mask[sigma2>=1e16] <- FALSE
+    cbeta <- spm$cbeta[mask]
+    if(is.null(res)) {
+        return(warning("Please specify keep=''all'' when calling fmri.lm"))
+    }
+
     ttthat <- switch(tolower(adaptation),
-                     aws = aws3D(y = spm$cbeta,
+                     aws = aws3D(y = cbeta,
                                   sigma2 = variance,
                                   hmax = hmax,
                                   mask = spm$mask,
@@ -58,7 +71,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
                                   ddim = spm$dim,
                                   ladjust = ladjust,
                                   testprop = propagation),
-                     fullaws = aws3Dfull(y = spm$cbeta,
+                     fullaws = aws3Dfull(y = cbeta,
                                           sigma2 = variance,
                                           hmax = hmax,
                                           mask = spm$mask,
@@ -71,7 +84,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
                                           ddim = spm$dim,
                                           ladjust = ladjust,
                                           testprop = propagation),
-                     none = aws3D(y = spm$cbeta,
+                     none = aws3D(y = cbeta,
                                    sigma2 = variance,
                                    hmax = hmax,
                                    mask = spm$mask,
@@ -85,7 +98,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
                                    resscale = spm$resscale,
                                    ddim = spm$dim,
                                    ladjust = ladjust),
-                     segment = segm3D(y = spm$cbeta,
+                     segment = segm3D(y = cbeta,
                                       sigma2 = variance,
                                       hmax = hmax,
                                       mask = spm$mask,
@@ -140,7 +153,6 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
     z$roit <- spm$roit
     z$header <- spm$header
     z$format <- spm$format
-    z$dim0 <- spm$dim0
     z$scorr <- ttthat$scorr
     z$call <- args
     attr(z, "file") <- attr(spm, "file")
@@ -247,7 +259,6 @@ fmri.pvalue <- function(spm, mode="basic", na.rm=FALSE, minimum.signal=0, alpha=
   z$roit <- spm$roit
   z$header <- spm$header
   z$format <- spm$format
-  z$dim0 <- spm$dim0
   z$call <- args
   z$alpha <- alpha
   z$thresh <- thresh
