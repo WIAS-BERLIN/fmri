@@ -527,7 +527,6 @@ fmri.lm <- function(ds,
   result$roit <- ds$roit
   result$header <- ds$header
   result$format <- ds$format
-  result$dim0 <- ds$dim0
   class(result) <- c("fmridata","fmrispm")
 
   attr(result, "file") <- attr(ds, "file")

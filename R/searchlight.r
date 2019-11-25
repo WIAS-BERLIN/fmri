@@ -112,7 +112,6 @@ mask[stat < thresh] <- FALSE
         z$roit <- spm$roit
         z$header <- spm$header
         z$format <- spm$format
-        z$dim0 <- spm$dim0
         z$call <- args
         attr(z, "file") <- attr(spm, "file")
         attr(z, "white") <- attr(spm, "white")

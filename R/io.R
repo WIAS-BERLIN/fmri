@@ -223,7 +223,6 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "",
               origin=NULL,
               orient=NULL,
               dim=ddim,
-              dim0=ddim,
               roixa=1,
               roixe=ddim[1],
               roiya=1,
@@ -242,7 +241,6 @@ read.ANALYZE <- function(prefix = c(""), numbered = FALSE, postfix = "",
               origin=NULL,
               orient=NULL,
               dim=NULL,
-              dim0=NULL,
               roixa=NULL,
               roixe=NULL,
               roiya=NULL,
@@ -518,7 +516,6 @@ read.AFNI <- function(filename, vol=NULL, level=0.75, mask=NULL, setmask=TRUE){
            origin=values$ORIGIN,
            orient=c(0,2,5),
            dim=c(ddim,length(vol)),
-           dim0=c(ddim,length(vol)),
            roixa=1,
            roixe=ddim[1],
            roiya=1,
@@ -537,7 +534,6 @@ read.AFNI <- function(filename, vol=NULL, level=0.75, mask=NULL, setmask=TRUE){
               origin=NULL,
               orient=NULL,
               dim=NULL,
-              dim0=NULL,
               roixa=NULL,
               roixe=NULL,
               roiya=NULL,
@@ -1179,7 +1175,6 @@ read.NIFTI <- function(filename, level=0.75, mask=NULL, setmask=TRUE) {
               origin=c(header$qoffsetx,header$qoffsety,header$qoffsetz),
               orient=NULL,
               dim=header$dimension[2:5],
-              dim0=header$dimension[2:5],
               roixa=1,
               roixe=dx,
               roiya=1,
@@ -1199,7 +1194,6 @@ read.NIFTI <- function(filename, level=0.75, mask=NULL, setmask=TRUE) {
               origin=c(header$qoffsetx,header$qoffsety,header$qoffsetz),
               orient=NULL,
               dim=c(dx,dy,dz,dd),
-              dim0=c(dx,dy,dz,dd),
               roixa=1,
               roixe=dx,
               roiya=1,
@@ -1431,9 +1425,9 @@ extractData <- function(z, what="data", maskOnly=FALSE){
        mask <- z$mask
        nvoxel <- sum(mask)
     } else {
-       nvoxel <- prod(z$ddim)[1:3]
+       nvoxel <- prod(z$dim)[1:3]
     }
-    nt <- z$ddim[4]
+    nt <- z$dim[4]
     n <- nt*nvoxel
     if (what == "residuals") {
         if (!is.null(z$resscale)) {
@@ -1481,17 +1475,17 @@ extractData <- function(z, what="data", maskOnly=FALSE){
     }
     if(!is.null(ttt)&!maskOnly){
       if(what=="data") ind <- 1:4 else ind <- c(4,1:3)
-      dim(ttt) <- z$ddim[ind]
+      dim(ttt) <- z$dim[ind]
     }
     invisible(ttt)
 }
 
-expandfMRIdata <- function(z){
+expandfMRI <- function(z){
 # expand fmridataobj to contain full images
 if(!is.null(z$maskOnly)&z$maskOnly){
   mask <- z$mask
   nvoxel <- sum(mask)
-  nt <- z$ddim[4]
+  nt <- z$dim[4]
   n <- nt*nvoxel
   if(!is.null(z$residuals)){
     ttt0 <- readBin(z$res, "integer", n, 2)
@@ -1530,15 +1524,15 @@ condensefMRI <- function(z, mask=NULL){
   if(!is.null(z$mask)&!is.null(mask)){
     if(any(mask&!z$mask))
     warning("condensefMRI: new mask is not a subset of old mask, using intesection")
-    mask[!z$mask] <- FALS 
+    mask[!z$mask] <- FALS
   }
   if(is.null(mask)) mask <- z$mask
   if(is.null(mask)){
     warning("condensefMRI: no mask available\n returning unchanged object")
     invisible(z)
   }
-  nt <- z$ddim[4]
-  ncube <- prod(z$ddim[1:3])
+  nt <- z$dim[4]
+  ncube <- prod(z$dim[1:3])
   n <- nt*ncube
   nvoxel <- sum(mask)
   if(!is.null(z$residuals)){
