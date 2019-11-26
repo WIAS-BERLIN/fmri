@@ -55,7 +55,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
     if(is.null(res)) {
         return(warning("Please specify keep=''all'' when calling fmri.lm"))
     }
-
+    res <- extractData(spm, what="residuals", maskOnly=TRUE)
     ttthat <- switch(tolower(adaptation),
                      aws = aws3D(y = cbeta,
                                   sigma2 = variance,
@@ -66,9 +66,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
                                   lkern = lkern,
                                   skern = skern,
                                   weighted = weighted,
-                                  res = spm$res,
-                                  resscale = spm$resscale,
-                                  ddim = spm$dim,
+                                  res = res,
                                   ladjust = ladjust,
                                   testprop = propagation),
                      fullaws = aws3Dfull(y = cbeta,
@@ -79,8 +77,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
                                           lkern = lkern,
                                           skern = skern,
                                           weighted = weighted,
-                                          res = spm$res,
-                                          resscale = spm$resscale,
+                                          res = res,
                                           ddim = spm$dim,
                                           ladjust = ladjust,
                                           testprop = propagation),
@@ -94,8 +91,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
                                    lkern = lkern,
                                    skern = skern,
                                    weighted = weighted,
-                                   res = spm$res,
-                                   resscale = spm$resscale,
+                                   res = res,
                                    ddim = spm$dim,
                                    ladjust = ladjust),
                      segment = segm3D(y = cbeta,
@@ -106,13 +102,16 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
                                       df = spm$df,
                                       h0 = bw,
                                       weighted = weighted,
-                                      res = spm$res,
-                                      resscale = spm$resscale,
+                                      res = res,
                                       ddim = spm$dim,
                                       ladjust = ladjust,
                                       delta = delta,
                                       alpha = alpha,
                                       restricted = restricted))
+    scale <- max(abs(range(ttthat$res)))/32767
+    ttthat$res <- writeBin(as.integer(ttthat$res/scale), raw(), 2)
+    ttthat$resscale <- scale
+
     cat("\n")
     cat("fmri.smooth: determine local smoothness\n")
     if (is.null(ttthat$scorr)) {
@@ -136,7 +135,9 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
     z <- list(cbeta = ttthat$theta, var = ttthat$var, rxyz = rxyz,
               rxyz0 = rxyz0, scorr = spm$scorr, weights = spm$weights,
               bw = bw, hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf,
-              segm = ttthat$segm, mask = ttthat$mask,scale=ttthat$scale,res=ttthat$residuals, call = args)
+              segm = ttthat$segm, mask = ttthat$mask,
+              resscale=ttthat$resscale, res=ttthat$residuals,
+              maskOnly=TRUE, call = args)
     if (adaptation == "segment") {
       class(z) <- c( "fmrisegment", "fmridata")
       z$alpha <- alpha
