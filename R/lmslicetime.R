@@ -331,14 +331,11 @@ fmri.lm <- function(ds,
     #    if (verbose) close(pb)
 
     if (actype == "smooth") {
-      arfactor1 <- array(0,dy[1:3])
-      arfactor1[mask] <- arfactor
-      hmax <- 3.52
+      har <- 3.52
       if (verbose) cat("fmri.lm: smoothing AR(1) parameters with (hmax):", hmax, "... ")
-      ## now smooth (if actype is such) with AWS
-      arfactor <- smooth3D(arfactor1, lkern = "Gaussian", hmax = hmax, wghts = ds$weights, mask = mask)[mask]
-      rm(arfactor1)
-      gc()
+      ## now smooth arfactor (if actype is such) with AWS
+      ## arfactor only contains voxel within mask
+      arfactor <- aws::smooth3D(arfactor, lkern = "Gaussian", h = har, wghts = ds$weights, mask = mask)
       if (verbose) cat("done\n")
     }
     ##

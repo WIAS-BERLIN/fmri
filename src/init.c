@@ -80,9 +80,6 @@ static R_NativePrimitiveArgType slicetim_t[]={REALSXP, INTSXP, INTSXP, INTSXP,
     INTSXP, REALSXP, REALSXP, INTSXP};
 static R_NativePrimitiveArgType slight_t[]={REALSXP, INTSXP, INTSXP, INTSXP,
     INTSXP, INTSXP, INTSXP, REALSXP};
-static R_NativePrimitiveArgType smooth3d_t[]={REALSXP, REALSXP, INTSXP, INTSXP,
-    INTSXP, INTSXP, INTSXP, INTSXP, REALSXP, REALSXP, INTSXP, REALSXP, REALSXP,
-    REALSXP};
 static R_NativePrimitiveArgType thcorr_t[]={REALSXP, INTSXP, INTSXP, INTSXP,
     REALSXP, INTSXP, INTSXP, INTSXP};
 
@@ -102,7 +99,6 @@ static const R_FortranMethodDef fmethods[] = {
             {"sincfilter", (DL_FUNC) &sincfilter_ ,6, sincfilter_t},
             {"slicetim", (DL_FUNC) &slicetim_ ,8, slicetim_t},
             {"slight", (DL_FUNC) &slight_ ,8, slight_t},
-            {"smooth3d", (DL_FUNC) &smooth3d_ ,14, smooth3d_t},
             {"thcorr", (DL_FUNC) &thcorr_ ,8, thcorr_t},
            {NULL, NULL, 0,NULL}
 };
