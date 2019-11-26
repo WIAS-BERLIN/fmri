@@ -259,3 +259,77 @@ C
      -   7.066693d-4*x6-2.079471d-1*ninvh-5.203836d-3*ninvh*dfq
       RETURN
       END
+C
+C   calculate location weights in lwght
+C
+      subroutine locwghts(dlw1,dlw2,dlw3,wght,hakt2,kern,lwght)
+      implicit none
+      integer dlw1,dlw2,dlw3,kern
+      double precision wght(2),hakt2,lwght(dlw1,dlw2,dlw3),lkern
+      external lkern
+      double precision z1,z2,z3
+      integer j1,j2,j3,clw1,clw2,clw3,ih1,ih2
+      clw1=(dlw1+1)/2
+      clw2=(dlw2+1)/2
+      clw3=(dlw3+1)/2
+      DO j3=1,dlw3
+         Do j2=1,dlw2
+            DO j1=1,dlw1
+               lwght(j1,j2,j3)=0.d0
+            END DO
+         END DO
+         z3=(clw3-j3)*wght(2)
+         z3=z3*z3
+         ih2=FLOOR(sqrt(hakt2-z3)/wght(1))
+         DO j2=clw2-ih2,clw2+ih2
+            IF(j2.lt.1.or.j2.gt.dlw2) CYCLE
+            z2=(clw2-j2)*wght(1)
+            z2=z3+z2*z2
+            ih1=FLOOR(sqrt(hakt2-z2))
+            DO j1=clw1-ih1,clw1+ih1
+               IF(j1.lt.1.or.j1.gt.dlw1) CYCLE
+               z1=clw1-j1
+               lwght(j1,j2,j3)=lkern(kern,(z1*z1+z2)/hakt2)
+            END DO
+         END DO
+      END DO
+      RETURN
+      END
+C
+C
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C
+C          Compute Location Kernel (Compact support only, based on x^2
+C                                   ignores scaling)
+C
+C          Kern=1     Plateau
+C          Kern=2     Epanechnicov
+C          Kern=3     Gaussian
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      double precision function lkern(kern,xsq)
+      implicit none
+      integer kern
+      double precision xsq
+      IF (xsq.ge.1) THEN
+         lkern=0.d0
+      ELSE IF (kern.eq.1) THEN
+         IF(xsq.le.0.5d0) THEN
+            lkern=1.d0
+         ELSE
+            lkern=2.d0*(1.d0-xsq)
+         END IF
+      ELSE IF (kern.eq.2) THEN
+         lkern=1.d0-xsq
+      ELSE IF (kern.eq.3) THEN
+         lkern=exp(-xsq*8.d0)
+      ELSE IF (kern.eq.4) THEN
+         lkern=exp(-xsq*18.d0)
+      ELSE
+C        use Epanechnikov
+         lkern=1.d0-xsq
+      ENDIF
+      RETURN
+      END
