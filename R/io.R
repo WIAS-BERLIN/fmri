@@ -1419,13 +1419,15 @@ extractData <- function(z, what="data", maskOnly=FALSE){
   #
   #  extract data or residuals in either compact (mask only) or expanded (full images) form
   #
+    if(is.null(z$maskOnly)) z$maskOnly <- FALSE
+  # z$maskOnly was not set, i.e, we have comlete data cubes
     expand <- z$maskOnly & !maskOnly
     condense <- !z$maskOnly & maskOnly
     if (z$maskOnly){
        mask <- z$mask
        nvoxel <- sum(mask)
     } else {
-       nvoxel <- prod(z$dim)[1:3]
+       nvoxel <- prod(z$dim[1:3])
     }
     nt <- z$dim[4]
     n <- nt*nvoxel
@@ -1521,11 +1523,11 @@ condensefMRI <- function(z, mask=NULL){
     warning("condensefMRI: nothing to do\n returning unchanged object")
     invisible(z)
   }
-  if(z$maskOnly) z <- expandfMRIdata(z)
+  if(z$maskOnly) z <- expandfMRI(z)
   if(!is.null(z$mask)&!is.null(mask)){
     if(any(mask&!z$mask))
     warning("condensefMRI: new mask is not a subset of old mask, using intesection")
-    mask[!z$mask] <- FALS
+    mask[!z$mask] <- FALSE
   }
   if(is.null(mask)) mask <- z$mask
   if(is.null(mask)){
@@ -1537,7 +1539,7 @@ condensefMRI <- function(z, mask=NULL){
   n <- nt*ncube
   nvoxel <- sum(mask)
   if(!is.null(z$residuals)){
-    ttt <- matrix(readBin(z$res, "integer", n, 2), nt, cube)
+    ttt <- matrix(readBin(z$res, "integer", n, 2), nt, ncube)
     z$res <- writeBin(as.integer(ttt[,mask]),raw(),2)
   }
   if(!is.null(z$ttt)){

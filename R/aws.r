@@ -96,7 +96,7 @@ aws3Dfull <- function(y, qlambda=NULL, lkern="Gaussian", skern="Plateau", weight
   }
 
 	z <- aws::aws3Dmaskfull(y, mask, lambda, hmax, res, sigma2, lkern, skern,
-											weighted, u, wghts, h0, testprop)
+											weighted, u, wghts, testprop)
 
 	## "compress" the residuals
 	scale <- max(abs(range(z$residuals)))/32767
@@ -106,63 +106,4 @@ aws3Dfull <- function(y, qlambda=NULL, lkern="Gaussian", skern="Plateau", weight
 	#   vred accounts for variance reduction with respect to uncorrelated (\check{sigma}^2) data
 	class(z) <- "aws.gaussian"
 	invisible(z)
-}
-
-smooth3D <- function(y,lkern="Gaussian",weighted=FALSE,sigma2=NULL,mask=NULL,hmax=NULL,
-                     wghts=NULL) {
-  #
-  # first check arguments and initialize
-  #
-  # test dimension of data (vector of 3D) and define dimension related stuff
-  d <- 3
-  dy <- dim(y)
-  n1 <- dy[1]
-  n2 <- dy[2]
-  n3 <- dy[3]
-  n <- n1*n2*n3
-  if (length(dy)==d) {
-    dim(y) <- dy <- c(dy,1)
-  } else if (length(dy)!=d+1) {
-    stop("y has to be 3 or 4 dimensional")
-  }
-  dv <- dim(y)[d+1]
-    if(is.null(sigma2)) {
-       weighted <- FALSE
-    } else {
-      if(length(sigma2)!=n) weighted <- FALSE
-      sigma2 <- 1/sigma2
-    }
-  if (is.null(hmax)) hmax <- 5    # uses a maximum of about 520 points
-
-  # re-define bandwidth for Gaussian lkern!!!!
-  lkern <- switch(lkern,
-                  Triangle=2,
-                  Plateau=1,
-                  Gaussian=3,
-                  1)
-  if (lkern==3) {
-    # assume  hmax was given in  FWHM  units (Gaussian kernel will be truncated at 4)
-    hmax <- fwhm2bw(hmax)*4
-  }
-  if (is.null(wghts)) wghts <- c(1,1,1)
-  if(is.null(mask)) mask <- array(TRUE,dy[1:3])
-  hmax <- hmax/wghts[1]
-  wghts <- (wghts[2:3]/wghts[1])
-    dlw <- (2*trunc(hmax/c(1,wghts))+1)[1:d]
-    ysmooth <- .Fortran(C_smooth3d,
-                     as.double(y),
-                     as.double(sigma2),
-                     as.integer(!mask),
-                     as.integer(weighted),
-                     as.integer(n1),
-                     as.integer(n2),
-                     as.integer(n3),
-                     as.integer(dv),
-                     hakt=as.double(hmax),
-                     thnew=double(n1*n2*n3*dv),
-                     as.integer(lkern),
-                     double(prod(dlw)),
-                     as.double(wghts),
-                     double(dv))$thnew
-array(ysmooth,dy)
 }

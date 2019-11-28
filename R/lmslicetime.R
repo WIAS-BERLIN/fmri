@@ -332,7 +332,7 @@ fmri.lm <- function(ds,
 
     if (actype == "smooth") {
       har <- 3.52
-      if (verbose) cat("fmri.lm: smoothing AR(1) parameters with (hmax):", hmax, "... ")
+      if (verbose) cat("fmri.lm: smoothing AR(1) parameters with (har):", har, "... ")
       ## now smooth arfactor (if actype is such) with AWS
       ## arfactor only contains voxel within mask
       arfactor <- aws::smooth3D(arfactor, lkern = "Gaussian", h = har, wghts = ds$weights, mask = mask)
@@ -420,33 +420,16 @@ fmri.lm <- function(ds,
   ##
 
   ## re-arrange residual dimensions,
-  ## need to expand residuals to calculate spatial correlations
-  ## residuals0 (condensed to mask) will be returned with results
-  residuals0 <- residuals
-  residuals <- matrix(0,dy[4],voxelcount)
-  residuals[,mask] <- residuals0
-  ## "compress" the residuals
-  scale <- max(abs(range(residuals0)))/32767
-  residuals0 <- writeBin(as.integer(residuals0/scale), raw(), 2)
-  gc()
-  dim(residuals) <- dy[c(4, 1:3)]    # n * vx * vy * vz
-
-  if (verbose) cat("fmri.lm: calculating spatial correlation ... ")
+    if (verbose) cat("fmri.lm: calculating spatial correlation ... ")
 
   lags <- c(5, 5, 3)
-  corr <- .Fortran(C_mcorr,
-                   as.double(residuals),
-                   as.integer(mask),
-                   as.integer(dy[1]),
-                   as.integer(dy[2]),
-                   as.integer(dy[3]),
-                   as.integer(dy[4]),
-                   scorr = double(prod(lags)),
-                   as.integer(lags[1]),
-                   as.integer(lags[2]),
-                   as.integer(lags[3]))$scorr
-  dim(corr) <- lags
-  rm(residuals)
+  corr <- aws::residualSpatialCorr(residuals,mask,resscale=1,compact=TRUE)
+  #
+  #    "compress" the residuals
+  #
+  scale <- max(abs(range(residuals)))/32767
+  residuals <- writeBin(as.integer(residuals/scale), raw(), 2)
+  ## residuals (condensed to mask) will be returned with results
   gc()
 
   ## determined local smoothness
@@ -491,7 +474,7 @@ fmri.lm <- function(ds,
   cx <- u %*% diag(lambda1) %*% vt %*% contrast
   tau1 <- sum(cx[-1] * cx[-length(cx)]) / sum(cx * cx)
   df <- switch(white,
-               abs(diff(dim(z)[1:2])) / (1 + 2*(1 + 2 * prod(hmax/bw)^0.667)^(-1.5) * tau1^2),
+               abs(diff(dim(z)[1:2])) / (1 + 2*(1 + 2 * prod(har/bw)^0.667)^(-1.5) * tau1^2),
                abs(diff(dim(z)[1:2])) / (1 + 2* tau1^2),
                abs(diff(dim(z)[1:2])))
   if (verbose) cat(df, "done\n")
@@ -502,7 +485,7 @@ fmri.lm <- function(ds,
   result$cbeta <- cbeta
   result$var <- variance
   result$mask <- mask
-  result$res <- residuals0
+  result$res <- residuals
   result$resscale <- scale
   results$maskOnly <- TRUE
   result$arfactor <- arfactor
@@ -575,7 +558,7 @@ slicetiming <- function(fmridataobj, sliceorder=NULL){
     dim(newdata) <- dim(data)
     newdata <- aperm(newdata,c(2:4,1))
     datascale <- max(abs(range(newdata)))/32767
-    dim(ttt) <- c(prod(dy[1:3]), nt)
+    dim(ttt) <- c(prod(dy[1:3]), dy[4])
     fmridataobj$ttt <- writeBin(as.integer(ttt[mask,]/datascale),raw(),2)
     fmridataobj$datascale <- datascale
     fmridataobj$maskOnly <- TRUE

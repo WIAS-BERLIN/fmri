@@ -29,14 +29,14 @@
 
 segm3D <- function(y,weighted=TRUE,
                    sigma2=NULL,mask=NULL,hinit=NULL,hmax=NULL,
-                   ladjust=1,graph=FALSE,wghts=NULL,
+                   ladjust=1,wghts=NULL,
                    df=100,h0=c(0,0,0),residuals=NULL, resscale=NULL,
-                   ddim=NULL,delta=0,alpha=.05,restricted=FALSE) {
+                   delta=0,alpha=.05,restricted=FALSE) {
 #
 #
 #  Auxilary functions
       getkrval <- function(df,ladj,fov,k,alpha){
-#  define threshold for segmantation
+#  define threshold for segmentation
       dfinv <- 1/df
       lfov <- log(fov)
       idffov <- dfinv*log(fov)
@@ -63,7 +63,6 @@ segm3D <- function(y,weighted=TRUE,
    if (length(y)!=nvoxel) {
      stop("segm3D: y needs to have length sum(mask)")
    }
-   if(is.null(ddim)) ddim <- dim(y)
 # set the code for the kernel (used in lkern) and set lambda
    lkern <- 1
    skern <- 1
@@ -107,8 +106,6 @@ segm3D <- function(y,weighted=TRUE,
 #  just to ensure monotonicity of thresh with kmax, there exist a few parameter configurations
 #  where the approximation formula does not ensure monotonicity
    cat("FOV",fov,"delta",delta,"thresh",thresh,"ladjust",ladjust,"lambda",lambda,"df",df,"\n")
-   residuals <- residuals*resscale
-   kv <- array(0,dy[1:3])
 #
 #   need these values to compute variances
 #
@@ -116,7 +113,7 @@ segm3D <- function(y,weighted=TRUE,
       hakt0 <- aws::gethani(1,10,lkern,1.25^(k-1),wghts,1e-4)
       hakt <- aws::gethani(1,10,lkern,1.25^k,wghts,1e-4)
       cat("step",k,"bandwidth",signif(hakt,3)," ")
-      dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:d]
+      dlw <- (2*trunc(hakt/c(1,wghts))+1)[1:3]
       hakt0 <- hakt
       bi0 <- tobj$bi
       tobj <- .Fortran(C_segm3d,
@@ -148,21 +145,9 @@ segm3D <- function(y,weighted=TRUE,
                        varest=as.double(varest),
                        as.integer(restricted))[c("bi","thnew","hakt","segm","varest")]
       gc()
-      theta <- array(tobj$thnew,dy[1:3])
-      segm <- array(tobj$segm,dy[1:3])
-      varest <- array(tobj$varest,dy[1:3])
-      dim(tobj$bi) <- dy[1:3]
-      if (graph) {
-         par(mfrow=c(2,2),mar=c(1,1,3,.25),mgp=c(2,1,0))
-         image(y[,,n3%/%2+1],col=gray((0:255)/255),xaxt="n",yaxt="n")
-         title(paste("Observed Image  min=",signif(min(y),3)," max=",signif(max(y),3)))
-         image(theta[,,n3%/%2+1],col=gray((0:255)/255),xaxt="n",yaxt="n")
-         title(paste("Reconstruction  h=",signif(hakt,3)," min=",signif(min(theta),3),"   max=",signif(max(theta),3)))
-         image(segm[,,n3%/%2+1]>0,col=gray((0:255)/255),xaxt="n",yaxt="n")
-         title(paste("Segmentation  h=",signif(hakt,3)," detected=",sum(segm>0)))
-         image(tobj$bi[,,n3%/%2+1],col=gray((0:255)/255),xaxt="n",yaxt="n")
-         title(paste("Sum of weights: min=",signif(min(tobj$bi),3)," mean=",signif(mean(tobj$bi),3)," max=",signif(max(tobj$bi),3)))
-      }
+      theta <- tobj$thnew
+      segm <- tobj$segm
+      varest <- tobj$varest
       if (max(total) >0) {
          cat(signif(total[k],2)*100,"%                 \r",sep="")
       }
