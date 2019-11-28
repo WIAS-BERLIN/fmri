@@ -1507,8 +1507,9 @@ if(!is.null(z$maskOnly)&z$maskOnly){
      z$ttt <- writeBin(as.integer(ttt/datascale),raw(),2)
      z$datascale <- datascale
   }
-  z$maskOnly <- FALSE
-  invisible(z)
+}
+z$maskOnly <- FALSE
+invisible(z)
 }
 
 condensefMRI <- function(z, mask=NULL){
