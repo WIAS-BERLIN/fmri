@@ -11,7 +11,6 @@ void F77_NAME(getslpv)(double* stat, int* n, double* p, double* kv, int* nsim,
                        double* pval);
 void F77_NAME(lconnect)(int* segm, int* n1, int* n2, int* n3, int* i1, int* i2, int* i3,
                         int* ind1, int* ind2, int* ind3, int* checked, int* mask);
-void F77_NAME(mean3d)(double* res, int* n1, int* n2, int* n3, int* nv, double* mres);
 void F77_NAME(segm3d)(double* y, double* res, double* si2, int* pos,
                       int* wlse, int* n1, int* n2, int* n3, int* nt, double* df,
                       double* hakt, double* lambda, double* theta,
@@ -38,8 +37,6 @@ static R_NativePrimitiveArgType getslpv_t[]={REALSXP, INTSXP, REALSXP,
     REALSXP, INTSXP, REALSXP};
 static R_NativePrimitiveArgType lconnect_t[]={INTSXP, INTSXP, INTSXP, INTSXP,
     INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP};
-static R_NativePrimitiveArgType mean3d_t[]={REALSXP, INTSXP, INTSXP,
-    INTSXP, INTSXP, REALSXP };
 static R_NativePrimitiveArgType segm3d_t[]={REALSXP, REALSXP, REALSXP, INTSXP,
     INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, REALSXP, REALSXP, REALSXP, REALSXP,
     REALSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP, INTSXP, REALSXP,
@@ -59,7 +56,6 @@ static const R_FortranMethodDef fmethods[] = {
             {"extrpatt", (DL_FUNC) &extrpatt_ ,10, extrpatt_t},
             {"getslpv", (DL_FUNC) &getslpv_ ,6, getslpv_t},
             {"lconnect", (DL_FUNC) &lconnect_ ,12, lconnect_t},
-            {"mean3d", (DL_FUNC) &mean3d_ ,6, mean3d_t},
             {"segm3d", (DL_FUNC) &segm3d_ ,27, segm3d_t},
             {"sincfilter", (DL_FUNC) &sincfilter_ ,6, sincfilter_t},
             {"slicetim", (DL_FUNC) &slicetim_ ,8, slicetim_t},
