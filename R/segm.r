@@ -30,7 +30,7 @@
 segm3D <- function(y,weighted=TRUE,
                    sigma2=NULL,mask=NULL,hinit=NULL,hmax=NULL,
                    ladjust=1,graph=FALSE,wghts=NULL,
-                   df=100,h0=c(0,0,0),res=NULL, resscale=NULL,
+                   df=100,h0=c(0,0,0),residuals=NULL, resscale=NULL,
                    ddim=NULL,delta=0,alpha=.05,restricted=FALSE) {
 #
 #
@@ -52,20 +52,18 @@ segm3D <- function(y,weighted=TRUE,
 # first check arguments and initialize
 #
    args <- match.call()
-   if(is.null(ddim)) ddim <- dim(y)
-# test dimension of data (vector of 3D) and define dimension related stuff
-   d <- 3
-   dy <- dim(y)
-   n1 <- dy[1]
-   n2 <- dy[2]
-   n3 <- dy[3]
-   n <- n1*n2*n3
-   nt <- ddim[4]
-   if (length(dy)==d+1) {
-      dim(y) <- dy[1:3]
-   } else if (length(dy)!=d) {
-      stop("y has to be 3 dimensional")
+   dmask <- dim(mask)
+   n1 <- dmask[1]
+   n2 <- dmask[2]
+   n3 <- dmask[3]
+   nvoxel <- sum(mask)
+   nt <- dim(residuals)[1]
+   position <- array(0,dmask)
+   position[mask] <- 1:nvoxel
+   if (length(y)!=nvoxel) {
+     stop("segm3D: y needs to have length sum(mask)")
    }
+   if(is.null(ddim)) ddim <- dim(y)
 # set the code for the kernel (used in lkern) and set lambda
    lkern <- 1
    skern <- 1
@@ -77,17 +75,13 @@ segm3D <- function(y,weighted=TRUE,
    if (is.null(hmax)) hmax <- 5    # uses a maximum of about 520 points
 # estimate variance in the gaussian case if necessary
 # deal with homoskedastic Gaussian case by extending sigma2
-   if (length(sigma2)==1) sigma2<-array(sigma2,dy[1:3])
-   if (length(sigma2)!=n) stop("sigma2 does not have length 1 or same length as y")
-   dim(sigma2) <- dy[1:3]
-   if(is.null(mask)) mask <- array(TRUE,dy[1:3])
-   mask[sigma2>=1e16] <- FALSE
+   if (length(sigma2)==1) sigma2<-array(sigma2,nvoxel)
+   if (length(sigma2)!=nvoxel) stop("sigma2 does not have length 1 or same length as y")
 #  in these points sigma2 probably contains NA's
    sigma2 <- 1/sigma2 #  taking the invers yields simpler formulaes
 # deal with homoskedastic Gaussian case by extending sigma2
-   residuals <- readBin(res,"integer",prod(ddim),2)
   cat("\nfmri.smooth: first variance estimate","\n")
-  varest0 <- aws::residualVariance(residuals, mask, resscale)
+  varest0 <- aws::residualVariance(residuals, mask, resscale=1)
    vq <- varest0*sigma2
    if (is.null(wghts)) wghts <- c(1,1,1)
    hinit <- hinit/wghts[1]
@@ -95,7 +89,7 @@ segm3D <- function(y,weighted=TRUE,
    wghts <- wghts[2:3]/wghts[1]
    tobj <- list(bi= sigma2)
    theta <- y
-   segm <- array(0,dy[1:3])
+   segm <- numeric(nvoxel)
    varest <- varest0
    maxvol <- aws::getvofh(hmax,lkern,wghts)
    fov <- sum(mask)
@@ -129,7 +123,7 @@ segm3D <- function(y,weighted=TRUE,
                        as.double(y),
                        as.double(residuals),
                        as.double(sigma2),
-                       as.integer(!mask),
+                       as.integer(position),
                        as.integer(weighted),
                        as.integer(n1),
                        as.integer(n2),
@@ -140,11 +134,11 @@ segm3D <- function(y,weighted=TRUE,
                        as.double(lambda0),
                        as.double(theta),
                        bi=as.double(bi0),
-                       thnew=double(n1*n2*n3),
+                       thnew=double(nvoxel),
                        double(prod(dlw)),
                        as.double(wghts),
                        double(nt),#swres
-                       double(n1*n2*n3),#pvalues
+                       double(nvoxel),#pvalues
                        segm=as.integer(segm),
                        as.double(delta),
                        as.double(thresh),

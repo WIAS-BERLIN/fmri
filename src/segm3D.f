@@ -5,7 +5,7 @@ C   for fmri data
 C   called in segm3D file (segm.r)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine segm3d(y,res,si2,mask,wlse,n1,n2,n3,nt,df,hakt,
+      subroutine segm3d(y,res,si2,pos,wlse,n1,n2,n3,nt,df,hakt,
      1                  lambda,theta,bi,thn,lwght,wght,swres,pval,
      3                  segm,delta,thresh,fov,vq,vest0i,varest,
      4                  restrict)
@@ -37,15 +37,13 @@ C   varest   array of smoothed residual variances (input)
 C   restrict penalize smoothing within segments (using pval)
 C
       implicit none
-      integer n1,n2,n3,nt,kern,segm(n1,n2,n3)
+      integer n1,n2,n3,nt,kern,segm(*)
       logical aws
-      integer wlse,mask(n1,n2,n3),restrict
-      double precision y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),delta,
-     1      thn(n1,n2,n3),lambda,wght(2),si2(n1,n2,n3),pval(n1,n2,n3),
-     1      hakt,lwght(*),thi,swres(nt),fov,vq(n1,n2,n3),
-     1      varest(n1,n2,n3),res(nt,n1,n2,n3),vest0i(n1,n2,n3),df,
-     1      thresh,kv(n1,n2,n3)
-      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,
+      integer wlse,pos(n1,n2,n3),restrict
+      double precision y(*),theta(*),bi(*),delta,thn(*),lambda,
+     1      wght(2),si2(*),pval(*),hakt,lwght(*),thi,swres(nt),fov,
+     2      vq(*),varest(*),res(nt,*),vest0i(*),df,thresh,kv(*)
+      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,iindp,jindp
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,dlw12,k,segmi
       double precision bii,swj,swjy,wj,hakt2,spf,si2j,si2i,vqi,
      1       varesti,fpchisq,ti,thij,sij,z,si,swr,z1,
@@ -77,22 +75,20 @@ C
       DO i3=1,n3
          DO i2=1,n2
             DO i1=1,n1
-               if(mask(i1,i2,i3).ne.0) THEN
-                  thn(i1,i2,i3)=0.d0
-                  CYCLE
-               END IF
-               vqi=vq(i1,i2,i3)
-               thi=theta(i1,i2,i3)
-               si2i=vest0i(i1,i2,i3)
-               varesti=varest(i1,i2,i3)
+               iindp = pos(i1,i2,i3)
+               if(iindp.eq.0) CYCLE
+               vqi=vq(iindp)
+               thi=theta(iindp)
+               si2i=vest0i(iindp)
+               varesti=varest(iindp)
                dn=varesti/si2i*fov
                call getdfnab(df,dn,a,b)
 C   this should be more conservative using actual variance reduction instead of theoretical
                ti=max(0.d0,abs(thi)-delta)
                IF(a*ti/sqrt(varesti/vqi)-b.gt.thresh) THEN
-                   pval(i1,i2,i3)=0.d0
+                   pval(iindp)=0.d0
                ELSE
-                   pval(i1,i2,i3)=1.d0
+                   pval(iindp)=1.d0
                END IF
             END DO
          END DO
@@ -102,21 +98,19 @@ C   scaling of sij outside the loop
       DO i3=1,n3
          DO i2=1,n2
             DO i1=1,n1
-               if(mask(i1,i2,i3).ne.0) THEN
-                  thn(i1,i2,i3)=0.d0
-                  CYCLE
-               END IF
-               segmi=segm(i1,i2,i3)
-               pvali=pval(i1,i2,i3)
-               vqi=vq(i1,i2,i3)
-               si2i=vest0i(i1,i2,i3)
-               bii=bi(i1,i2,i3)/lambda
+               iindp=pos(i1,i2,i3)
+               if(iindp.eq.0) CYCLE
+               segmi=segm(iindp)
+               pvali=pval(iindp)
+               vqi=vq(iindp)
+               si2i=vest0i(iindp)
+               bii=bi(iindp)/lambda
                swj=0.d0
                swjy=0.d0
                DO k=1,nt
                   swres(k)=0.d0
                END DO
-               thi=theta(i1,i2,i3)
+               thi=theta(iindp)
                DO jw3=1,dlw3
                   j3=jw3-clw3+i3
                   if(j3.lt.1.or.j3.gt.n3) CYCLE
@@ -127,17 +121,18 @@ C   scaling of sij outside the loop
 C  first stochastic term
                         j1=jw1-clw1+i1
                         if(j1.lt.1.or.j1.gt.n1) CYCLE
-                        IF(mask(j1,j2,j3).ne.0) CYCLE
+                        jindp=pos(j1,j2,j3)
+                        IF(jindp.eq.0) CYCLE
                         wj=lwght(jw1+(jw2-1)*dlw1+(jw3-1)*dlw12)
                         if(wj.le.0.d0) CYCLE
-                        si2j=si2(j1,j2,j3)
+                        si2j=si2(jindp)
                         IF (aws) THEN
-                           thij=thi-theta(j1,j2,j3)
+                           thij=thi-theta(jindp)
                            sij=thij*thij*bii
                            if(restrict.ne.0) THEN
 C restrict smoothing within segmented areas
                            if(abs(segmi).eq.1) THEN
-                           if(segmi*segm(j1,j2,j3).gt.0) THEN
+                           if(segmi*segm(jindp).gt.0) THEN
 C
 C   allow for nonadaptive smoothing if values are in the same segment
 C   since pvali << 1 adaptation is significantly reduced
@@ -158,9 +153,9 @@ C endif for restrict smoothing within segmented areas
                         END IF
                         if(wlse.ne.0)  wj=wj*si2j
                         swj=swj+wj
-                        swjy=swjy+wj*y(j1,j2,j3)
+                        swjy=swjy+wj*y(jindp)
 C  weighted sum of residuals
-                        call daxpy(nt,wj,res(1,j1,j2,j3),1,swres,1)
+                        call daxpy(nt,wj,res(1,jindp),1,swres,1)
                      END DO
                   END DO
                END DO
@@ -180,28 +175,28 @@ C
                if(restrict.ne.0) THEN
 C  smoothing restricted within segmented ares
                if(segmi.eq.1) THEN
-                  if(thi.lt.theta(i1,i2,i3)) THEN
-                     thi = theta(i1,i2,i3)
+                  if(thi.lt.theta(iindp)) THEN
+                     thi = theta(iindp)
                   ELSE
-                     varest(i1,i2,i3)=si
-                     bi(i1,i2,i3)=si2i/si*si2(i1,i2,i3)
+                     varest(iindp)=si
+                     bi(iindp)=si2i/si*si2(iindp)
                   END IF
                END IF
                if(segmi.eq.-1) THEN
-                  if(thi.gt.theta(i1,i2,i3)) THEN
-                     thi = theta(i1,i2,i3)
+                  if(thi.gt.theta(iindp)) THEN
+                     thi = theta(iindp)
                   ELSE
-                     varest(i1,i2,i3)=si
-                     bi(i1,i2,i3)=si2i/si*si2(i1,i2,i3)
+                     varest(iindp)=si
+                     bi(iindp)=si2i/si*si2(iindp)
                   END IF
                END IF
                END IF
 C  end if for smoothing restricted within segmented ares
-               thn(i1,i2,i3)=thi
+               thn(iindp)=thi
 C               si = si/nt
                if(restrict*segmi.ne.0) CYCLE
-               varest(i1,i2,i3)=si
-               bi(i1,i2,i3)=si2i/si*si2(i1,i2,i3)
+               varest(iindp)=si
+               bi(iindp)=si2i/si*si2(iindp)
 C   keep the detected segment
                dn=si/si2i*fov
                call getdfnab(df,dn,a,b)
@@ -210,12 +205,12 @@ C   note that a and b refer to  1/a_n and b_n/a_n
 C
 C   this should be more conservative using actual variance reduction instead of theoretical
                si=sqrt(si/vqi)
-               kv(i1,i2,i3)=a*(thi-delta)/si-b
+               kv(iindp)=a*(thi-delta)/si-b
 C   thats the SD of thi
                if(a*(thi+delta)/si+b.lt.-thresh) THEN
-                  segm(i1,i2,i3)=-1
+                  segm(iindp)=-1
                ELSE IF (a*(thi-delta)/si-b.gt.thresh) THEN
-                  segm(i1,i2,i3)=1
+                  segm(iindp)=1
                END IF
                call rchkusr()
             END DO
