@@ -42,8 +42,8 @@ C
       integer wlse,pos(n1,n2,n3),restrict
       double precision y(*),theta(*),bi(*),delta,thn(*),lambda,
      1      wght(2),si2(*),pval(*),hakt,lwght(*),thi,swres(nt),fov,
-     2      vq(*),varest(*),res(nt,*),vest0i(*),df,thresh,kv(*)
-      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,iindp,jindp
+     2      vq(*),varest(*),res(nt,*),vest0i(*),df,thresh
+      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,iindp,jindp,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,dlw12,k,segmi
       double precision bii,swj,swjy,wj,hakt2,spf,si2j,si2i,vqi,
      1       varesti,fpchisq,ti,thij,sij,z,si,swr,z1,
@@ -205,7 +205,6 @@ C   note that a and b refer to  1/a_n and b_n/a_n
 C
 C   this should be more conservative using actual variance reduction instead of theoretical
                si=sqrt(si/vqi)
-               kv(iindp)=a*(thi-delta)/si-b
 C   thats the SD of thi
                if(a*(thi+delta)/si+b.lt.-thresh) THEN
                   segm(iindp)=-1
