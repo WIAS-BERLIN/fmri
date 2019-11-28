@@ -50,8 +50,8 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
     if(is.null(mask)) mask <- array(TRUE,spm$dim)
 # reduce data entries to contain only voxel within mask
     if(is.null(spm$maskOnly)|!spm$maskOnly) spm <- condensefMRI(spm)
-    mask[sigma2>=1e16] <- FALSE
     cbeta <- spm$cbeta[mask]
+    variance <- variance[mask]
     if(is.null(res)) {
         return(warning("Please specify keep=''all'' when calling fmri.lm"))
     }
@@ -132,7 +132,16 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
         bw0[, 3]))
     dim(rxyz0) <- c(dim(bw0)[1], 3)
     cat("fmri.smooth: exiting function\n")
-    z <- list(cbeta = ttthat$theta, var = ttthat$var, rxyz = rxyz,
+    cbeta <- variance <- array(0, dim(mask))
+    cbeta[mask] <- ttthat$theta
+    variance[mask] <- ttthat$var
+    if(!is.null(ttthat$segm)){
+        segm <- array(0, dim(mask))
+        segm[mask] <- ttthat$segm
+    } else {
+        segm <- NULL
+    }
+    z <- list(cbeta = cbeta, var = variance, rxyz = rxyz,
               rxyz0 = rxyz0, scorr = spm$scorr, weights = spm$weights,
               bw = bw, hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf,
               segm = ttthat$segm, mask = ttthat$mask,
@@ -143,7 +152,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
       z$alpha <- alpha
       z$delta <- delta
     } else {
-      class(z) <- c("fmridata", "fmrispm")
+      class(z) <- c("fmrispm", "fmridata")
     }
     z$roixa <- spm$roixa
     z$roixe <- spm$roixe
