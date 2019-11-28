@@ -15,7 +15,7 @@ void F77_NAME(getvofh)(double* bw, int* kern, double* wght, double* vol);
 void F77_NAME(lconnect)(int* segm, int* n1, int* n2, int* n3, int* i1, int* i2, int* i3,
                         int* ind1, int* ind2, int* ind3, int* checked, int* mask);
 void F77_NAME(mean3d)(double* res, int* n1, int* n2, int* n3, int* nv, double* mres);
-void F77_NAME(segm3d)(double* y, double* res, double* si2, int* mask,
+void F77_NAME(segm3d)(double* y, double* res, double* si2, int* pos,
                       int* wlse, int* n1, int* n2, int* n3, int* nt, double* df,
                       double* hakt, double* lambda, double* theta,
                       double* bi, double* thn, double* lwght, double* wght,
