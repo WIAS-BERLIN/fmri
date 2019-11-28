@@ -7,11 +7,8 @@
 void F77_NAME(ccluster)(int* x, int* n1, int* n2, int* n3, int* z);
 void F77_NAME(extrpatt)(double* beta, int* voxel, int* n1, int* n2, int* n3,
                       int* nb, int* sl, int* nsl, double* pattern, int* nvox);
-void F77_NAME(gethani)(double* x, double* y, int* kern, double* value,
-                       double* wght, double* eps, double* bw);
 void F77_NAME(getslpv)(double* stat, int* n, double* p, double* kv, int* nsim,
                        double* pval);
-void F77_NAME(getvofh)(double* bw, int* kern, double* wght, double* vol);
 void F77_NAME(lconnect)(int* segm, int* n1, int* n2, int* n3, int* i1, int* i2, int* i3,
                         int* ind1, int* ind2, int* ind3, int* checked, int* mask);
 void F77_NAME(mean3d)(double* res, int* n1, int* n2, int* n3, int* nv, double* mres);
@@ -37,11 +34,8 @@ static R_NativePrimitiveArgType ccluster_t[]={INTSXP, INTSXP, INTSXP,
     INTSXP, INTSXP};
 static R_NativePrimitiveArgType extrpatt_t[]={REALSXP, INTSXP, INTSXP,
     INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, REALSXP, INTSXP};
-static R_NativePrimitiveArgType gethani_t[]={REALSXP, REALSXP, INTSXP,
-    REALSXP, REALSXP, REALSXP, REALSXP};
 static R_NativePrimitiveArgType getslpv_t[]={REALSXP, INTSXP, REALSXP,
     REALSXP, INTSXP, REALSXP};
-static R_NativePrimitiveArgType getvofh_t[]={REALSXP, INTSXP, REALSXP, REALSXP};
 static R_NativePrimitiveArgType lconnect_t[]={INTSXP, INTSXP, INTSXP, INTSXP,
     INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP};
 static R_NativePrimitiveArgType mean3d_t[]={REALSXP, INTSXP, INTSXP,
@@ -63,9 +57,7 @@ static R_NativePrimitiveArgType thcorr_t[]={REALSXP, INTSXP, INTSXP, INTSXP,
 static const R_FortranMethodDef fmethods[] = {
             {"ccluster", (DL_FUNC) &ccluster_ ,5 , ccluster_t},
             {"extrpatt", (DL_FUNC) &extrpatt_ ,10, extrpatt_t},
-            {"gethani", (DL_FUNC) &gethani_ ,7, gethani_t},
             {"getslpv", (DL_FUNC) &getslpv_ ,6, getslpv_t},
-            {"getvofh", (DL_FUNC) &getvofh_ ,4, getvofh_t},
             {"lconnect", (DL_FUNC) &lconnect_ ,12, lconnect_t},
             {"mean3d", (DL_FUNC) &mean3d_ ,6, mean3d_t},
             {"segm3d", (DL_FUNC) &segm3d_ ,27, segm3d_t},
