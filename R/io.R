@@ -1420,14 +1420,15 @@ extractData <- function(z, what="data", maskOnly=FALSE){
   #  extract data or residuals in either compact (mask only) or expanded (full images) form
   #
     if(is.null(z$maskOnly)) z$maskOnly <- FALSE
-  # z$maskOnly was not set, i.e, we have comlete data cubes
+  # z$maskOnly was not set, i.e, we have complete data cubes
     expand <- z$maskOnly & !maskOnly
     condense <- !z$maskOnly & maskOnly
     if (z$maskOnly){
-       mask <- z$mask
+       mask <- as.logical(z$mask)
        nvoxel <- sum(mask)
     } else {
        nvoxel <- prod(z$dim[1:3])
+       mask <- array(TRUE,z$dim[1:3])
     }
     nt <- z$dim[4]
     n <- nt*nvoxel

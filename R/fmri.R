@@ -52,10 +52,10 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
     if(is.null(spm$maskOnly)|!spm$maskOnly) spm <- condensefMRI(spm)
     cbeta <- spm$cbeta[mask]
     variance <- variance[mask]
+    res <- extractData(spm, what="residuals", maskOnly=TRUE)
     if(is.null(res)) {
         return(warning("Please specify keep=''all'' when calling fmri.lm"))
     }
-    res <- extractData(spm, what="residuals", maskOnly=TRUE)
     ttthat <- switch(tolower(adaptation),
                      aws = aws3D(y = cbeta,
                                   sigma2 = variance,
@@ -78,7 +78,6 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
                                           skern = skern,
                                           weighted = weighted,
                                           res = res,
-                                          ddim = spm$dim,
                                           ladjust = ladjust,
                                           testprop = propagation),
                      none = aws3D(y = cbeta,
@@ -142,7 +141,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
     z <- list(cbeta = cbeta, var = variance, rxyz = rxyz,
               rxyz0 = rxyz0, scorr = spm$scorr, weights = spm$weights,
               bw = bw, hmax = ttthat$hmax, dim = spm$dim, hrf = spm$hrf,
-              segm = ttthat$segm, mask = ttthat$mask,
+              segm = segm, mask = mask,
               resscale=ttthat$resscale, res=ttthat$residuals,
               maskOnly=TRUE, call = args)
     if (adaptation == "segment") {

@@ -39,7 +39,9 @@ aws3D <- function(y, qlambda=NULL, lkern="Gaussian", skern="Plateau", weighted=T
       return(warning("Please specify keep=''all'' when calling fmri.lm"))
   }
   # define qlambda, lambda
-  if (is.null(qlambda)) qlambda <- switch(skern,.9945,.9988,.9995)
+  if (is.null(qlambda)) qlambda <- switch(skern,Plateau=.9945,
+		                                            Triangle=.9988,
+																								Exponential=.9995)
   if (qlambda<.9) warning("Inappropriate value of qlambda")
   if (qlambda<1) {
     lambda <- ladjust*qchisq(qlambda,1)
@@ -62,7 +64,7 @@ aws3D <- function(y, qlambda=NULL, lkern="Gaussian", skern="Plateau", weighted=T
 
 aws3Dfull <- function(y, qlambda=NULL, lkern="Gaussian", skern="Plateau", weighted=TRUE,
                    sigma2=NULL, mask=NULL, hmax=NULL, ladjust=1, u=NULL, wghts=NULL,
-                   testprop=FALSE, res=NULL, resscale=NULL, ddim=NULL) {
+                   testprop=FALSE, res=NULL, resscale=NULL) {
 #
 #  qlambda, corrfactor adjusted for case lkern="Gaussian",skern="Plateau" only
 #
@@ -74,20 +76,12 @@ aws3Dfull <- function(y, qlambda=NULL, lkern="Gaussian", skern="Plateau", weight
     # MAE
   mae <- NULL
 
-  # set the code for the kernel (used in lkern) and set lambda
-  lkern <- switch(lkern,
-                  Triangle=2,
-                  Plateau=1,
-                  Gaussian=3,
-                  1)
-  skern <- switch(skern,
-                  Triangle=2,
-                  Plateau=1,
-                  Exponential=3,
-                  2)
 
   # define qlambda, lambda
-  if (is.null(qlambda)) qlambda <- switch(skern,.9945,.9988,.9995)
+  if (is.null(qlambda)) qlambda <- switch(skern,
+		            Plateau=.9945,
+								Triangle=.9988,
+								Exponential=.9995)
   if (qlambda<.9) warning("Inappropriate value of qlambda")
   if (qlambda<1) {
     lambda <- qchisq(qlambda,1)

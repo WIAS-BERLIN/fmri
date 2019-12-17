@@ -398,7 +398,6 @@ fmri.lm <- function(ds,
         }
       }
       rm(ttt,tttprime)
-      gc()
       if (verbose) close(pb)
       ##  prewhitened residuals don't have zero mean, therefore sweep mean over time from them
       meanres <- residuals%*%rep(1/dy[4],dy[4])
@@ -423,7 +422,7 @@ fmri.lm <- function(ds,
     if (verbose) cat("fmri.lm: calculating spatial correlation ... ")
 
   lags <- c(5, 5, 3)
-  corr <- aws::residualSpatialCorr(residuals,mask,resscale=1,compact=TRUE)
+  corr <- aws::residualSpatialCorr(residuals,mask,lags=lags,compact=TRUE)
   #
   #    "compress" the residuals
   #
@@ -487,7 +486,7 @@ fmri.lm <- function(ds,
   result$mask <- mask
   result$res <- residuals
   result$resscale <- scale
-  results$maskOnly <- TRUE
+  result$maskOnly <- TRUE
   result$arfactor <- arfactor
   result$rxyz <- rxyz
   result$scorr <- corr
