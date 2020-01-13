@@ -80,7 +80,7 @@ segm3D <- function(y,weighted=TRUE,
    sigma2 <- 1/sigma2 #  taking the invers yields simpler formulaes
 # deal with homoskedastic Gaussian case by extending sigma2
   cat("\nfmri.smooth: first variance estimate","\n")
-  varest0 <- aws::residualVariance(residuals, mask, resscale=1)
+  varest0 <- aws::residualVariance(residuals, mask, resscale=1, compact=TRUE)
    vq <- varest0*sigma2
    if (is.null(wghts)) wghts <- c(1,1,1)
    hinit <- hinit/wghts[1]

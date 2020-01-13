@@ -280,6 +280,7 @@ fmri.lm <- function(ds,
 
   ## define some variables and make object a matrix
   voxelcount <- prod(dy[1:3])
+  if(nvoxel==voxelcount) ttt <- ttt[mask,]
   dim(ttt) <- c(nvoxel, dy[4]) ## ttt only contains voxel in mask
   arfactor <- numeric(nvoxel)
   variance <- numeric(nvoxel)

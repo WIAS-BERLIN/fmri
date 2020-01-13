@@ -1520,6 +1520,8 @@ condensefMRI <- function(z, mask=NULL){
 #  reduce size of fmri object to voxel in mask
 #  can also be used to set a more restrictive mask
 #
+  if(is.null(z$maskOnly)) z$maskOnly <- FALSE
+  if(is.null(z$mask)) z$mask <- array(TRUE, z$dim[1:3])
   if(z$maskOnly&is.null(mask)){
     warning("condensefMRI: nothing to do\n returning unchanged object")
     invisible(z)
@@ -1535,6 +1537,7 @@ condensefMRI <- function(z, mask=NULL){
     warning("condensefMRI: no mask available\n returning unchanged object")
     invisible(z)
   }
+  z$mask <- mask
   nt <- z$dim[4]
   ncube <- prod(z$dim[1:3])
   n <- nt*ncube
