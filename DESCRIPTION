@@ -1,6 +1,6 @@
 Package: fmri
 Version: 1.9.3
-Date: 2019-11-25
+Date: 2020-02-06
 Title: Analysis of fMRI Experiments
 Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
                     email = "tabelow@wias-berlin.de"),
@@ -8,8 +8,8 @@ Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
                     email = "polzehl@wias-berlin.de"),
              person("Brandon", "Whitcher", role = c("ctb")),
              person("Dames", "Sibylle", role = c("ctb")))
-Depends: R (>= 3.2.0), nlme
-Imports: parallel, metafor, methods, aws (>= 2.4)
+Depends: R (>= 3.2.0), aws (>= 2.4)
+Imports: parallel, metafor, methods, nlme
 Suggests: tcltk, tkrplot, fastICA, adimpro (>= 0.9), oro.nifti
 LazyData: true
 Description: Contains R-functions to perform an fMRI analysis as described in
