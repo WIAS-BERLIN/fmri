@@ -26,7 +26,7 @@ rn <- array(rt(nsim,df),sdim)
 if(any(bw>0)){
 # emulate correlation structure in spm
     sdrn <- sd(rn)
-    rn <- kernsm(rn, h=bw, unit="FWHM")@yhat
+    rn <- aws::kernsm(rn, h=bw, unit="FWHM")@yhat
     rn <- rn*sdrn/sd(rn)
 }
 rn <- if(kind==0) abs(rn) else rn^2
