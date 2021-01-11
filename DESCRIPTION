@@ -1,6 +1,6 @@
 Package: fmri
-Version: 1.9.3
-Date: 2020-02-06
+Version: 1.9.4
+Date: 2021-01-11
 Title: Analysis of fMRI Experiments
 Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
                     email = "tabelow@wias-berlin.de"),
@@ -23,4 +23,4 @@ Copyright: This package is Copyright (C) 2006-2019 Weierstrass Institute for
 URL: http://www.wias-berlin.de/software/imaging/
 Note: This software comes with NO warranty! It is NOT intended to be used
       in clinical applications! For evaluation only!
-RoxygenNote: 6.1.0
+RoxygenNote: 7.1.1
