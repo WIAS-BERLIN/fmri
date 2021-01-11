@@ -8,9 +8,10 @@
 <!-- badges: end -->
 
 The goal of fmri is to perform an fMRI analysis as described in Tabelow
-et al. (2006) <DOI:10.1016/j.neuroimage.2006.06.029>, Polzehl et
-al. (2010) <DOI:10.1016/j.neuroimage.2010.04.241>, Tabelow and Polzehl
-(2011) <DOI:10.18637/jss.v044.i11>.
+et al. (2006) <https://doi.org/10.1016/j.neuroimage.2006.06.029>,
+Polzehl et al. (2010)
+<https://doi.org/10.1016/j.neuroimage.2010.04.241>, Tabelow and Polzehl
+(2011) <https://doi.org/10.18637/jss.v044.i11>.
 
 ## Installation
 
@@ -34,10 +35,6 @@ This is a basic example which shows you how to solve a common problem:
 
 ``` r
 library(fmri)
-#> Loading required package: awsMethods
-#> 
-#> Use the function setCores() to change the number of CPU cores.
-#> Loading required package: nlme
 ## basic example code
 ```
 
@@ -145,8 +142,8 @@ dim(sig) <- c(i,j,k)
 dim(sig4) <- c(i,j,k,scans)
 
 RNGversion("3.5.0")
-#> Warning in RNGkind("Mersenne-Twister", "Inversion", "Rounding"): non-
-#> uniform 'Rounding' sampler used
+#> Warning in RNGkind("Mersenne-Twister", "Inversion", "Rounding"): non-uniform
+#> 'Rounding' sampler used
 # create noise with spatial and temporal correlation
 set.seed(1)
 noisy4 <- rnorm(i*j*k*scans,0,noise)
