@@ -8,8 +8,8 @@ Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
                     email = "polzehl@wias-berlin.de"),
              person("Brandon", "Whitcher", role = c("ctb")),
              person("Dames", "Sibylle", role = c("ctb")))
-Depends: R (>= 3.2.0), aws (>= 2.4)
-Imports: parallel, metafor, methods, nlme
+Depends: R (>= 3.3.0)
+Imports: grDevices, graphics, stats, utils, nlme, parallel, metafor, methods, aws (>= 2.4)
 Suggests: tcltk, tkrplot, fastICA, adimpro (>= 0.9), oro.nifti
 LazyData: true
 Description: Contains R-functions to perform an fMRI analysis as described in
@@ -18,7 +18,7 @@ Description: Contains R-functions to perform an fMRI analysis as described in
              Polzehl et al. (2010) <DOI:10.1016/j.neuroimage.2010.04.241>,
              Tabelow and Polzehl (2011) <DOI:10.18637/jss.v044.i11>.
 License: GPL (>= 2)
-Copyright: This package is Copyright (C) 2006-2019 Weierstrass Institute for
+Copyright: This package is Copyright (C) 2006-2020 Weierstrass Institute for
                                            Applied Analysis and Stochastics.
 URL: http://www.wias-berlin.de/software/imaging/
 Note: This software comes with NO warranty! It is NOT intended to be used

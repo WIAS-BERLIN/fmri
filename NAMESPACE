@@ -14,27 +14,26 @@ export(gen_fmridata)
 # export(findclusters,simclusterthr)
 export(fmri.designG,fmri.lmePar,fmri.metaPar)
 export(niftiImage2fmri)
-  importFrom("grDevices", "col2rgb", "dev.new", "gray", "grey",
+importFrom("grDevices", "col2rgb", "dev.new", "gray", "grey",
              "heat.colors", "hsv", "rainbow")
-  importFrom("graphics", "image", "layout", "legend", "lines", "par",
+importFrom("graphics", "image", "layout", "legend", "lines", "par",
              "plot", "polygon", "text", "title", "hist", "stars")
-  importFrom("methods", "getClassDef", "getValidity", "slot",
+importFrom("methods", "getClassDef", "getValidity", "slot",
              "slotNames", "is")
-  importFrom("stats", "IQR", "convolve", "dchisq", "density", "dnorm", "qnorm",
+importFrom("stats", "IQR", "convolve", "dchisq", "density", "dnorm", "qnorm",
              "formula", "lm", "median", "optim", "pchisq", "pnorm",
              "poly", "prcomp", "pt", "qchisq", "qt", "quantile", "rnorm", "cor",
              "rt", "var", "vcov", "sd", "spectrum", "dist", "as.dist", "hclust")
-  importFrom("utils", "flush.console", "setTxtProgressBar",
+importFrom("utils", "flush.console", "setTxtProgressBar",
              "txtProgressBar")
-  importFrom("parallel", "makeCluster", "clusterEvalQ", "parApply", "stopCluster")
-  importFrom("metafor","rma.uni")
-  importFrom("nlme", "lme", "lmeControl", "varIdent", "corAR1", "fixef", "pdDiag")
-  importFrom("aws", "kernsm")
-
-  S3method(plot,fmridata)
-  S3method(plot,fmripvalue)
-  S3method(plot,fmrisegment)
-  S3method(plot,fmriICA)
-  S3method(plot,fmrigroupICA)
-  S3method(print,fmridata)
-  S3method(summary,fmridata)
+importFrom(metafor,rma.uni)
+importFrom(nlme, lme, lmeControl, varIdent, corAR1, fixef, pdDiag)
+importFrom(parallel, makeCluster, clusterEvalQ, parApply, stopCluster)
+importFrom(aws, kernsm)
+S3method(plot,fmridata)
+S3method(plot,fmripvalue)
+S3method(plot,fmrisegment)
+S3method(plot,fmriICA)
+S3method(plot,fmrigroupICA)
+S3method(print,fmridata)
+S3method(summary,fmridata)
