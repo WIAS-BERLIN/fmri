@@ -32,7 +32,7 @@ fmri.cluster(spm, alpha = 0.05, ncmin = 2, minimum.signal = 0)
 exceeding a \code{1-beta} threshold \code{k_{nc}} for cluster size \code{nc}
 are based on a simulation study under the hypothesis and adjusted for both degrees
 of freedom, number of voxel in mask and spatial correlation.
-\code{beta} is choosen such that under the hypothesis the combined (over cluster sizes
+\code{beta} is chosen such that under the hypothesis the combined (over cluster sizes
 \code{ncmin:20}) test has approximate significance level \code{alpha}.
 }
 \value{
