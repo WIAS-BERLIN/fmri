@@ -349,7 +349,7 @@ fmri.lm <- function(ds,
       step <- 0.01
       arlist <- seq(min(arfactor) - step/2, max(arfactor) + step/2,  length = diff(range(arfactor)) / step + 2)
       if (verbose) {
-        cat("fmri.lm: re-calculating linear model with prewithened object\n")
+        cat("fmri.lm: re-calculating linear model with prewhitened object\n")
         pb <- txtProgressBar(0, length(arlist) - 1, style = 3)
       }
       for (i in 1:(length(arlist)-1)) {
