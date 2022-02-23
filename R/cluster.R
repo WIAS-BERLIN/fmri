@@ -149,5 +149,37 @@ simclusterthr <- function(n,distr=c("norm","t"),df=100,bw=0,kern="Gaussian",
         list(results=results/nsim,qgrid=qgrid,n=n,distr=distr[1],df=df,bw=bw,kern=kern)
       }
       
-      
-      
+simclusterthr2 <- function(n,kv,distr=c("norm","t"),df=100,bw=0,kern="Gaussian",
+                           nsim=1000,seed=1,filename="tempres"){
+  #
+  #  second order simulations for adjustment of kritical values
+  #
+  require(aws)
+  nq <- length(kv)
+  nsize <- 20
+  results <- numeric(nq)
+  set.seed(seed)
+  dx <- c(n,n,n)
+  for(i in 1:nsim){
+    x <- if(distr[1]=="t") rt(n^3,df) else rnorm(n^3)
+    dim(x) <- dx
+    if(bw>0) {
+      x <- kernsm(x,bw,kern=kern,unit="FWHM")@yhat
+      x <- x/sqrt(var(x))
+    }
+    mc <- logical(nq)
+    for(j in 1:nq){
+      mc[j] <- max(findclusters(x,kv[j])$size)>j
+    }
+    for(j in 1:nq){
+      results[j] <- results[j] + any(mc[j:nq])
+    }
+    cat("Time",format(Sys.time()),"after ",i,"simulations:\n")
+    if(i%/%100*100==i) print(results[seq(1,nq,5),]/i)
+    if(i%/%1000*1000==i){
+      tmp <- list(results=results/i,kv=kv,n=n,distr=distr[1],df=df,bw=bw,kern=kern)
+      save(tmp,file=filename)
+    }
+  }
+  list(results=results/nsim,kv=kv,n=n,distr=distr[1],df=df,bw=bw,kern=kern)
+}
