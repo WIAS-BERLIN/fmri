@@ -13,6 +13,34 @@ findclusters <- function(x,thresh){
     z
 }
 
+kvclust <- function(alpha,n,nc,cc){
+# compute critical value for level alpha and 
+# sample size n, cluster size nc and spatial correlation cc
+# based on tail approximation Abramovich/Stegun 26.2.14
+  th11 <- 3.26879 -14.31830*cc^.8
+  th12 <- 0.1483195 - 12.9293447/sqrt(n) +   0.8273919*cc^{.5}
+  th1 <- th11 + th12*nc
+  th2 <- 0.8387102 + 0.3439666*nc -6.0815169*cc
+  x <- 2
+  x0 <- 0
+  while(abs(x-x0)>1e-5){
+    x0 <- x
+    x <- sqrt((-log(alpha)+th1-log(x))/th2)
+  }
+  x
+}
+pvclust <- function(tvalue,n,nc,cc){
+  # compute p-value for test statistic tvalue and 
+  # sample size n, cluster size nc and spatial correlation cc
+  # based on tail approximation Abramovich/Stegun 26.2.14
+  th11 <- 3.26879 -14.31830*cc^.8
+  th12 <- 0.1483195 - 12.9293447/sqrt(n) +   0.8273919*cc^{.5}
+  th1 <- th11 + th12*nc
+  th2 <- 0.8387102 + 0.3439666*nc -6.0815169*cc
+  pmin(.5,exp(th1-th2*tvalue^2)/tvalue)
+}
+
+
 getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
    nc <- ncmin:20
    kv <- (param[1]+param[2]*log((alpha+1e-5)/(1-alpha+2e-5)))*mpredf[nc,irho]
