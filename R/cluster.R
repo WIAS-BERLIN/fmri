@@ -175,7 +175,7 @@ simclusterthr2 <- function(n,kv,distr=c("norm","t"),df=100,bw=0,kern="Gaussian",
       results[j] <- results[j] + any(mc[j:nq])
     }
     cat("Time",format(Sys.time()),"after ",i,"simulations:\n")
-    if(i%/%100*100==i) print(results[seq(1,nq,5),]/i)
+    if(i%/%100*100==i) print(results/i)
     if(i%/%1000*1000==i){
       tmp <- list(results=results/i,kv=kv,n=n,distr=distr[1],df=df,bw=bw,kern=kern)
       save(tmp,file=filename)
