@@ -14,29 +14,39 @@ findclusters <- function(x,thresh){
 }
 
 kvclust <- function(alpha,n,nc,cc){
-# compute critical value for level alpha and 
-# sample size n, cluster size nc and spatial correlation cc
-# based on tail approximation Abramovich/Stegun 26.2.14
-  th11 <- 3.26879 -14.31830*cc^.8
-  th12 <- 0.1483195 - 12.9293447/sqrt(n) +   0.8273919*cc^{.5}
-  th1 <- th11 + th12*nc
-  th2 <- 0.8387102 + 0.3439666*nc -6.0815169*cc
-  x <- 2
-  x0 <- 0
-  while(abs(x-x0)>1e-5){
-    x0 <- x
-    x <- sqrt((-log(alpha)+th1-log(x))/th2)
-  }
-  x
+    # compute critical value for level alpha and 
+    # sample size n, cluster size nc and spatial correlation cc
+    # based on tail approximation Abramovich/Stegun 26.2.14
+    th11 <- -1.497900  + 3.151544*n^(1/9) + 1.371327*cc^.3
+    th12 <- -6.69480291 + 0.02707265*n^(1/3) + 81.95158390*cc
+    th13 <- 5.45484788 + 0.09130765*n^(1/3) + 0.9582841248*cc^(1/3)
+    lnc <- log(nc)
+    lnc2 <- lnc^2
+    th1 <- th11 + th12*(-.7961+.3573*lnc) + th13*(1.8-2.108*lnc+0.539*lnc2)
+    th2 <- 0.8755227 + 0.3699806*nc -5.8556741*cc
+    x <- 2
+    x0 <- 0
+    i <- 1
+    while(max(abs(x-x0))>1e-5&i<10){
+      x0 <- x
+      x <- sqrt(pmax(1,(-log(alpha)+th1-log(x))/th2))
+      cat("i",i,"kv",signif(x,3),"\n")
+      i <- i+1
+    }
+    x
 }
+
 pvclust <- function(tvalue,n,nc,cc){
   # compute p-value for test statistic tvalue and 
   # sample size n, cluster size nc and spatial correlation cc
   # based on tail approximation Abramovich/Stegun 26.2.14
-  th11 <- 3.26879 -14.31830*cc^.8
-  th12 <- 0.1483195 - 12.9293447/sqrt(n) +   0.8273919*cc^{.5}
-  th1 <- th11 + th12*nc
-  th2 <- 0.8387102 + 0.3439666*nc -6.0815169*cc
+  th11 <- -1.497900  + 3.151544*n^(1/9) + 1.371327*cc^.3
+  th12 <- -6.69480291 + 0.02707265*n^(1/3) + 81.95158390*cc
+  th13 <- 5.45484788 + 0.09130765*n^(1/3) + 0.9582841248*cc^(1/3)
+  lnc <- log(nc)
+  lnc2 <- lnc^2
+  th1 <- th11 + th12*(-.7961+.3573*lnc) + th13*(1.8-2.108*lnc+0.539*lnc2)
+  th2 <- 0.8755227 + 0.3699806*nc -5.8556741*cc
   pmin(.5,exp(th1-th2*tvalue^2)/tvalue)
 }
 
