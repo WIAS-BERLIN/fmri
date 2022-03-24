@@ -13,40 +13,47 @@ findclusters <- function(x,thresh){
     z
 }
 
-kvclust <- function(alpha,n,nc,cc){
+kvclust <-
+  function(alpha,n,nc,cc){
     # compute critical value for level alpha and 
     # sample size n, cluster size nc and spatial correlation cc
     # based on tail approximation Abramovich/Stegun 26.2.14
-    th11 <- -1.497900  + 3.151544*n^(1/9) + 1.371327*cc^.3
-    th12 <- -6.69480291 + 0.02707265*n^(1/3) + 81.95158390*cc
-    th13 <- 5.45484788 + 0.09130765*n^(1/3) + 0.9582841248*cc^(1/3)
+    th11 <- -0.5679493  -0.6276305*cc^.3  + 3.0608387*n^(1/9)
+    th12 <- -8.47163638 + 0.02560351*n^(1/3) + 84.28136758*cc^.9
+    th13 <- 3.18491717 -19.41570878*cc^.9 + 0.00479463*n^(1/3)  
+    th14 <- -0.4531994 + 4.7408157*cc^(2/3) -0.1656168*n^(1/15)
     lnc <- log(nc)
     lnc2 <- lnc^2
-    th1 <- th11 + th12*(-.7961+.3573*lnc) + th13*(1.8-2.108*lnc+0.539*lnc2)
-    th2 <- 0.8755227 + 0.3699806*nc -5.8556741*cc
+    lnc3 <- lnc^3
+    th1 <- th11 + th12*(-.7961+.3573*lnc) + th13*(1.8-2.108*lnc+0.539*lnc2) + 
+      th14*(-4.316+ 8.618*lnc-4.993*lnc2+0.880*lnc3 )
+    th2 <- 0.7071393  + 0.5875162*nc^.85  -5.1295360*cc^.75
     x <- 2
     x0 <- 0
     i <- 1
     while(max(abs(x-x0))>1e-5&i<10){
       x0 <- x
       x <- sqrt(pmax(1,(-log(alpha)+th1-log(x))/th2))
-      cat("i",i,"kv",signif(x,3),"\n")
+#      cat("i",i,"kv",signif(x,3),"\n")
       i <- i+1
     }
     x
-}
+  }
 
 pvclust <- function(tvalue,n,nc,cc){
   # compute p-value for test statistic tvalue and 
   # sample size n, cluster size nc and spatial correlation cc
   # based on tail approximation Abramovich/Stegun 26.2.14
-  th11 <- -1.497900  + 3.151544*n^(1/9) + 1.371327*cc^.3
-  th12 <- -6.69480291 + 0.02707265*n^(1/3) + 81.95158390*cc
-  th13 <- 5.45484788 + 0.09130765*n^(1/3) + 0.9582841248*cc^(1/3)
+  th11 <- -0.5679493  -0.6276305*cc^.3  + 3.0608387*n^(1/9)
+  th12 <- -8.47163638 + 0.02560351*n^(1/3) + 84.28136758*cc^.9
+  th13 <- 3.18491717 -19.41570878*cc^.9 + 0.00479463*n^(1/3)  
+  th14 <- -0.4531994 + 4.7408157*cc^(2/3) -0.1656168*n^(1/15)
   lnc <- log(nc)
   lnc2 <- lnc^2
-  th1 <- th11 + th12*(-.7961+.3573*lnc) + th13*(1.8-2.108*lnc+0.539*lnc2)
-  th2 <- 0.8755227 + 0.3699806*nc -5.8556741*cc
+  lnc3 <- lnc^3
+  th1 <- th11 + th12*(-.7961+.3573*lnc) + th13*(1.8-2.108*lnc+0.539*lnc2) + 
+    th14*(-4.316+ 8.618*lnc-4.993*lnc2+0.880*lnc3 )
+  th2 <- 0.7071393  + 0.5875162*nc^.85  -5.1295360*cc^.75
   pmin(.5,exp(th1-th2*tvalue^2)/tvalue)
 }
 
