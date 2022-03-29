@@ -13,21 +13,30 @@ findclusters <- function(x,thresh){
     z
 }
 
-kvclust <-
-  function(alpha,n,nc,cc){
+kvclust <- function(alpha,n,cc,nca,nce=nca){
     # compute critical value for level alpha and 
-    # sample size n, cluster size nc and spatial correlation cc
+    # sample size n, cluster sizes nca:nce and spatial correlation cc
     # based on tail approximation Abramovich/Stegun 26.2.14
+    nce <- pmax(nca,nce)
     th11 <- -0.5679493  -0.6276305*cc^.3  + 3.0608387*n^(1/9)
     th12 <- -8.47163638 + 0.02560351*n^(1/3) + 84.28136758*cc^.9
     th13 <- 3.18491717 -19.41570878*cc^.9 + 0.00479463*n^(1/3)  
     th14 <- -0.4531994 + 4.7408157*cc^(2/3) -0.1656168*n^(1/15)
-    lnc <- log(nc)
+    lnc <- log(nca)
     lnc2 <- lnc^2
     lnc3 <- lnc^3
     th1 <- th11 + th12*(-.7961+.3573*lnc) + th13*(1.8-2.108*lnc+0.539*lnc2) + 
       th14*(-4.316+ 8.618*lnc-4.993*lnc2+0.880*lnc3 )
-    th2 <- 0.7071393  + 0.5875162*nc^.85  -5.1295360*cc^.75
+    th2 <- 0.7071393  + 0.5875162*nca^.85  -5.1295360*cc^.75
+    if(any(nce>nca)){
+      ncd <- log(1e-4+nce-nca)
+      nca2 <- nca^2
+      nca3 <- nca^3
+      eta1 <- pmax(0,-0.014020 + 0.008642*n^(1/3) + 0.157975*ncd + 
+                     0.114501*nca -0.015963*nca2 +0.000520*nca3)
+      eta2 <- pmin(0, -0.2496057 -0.0485483*ncd + 0.0663842*nca -0.0056151*nca2 +0.0001511*nca3)
+       th1 <- th1+eta1+eta2*log(alpha)
+    }
     x <- 2
     x0 <- 0
     i <- 1
@@ -40,10 +49,11 @@ kvclust <-
     x
   }
 
-pvclust <- function(tvalue,n,nc,cc){
+pvclust <- function(tvalue,n,cc,nca,nce=nca){
   # compute p-value for test statistic tvalue and 
   # sample size n, cluster size nc and spatial correlation cc
   # based on tail approximation Abramovich/Stegun 26.2.14
+  nce <- pmax(nca,nce)
   th11 <- -0.5679493  -0.6276305*cc^.3  + 3.0608387*n^(1/9)
   th12 <- -8.47163638 + 0.02560351*n^(1/3) + 84.28136758*cc^.9
   th13 <- 3.18491717 -19.41570878*cc^.9 + 0.00479463*n^(1/3)  
@@ -54,7 +64,18 @@ pvclust <- function(tvalue,n,nc,cc){
   th1 <- th11 + th12*(-.7961+.3573*lnc) + th13*(1.8-2.108*lnc+0.539*lnc2) + 
     th14*(-4.316+ 8.618*lnc-4.993*lnc2+0.880*lnc3 )
   th2 <- 0.7071393  + 0.5875162*nc^.85  -5.1295360*cc^.75
-  pmin(.5,exp(th1-th2*tvalue^2)/tvalue)
+  if(any(nce>nca)){
+    ncd <- log(1e-4+nce-nca)
+    nca2 <- nca^2
+    nca3 <- nca^3
+    eta1 <- pmax(0,-0.014020 + 0.008642*n^(1/3) + 0.157975*ncd + 
+                   0.114501*nca -0.015963*nca2 +0.000520*nca3)
+    eta2 <- pmin(0, -0.2496057 -0.0485483*ncd + 0.0663842*nca -0.0056151*nca2 +0.0001511*nca3)
+    th1 <- th1+eta1+eta2*log(alpha)
+  } else {
+    eta1 <- eta2 <- 0
+  }
+  pmin(.5,exp((th1+eta1-th2*tvalue^2-log(tvalue))/(1-eta2)))
 }
 
 
