@@ -98,7 +98,7 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
          ca0+ (cta1-alpha)*(ca1-ca0)/(cta1-cta0)
       }
 
-      fmri.cluster <- function(spm, alpha=.05, ncmin=2, minimum.signal=0){
+      fmri.cluster <- function(spm, alpha=.05, ncmin=2, ncmax=ncmin, minimum.signal=0){
         args <- sys.call()
         args <- c(spm$call,args)
       cat("fmri.cluster: entering function\n")
@@ -128,19 +128,14 @@ getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
         dim(pv) <- spm$dim[1:3]
 
       #  clustersizes to use
-        clusters <- ncmin:20
-        alphaclust <- getalphaclust(alpha,clustertable,ncmin)
+        clusters <- ncmin:ncmax
         irho <- as.integer(corr/0.05)+1
-        if(irho>13) {
+        if(irho>6) {
            stop("to much spatial correlation")
         }
         # correct for size of multiplicity
-        n2 <- sum(spm$mask)
-        n1 <- 64^3
-        alpha <- 1-(1-alpha)^(n2/n1)
-        # this reflects the use of n2 instead of 64^3 voxel (simulation)
-        # get critical values
-        kv <- getkv0(parcoeff,mpredf=mpredfactor,irho=irho,alpha=alpha,ncmin=2)
+        n <- sum(spm$mask)
+        kv <- kvclust(alpha,n,corr,ncmin,clusters)
       # this gives a vector of kritical values corresponding to cluster sizes
       # now adjust for distribution
         if(type=="t") kv <- qt(pnorm(kv),df)
