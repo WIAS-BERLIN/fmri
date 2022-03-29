@@ -79,24 +79,7 @@ pvclust <- function(tvalue,n,cc,nca,nce=nca){
 }
 
 
-getkv0 <- function(param,mpredf=mpredfactor,irho=1,alpha=.05,ncmin=2){
-   nc <- ncmin:20
-   kv <- (param[1]+param[2]*log((alpha+1e-5)/(1-alpha+2e-5)))*mpredf[nc,irho]
-   kv
-      }
 
-      getalphaclust <- function(alpha,clustertable,ncmin=2){
-        ## get reference alpha for clusterthreshold with clustersizes ncmin:20
-         calpha <- seq(.001,.1,.001)
-         if(ncmin <2) ncmin <- 2
-         if(ncmin >20) ncmin <- 20
-         cta <- clustertable[,ncmin-1]
-         ca0 <- max(calpha[calpha<alpha])
-         cta0 <- max(cta[cta<alpha])
-         ca1 <- min(calpha[calpha>alpha])
-         cta1 <- min(cta[cta>alpha])
-         ca0+ (cta1-alpha)*(ca1-ca0)/(cta1-cta0)
-      }
 
       fmri.cluster <- function(spm, alpha=.05, ncmin=2, ncmax=ncmin, minimum.signal=0){
         args <- sys.call()
