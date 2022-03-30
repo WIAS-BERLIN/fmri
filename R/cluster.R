@@ -13,11 +13,32 @@ findclusters <- function(x,thresh){
     z
 }
 
-kvclust <- function(alpha,n,cc,nca,nce=nca){
+getpvalue <- function(x,xclust,n,nc,nca,nce,cc){
+# x - spm array
+# xclust result from findclusters
+# nc specified actual cluster size
+# nca/nce specified min/max cluster size
+# cc spatial correlation
+   pvalue <- array(1,dim(x))
+   clusterids <- unique(xclust$clusterid[xclust$size>=nc])
+   for(i in clusterids){
+      if(xlust$size[xclust$clusterid==i][1]==nc){
+         xvalue <- min(x[xclust$clusterid==i])
+      } else {
+         vals <- x[xclust$clusterid==i]
+         j <- length(vals)-nc+1
+         xvalue <- sort(vals,partial=j)[j]
+# assuming, that the largest nc values still form a connected cluster
+      }
+      pvalue[xclust$clusterid==i] <- pvclust(xvalue,n,cc,nca,nce)
+   }
+}
+
+kvclust <- function(alpha,n,cc,nca,nce=max(nca)){
     # compute critical value for level alpha and 
     # sample size n, cluster sizes nca:nce and spatial correlation cc
     # based on tail approximation Abramovich/Stegun 26.2.14
-    nce <- pmax(nca,nce)
+    nca <- min(nca):nce
     th11 <- -0.5679493  -0.6276305*cc^.3  + 3.0608387*n^(1/9)
     th12 <- -8.47163638 + 0.02560351*n^(1/3) + 84.28136758*cc^.9
     th13 <- 3.18491717 -19.41570878*cc^.9 + 0.00479463*n^(1/3)  
@@ -49,10 +70,12 @@ kvclust <- function(alpha,n,cc,nca,nce=nca){
     x
   }
 
-pvclust <- function(tvalue,n,cc,nca,nce=nca){
+pvclust <- function(tvalue,n,cc,nc,nca,nce=nca){
   # compute p-value for test statistic tvalue and 
   # sample size n, cluster size nc and spatial correlation cc
-  # based on tail approximation Abramovich/Stegun 26.2.14
+  # based on tail approximation Abramovich/Stegun 26.2.1
+  # nce: maximum cluster size 
+  # nc: actual cluster size under consideration
   nce <- pmax(nca,nce)
   th11 <- -0.5679493  -0.6276305*cc^.3  + 3.0608387*n^(1/9)
   th12 <- -8.47163638 + 0.02560351*n^(1/3) + 84.28136758*cc^.9
@@ -64,7 +87,8 @@ pvclust <- function(tvalue,n,cc,nca,nce=nca){
   th1 <- th11 + th12*(-.7961+.3573*lnc) + th13*(1.8-2.108*lnc+0.539*lnc2) + 
     th14*(-4.316+ 8.618*lnc-4.993*lnc2+0.880*lnc3 )
   th2 <- 0.7071393  + 0.5875162*nc^.85  -5.1295360*cc^.75
-  if(any(nce>nca)){
+  if(nce>nca){
+    i <- nca-nc+1
     ncd <- log(1e-4+nce-nca)
     nca2 <- nca^2
     nca3 <- nca^3
@@ -107,9 +131,7 @@ pvclust <- function(tvalue,n,cc,nca,nce=nca){
         if(is.null(corr)) corr <- 0
         stat <- (spm$cbeta-minimum.signal)/sqrt(spm$var)
         dim(stat) <- spm$dim[1:3]
-        pv <- 1-switch(type,"norm"=pnorm(stat),"t"=pt(stat,df))
-        dim(pv) <- spm$dim[1:3]
-
+        pv <- array(1,dim(stat))
       #  clustersizes to use
         clusters <- ncmin:ncmax
         irho <- as.integer(corr/0.05)+1
@@ -126,6 +148,7 @@ pvclust <- function(tvalue,n,cc,nca,nce=nca){
         for(ic in 1:length(clusters)){
            ttt <- findclusters(stat,kv[ic])
            detected[ttt$size>=clusters[ic]] <- 1
+           pv <- pmin(pv,getpvalue(stat,ttt,n,clusters[ic],ncmin,ncmax,corr))
            cat("inspecting cluster size",clusters[ic],"detected voxel",sum(detected),"\n")
         }
         detected <- detected*spm$mask
