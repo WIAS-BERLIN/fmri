@@ -22,7 +22,7 @@ getpvalue <- function(x,xclust,n,cc,nc,clusters){
    pvalue <- array(1,dim(x))
    clusterids <- unique(xclust$clusterid[xclust$size>=nc])
    for(i in clusterids){
-      if(xlust$size[xclust$clusterid==i][1]==nc){
+      if(xclust$size[xclust$clusterid==i][1]==nc){
          xvalue <- min(x[xclust$clusterid==i])
       } else {
          vals <- x[xclust$clusterid==i]
@@ -81,21 +81,20 @@ pvclust <- function(tvalue,n,cc,nca,nce=max(nca)){
   th12 <- -8.47163638 + 0.02560351*n^(1/3) + 84.28136758*cc^.9
   th13 <- 3.18491717 -19.41570878*cc^.9 + 0.00479463*n^(1/3)  
   th14 <- -0.4531994 + 4.7408157*cc^(2/3) -0.1656168*n^(1/15)
-  lnc <- log(nc)
+  lnc <- log(nca)
   lnc2 <- lnc^2
   lnc3 <- lnc^3
   th1 <- th11 + th12*(-.7961+.3573*lnc) + th13*(1.8-2.108*lnc+0.539*lnc2) + 
     th14*(-4.316+ 8.618*lnc-4.993*lnc2+0.880*lnc3 )
-  th2 <- 0.7071393  + 0.5875162*nc^.85  -5.1295360*cc^.75
+  th2 <- 0.7071393  + 0.5875162*nca^.85  -5.1295360*cc^.75
   if(nce>nca){
-    i <- nca-nc+1
     ncd <- log(1e-4+nce-nca)
     nca2 <- nca^2
     nca3 <- nca^3
     eta1 <- pmax(0,-0.014020 + 0.008642*n^(1/3) + 0.157975*ncd + 
                    0.114501*nca -0.015963*nca2 +0.000520*nca3)
     eta2 <- pmin(0, -0.2496057 -0.0485483*ncd + 0.0663842*nca -0.0056151*nca2 +0.0001511*nca3)
-    th1 <- th1+eta1+eta2*log(alpha)
+    th1 <- th1+eta1
   } else {
     eta1 <- eta2 <- 0
   }
@@ -173,7 +172,6 @@ pvclust <- function(tvalue,n,cc,nca,nce=max(nca)){
 
 simclusterthr <- function(n,distr=c("norm","t"),df=100,bw=0,kern="Gaussian",
                           nsim=1000,seed=1,qgrid = pnorm(seq(1.4,4,.05)),filename="tempres"){
-        require(aws)
         nq <- length(qgrid)
         nsize <- 20
         results <- array(0,c(nq,nsize))
@@ -206,7 +204,6 @@ simclusterthr2 <- function(n,kv,distr=c("norm","t"),df=100,bw=0,kern="Gaussian",
   #
   #  second order simulations for adjustment of kritical values
   #
-  require(aws)
   nq <- length(kv)
   nsize <- 20
   results <- numeric(nq)
