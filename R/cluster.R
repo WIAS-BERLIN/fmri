@@ -13,7 +13,7 @@ findclusters <- function(x,thresh){
     z
 }
 
-getpvalue <- function(x,xclust,n,nc,nca,nce,cc){
+getpvalue <- function(x,xclust,n,nc,cc,nc,clusters){
 # x - spm array
 # xclust result from findclusters
 # nc specified actual cluster size
@@ -30,7 +30,7 @@ getpvalue <- function(x,xclust,n,nc,nca,nce,cc){
          xvalue <- sort(vals,partial=j)[j]
 # assuming, that the largest nc values still form a connected cluster
       }
-      pvalue[xclust$clusterid==i] <- pvclust(xvalue,n,cc,nca,nce)
+      pvalue[xclust$clusterid==i] <- pvclust(xvalue,n,cc,clusters)[clusters==nc]
    }
 }
 
@@ -70,13 +70,13 @@ kvclust <- function(alpha,n,cc,nca,nce=max(nca)){
     x
   }
 
-pvclust <- function(tvalue,n,cc,nc,nca,nce=nca){
+pvclust <- function(tvalue,n,cc,nca,nce=max(nca)){
   # compute p-value for test statistic tvalue and 
   # sample size n, cluster size nc and spatial correlation cc
   # based on tail approximation Abramovich/Stegun 26.2.1
   # nce: maximum cluster size 
   # nc: actual cluster size under consideration
-  nce <- pmax(nca,nce)
+  nca <- min(nca):nce
   th11 <- -0.5679493  -0.6276305*cc^.3  + 3.0608387*n^(1/9)
   th12 <- -8.47163638 + 0.02560351*n^(1/3) + 84.28136758*cc^.9
   th13 <- 3.18491717 -19.41570878*cc^.9 + 0.00479463*n^(1/3)  
@@ -115,18 +115,6 @@ pvclust <- function(tvalue,n,cc,nc,nca,nce=nca){
       }
 
       if (!is.null(attr(spm, "smooth"))) {
-        if (!is.null(attr(spm, "residuals"))) {
-          type <- "t"
-          df <- spm$df
-          if(is.null(df)) df <- abs(diff(dim(attr(spm, "design"))))
-        } else {
-          type <- "norm"
-          df <- 1000 # this is actually not needed, placeholder
-        }
-      } else {
-        type <- "t"
-        df <- spm$df
-      }
         corr <- mean(spm$scorr)
         if(is.null(corr)) corr <- 0
         stat <- (spm$cbeta-minimum.signal)/sqrt(spm$var)
@@ -140,15 +128,13 @@ pvclust <- function(tvalue,n,cc,nc,nca,nce=nca){
         }
         # correct for size of multiplicity
         n <- sum(spm$mask)
-        kv <- kvclust(alpha,n,corr,ncmin,clusters)
+        kv <- kvclust(alpha,n,corr,clusters)
       # this gives a vector of kritical values corresponding to cluster sizes
-      # now adjust for distribution
-        if(type=="t") kv <- qt(pnorm(kv),df)
         detected <- array(0,spm$dim[1:3])
         for(ic in 1:length(clusters)){
            ttt <- findclusters(stat,kv[ic])
            detected[ttt$size>=clusters[ic]] <- 1
-           pv <- pmin(pv,getpvalue(stat,ttt,n,clusters[ic],ncmin,ncmax,corr))
+           pv <- pmin(pv,getpvalue(stat,ttt,n,corr,clusters))
            cat("inspecting cluster size",clusters[ic],"detected voxel",sum(detected),"\n")
         }
         detected <- detected*spm$mask
@@ -157,7 +143,6 @@ pvclust <- function(tvalue,n,cc,nc,nca,nce=nca){
         mask[as.logical(detected)] <- TRUE
         pv[!mask] <- NA
         dim(pv) <- spm$dim[1:3]
-          pv[spm$var > 9e19] <- 1
 
         cat("fmri.pvalue: exiting function\n")
 
