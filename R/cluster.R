@@ -49,7 +49,8 @@ kvclust <- function(alpha,n,cc,nca,nce=max(nca)){
     th1 <- th11 + th12*(-.7961+.3573*lnc) + th13*(1.8-2.108*lnc+0.539*lnc2) + 
       th14*(-4.316+ 8.618*lnc-4.993*lnc2+0.880*lnc3 )
     th2 <- 0.7071393  + 0.5875162*nca^.85  -5.1295360*cc^.75
-    if(any(nce>nca)){
+    nca <- nca[1]
+    if(nce>nca){
       ncd <- log(1e-4+nce-nca)
       nca2 <- nca^2
       nca3 <- nca^3
@@ -87,6 +88,7 @@ pvclust <- function(tvalue,n,cc,nca,nce=max(nca)){
   th1 <- th11 + th12*(-.7961+.3573*lnc) + th13*(1.8-2.108*lnc+0.539*lnc2) + 
     th14*(-4.316+ 8.618*lnc-4.993*lnc2+0.880*lnc3 )
   th2 <- 0.7071393  + 0.5875162*nca^.85  -5.1295360*cc^.75
+  nca <- nca[1]
   if(nce>nca){
     ncd <- log(1e-4+nce-nca)
     nca2 <- nca^2
@@ -94,7 +96,6 @@ pvclust <- function(tvalue,n,cc,nca,nce=max(nca)){
     eta1 <- pmax(0,-0.014020 + 0.008642*n^(1/3) + 0.157975*ncd + 
                    0.114501*nca -0.015963*nca2 +0.000520*nca3)
     eta2 <- pmin(0, -0.2496057 -0.0485483*ncd + 0.0663842*nca -0.0056151*nca2 +0.0001511*nca3)
-    th1 <- th1+eta1
   } else {
     eta1 <- eta2 <- 0
   }
