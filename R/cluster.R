@@ -13,7 +13,7 @@ findclusters <- function(x,thresh){
     z
 }
 
-getpvalue <- function(x,xclust,n,nc,cc,nc,clusters){
+getpvalue <- function(x,xclust,n,cc,nc,clusters){
 # x - spm array
 # xclust result from findclusters
 # nc specified actual cluster size
@@ -114,7 +114,7 @@ pvclust <- function(tvalue,n,cc,nca,nce=max(nca)){
         warning("fmri.cluster: data not of class <fmrispm>. Try to proceed but strange things may happen")
       }
 
-      if (!is.null(attr(spm, "smooth"))) {
+      if (is.null(attr(spm, "smooth"))) return("fmri.cluster not suitable for smoothed spm's") 
         corr <- mean(spm$scorr)
         if(is.null(corr)) corr <- 0
         stat <- (spm$cbeta-minimum.signal)/sqrt(spm$var)
