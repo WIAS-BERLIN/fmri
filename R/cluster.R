@@ -114,7 +114,7 @@ pvclust <- function(tvalue,n,cc,nca,nce=max(nca)){
         warning("fmri.cluster: data not of class <fmrispm>. Try to proceed but strange things may happen")
       }
 
-      if (is.null(attr(spm, "smooth"))) return("fmri.cluster not suitable for smoothed spm's") 
+      if (!is.null(attr(spm, "smooth"))) return("fmri.cluster not suitable for smoothed spm's") 
         corr <- mean(spm$scorr)
         if(is.null(corr)) corr <- 0
         stat <- (spm$cbeta-minimum.signal)/sqrt(spm$var)
@@ -134,7 +134,7 @@ pvclust <- function(tvalue,n,cc,nca,nce=max(nca)){
         for(ic in 1:length(clusters)){
            ttt <- findclusters(stat,kv[ic])
            detected[ttt$size>=clusters[ic]] <- 1
-           pv <- pmin(pv,getpvalue(stat,ttt,n,corr,clusters))
+           pv <- pmin(pv,getpvalue(stat,ttt,n,corr,clusters[ic],clusters))
            cat("inspecting cluster size",clusters[ic],"detected voxel",sum(detected),"\n")
         }
         detected <- detected*spm$mask
