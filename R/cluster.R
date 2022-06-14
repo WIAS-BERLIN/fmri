@@ -32,6 +32,7 @@ getpvalue <- function(x,xclust,n,cc,nc,clusters){
       }
       pvalue[xclust$clusterid==i] <- pvclust(xvalue,n,cc,clusters)[clusters==nc]
    }
+   pvalue
 }
 
 kvclust <- function(alpha,n,cc,nca,nce=max(nca)){
