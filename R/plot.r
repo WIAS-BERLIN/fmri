@@ -210,7 +210,7 @@ getAlignedCoords <- function(img1,img2){
 #
 #  compute indices of closest representants
 #
-   if(class(img1)=="nifti"){
+   if(is.nifti(img1)){
       scode1 <- img1@sform_code
       qcode1 <- img1@qform_code
       if(qcode1>0){
@@ -243,7 +243,7 @@ getAlignedCoords <- function(img1,img2){
    } else {
       stop("can't handle img1")
    }
-   if(class(img2)=="nifti"){
+   if(is.nifti(img2)){
       scode2 <- img2@sform_code
       qcode2 <- img2@qform_code
       if(qcode2>0){
@@ -294,7 +294,16 @@ plot.fmripvalue <- function(x, template=NULL, mask=NULL,
   pvalue <- x$pvalue
   alpha <- x$alpha
   ddim <- dim(pvalue)
-  if(is.null(template)) template <- x$pvalue
+  if(is.null(template)) template <- x$pvalue else {
+    if(is.nifti(template)){
+      scode <- template@sform_code
+      qcode <- template@qform_code
+      if(scode==0&qcode==0){
+        template <- x$pvalue
+        warning("img2: need method 2 or 3 in nifti, no overlay used")
+      }
+    }
+  }
   if(is.null(mask)) mask <- if(is.null(x$mask)) array(TRUE,dim(pvalue)) else x$mask
   if(any(ddim!=dim(mask))) stop("mask dimension does not match")
   pvalue[pvalue>=alpha] <- NA
