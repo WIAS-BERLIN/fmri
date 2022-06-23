@@ -111,7 +111,7 @@ pvclust <- function(tvalue,n,cc,nca,nce=max(nca)){
         args <- c(spm$call,args)
       cat("fmri.cluster: entering function\n")
 
-      if (!("fmrispm" %in% class(spm)) ) {
+      if (!inherits(spm,"fmrispm"))  {
         warning("fmri.cluster: data not of class <fmrispm>. Try to proceed but strange things may happen")
       }
 

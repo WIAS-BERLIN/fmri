@@ -22,7 +22,7 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
     restricted <- if ("restricted" %in% names(list(...)))
         as.logical(list(...)[["restricted"]])
     else FALSE
-    if (!("fmrispm" %in% class(spm))) {
+    if (!inherits(spm,"fmrispm")) {
         warning("fmri.smooth: data not of class <fmrispm>. Try to proceed but strange things may happen")
     }
     if (!is.null(attr(spm, "smooth"))) {
@@ -187,7 +187,7 @@ fmri.pvalue <- function(spm, mode="basic", na.rm=FALSE, minimum.signal=0, alpha=
     args <- c(spm$call,args)
   cat("fmri.pvalue: entering function\n")
 
-  if (!("fmrispm" %in% class(spm)) ) {
+  if (!inherits(spm,"fmrispm"))  {
     warning("fmri.pvalue: data not of class <fmrispm>. Try to proceed but strange things may happen")
   }
 
