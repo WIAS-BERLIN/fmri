@@ -66,7 +66,7 @@
   \item{cbeta}{estimated contrast of parameters}
   \item{var}{estimated variance of the contrast of parameters.}
   \item{varm}{covariance matrix of the parameters given by \code{vvector}}
-  \item{res}{raw (integer size 2) vector containing residuals of the estimated linear model
+  \item{residuals}{raw (integer size 2) vector containing residuals of the estimated linear model
              up to scale factor resscale.}
   \item{resscale}{\code{resscale*extractData(object,"residuals")} are the residuals. }
   \item{dim}{dimension of the data cube and residuals}

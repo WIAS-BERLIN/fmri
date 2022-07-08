@@ -105,8 +105,8 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
                                       delta = delta,
                                       alpha = alpha,
                                       restricted = restricted))
-    scale <- max(abs(range(ttthat$res)))/32767
-    ttthat$res <- writeBin(as.integer(ttthat$res/scale), raw(), 2)
+    scale <- max(abs(range(ttthat$residuals)))/32767
+    ttthat$residuals <- writeBin(as.integer(ttthat$residuals/scale), raw(), 2)
     ttthat$resscale <- scale
 
     cat("\n")
