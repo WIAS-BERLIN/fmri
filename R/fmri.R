@@ -105,9 +105,6 @@ fmri.smooth <- function (spm, hmax = 4, adaptation = "aws",
                                       delta = delta,
                                       alpha = alpha,
                                       restricted = restricted))
-    scale <- max(abs(range(ttthat$residuals)))/32767
-    ttthat$residuals <- writeBin(as.integer(ttthat$residuals/scale), raw(), 2)
-    ttthat$resscale <- scale
 
     cat("\n")
     cat("fmri.smooth: determine local smoothness\n")
