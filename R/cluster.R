@@ -106,10 +106,10 @@ pvclust <- function(tvalue,n,cc,nca,nce=max(nca)){
 
 
 
-      fmri.cluster <- function(spm, alpha=.05, ncmin=2, ncmax=ncmin, minimum.signal=0){
+fmri.cluster <- function(spm, alpha=.05, ncmin=2, ncmax=ncmin, minimum.signal=0, verbose = FALSE){
         args <- sys.call()
         args <- c(spm$call,args)
-      cat("fmri.cluster: entering function\n")
+      if (verbose) cat("fmri.cluster: entering function\n")
 
       if (!("fmrispm" %in% class(spm)) ) {
         warning("fmri.cluster: data not of class <fmrispm>. Try to proceed but strange things may happen")
@@ -136,16 +136,16 @@ pvclust <- function(tvalue,n,cc,nca,nce=max(nca)){
            ttt <- findclusters(stat,kv[ic])
            detected[ttt$size>=clusters[ic]] <- 1
            pv <- pmin(pv,getpvalue(stat,ttt,n,corr,clusters[ic],clusters))
-           cat("inspecting cluster size",clusters[ic],"detected voxel",sum(detected),"\n")
+           if (verbose) cat("inspecting cluster size",clusters[ic],"detected voxel",sum(detected),"\n")
         }
         detected <- detected*spm$mask
-        cat("fmri.pvalue: thresholding\n")
+        if (verbose) cat("fmri.pvalue: thresholding\n")
         mask <- rep(FALSE,length=prod(spm$dim[1:3]))
         mask[as.logical(detected)] <- TRUE
         pv[!mask] <- NA
         dim(pv) <- spm$dim[1:3]
 
-        cat("fmri.pvalue: exiting function\n")
+        if (verbose) cat("fmri.pvalue: exiting function\n")
 
         z <- list(pvalue = pv, weights = spm$weights, dim = spm$dim,
                   hrf = spm$hrf, alpha=alpha, mask = spm$mask)
