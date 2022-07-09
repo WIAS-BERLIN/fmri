@@ -485,7 +485,7 @@ fmri.lm <- function(ds,
   result$cbeta <- cbeta
   result$var <- variance
   result$mask <- mask
-  result$res <- residuals
+  result$residuals <- residuals
   result$resscale <- scale
   result$maskOnly <- TRUE
   result$arfactor <- arfactor

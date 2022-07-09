@@ -26,6 +26,7 @@ importFrom("stats", "IQR", "convolve", "dchisq", "density", "dnorm", "qnorm",
              "rt", "var", "vcov", "sd", "spectrum", "dist", "as.dist", "hclust")
 importFrom("utils", "flush.console", "setTxtProgressBar",
              "txtProgressBar")
+importFrom("oro.nifti", "is.nifti")
 importFrom(metafor,rma.uni)
 importFrom(nlme, lme, lmeControl, varIdent, corAR1, fixef, pdDiag)
 importFrom(parallel, makeCluster, clusterEvalQ, parApply, stopCluster)

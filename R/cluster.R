@@ -111,7 +111,7 @@ fmri.cluster <- function(spm, alpha=.05, ncmin=2, ncmax=ncmin, minimum.signal=0,
         args <- c(spm$call,args)
       if (verbose) cat("fmri.cluster: entering function\n")
 
-      if (!("fmrispm" %in% class(spm)) ) {
+      if (!inherits(spm,"fmrispm"))  {
         warning("fmri.cluster: data not of class <fmrispm>. Try to proceed but strange things may happen")
       }
 
