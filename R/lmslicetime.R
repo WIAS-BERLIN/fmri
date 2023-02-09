@@ -30,6 +30,7 @@ fmri.stimulus <- function(scans = 1,
      slicetimes <- (1:nslices-1)[sliceorder]/TR*scale
   }
   ## consider microtime
+  if(scale<1/TR) scale <- 1/TR
   onsets <- onsets * scale
   durations <- durations * scale
   scans <- scans * TR * scale
