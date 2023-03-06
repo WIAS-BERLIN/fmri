@@ -30,6 +30,7 @@ fmri.stimulus <- function(scans = 1,
      slicetimes <- (1:nslices-1)[sliceorder]/TR*scale
   }
   ## consider microtime
+  if(scale<1/TR) scale <- 1/TR
   onsets <- onsets * scale
   durations <- durations * scale
   scans <- scans * TR * scale
@@ -102,11 +103,13 @@ fmri.stimulus <- function(scans = 1,
         convolve(stimulus[,j], rev(y), type="open")[1:dim(stimulus)[1]]
       }
       ## final operations to get BOLD at scan time
-    stimulus <- stimulus[unique((scale:scans)%/%(scale^2*TR))*scale^2*TR,]/(scale^2*TR)
+    ind <- unique((trunc(min(scale*TR,1)*scale):scans)%/%(scale^2*TR))*scale^2*TR
+    stimulus <- stimulus[ind,]/(scale^2*TR)
   } else {
      stimulus <- convolve(stimulus, rev(y), type="open")
     ## final operations to get BOLD at scan time
-     stimulus <- stimulus[unique((scale:scans)%/%(scale^2*TR))*scale^2*TR]/(scale^2*TR)
+     ind <- unique((trunc(min(scale*TR,1)*scale):scans)%/%(scale^2*TR))*scale^2*TR
+     stimulus <- stimulus[ind]/(scale^2*TR)
   }
   ## return mean corrected stimulus function
   if(slicetiming) sweep(stimulus,2,apply(stimulus,2,mean),"-") else stimulus - mean(stimulus)
