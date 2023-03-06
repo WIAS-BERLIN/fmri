@@ -9,7 +9,8 @@ Detection of activated regions using cluster thresholding.
 
 }
 \usage{
-fmri.cluster(spm, alpha = 0.05, ncmin = 2, ncmax=ncmin, minimum.signal = 0)
+fmri.cluster(spm, alpha = 0.05, ncmin = 2, ncmax=ncmin, 
+             minimum.signal = 0, verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -31,6 +32,9 @@ fmri.cluster(spm, alpha = 0.05, ncmin = 2, ncmax=ncmin, minimum.signal = 0)
   allows to specify a (positive) minimum value for detected signals. If minimum.signal >0
    the thresholds are to conservative, this case needs further improvements.
 }
+  \item{verbose}{
+    intermediat diagnostics
+  }
 }
 \details{ Approximate thresholds for the existence of a cluster with spm-values
 exceeding a \code{1-beta} threshold \code{k_{nc,na:ne}} for cluster size \code{nc}
