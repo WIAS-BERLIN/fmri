@@ -33,7 +33,7 @@ fmri.cluster(spm, alpha = 0.05, ncmin = 2, ncmax=ncmin,
    the thresholds are to conservative, this case needs further improvements.
 }
   \item{verbose}{
-    intermediat diagnostics
+    intermediate diagnostics
   }
 }
 \details{ Approximate thresholds for the existence of a cluster with spm-values
