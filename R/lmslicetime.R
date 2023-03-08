@@ -12,7 +12,7 @@ fmri.stimulus <- function(scans = 1,
 
   ## match the type of HRF function to the defaults
   type <- match.arg(type)
-  if ((type == "user") && (class(hrf) != "function"))
+  if ((type == "user") && (!inherits(hrf, "function")))
     stop("HRF type is user, but specified hrf is not a function!")
 
   ## is information for slice timing present ?
