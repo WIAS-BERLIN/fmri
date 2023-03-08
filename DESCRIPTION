@@ -20,7 +20,7 @@ Description: Contains R-functions to perform an fMRI analysis as described in
 License: GPL (>= 2)
 Copyright: This package is Copyright (C) 2006-2020 Weierstrass Institute for
                                            Applied Analysis and Stochastics.
-URL: http://www.wias-berlin.de/software/imaging/
+URL: https://www.wias-berlin.de/software/imaging/
 Note: This software comes with NO warranty! It is NOT intended to be used
       in clinical applications! For evaluation only!
 RoxygenNote: 7.2.3
