@@ -1459,12 +1459,13 @@ extractData <- function(z, what="data", maskOnly=FALSE){
     }
 ## now expand to full arrays if needed
     if(!is.null(ttt)&expand){
+      nvoxel <- prod(z$dim[1:3])
       ttt0 <- ttt
       if(what=="data"){
-         ttt <- matrix(0,n/nt,nt)
+         ttt <- matrix(0,nvoxel,nt)
          ttt[mask,] <- ttt0
       } else {
-        ttt <- matrix(0,nt,n/nt)
+        ttt <- matrix(0,nt,nvoxel)
         ttt[,mask] <- ttt0
       }
     }
